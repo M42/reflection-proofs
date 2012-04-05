@@ -20,7 +20,7 @@ succ n + m = succ (n + m)
 -- n is even => n+2 is even  <- rule
 data Even  : Nat → Set where
   isEvenZ  : Even 0
-  isEvenSS : {n : Nat} → Even n → Even (n + n)
+  isEvenSS : {n : Nat} → Even n → Even (2 + n)
   
 -- we want to prove that 2*n is always even, \forall n.
 
