@@ -34,8 +34,9 @@ isEvenQ (succ (succ n)) = isEvenQ n
 -- now prove that N is even precisely when our function
 -- returns True
 soundIsEvenQ : {n : Nat} → isEvenQ n ≡ true → Even n
-soundIsEvenQ = {!!}
-
+soundIsEvenQ {0} refl          = isEvenZ
+soundIsEvenQ {1} ()
+soundIsEvenQ {succ (succ n)} s = isEvenSS (soundIsEvenQ s)
 
 -- now we can prove instances by applying the soundness theorem
 -- with reflexivity proofs
@@ -43,4 +44,8 @@ soundIsEvenQ = {!!}
 -- For example, it turns out that 28 is even:
 isEven28 : Even 28
 isEven28 = soundIsEvenQ refl
+
+-- or something which would otherwise have a rather large proof tree
+isEven8772 : Even 8772
+isEven8772 = soundIsEvenQ refl
 
