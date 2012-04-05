@@ -38,6 +38,7 @@ data BoolExpr : Set where
 ⟦ And p q ⟧ = ⟦ p ⟧ ∧ ⟦ q ⟧
 ⟦ Or p q ⟧ = ⟦ p ⟧ ∨ ⟦ q ⟧
 ⟦ Not p ⟧ = not ⟦ p ⟧
+-- and if we encounter a variable, same name => equal
 
 -- getting back to our nicer formulation:
 
@@ -185,6 +186,10 @@ private
 
 
 -- still required: 
+-- * do actual reflection
+-- * evaluate the DSL AST we get
+-- * prove soundness theorem
+-- see lecture11.pdf
 
 
 
