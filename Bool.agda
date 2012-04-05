@@ -24,10 +24,10 @@ proof1 = {! refl!}   -- this won't work, since p1 != q1, etc!
 -- in some magical way... TBC
 
 data BoolExpr : Set where
-  Const : Bool        → BoolExpr
-  And   : Bool → Bool → BoolExpr
-  Or    : Bool → Bool → BoolExpr
-  Not   : Bool        → BoolExpr
+  Const : Bool                → BoolExpr
+  And   : BoolExpr → BoolExpr → BoolExpr
+  Or    : BoolExpr → BoolExpr → BoolExpr
+  Not   : BoolExpr            → BoolExpr
 
 -- ...and some way to interpret our representation
 -- of the formula at hand:
@@ -35,9 +35,9 @@ data BoolExpr : Set where
 ⟦_⟧ : BoolExpr → Bool
 ⟦ Const true ⟧ = true
 ⟦ Const false ⟧ = false
-⟦ And p q ⟧ = p ∧ q
-⟦ Or p q ⟧ = p ∨ q
-⟦ Not p ⟧ = p
+⟦ And p q ⟧ = ⟦ p ⟧ ∧ ⟦ q ⟧
+⟦ Or p q ⟧ = ⟦ p ⟧ ∨ ⟦ q ⟧
+⟦ Not p ⟧ = not ⟦ p ⟧
 
 -- getting back to our nicer formulation:
 
@@ -184,12 +184,10 @@ private
 -- reflects its structure.
 
 
+-- still required: 
 
 
 
 
-something : (t : Term) → true ∨ false ≡ true
-something  = {!!}
-
-taketwo : easiertheorem
-taketwo = quoteGoal prop in (something prop)
+somethingIWantToProve : true ∨ false ≡ true
+somethingIWantToProve  = {!!}
