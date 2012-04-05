@@ -40,6 +40,7 @@ soundIsEvenQ = {!!}
 -- now we can prove instances by applying the soundness theorem
 -- with reflexivity proofs
 
-isEven2N : {n : Nat} → Even (n + n)
-isEven2N {n} = soundIsEvenQ {n + n} {!refl!}
+-- For example, it turns out that 28 is even:
+isEven28 : Even 28
+isEven28 = soundIsEvenQ refl
 
