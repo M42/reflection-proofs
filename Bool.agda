@@ -28,17 +28,41 @@ data BoolExpr : Set where
   And   : BoolExpr → BoolExpr → BoolExpr
   Or    : BoolExpr → BoolExpr → BoolExpr
   Not   : BoolExpr            → BoolExpr
+--   Impl  : BoolExpr → BoolExpr → BoolExpr
 
 -- ...and some way to interpret our representation
 -- of the formula at hand:
+-- this is our compilation: happens to be like the decision
+-- procedure, will differ for things other than bool
+-- this is compile : S → D
 
+-- S = BoolExpr (the syntactic realm)
+-- D = the domain of our Props
 ⟦_⟧ : BoolExpr → Bool
 ⟦ Const true ⟧ = true
 ⟦ Const false ⟧ = false
 ⟦ And p q ⟧ = ⟦ p ⟧ ∧ ⟦ q ⟧
 ⟦ Or p q ⟧ = ⟦ p ⟧ ∨ ⟦ q ⟧
 ⟦ Not p ⟧ = not ⟦ p ⟧
+-- ⟦ Impl p q ⟧ = not ⟦ p ⟧ ∨ ⟦ q ⟧ -- logical implication
 -- and if we encounter a variable, same name => equal
+
+-- decision procedure:
+-- return whether the given proposition is true
+decide : BoolExpr → Bool
+decide (Const true) = true
+decide (Const false) = false
+decide (And be be₁) = decide be ∧ decide be₁
+decide (Or be be₁) = decide be ∨ decide be₁
+decide (Not be) = not (decide be)
+
+-- soundness:
+soundness : (p : BoolExpr) → decide p ≡ true → ⟦ p ⟧ ≡ true
+soundness (Const true) refl = refl
+soundness (Const false) ()
+soundness (And p p₁) pf = {!!}
+soundness (Or p p₁) pf = {!!}
+soundness (Not p) pf = soundness {!p!} pf
 
 -- getting back to our nicer formulation:
 
@@ -193,6 +217,11 @@ private
 
 
 
+somethingIWantToProve : true ≡ true ∨ false
+somethingIWantToProve  = quoteGoal e in soundness e refl
 
-somethingIWantToProve : true ∨ false ≡ true
-somethingIWantToProve  = {!!}
+
+-- next step: variables:
+theorem1 : Set
+theorem1 = {p : Bool} → p ∨ ¬ p ≡ p
+
