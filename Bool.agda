@@ -9,62 +9,75 @@ open import Data.Bool
 -- here's something the type system gives us
 -- for free: (i.e. not not true is evaluated,
 -- then refl works)
+-- this works because the type system does beta-reduction.
 trueisnotnottrue : true ≡ ¬ ( ¬ true)
 trueisnotnottrue = refl
 
+-- eventually we'd like to prove these kinds of tautologies:
 myfavouritetheorem : Set
 myfavouritetheorem = {p1 q1 p2 q2 : Bool} → (p1 ∨ q1) ∧ (p2 ∨ q2) ≡
                                             (q1 ∨ p1) ∧ (q2 ∨ p2)
 proof1 : myfavouritetheorem
 proof1 = {! refl!}   -- this won't work, since p1 != q1, etc!
-                    -- proving this manually would require 2ⁿ cases...
+                     -- proving this manually would require 2ⁿ cases...
 
 -- we'll make some DSL into which we're going to translate theorems
 -- (which are actually types of functions), and then use reflection
 -- in some magical way... TBC
 
-data BoolExpr : Set where
-  Const : Bool                → BoolExpr
-  And   : BoolExpr → BoolExpr → BoolExpr
-  Or    : BoolExpr → BoolExpr → BoolExpr
---  Not   : BoolExpr            → BoolExpr
---  Is    : Bool → Bool → BoolExpr
---   Impl  : BoolExpr → BoolExpr → BoolExpr
+open import Data.Nat
+open import Data.Fin
 
--- ...and some way to interpret our representation
--- of the formula at hand:
--- this is our compilation: happens to be like the decision
--- procedure, will differ for things other than bool
--- this is compile : S → D
+data BoolExpr : ℕ → Set where
+  Truth     : {n : ℕ}                           → BoolExpr n
+  Falsehood : {n : ℕ}                           → BoolExpr n
+  And       : {n : ℕ} → BoolExpr n → BoolExpr n → BoolExpr n
+  Or        : {n : ℕ} → BoolExpr n → BoolExpr n → BoolExpr n
+  Not       : {n : ℕ} → BoolExpr n              → BoolExpr n
+  Imp       : {n : ℕ} → BoolExpr n → BoolExpr n → BoolExpr n
+  Atomic    : {n : ℕ} → Fin n                   → BoolExpr n
 
+open import Data.Vec
 open import Data.Unit hiding (_≤?_)
 open import Data.Empty
 open import Data.Sum
 open import Data.Product
 
+-- ...and some way to interpret our representation
+-- of the formula at hand:
+-- this is compile : S → D
+
+-- the environment
+Env : ℕ → Set
+Env = Vec Bool
+  -- lijst van lengte n met daarin een Set / Bool
+
 -- S = BoolExpr (the syntactic realm)
 -- D = the domain of our Props
-⟦_⟧ : BoolExpr → Set
-⟦ Const true ⟧ = ⊤
-⟦ Const false ⟧ = ⊥
-⟦ And p q ⟧ = ⟦ p ⟧ × ⟦ q ⟧
-⟦ Or p q ⟧ = ⟦ p ⟧ ⊎ ⟦ q ⟧
--- ⟦ Not p ⟧ with ⟦ p ⟧
--- ⟦ Is p q ⟧ = {!!}
--- ⟦ Impl p q ⟧ = not ⟦ p ⟧ ∨ ⟦ q ⟧ -- logical implication
--- and if we encounter a variable, same name => equal
+⟦_⊢_⟧ : {n : ℕ} → Env n → BoolExpr n → Set
+⟦ env ⊢ Truth ⟧     = ⊤
+⟦ env ⊢ Falsehood ⟧ = ⊥
+⟦ env ⊢ And p q ⟧   = ⟦ env ⊢ p ⟧ × ⟦ env ⊢ q ⟧
+⟦ env ⊢ Or p q ⟧    = ⟦ env ⊢ p ⟧ ⊎ ⟦ env ⊢ q ⟧
+⟦ env ⊢ Imp p q ⟧   = ⟦ env ⊢ p ⟧ → ⟦ env ⊢ q ⟧
+⟦ env ⊢ Atomic n ⟧ with lookup n env
+... | true  = ⊤
+... | false = ⊥
+⟦ env ⊢ Not p ⟧     = {!!}
 
 -- decision procedure:
 -- return whether the given proposition is true
 -- this is like our isEvenQ
-decide : BoolExpr → Bool
-decide (Const true) = true
-decide (Const false) = false
-decide (And be be₁) = decide be ∧ decide be₁
-decide (Or be be₁) = decide be ∨ decide be₁
--- decide (Not be) = not (decide be)
--- decide (Is p q) = {!!}
+decide : {n : ℕ} → Env n → BoolExpr n → Bool
+decide env (Truth)      = true
+decide env (Falsehood)  = false
+decide env (And be be₁) = decide env be ∧ decide env be₁
+decide env (Or be be₁)  = decide env be ∨ decide env be₁
+decide env (Not p)      = not (decide env p)
+decide env (Imp p q)    = not (decide env p) ∨ (decide env q)
+decide env (Atomic n)   = lookup n env
 
+-- these helpers show that a AND b => both a = true, as well as b = true.
 and-l : ∀ {b b'} → b ∧ b' ≡ true → b ≡ true
 and-l {true} eq = refl
 and-l {false} eq = eq
@@ -73,24 +86,31 @@ and-r : ∀ b b' → b ∧ b' ≡ true → b' ≡ true
 and-r true b' eq = eq
 and-r false true eq = refl
 and-r false false eq = eq
--- soundness:
-soundness : (p : BoolExpr) → decide p ≡ true → ⟦ p ⟧
-soundness (Const true) refl = tt
-soundness (Const false) ()
-soundness (And p p₁) pf = (soundness p  (and-l pf)) ,
-                          (soundness p₁ (and-r (decide p) (decide p₁) pf))
-soundness (Or p p₁) pf  = {!pf!}
--- soundness (Not p) pf = soundness {!p!} pf
--- soundness (Is p q) pf = {!!}
 
--- getting back to our nicer formulation:
+or-lem : ∀ p q → p ∨ q ≡ true → p ≡ true ⊎ q ≡ true
+or-lem true q = inj₁
+or-lem false q = inj₂
+
+-- soundness theorem:
+soundness : {n : ℕ} → (env : Env n) → (p : BoolExpr n) → decide env p ≡ true → ⟦ env ⊢ p ⟧
+soundness env (Truth) refl = tt
+soundness env (Falsehood) ()
+soundness env (And p p₁) pf = (soundness env p  (and-l pf)) ,
+                              (soundness env p₁ (and-r (decide env p) (decide env p₁) pf))
+soundness env (Or p p₁) pf  with or-lem (decide env p) (decide env p₁) pf
+soundness env (Or p p₁) pf | inj₁ x = inj₁ (soundness env p x)
+soundness env (Or p p₁) pf | inj₂ y = inj₂ (soundness env p₁ y)
+soundness env (Not p) pf = {!!}
+soundness env (Imp p q) pf with or-lem (decide env (Not p)) (decide env q) pf
+soundness env (Imp p q) pf | inj₁ x = λ x₁ → {!!}
+soundness env (Imp p q) pf | inj₂ y = λ x → soundness env q y
+soundness env (Atomic n) pf with lookup n env
+soundness env (Atomic n₁) refl | .true = tt
 
 open import Data.Nat
 open import Relation.Nullary hiding (¬_)
 open import Data.List
 open import Data.Product
-
-
 
 -- still required: 
 -- * do actual reflection
@@ -98,15 +118,27 @@ open import Data.Product
 -- see lecture11.pdf
 
 
+private
 -- we can only prove "propositions" that eventually evaluate to true.
 -- somethingIWantToProve : true ∨ false ≡ true
 -- this should be formulated as follows:
 -- you give the type in terms of the AST
 -- of course, later we want to generate the AST ourselves.
-somethingIWantToProve : ⟦ Or (Const true) (Const false) ⟧
-somethingIWantToProve  = soundness (Or (Const true) (Const false)) refl
+    empty : Env zero
+    empty = []
 
+    somethingIWantToProve : ⟦ empty ⊢ Or (Truth) (Falsehood) ⟧
+    somethingIWantToProve  = soundness empty (Or (Truth) (Falsehood)) refl
 
--- next step: variables:
+private
+    oneVar : Env 1
+    oneVar = false ∷ [] 
+
+    -- this also works if you set oneVar = true :: []. Next
+    -- we want to automatically prove all cases.
+    thm0 : ⟦ oneVar ⊢ Or (Atomic zero) (Not (Atomic zero))⟧
+    thm0 = soundness oneVar (Or (Atomic zero) (Not (Atomic zero))) refl
+
+-- next step: automatically generate the AST from something like this:
 -- theorem1 : Set
-theorem1 = {p : Bool} → p ∨ ¬ p ≡ true
+-- theorem1 = {p : Bool} → p ∨ ¬ p ≡ true
