@@ -11,6 +11,11 @@ data Even  : ℕ → Set where
   isEvenZ  : Even 0
   isEvenSS : {n : ℕ} → Even n → Even (2 + n)
   
+
+n2isEven : {n : ℕ} → Even n → Even (n + n)
+n2isEven isEvenZ = isEvenZ
+n2isEven (isEvenSS proof) = {!!}
+
 -- we want to prove that 2*n is always even, ∀n.
 
 -- therefore, first make a decision function which tells us

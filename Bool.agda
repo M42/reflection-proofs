@@ -28,7 +28,11 @@ data BoolExpr : Set where
   And   : BoolExpr → BoolExpr → BoolExpr
   Or    : BoolExpr → BoolExpr → BoolExpr
   Not   : BoolExpr            → BoolExpr
+  Is    : Bool → Bool → BoolExpr
 --   Impl  : BoolExpr → BoolExpr → BoolExpr
+
+_==_ : Bool → Bool → Bool
+_==_ p q = ?
 
 -- ...and some way to interpret our representation
 -- of the formula at hand:
@@ -44,25 +48,29 @@ data BoolExpr : Set where
 ⟦ And p q ⟧ = ⟦ p ⟧ ∧ ⟦ q ⟧
 ⟦ Or p q ⟧ = ⟦ p ⟧ ∨ ⟦ q ⟧
 ⟦ Not p ⟧ = not ⟦ p ⟧
+⟦ Is p q ⟧ = ?
 -- ⟦ Impl p q ⟧ = not ⟦ p ⟧ ∨ ⟦ q ⟧ -- logical implication
 -- and if we encounter a variable, same name => equal
 
 -- decision procedure:
 -- return whether the given proposition is true
+-- this is like our isEvenQ
 decide : BoolExpr → Bool
 decide (Const true) = true
 decide (Const false) = false
 decide (And be be₁) = decide be ∧ decide be₁
 decide (Or be be₁) = decide be ∨ decide be₁
 decide (Not be) = not (decide be)
+decide (Is p q) = ?
 
 -- soundness:
 soundness : (p : BoolExpr) → decide p ≡ true → ⟦ p ⟧ ≡ true
 soundness (Const true) refl = refl
 soundness (Const false) ()
-soundness (And p p₁) pf = {!!}
+soundness (And p p₁) pf =  {!p!}
 soundness (Or p p₁) pf = {!!}
 soundness (Not p) pf = soundness {!p!} pf
+soundness (Is p q) pf = ?
 
 -- getting back to our nicer formulation:
 
@@ -211,15 +219,14 @@ private
 
 -- still required: 
 -- * do actual reflection
--- * evaluate the DSL AST we get
 -- * prove soundness theorem
 -- see lecture11.pdf
 
+somethingIWantToProve : true ∨ false ≡ true
+somethingIWantToProve  = quoteGoal e in soundness (Or (Const true) (Const false)) refl
 
-
-somethingIWantToProve : true ≡ true ∨ false
-somethingIWantToProve  = quoteGoal e in soundness e refl
-
+theorem0 : (true == true) ≡ true
+theorem0 = ?
 
 -- next step: variables:
 theorem1 : Set
