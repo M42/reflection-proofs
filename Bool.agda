@@ -1,6 +1,6 @@
 module Bool where
 
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality hiding ( [_] )
 open import Data.Bool
 
 ¬_ : Bool → Bool
@@ -109,14 +109,12 @@ soundness env (Atomic n₁) refl | .true = tt
 
 open import Data.Nat
 open import Relation.Nullary hiding (¬_)
-open import Data.List
 open import Data.Product
 
 -- still required: 
 -- * do actual reflection
 -- * prove soundness theorem
 -- see lecture11.pdf
-
 
 private
 -- we can only prove "propositions" that eventually evaluate to true.
@@ -131,14 +129,14 @@ private
     somethingIWantToProve  = soundness empty (Or (Truth) (Falsehood)) refl
 
 private
-    oneVar : Env 1
-    oneVar = false ∷ [] 
 
     -- this also works if you set oneVar = true :: []. Next
     -- we want to automatically prove all cases.
-    thm0 : ⟦ oneVar ⊢ Or (Atomic zero) (Not (Atomic zero))⟧
-    thm0 = soundness oneVar (Or (Atomic zero) (Not (Atomic zero))) refl
-
+    -- how to do this automatically?
+    thm0 : ∀ (ov : Env 1) → ⟦ ov ⊢ Or (Atomic zero) (Not (Atomic zero))⟧
+    thm0 (true ∷ [])  = soundness (true ∷ []) (Or (Atomic zero) (Not (Atomic zero))) refl
+    thm0 (false ∷ []) = soundness (false ∷ []) (Or (Atomic zero) (Not (Atomic zero))) refl
+    
 -- next step: automatically generate the AST from something like this:
 -- theorem1 : Set
 -- theorem1 = {p : Bool} → p ∨ ¬ p ≡ true
