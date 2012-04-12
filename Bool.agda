@@ -27,12 +27,9 @@ data BoolExpr : Set where
   Const : Bool                → BoolExpr
   And   : BoolExpr → BoolExpr → BoolExpr
   Or    : BoolExpr → BoolExpr → BoolExpr
-  Not   : BoolExpr            → BoolExpr
-  Is    : Bool → Bool → BoolExpr
+--  Not   : BoolExpr            → BoolExpr
+--  Is    : Bool → Bool → BoolExpr
 --   Impl  : BoolExpr → BoolExpr → BoolExpr
-
-_==_ : Bool → Bool → Bool
-_==_ p q = ?
 
 -- ...and some way to interpret our representation
 -- of the formula at hand:
@@ -40,15 +37,20 @@ _==_ p q = ?
 -- procedure, will differ for things other than bool
 -- this is compile : S → D
 
+open import Data.Unit hiding (_≤?_)
+open import Data.Empty
+open import Data.Sum
+open import Data.Product
+
 -- S = BoolExpr (the syntactic realm)
 -- D = the domain of our Props
-⟦_⟧ : BoolExpr → Bool
-⟦ Const true ⟧ = true
-⟦ Const false ⟧ = false
-⟦ And p q ⟧ = ⟦ p ⟧ ∧ ⟦ q ⟧
-⟦ Or p q ⟧ = ⟦ p ⟧ ∨ ⟦ q ⟧
-⟦ Not p ⟧ = not ⟦ p ⟧
-⟦ Is p q ⟧ = ?
+⟦_⟧ : BoolExpr → Set
+⟦ Const true ⟧ = ⊤
+⟦ Const false ⟧ = ⊥
+⟦ And p q ⟧ = ⟦ p ⟧ × ⟦ q ⟧
+⟦ Or p q ⟧ = ⟦ p ⟧ ⊎ ⟦ q ⟧
+-- ⟦ Not p ⟧ with ⟦ p ⟧
+-- ⟦ Is p q ⟧ = {!!}
 -- ⟦ Impl p q ⟧ = not ⟦ p ⟧ ∨ ⟦ q ⟧ -- logical implication
 -- and if we encounter a variable, same name => equal
 
@@ -60,17 +62,26 @@ decide (Const true) = true
 decide (Const false) = false
 decide (And be be₁) = decide be ∧ decide be₁
 decide (Or be be₁) = decide be ∨ decide be₁
-decide (Not be) = not (decide be)
-decide (Is p q) = ?
+-- decide (Not be) = not (decide be)
+-- decide (Is p q) = {!!}
 
+and-l : ∀ {b b'} → b ∧ b' ≡ true → b ≡ true
+and-l {true} eq = refl
+and-l {false} eq = eq
+
+and-r : ∀ b b' → b ∧ b' ≡ true → b' ≡ true
+and-r true b' eq = eq
+and-r false true eq = refl
+and-r false false eq = eq
 -- soundness:
-soundness : (p : BoolExpr) → decide p ≡ true → ⟦ p ⟧ ≡ true
-soundness (Const true) refl = refl
+soundness : (p : BoolExpr) → decide p ≡ true → ⟦ p ⟧
+soundness (Const true) refl = tt
 soundness (Const false) ()
-soundness (And p p₁) pf =  {!p!}
-soundness (Or p p₁) pf = {!!}
-soundness (Not p) pf = soundness {!p!} pf
-soundness (Is p q) pf = ?
+soundness (And p p₁) pf = (soundness p  (and-l pf)) ,
+                          (soundness p₁ (and-r (decide p) (decide p₁) pf))
+soundness (Or p p₁) pf  = {!pf!}
+-- soundness (Not p) pf = soundness {!p!} pf
+-- soundness (Is p q) pf = {!!}
 
 -- getting back to our nicer formulation:
 
@@ -79,9 +90,6 @@ open import Data.Nat
 open import Relation.Nullary hiding (¬_)
 open import Data.List
 open import Data.Product
-
-easiertheorem : Set
-easiertheorem = true ∨ false ≡ true
 
 --------------------------------------------
 -- Extracting two sides of the equation --
@@ -201,17 +209,6 @@ private
 -- Boolean helpers
 -- Agda is able to infer b and b' in and-l but not in and-r, hence the contrast.
 
-private
-
-  and-l : ∀ {b b'} → b ∧ b' ≡ true → b ≡ true
-  and-l {true} eq = refl
-  and-l {false} eq = eq
-
-  and-r : ∀ b b' → b ∧ b' ≡ true → b' ≡ true
-  and-r true b' eq = eq
-  and-r false true eq = refl
-  and-r false false eq = eq
-
 -- The main reflection helper.
 -- Takes a term that is known to have the structure of a polynomial and
 -- reflects its structure.
@@ -222,13 +219,42 @@ private
 -- * prove soundness theorem
 -- see lecture11.pdf
 
-somethingIWantToProve : true ∨ false ≡ true
-somethingIWantToProve  = quoteGoal e in soundness (Or (Const true) (Const false)) refl
+freeVars : Term → ℕ
+freeVars (pi t₁ (el s t)) = 1 + freeVars t
+freeVars (var x args)     = 0
+freeVars (con c args)     = 0
+freeVars (def f args)     = 0
+freeVars (lam v t)        = 0
+freeVars (sort x)         = 0
+freeVars unknown          = 0
 
-theorem0 : (true == true) ≡ true
-theorem0 = ?
+stripPi : Term → Term
+stripPi (pi t₁ (el s t)) = stripPi t
+
+-- identity otherwise
+stripPi (var x args) = var x args
+stripPi (con c args) = con c args
+stripPi (def f args) = def f args
+stripPi (lam v t) = lam v t
+stripPi (sort x) = sort x
+stripPi unknown = unknown 
+
+
+-- we can only prove "propositions" that eventually evaluate to true.
+-- somethingIWantToProve : true ∨ false ≡ true
+-- this should be formulated as follows:
+-- you give the type in terms of the AST
+-- of course, later we want to generate the AST ourselves.
+somethingIWantToProve : ⟦ Or (Const true) (Const false) ⟧
+somethingIWantToProve  = soundness (Or (Const true) (Const false)) refl
+
+concreteToAbstract : (t' : Term) → let n  = freeVars t' in
+                                    isBoolExpr {n} t' ≡ true → BoolExpr
+concreteToAbstract t pf = {!!}
+
+-- theorem0 : true ∨ false ≡ true
+-- theorem0 = quoteGoal e in soundness (concreteToAbstract e {!!} {!refl!}) refl
 
 -- next step: variables:
-theorem1 : Set
-theorem1 = {p : Bool} → p ∨ ¬ p ≡ p
-
+-- theorem1 : Set
+theorem1 = {p : Bool} → p ∨ ¬ p ≡ true
