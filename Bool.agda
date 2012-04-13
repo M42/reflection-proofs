@@ -63,7 +63,7 @@ Env = Vec Bool
 ⟦ env ⊢ Atomic n ⟧ with lookup n env
 ... | true  = ⊤
 ... | false = ⊥
-⟦ env ⊢ Not p ⟧     = {!!}
+⟦ env ⊢ Not p ⟧     = ⟦ env ⊢ p ⟧ → ⊥ -- if you manage to prove p, then Not p cannot hold
 
 -- decision procedure:
 -- return whether the given proposition is true
