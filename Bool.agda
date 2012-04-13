@@ -87,6 +87,19 @@ and-r true b' eq = eq
 and-r false true eq = refl
 and-r false false eq = eq
 
+and-false : ∀ p q → p ∧ q ≡ false → p ≡ false ⊎ q ≡ false
+and-false false q = inj₁
+and-false true q  = inj₂
+
+or-false-l : ∀ p q → p ∨ q ≡ false → p ≡ false
+or-false-l true q  ()
+or-false-l false q pf = refl
+
+or-false-r : ∀ p q → p ∨ q ≡ false → q ≡ false
+or-false-r true true ()
+or-false-r false true ()
+or-false-r p false pf = refl
+
 or-lem : ∀ p q → p ∨ q ≡ true → p ≡ true ⊎ q ≡ true
 or-lem true q  = inj₁
 or-lem false q = inj₂
@@ -99,31 +112,38 @@ not-lemma : {b : Bool} → not b ≡ true → b ≡ false
 not-lemma {false} refl = refl
 not-lemma {true}  ()
 
--- first a helper for the cases where a proposition isn't true
-soundness' : {n : ℕ} → (env : Env n) → (p : BoolExpr n) → decide env p ≡ false → ⟦ env ⊢ p ⟧ → ⊥
-soundness' env Truth dec = {!!}
-soundness' env Falsehood dec = {!!}
-soundness' env (And p p₁) dec = {!!}
-soundness' env (Or p p₁) dec = {!!}
-soundness' env (Not p) dec = {!!}
-soundness' env (Imp p p₁) dec = {!!}
-soundness' env (Atomic x) dec = {!!}
+not-false : {b : Bool} → not b ≡ false → b ≡ true
+not-false {true}  pf = refl
+not-false {false} ()
 
--- soundness theorem:
-soundness : {n : ℕ} → (env : Env n) → (p : BoolExpr n) → decide env p ≡ true → ⟦ env ⊢ p ⟧
-soundness env (Truth) refl = tt
-soundness env (Falsehood) ()
-soundness env (And p p₁) pf = (soundness env p  (and-l pf)) ,
-                              (soundness env p₁ (and-r (decide env p) (decide env p₁) pf))
-soundness env (Or p p₁) pf  with or-lem (decide env p) (decide env p₁) pf
-soundness env (Or p p₁) pf | inj₁ x = inj₁ (soundness env p x)
-soundness env (Or p p₁) pf | inj₂ y = inj₂ (soundness env p₁ y)
-soundness env (Not p) pf = soundness' env p (not-lemma pf)
-soundness env (Imp p q) pf  with or-lem (decide env (Not p)) (decide env q) pf
-soundness env (Imp p q) pf | inj₁ y = λ x → ⊥-elim (soundness' env p (not-lemma y) x)
-soundness env (Imp p q) pf | inj₂ y = λ x → soundness env q y
-soundness env (Atomic n) pf with lookup n env
-soundness env (Atomic n₁) refl | .true = tt
+mutual
+  -- first a helper for the cases where a proposition isn't true
+  soundness' : {n : ℕ} → (env : Env n) → (p : BoolExpr n) → decide env p ≡ false → ⟦ env ⊢ p ⟧ → ⊥
+  soundness' env Truth () pf
+  soundness' env Falsehood dec  pf = pf
+  soundness' env (And p p₁) dec pf  with and-false (decide env p) (decide env p₁) dec
+  soundness' env (And p p₁) dec pf | inj₁ () --  = {!!}
+  soundness' env (And p p₁) dec pf | inj₂ y = {!!}
+  soundness' env (Or p p₁) dec  pf = {!!}
+  soundness' env (Not p) dec    pf = pf (soundness env p (not-false dec))
+  soundness' env (Imp p p₁) dec pf = {!!}
+  soundness' env (Atomic x) dec pf = {!!}
+  
+  -- soundness theorem:
+  soundness : {n : ℕ} → (env : Env n) → (p : BoolExpr n) → decide env p ≡ true → ⟦ env ⊢ p ⟧
+  soundness env (Truth) refl = tt
+  soundness env (Falsehood) ()
+  soundness env (And p p₁) pf = (soundness env p  (and-l pf)) ,
+                                (soundness env p₁ (and-r (decide env p) (decide env p₁) pf))
+  soundness env (Or p p₁) pf  with or-lem (decide env p) (decide env p₁) pf
+  soundness env (Or p p₁) pf | inj₁ x = inj₁ (soundness env p x)
+  soundness env (Or p p₁) pf | inj₂ y = inj₂ (soundness env p₁ y)
+  soundness env (Not p) pf = soundness' env p (not-lemma pf)
+  soundness env (Imp p q) pf  with or-lem (decide env (Not p)) (decide env q) pf
+  soundness env (Imp p q) pf | inj₁ y = λ x → ⊥-elim (soundness' env p (not-lemma y) x)
+  soundness env (Imp p q) pf | inj₂ y = λ x → soundness env q y
+  soundness env (Atomic n) pf with lookup n env
+  soundness env (Atomic n₁) refl | .true = tt
 
 open import Data.Nat
 open import Relation.Nullary hiding (¬_)
