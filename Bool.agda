@@ -163,8 +163,8 @@ automate n env p | true  | by eq = just (soundness env p eq)
 automate n env p | false | by eq = nothing
 
 private
-  thm2 : ∀ (ov : Env 500) → ⟦ ov ⊢ Or (Atomic zero) (Not (Atomic zero))⟧
-  thm2 ov  with automate 500 ov (Or (Atomic zero) (Not (Atomic zero)))
+  thm2 : ∀ (ov : Env 1) → ⟦ ov ⊢ Or (Atomic zero) (Not (Atomic zero))⟧
+  thm2 ov  with automate 1 ov (Or (Atomic zero) (Not (Atomic zero)))
   thm2 ov | just x = x
   thm2 ov | nothing = {!!}
 
