@@ -88,8 +88,21 @@ and-r false true eq = refl
 and-r false false eq = eq
 
 or-lem : ∀ p q → p ∨ q ≡ true → p ≡ true ⊎ q ≡ true
-or-lem true q = inj₁
+or-lem true q  = inj₁
 or-lem false q = inj₂
+
+boolToAST : ∀ {n : ℕ} → Bool → BoolExpr n
+boolToAST true = Truth
+boolToAST false = Falsehood
+
+-- what I'm trying to show here is that, given some bool and
+-- the fact that not b ≡ true, we know the bool is false. We
+-- therefore should also be able to show that you can then
+-- not compile the theorem.
+not-lem : ∀ {n : ℕ} (b : Bool) → let p = boolToAST {n} b in
+                                 (env : Env n) → not b ≡ true → ⟦ env ⊢ p ⟧ ≡ ⊥
+not-lem false env pf = refl
+not-lem true env ()
 
 -- soundness theorem:
 soundness : {n : ℕ} → (env : Env n) → (p : BoolExpr n) → decide env p ≡ true → ⟦ env ⊢ p ⟧
@@ -100,10 +113,12 @@ soundness env (And p p₁) pf = (soundness env p  (and-l pf)) ,
 soundness env (Or p p₁) pf  with or-lem (decide env p) (decide env p₁) pf
 soundness env (Or p p₁) pf | inj₁ x = inj₁ (soundness env p x)
 soundness env (Or p p₁) pf | inj₂ y = inj₂ (soundness env p₁ y)
-soundness env (Not p) pf = {!!}
-soundness env (Imp p q) pf with or-lem (decide env (Not p)) (decide env q) pf
-soundness env (Imp p q) pf | inj₁ x = λ x₁ → {!!}
-soundness env (Imp p q) pf | inj₂ y = λ x → soundness env q y
+soundness env (Not p) pf with not-lem (decide env p) env pf
+... | ()
+--soundness env (Imp p q) pf with or-lem (decide env (Not p)) (decide env q) pf
+--soundness env (Imp p q) pf | inj₁ () --  = λ () 
+--soundness env (Imp p q) pf | inj₂ y = λ x → soundness env q y
+soundness env (Imp p q) pf = {!!}
 soundness env (Atomic n) pf with lookup n env
 soundness env (Atomic n₁) refl | .true = tt
 
@@ -136,6 +151,10 @@ private
     thm0 : ∀ (ov : Env 1) → ⟦ ov ⊢ Or (Atomic zero) (Not (Atomic zero))⟧
     thm0 (true ∷ [])  = soundness (true ∷ []) (Or (Atomic zero) (Not (Atomic zero))) refl
     thm0 (false ∷ []) = soundness (false ∷ []) (Or (Atomic zero) (Not (Atomic zero))) refl
+
+    thm1 : ∀ (ov : Env 1) → ⟦ ov ⊢ Imp (Atomic zero) (Atomic zero) ⟧
+    thm1 (true ∷ []) = soundness (true ∷ []) (Imp (Atomic zero) (Atomic zero)) refl
+    thm1 (false ∷ []) = soundness (false ∷ []) (Imp (Atomic zero) (Atomic zero)) refl
     
 -- next step: automatically generate the AST from something like this:
 -- theorem1 : Set
