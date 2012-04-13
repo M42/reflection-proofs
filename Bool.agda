@@ -68,7 +68,7 @@ Env = Vec Bool
 -- decision procedure:
 -- return whether the given proposition is true
 -- this is like our isEvenQ
-decide : {n : ℕ} → Env n → BoolExpr n → Bool
+decide : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
 decide env (Truth)      = true
 decide env (Falsehood)  = false
 decide env (And be be₁) = decide env be ∧ decide env be₁
@@ -153,6 +153,7 @@ private
     thm0 (false ∷ []) = soundness (false ∷ []) (Or (Atomic zero) (Not (Atomic zero))) refl
 
     thm1 : ∀ (ov : Env 1) → ⟦ ov ⊢ Imp (Atomic zero) (Atomic zero) ⟧
+    --thm1 ov = soundness ov (Imp (Atomic zero) (Atomic zero)) refl
     thm1 (true ∷ []) = soundness (true ∷ []) (Imp (Atomic zero) (Atomic zero)) refl
     thm1 (false ∷ []) = soundness (false ∷ []) (Imp (Atomic zero) (Atomic zero)) refl
     
