@@ -115,7 +115,9 @@ mutual
   soundness' env (And p q) dec pf  with and-false (decide env p) (decide env q) dec
   soundness' env (And p q) dec (proj₁ , proj₂) | inj₁ x = soundness' env p x proj₁
   soundness' env (And p q) dec (proj₁ , proj₂) | inj₂ y = soundness' env q y proj₂
-  soundness' env (Or p q) dec  pf = {!!}
+  soundness' env (Or p q) dec  pf  with or-false (decide env p) (decide env q) dec
+  soundness' env (Or p q) dec (inj₁ x) | proj₁ , proj₂ = soundness' env p proj₁ x
+  soundness' env (Or p q) dec (inj₂ y) | proj₁ , proj₂ = soundness' env q proj₂ y
   soundness' env (Not p) dec   pf = pf (soundness env p (not-false dec))
   soundness' env (Imp p q) dec pf  with or-false (not (decide env p)) (decide env q) dec
   soundness' env (Imp p q) dec pf | proj₁ , proj₂  with not-false proj₁
