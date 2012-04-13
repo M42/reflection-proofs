@@ -100,9 +100,10 @@ boolToAST false = Falsehood
 -- therefore should also be able to show that you can then
 -- not compile the theorem.
 not-lem : ∀ {n : ℕ} (b : Bool) → let p = boolToAST {n} b in
+                                 boolToAST {n} b ≡ p →
                                  (env : Env n) → not b ≡ true → ⟦ env ⊢ p ⟧ ≡ ⊥
-not-lem false env pf = refl
-not-lem true env ()
+not-lem false refl env pf2 = refl
+not-lem true refl env ()
 
 -- soundness theorem:
 soundness : {n : ℕ} → (env : Env n) → (p : BoolExpr n) → decide env p ≡ true → ⟦ env ⊢ p ⟧
@@ -113,12 +114,11 @@ soundness env (And p p₁) pf = (soundness env p  (and-l pf)) ,
 soundness env (Or p p₁) pf  with or-lem (decide env p) (decide env p₁) pf
 soundness env (Or p p₁) pf | inj₁ x = inj₁ (soundness env p x)
 soundness env (Or p p₁) pf | inj₂ y = inj₂ (soundness env p₁ y)
-soundness env (Not p) pf with not-lem (decide env p) env pf
+soundness {n} env (Not p) pf with not-lem (decide env p) refl env pf
 ... | ()
---soundness env (Imp p q) pf with or-lem (decide env (Not p)) (decide env q) pf
---soundness env (Imp p q) pf | inj₁ () --  = λ () 
---soundness env (Imp p q) pf | inj₂ y = λ x → soundness env q y
-soundness env (Imp p q) pf = {!!}
+soundness env (Imp p q) pf  with or-lem (decide env (Not p)) (decide env q) pf
+soundness env (Imp p q) pf | inj₁ ()
+soundness env (Imp p q) pf | inj₂ y = λ x → soundness env q y
 soundness env (Atomic n) pf with lookup n env
 soundness env (Atomic n₁) refl | .true = tt
 
