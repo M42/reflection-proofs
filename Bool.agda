@@ -91,22 +91,13 @@ and-false : ∀ p q → p ∧ q ≡ false → p ≡ false ⊎ q ≡ false
 and-false false q = inj₁
 and-false true q  = inj₂
 
-or-false-l : ∀ p q → p ∨ q ≡ false → p ≡ false
-or-false-l true q  ()
-or-false-l false q pf = refl
-
-or-false-r : ∀ p q → p ∨ q ≡ false → q ≡ false
-or-false-r true true ()
-or-false-r false true ()
-or-false-r p false pf = refl
+or-false : ∀ p q → p ∨ q ≡ false → p ≡ false × q ≡ false
+or-false true  q ()
+or-false false q pf = refl , pf
 
 or-lem : ∀ p q → p ∨ q ≡ true → p ≡ true ⊎ q ≡ true
 or-lem true q  = inj₁
 or-lem false q = inj₂
-
-boolToAST : ∀ {n : ℕ} → Bool → BoolExpr n
-boolToAST true  = Truth
-boolToAST false = Falsehood
 
 not-lemma : {b : Bool} → not b ≡ true → b ≡ false
 not-lemma {false} refl = refl
@@ -122,12 +113,17 @@ mutual
   soundness' env Truth () pf
   soundness' env Falsehood dec  pf = pf
   soundness' env (And p p₁) dec pf  with and-false (decide env p) (decide env p₁) dec
-  soundness' env (And p p₁) dec pf | inj₁ () --  = {!!}
+  soundness' env (And p p₁) dec pf | inj₁ x = {!!}
   soundness' env (And p p₁) dec pf | inj₂ y = {!!}
   soundness' env (Or p p₁) dec  pf = {!!}
   soundness' env (Not p) dec    pf = pf (soundness env p (not-false dec))
-  soundness' env (Imp p p₁) dec pf = {!!}
-  soundness' env (Atomic x) dec pf = {!!}
+  soundness' env (Imp p q) dec pf  with or-false (not (decide env p)) (decide env q) dec
+  soundness' env (Imp p q) dec pf | proj₁ , proj₂  with not-false proj₁
+  ... | tmppat  with pf (soundness env p tmppat)
+  ... | tmppatq = soundness' env q proj₂ tmppatq
+  soundness' env (Atomic x) dec pf  with lookup x env
+  soundness' env (Atomic x) () pf  | true
+  soundness' env (Atomic x) dec pf | false = pf
   
   -- soundness theorem:
   soundness : {n : ℕ} → (env : Env n) → (p : BoolExpr n) → decide env p ≡ true → ⟦ env ⊢ p ⟧
