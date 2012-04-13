@@ -92,7 +92,7 @@ or-lem true q  = inj₁
 or-lem false q = inj₂
 
 boolToAST : ∀ {n : ℕ} → Bool → BoolExpr n
-boolToAST true = Truth
+boolToAST true  = Truth
 boolToAST false = Falsehood
 
 -- what I'm trying to show here is that, given some bool and
@@ -102,8 +102,8 @@ boolToAST false = Falsehood
 not-lem : ∀ {n : ℕ} (b : Bool) → let p = boolToAST {n} b in
                                  boolToAST {n} b ≡ p →
                                  (env : Env n) → not b ≡ true → ⟦ env ⊢ p ⟧ ≡ ⊥
-not-lem false refl env pf2 = refl
-not-lem true refl env ()
+not-lem false refl _ refl = refl
+not-lem true  refl _ ()
 
 -- soundness theorem:
 soundness : {n : ℕ} → (env : Env n) → (p : BoolExpr n) → decide env p ≡ true → ⟦ env ⊢ p ⟧
@@ -114,7 +114,7 @@ soundness env (And p p₁) pf = (soundness env p  (and-l pf)) ,
 soundness env (Or p p₁) pf  with or-lem (decide env p) (decide env p₁) pf
 soundness env (Or p p₁) pf | inj₁ x = inj₁ (soundness env p x)
 soundness env (Or p p₁) pf | inj₂ y = inj₂ (soundness env p₁ y)
-soundness {n} env (Not p) pf with not-lem (decide env p) refl env pf
+soundness env (Not p) pf with not-lem (decide env p) refl env pf
 ... | ()
 soundness env (Imp p q) pf  with or-lem (decide env (Not p)) (decide env q) pf
 soundness env (Imp p q) pf | inj₁ ()
