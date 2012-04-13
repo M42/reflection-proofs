@@ -1,6 +1,6 @@
 module Bool where
 
-open import Relation.Binary.PropositionalEquality hiding ( [_] )
+open import Relation.Binary.PropositionalEquality renaming ( [_] to by )
 open import Data.Bool
 
 ¬_ : Bool → Bool
@@ -15,8 +15,8 @@ trueisnotnottrue = refl
 
 -- eventually we'd like to prove these kinds of tautologies:
 myfavouritetheorem : Set
-myfavouritetheorem = {p1 q1 p2 q2 : Bool} → (p1 ∨ q1) ∧ (p2 ∨ q2) ≡
-                                            (q1 ∨ p1) ∧ (q2 ∨ p2)
+myfavouritetheorem = {p1 q1 p2 q2 : Bool} → ((p1 ∨ q1) ∧ (p2 ∨ q2) ≡
+                                             (q1 ∨ p1) ∧ (q2 ∨ p2))
 proof1 : myfavouritetheorem
 proof1 = {! refl!}   -- this won't work, since p1 != q1, etc!
                      -- proving this manually would require 2ⁿ cases...
@@ -77,35 +77,7 @@ decide env (Not p)      = not (decide env p)
 decide env (Imp p q)    = not (decide env p) ∨ (decide env q)
 decide env (Atomic n)   = lookup n env
 
--- these helpers show that a AND b => both a = true, as well as b = true.
-and-l : ∀ {b b'} → b ∧ b' ≡ true → b ≡ true
-and-l {true} eq = refl
-and-l {false} eq = eq
-
-and-r : ∀ b b' → b ∧ b' ≡ true → b' ≡ true
-and-r true b' eq = eq
-and-r false true eq = refl
-and-r false false eq = eq
-
-and-false : ∀ p q → p ∧ q ≡ false → p ≡ false ⊎ q ≡ false
-and-false false q = inj₁
-and-false true q  = inj₂
-
-or-false : ∀ p q → p ∨ q ≡ false → p ≡ false × q ≡ false
-or-false true  q ()
-or-false false q pf = refl , pf
-
-or-lem : ∀ p q → p ∨ q ≡ true → p ≡ true ⊎ q ≡ true
-or-lem true q  = inj₁
-or-lem false q = inj₂
-
-not-lemma : {b : Bool} → not b ≡ true → b ≡ false
-not-lemma {false} refl = refl
-not-lemma {true}  ()
-
-not-false : {b : Bool} → not b ≡ false → b ≡ true
-not-false {true}  pf = refl
-not-false {false} ()
+open import Lemmas
 
 mutual
   -- first a helper for the cases where a proposition isn't true
@@ -178,6 +150,27 @@ private
     thm1 (true ∷ []) = soundness (true ∷ []) (Imp (Atomic zero) (Atomic zero)) refl
     thm1 (false ∷ []) = soundness (false ∷ []) (Imp (Atomic zero) (Atomic zero)) refl
     
+-- next step: try and avoid having to enumerate all the possible environments,
+-- as this will quickly become tedious (and remember, the challenge was to
+-- prove tautologies in n² and not 2ⁿ with n the number of variables...
+
+open import Data.Maybe
+
+
+automate : ∀ (n : ℕ) (env : Env n) (p : BoolExpr n) → Maybe ⟦ env ⊢ p ⟧
+automate n env p  with decide env p | inspect (decide env) p
+automate n env p | true  | by eq = just (soundness env p eq)
+automate n env p | false | by eq = nothing
+
+private
+  thm2 : ∀ (ov : Env 500) → ⟦ ov ⊢ Or (Atomic zero) (Not (Atomic zero))⟧
+  thm2 ov  with automate 500 ov (Or (Atomic zero) (Not (Atomic zero)))
+  thm2 ov | just x = x
+  thm2 ov | nothing = {!!}
+
+  thm3 : ∀ (ov : Env 1) → ⟦ ov ⊢ Imp (Atomic zero) (Atomic zero) ⟧
+  thm3 ov = {!!}
+
 -- next step: automatically generate the AST from something like this:
 -- theorem1 : Set
 -- theorem1 = {p : Bool} → p ∨ ¬ p ≡ true
