@@ -121,8 +121,6 @@ open import Data.Product
 
 -- still required: 
 -- * do actual reflection
--- * prove soundness theorem
--- see lecture11.pdf
 
 private
 -- we can only prove "propositions" that eventually evaluate to true.
@@ -137,7 +135,6 @@ private
     somethingIWantToProve  = soundness empty (Or (Truth) (Falsehood)) refl
 
 private
-
     -- this also works if you set oneVar = true :: []. Next
     -- we want to automatically prove all cases.
     -- how to do this automatically?
@@ -156,7 +153,9 @@ private
 
 open import Data.Maybe
 
-
+-- TODO understand this function, and write a version which returns a
+-- proof either way, not a maybe. possibly using a predicate to be instantiated
+-- to refl?
 automate : ∀ (n : ℕ) (env : Env n) (p : BoolExpr n) → Maybe ⟦ env ⊢ p ⟧
 automate n env p  with decide env p | inspect (decide env) p
 automate n env p | true  | by eq = just (soundness env p eq)
@@ -169,7 +168,27 @@ private
   thm2 ov | nothing = {!!}
 
   thm3 : ∀ (ov : Env 1) → ⟦ ov ⊢ Imp (Atomic zero) (Atomic zero) ⟧
-  thm3 ov = {!!}
+  thm3 ov  with automate 1 ov (Imp (Atomic zero) (Atomic zero))
+  thm3 ov | just x = x
+  thm3 ov | nothing = {!!}
+
+  o  : Fin 4
+  o  = suc zero
+  t : Fin 4
+  t  = suc (suc zero)
+  th : Fin 4
+  th = suc (suc (suc zero))
+  
+  -- this means the following: ((p1 ∨ q1) ∧ (p2 ∨ q2) → (q1 ∨ p1) ∧ (q2 ∨ p2))
+  -- ...which is cool, since we can now prove tautologies of this form.
+  thm1bdef : BoolExpr 4
+  thm1bdef = Imp (And (Or (Atomic zero) (Atomic t)) (Or (Atomic o) (Atomic th)))
+                 (And (Or (Atomic t) (Atomic zero)) (Or (Atomic th) (Atomic o)))
+  
+  thm1b : ∀ (ov : Env 4) → ⟦ ov ⊢ thm1bdef ⟧
+  thm1b ov with automate 4 ov thm1bdef
+  thm1b ov | just x = x
+  thm1b ov | nothing = {!!}
 
 -- next step: automatically generate the AST from something like this:
 -- theorem1 : Set
