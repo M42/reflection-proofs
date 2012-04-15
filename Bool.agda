@@ -26,7 +26,7 @@ proof1 = {! refl!}   -- this won't work, since p1 != q1, etc!
 -- in some magical way... TBC
 
 open import Data.Nat
-open import Data.Fin
+open import Data.Fin hiding (_+_; pred)
 
 data BoolExpr : ℕ → Set where
   Truth     : {n : ℕ}                           → BoolExpr n
@@ -196,7 +196,6 @@ private
 
 
 open import Data.Unit
-open import Data.Fin hiding (pred)
 open import Relation.Nullary
 
 ------------------------------------------------------------------------
@@ -246,6 +245,9 @@ kfdsjl : ∀ n → 2 ^ (suc n) ≡ 2 * (2 ^ n)
 kfdsjl = λ n → refl
 
 open import Data.Vec.Properties
+open import Data.Nat.Properties
+open import Relation.Binary.PropositionalEquality
+open ≡-Reasoning
 
 len : {n : ℕ} {a : Set} → Vec a n → ℕ
 len {n} _ = n
@@ -256,20 +258,35 @@ test = λ f xs → refl
 doubleList : {n : ℕ} → Bool → Env n → Env (suc n)
 doubleList x env = x ∷ env
 
-addLists : {n m : ℕ} → Vec (Env m) n → Vec (Env m) n → Vec (Env m) (2 * n)
-addLists {n} e1 e2 = {!!}
+addlem : {n : ℕ} → suc (n + (1 * n)) ≡ n + (1 * suc n)
+addlem {zero} = refl
+addlem {suc n} =
+  begin
+    suc (suc (n + suc (n + zero)))
+    ≡⟨ cong suc (cong suc (sym (cong (_+_ n) (cong suc blah)))) ⟩
+    suc (suc (n + suc n))
+    ≡⟨ cong suc ({!!}) ⟩
+    suc (n + suc (suc n))
+    ≡⟨ cong suc ( (cong (_+_ n) (cong suc (cong suc blah)))) ⟩
+    suc (n + suc (suc (n + zero)))
+  ∎
+
+  
+addLists : {n m : ℕ} → suc (n + suc (n + 0)) ≡ suc (suc (n + (n + 0))) → Vec (Env m) n → Vec (Env m) n → Vec (Env m) (2 * n)
+addLists {zero} pf [] [] = []
+addLists {suc n} pf (e1 ∷ e2) (e3 ∷ e4) = {!e1 ∷ e3 ∷ addLists e2 e4 pf!}
 
 embellish : (n : ℕ) → Vec (Env n) (2 ^ n)
 embellish zero = [] ∷ []
-embellish (suc n) = addLists (map (doubleList false) (embellish n))
-                                (map (doubleList true)  (embellish n))
+embellish (suc n) = addLists (addlem {n }) (map (doubleList false) (embellish n))
+                             (map (doubleList true)  (embellish n))
                     
 
 something : ∀ {n : ℕ} → ℕ → Env n
 something {n} nn = {!!}
 
 Surj-something : ∀ {n : ℕ} → Surj (something {n})
-Surj-something = {!!}
+Surj-something y = {!!} , {!!}
 
 ex₁ : ∀ {n : ℕ} → Enum (Env n)
 ex₁ = surj something {!!}
