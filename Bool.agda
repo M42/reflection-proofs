@@ -208,52 +208,36 @@ Inj f = ∀ x₁ x₂ → f x₁ ≡ f x₂ → x₁ ≡ x₂
 
 ------------------------------------------------------------------------
 
-isZero : ℕ → Bool
+isZero : Fin 2 → Bool
 isZero zero    = true
 isZero (suc _) = false
 
 Surj-isZero : Surj isZero
-Surj-isZero true  = 0 , refl
-Surj-isZero false = 1 , refl
+Surj-isZero true  = zero , refl
+Surj-isZero false = suc zero , refl
 
 data Enum (A : Set) : Set where
-  surj : (f : ℕ → A) → Surj f → Enum A
-  inj  : (f : A → ℕ) → Inj  f → Enum A
+  surj : (n : ℕ) (f : Fin n → A) → Surj f → Enum A
+  inj  : (n : ℕ) (f : A → Fin n) → Inj  f → Enum A
 
 ex₀ : Enum Bool
-ex₀ = surj isZero Surj-isZero
+ex₀ = surj 2 isZero Surj-isZero
 
 ------------------------------------------------------------------------
 
+-- integer exponentiation.
 _^_ : ℕ → ℕ → ℕ
 n ^ zero    = 1
 n ^ (suc m) = n * (n ^ m)
-
-timesZero : {n : ℕ} → 0 ≡ n * 0
-timesZero {zero} = refl
-timesZero {suc n} = timesZero {n}
 
 blah : {n : ℕ}  → n ≡ Data.Nat._+_ n 0
 blah {zero} = refl
 blah {suc n} = cong suc blah
 
-plusZero : {n : ℕ} → 0 ≡ n * 0 → 2 ^ n ≡ (Data.Nat._+_ (2 ^ n) (0 * (2 ^ n)))
-plusZero {zero} pf = refl
-plusZero {suc n} pf = blah
-
-kfdsjl : ∀ n → 2 ^ (suc n) ≡ 2 * (2 ^ n)
-kfdsjl = λ n → refl
-
 open import Data.Vec.Properties
 open import Data.Nat.Properties
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
-
-len : {n : ℕ} {a : Set} → Vec a n → ℕ
-len {n} _ = n
-
-test : ∀ {n : ℕ} {a : Set} {b : Set} (f : a → b) (xs : Vec a n) → (len {_} {b} (Data.Vec.map f xs) ≡ len xs)
-test = λ f xs → refl
 
 doubleList : {n : ℕ} → Bool → Env n → Env (suc n)
 doubleList x env = x ∷ env
@@ -282,11 +266,11 @@ embellish (suc n) = addLists (addlem {n }) (map (doubleList false) (embellish n)
                              (map (doubleList true)  (embellish n))
                     
 
-something : ∀ {n : ℕ} → ℕ → Env n
-something {n} nn = {!!}
+something : ∀ {n : ℕ} → (nn : Fin (2 ^ n)) → Env n
+something {n} nn = lookup nn (embellish n)
 
 Surj-something : ∀ {n : ℕ} → Surj (something {n})
-Surj-something y = {!!} , {!!}
+Surj-something {n} y = {!!} , {!!}
 
 ex₁ : ∀ {n : ℕ} → Enum (Env n)
-ex₁ = surj something {!!}
+ex₁ {n} = surj (2 ^ n) something Surj-something
