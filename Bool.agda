@@ -256,21 +256,34 @@ addlem {suc n} =
   ∎
 
   
-addLists : {n m : ℕ} → suc (n + suc (n + 0)) ≡ suc (suc (n + (n + 0))) → Vec (Env m) n → Vec (Env m) n → Vec (Env m) (2 * n)
+addLists : {n m : ℕ} → suc (n + suc (n + 0)) ≡ suc (suc (n + (n + 0)))
+                     → Vec (Env m) n
+                     → Vec (Env m) n
+                     → Vec (Env m) (2 * n)
 addLists {zero} pf [] [] = []
 addLists {suc n} pf (e1 ∷ e2) (e3 ∷ e4) = {!e1 ∷ e3 ∷ addLists e2 e4 pf!}
 
+-- enumerate all the possible envs of a particular size.
 embellish : (n : ℕ) → Vec (Env n) (2 ^ n)
 embellish zero = [] ∷ []
 embellish (suc n) = addLists (addlem {n }) (map (doubleList false) (embellish n))
                              (map (doubleList true)  (embellish n))
                     
-
+-- return the nn'th env with size n
 something : ∀ {n : ℕ} → (nn : Fin (2 ^ n)) → Env n
 something {n} nn = lookup nn (embellish n)
 
 Surj-something : ∀ {n : ℕ} → Surj (something {n})
 Surj-something {n} y = {!!} , {!!}
+
+open import Relation.Binary
+
+_≟-env_ : {n : ℕ} → Decidable {A = Env n} _≡_
+_≟-env_ = {!!}
+
+whichElem : {n : ℕ} → (a : Env n) → Vec (Env n) (2 ^ n) → Fin (2 ^ n)
+whichElem {zero} [] ([] ∷ []) = zero
+whichElem {suc n} elem l = {!l!}
 
 ex₁ : ∀ {n : ℕ} → Enum (Env n)
 ex₁ {n} = surj (2 ^ n) something Surj-something
