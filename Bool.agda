@@ -40,8 +40,8 @@ data BoolExpr : ℕ → Set where
 open import Data.Vec
 open import Data.Unit hiding (_≤?_)
 open import Data.Empty
-open import Data.Sum
-open import Data.Product
+open import Data.Sum hiding (map)
+open import Data.Product hiding (map)
 
 -- ...and some way to interpret our representation
 -- of the formula at hand:
@@ -117,7 +117,7 @@ mutual
 
 open import Data.Nat
 open import Relation.Nullary hiding (¬_)
-open import Data.Product
+open import Data.Product hiding (map)
 
 -- still required: 
 -- * do actual reflection
@@ -190,6 +190,86 @@ private
   thm1b ov | just x = x
   thm1b ov | nothing = {!!}
 
--- next step: automatically generate the AST from something like this:
--- theorem1 : Set
--- theorem1 = {p : Bool} → p ∨ ¬ p ≡ true
+-- First: return proof either way, not maybe, from automate,
+-- then: prove that you can enumerate all possible Env's and use
+-- that to call decide...
+
+
+open import Data.Unit
+open import Data.Fin hiding (pred)
+open import Relation.Nullary
+
+------------------------------------------------------------------------
+
+Surj : ∀ {A B}(f : A → B) → Set
+Surj f = ∀ y → ∃ λ x → f x ≡ y
+
+Inj : ∀ {A B}(f : A → B) → Set
+Inj f = ∀ x₁ x₂ → f x₁ ≡ f x₂ → x₁ ≡ x₂
+
+------------------------------------------------------------------------
+
+isZero : ℕ → Bool
+isZero zero    = true
+isZero (suc _) = false
+
+Surj-isZero : Surj isZero
+Surj-isZero true  = 0 , refl
+Surj-isZero false = 1 , refl
+
+data Enum (A : Set) : Set where
+  surj : (f : ℕ → A) → Surj f → Enum A
+  inj  : (f : A → ℕ) → Inj  f → Enum A
+
+ex₀ : Enum Bool
+ex₀ = surj isZero Surj-isZero
+
+------------------------------------------------------------------------
+
+_^_ : ℕ → ℕ → ℕ
+n ^ zero    = 1
+n ^ (suc m) = n * (n ^ m)
+
+timesZero : {n : ℕ} → 0 ≡ n * 0
+timesZero {zero} = refl
+timesZero {suc n} = timesZero {n}
+
+blah : {n : ℕ}  → n ≡ Data.Nat._+_ n 0
+blah {zero} = refl
+blah {suc n} = cong suc blah
+
+plusZero : {n : ℕ} → 0 ≡ n * 0 → 2 ^ n ≡ (Data.Nat._+_ (2 ^ n) (0 * (2 ^ n)))
+plusZero {zero} pf = refl
+plusZero {suc n} pf = blah
+
+kfdsjl : ∀ n → 2 ^ (suc n) ≡ 2 * (2 ^ n)
+kfdsjl = λ n → refl
+
+open import Data.Vec.Properties
+
+len : {n : ℕ} {a : Set} → Vec a n → ℕ
+len {n} _ = n
+
+test : ∀ {n : ℕ} {a : Set} {b : Set} (f : a → b) (xs : Vec a n) → (len {_} {b} (Data.Vec.map f xs) ≡ len xs)
+test = λ f xs → refl
+
+doubleList : {n : ℕ} → Bool → Env n → Env (suc n)
+doubleList x env = x ∷ env
+
+addLists : {n m : ℕ} → Vec (Env m) n → Vec (Env m) n → Vec (Env m) (2 * n)
+addLists {n} e1 e2 = {!!}
+
+embellish : (n : ℕ) →  2 ^ n ≡ (Data.Nat._+_ (2 ^ n) (0 * (2 ^ n))) → Vec (Env n) (2 ^ n)
+embellish zero refl = [] ∷ []
+embellish (suc n) pf = addLists (map (doubleList false) (embellish n (plusZero timesZero)))
+                                (map (doubleList true) (embellish n (plusZero timesZero)))
+                    
+
+something : ∀ {n : ℕ} → ℕ → Env n
+something {n} nn = {!!}
+
+Surj-something : ∀ {n : ℕ} → Surj (something {n})
+Surj-something = {!!}
+
+ex₁ : ∀ {n : ℕ} → Enum (Env n)
+ex₁ = surj something {!!}
