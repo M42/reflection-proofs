@@ -259,10 +259,10 @@ doubleList x env = x ∷ env
 addLists : {n m : ℕ} → Vec (Env m) n → Vec (Env m) n → Vec (Env m) (2 * n)
 addLists {n} e1 e2 = {!!}
 
-embellish : (n : ℕ) →  2 ^ n ≡ (Data.Nat._+_ (2 ^ n) (0 * (2 ^ n))) → Vec (Env n) (2 ^ n)
-embellish zero refl = [] ∷ []
-embellish (suc n) pf = addLists (map (doubleList false) (embellish n (plusZero timesZero)))
-                                (map (doubleList true) (embellish n (plusZero timesZero)))
+embellish : (n : ℕ) → Vec (Env n) (2 ^ n)
+embellish zero = [] ∷ []
+embellish (suc n) = addLists (map (doubleList false) (embellish n))
+                                (map (doubleList true)  (embellish n))
                     
 
 something : ∀ {n : ℕ} → ℕ → Env n
