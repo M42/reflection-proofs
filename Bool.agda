@@ -239,6 +239,10 @@ open import Data.Nat.Properties
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 
+sucLem : {n : ℕ} → suc (n + suc n) ≡ n + suc (suc n)
+sucLem {zero} = refl
+sucLem {suc n} =  cong suc (sucLem {{! !}})
+
 doubleList : {n : ℕ} → Bool → Env n → Env (suc n)
 doubleList x env = x ∷ env
 
@@ -249,7 +253,7 @@ addlem {suc n} =
     suc (suc (n + suc (n + zero)))
     ≡⟨ cong suc (cong suc (sym (cong (_+_ n) (cong suc blah)))) ⟩
     suc (suc (n + suc n))
-    ≡⟨ cong suc ({!!}) ⟩
+    ≡⟨ cong suc (sucLem {n}) ⟩
     suc (n + suc (suc n))
     ≡⟨ cong suc ( (cong (_+_ n) (cong suc (cong suc blah)))) ⟩
     suc (n + suc (suc (n + zero)))
@@ -260,8 +264,10 @@ addLists : {n m : ℕ} → suc (n + suc (n + 0)) ≡ suc (suc (n + (n + 0)))
                      → Vec (Env m) n
                      → Vec (Env m) n
                      → Vec (Env m) (2 * n)
-addLists {zero} pf [] [] = []
-addLists {suc n} pf (e1 ∷ e2) (e3 ∷ e4) = {!e1 ∷ e3 ∷ addLists e2 e4 pf!}
+addLists {zero}  {zero} _ [] [] = []
+addLists {zero}  {m} () l1 l2 
+addLists {n} {zero} () l1 l2
+addLists {suc n} {suc m} pf (e1 ∷ e2) (e3 ∷ e4) =  {!e1 ∷ e3 ∷ addLists pf e2 e4 !}
 
 -- enumerate all the possible envs of a particular size.
 embellish : (n : ℕ) → Vec (Env n) (2 ^ n)
