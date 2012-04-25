@@ -188,7 +188,7 @@ private
   thm1b : ∀ (ov : Env 4) → ⟦ ov ⊢ thm1bdef ⟧
   thm1b ov with automate 4 ov thm1bdef
   thm1b ov | just x = x
-  thm1b ov | nothing = {!!}
+  thm1b ov | nothing = {!!} -- we want absurd here.
 
 -- First: return proof either way, not maybe, from automate,
 -- then: prove that you can enumerate all possible Env's and use
@@ -292,3 +292,31 @@ whichElem {suc n} elem l = {!l!}
 
 ex₁ : ∀ {n : ℕ} → Enum (Env n)
 ex₁ {n} = surj (2 ^ n) something Surj-something
+
+-- okay, next attempt: using quoteGoal
+
+open import Reflection
+
+isBoolExpr : Term → Bool
+isBoolExpr (var x args) = {!!}
+isBoolExpr (con c args) = {!!}
+isBoolExpr (def f args) = {!!}
+isBoolExpr (lam v t) = false
+isBoolExpr (pi t₁ t₂) = false
+isBoolExpr (sort x) = false
+isBoolExpr unknown = false
+
+
+someThm : {p1 p2 q1 q2 : Bool} → (_≡_ ((p1 ∨ q1) ∧ (p2 ∨ q2)) ((q1 ∨ p1) ∧ (q2 ∨ p2)))
+someThm = quoteGoal g in {!isBoolExpr g!} -- C-c C-n in this goal is useful.
+
+represent : {n : ℕ} → (t : Term) →
+            isBoolExpr t ≡ true  →
+            BoolExpr n
+represent (var x args) = {!!}
+represent (con c args) = {!!}
+represent (def f args) = {!!}
+represent (lam v t) = {!!}
+represent (pi t₁ t₂) = {!!}
+represent (sort x) = {!!}
+represent unknown = {!!}
