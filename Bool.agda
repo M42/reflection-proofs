@@ -362,22 +362,32 @@ isAnd   c as = isName (quote _∧_) c as   ∧ lengthis as 2
 isOr    c as = isName (quote _∨_) c as   ∧ lengthis as 2
 isNot   c as = isName (quote  ¬_) c as   ∧ lengthis as 1
 
-isBoolExpr : {n : ℕ} → Term → Bool
-isBoolExpr {n} (var x args) with suc x ≤? n
-... | yes p = true
-... | no ¬p = false
-isBoolExpr (con c args) = isTrue c args
-                        ∨ isFalse c args
-isBoolExpr (def f args) = isAnd f args
-                        ∨ isOr f args
-                        ∨ isNot f args
-isBoolExpr (lam v t)    = false
-isBoolExpr (pi t₁ t₂)   = false
-isBoolExpr (sort x)     = false
-isBoolExpr unknown      = false
+allAnd : List Bool → Bool
+allAnd = Data.List.foldr _∧_ true
+
+mutual
+  isBoolArg : {n : ℕ} → Arg Term → Bool
+  isBoolArg (arg v r x) = isBoolExpr x
+  
+  isBoolExpr : {n : ℕ} → Term → Bool
+  isBoolExpr {n} (var x args) with suc x ≤? n
+  ... | yes p = true
+  ... | no ¬p = false
+  isBoolExpr (con c args) = (isTrue c args
+                          ∨ isFalse c args)
+                          ∧ allAnd (Data.List.map isBoolArg args)
+  isBoolExpr (def f args) = (isAnd f args
+                          ∨ isOr f args
+                          ∨ isNot f args)
+                          ∧ allAnd (Data.List.map isBoolArg args)
+  isBoolExpr (lam v t)    = false
+  isBoolExpr (pi t₁ t₂)   = false
+  isBoolExpr (sort x)     = false
+  isBoolExpr unknown      = false
 
 someThm : {p1 p2 q1 q2 : Bool} → (_≡_ ((p1 ∨ q1) ∧ (p2 ∨ q2)) ((q1 ∨ p1) ∧ (q2 ∨ p2)))
 someThm = quoteGoal g in {!isBoolExpr g!} -- C-c C-n in this goal is useful.
+
 
 -- this should take a LHS or RHS and turn it into
 -- something in our AST language
@@ -392,13 +402,17 @@ represent (con c args) isBE with c ≟-Name (quote true)
 ... | no _ with c ≟-Name (quote false)
 ... | yes _ = Falsehood
 represent (con c args) () | no _ | no _ -- we only know true and false as constructors.
-represent (def f as) isBE with f ≟-Name (quote _∧_)
+represent (def f as) isBE with f ≟-Name (quote _∧_) -- is it an and?
 represent (def f []) () | yes  _
 represent (def f (arg _ _ a₁ ∷ [])) () | yes  _
-represent (def f (arg _ _ a₁ ∷ arg _ _ a₂ ∷ l)) isBE | yes  _ = And (represent a₁ {!!}) (represent a₂ {!!})
-... | no _ with f ≟-Name (quote true)
-... | yes _ = Or (represent {!!} {!!}) (represent {!!} {!!})
-represent (def f as) pf | no _ | no _ = {!!} -- last option: not.
+represent (def f (arg _ _ a₁ ∷ arg _ _ a₂ ∷ l)) isBE | yes p = And (represent a₁ (and-r {!!} {!!} (and-l isBE))) (represent a₂ {!!})
+... | no _ with f ≟-Name (quote _∨_) -- or maybe an or?
+represent (def f (arg _ _ a₁ ∷ arg _ _ a₂ ∷ l)) isBE | no _ | yes p = Or (represent a₁ {!!}) (represent a₂ {!!})
+represent (def f l) () | no _ | yes p 
+represent (def f as) pf | no _ | no _ with f ≟-Name (quote ¬_)
+... | no _ = {!!}
+represent (def f (arg _ _ a₁ ∷ l)) isBE | no _ | no _ | yes p = Not (represent a₁ {!!})
+represent (def f l) () | no _ | no _ | yes _
 represent (lam v t)    ()
 represent (pi t₁ t₂)   ()
 represent (sort x)     ()
