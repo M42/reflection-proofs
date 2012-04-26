@@ -32,6 +32,7 @@ data BoolExpr : ℕ → Set where
   Truth     : {n : ℕ}                           → BoolExpr n
   Falsehood : {n : ℕ}                           → BoolExpr n
   And       : {n : ℕ} → BoolExpr n → BoolExpr n → BoolExpr n
+--  Eq        : {n : ℕ} → BoolExpr n → BoolExpr n → BoolExpr n
   Or        : {n : ℕ} → BoolExpr n → BoolExpr n → BoolExpr n
   Not       : {n : ℕ} → BoolExpr n              → BoolExpr n
   Imp       : {n : ℕ} → BoolExpr n → BoolExpr n → BoolExpr n
@@ -59,6 +60,7 @@ Env = Vec Bool
 ⟦ env ⊢ Falsehood ⟧ = ⊥
 ⟦ env ⊢ And p q ⟧   = ⟦ env ⊢ p ⟧ × ⟦ env ⊢ q ⟧
 ⟦ env ⊢ Or p q ⟧    = ⟦ env ⊢ p ⟧ ⊎ ⟦ env ⊢ q ⟧
+-- ⟦ env ⊢ Eq p q ⟧    = ⟦ env ⊢ p ⟧ ≡ ⟦ env ⊢ q ⟧
 ⟦ env ⊢ Imp p q ⟧   = ⟦ env ⊢ p ⟧ → ⟦ env ⊢ q ⟧
 ⟦ env ⊢ Atomic n ⟧ with lookup n env
 ... | true  = ⊤
@@ -195,8 +197,6 @@ private
 -- that to call decide...
 
 
-open import Data.Unit
-open import Relation.Nullary
 
 ------------------------------------------------------------------------
 
@@ -243,9 +243,6 @@ sucLem : {n k : ℕ} → suc (n + k) ≡ n + suc k
 sucLem {zero} = refl
 sucLem {suc n} {k} =  cong suc (sucLem {n} {k })
 
-doubleList : {n : ℕ} → Bool → Env n → Env (suc n)
-doubleList x env = x ∷ env
-
 addlem : {n : ℕ} → suc (n + (1 * n)) ≡ n + (1 * suc n)
 addlem {zero} = refl
 addlem {suc n} =
@@ -259,21 +256,22 @@ addlem {suc n} =
     suc (n + suc (suc (n + zero)))
   ∎
   
-addLists : {n m : ℕ} → suc (n + suc (n + 0)) ≡ suc (suc (n + (n + 0)))
-                     → Vec (Env m) n
-                     → Vec (Env m) n
-                     → Vec (Env m) (2 * n)
-addLists {zero}  {zero} _ [] [] = []
-addLists {zero}  {m} () l1 l2 
-addLists {n} {zero} () l1 l2
-addLists {suc n} {suc m} pf (e1 ∷ e2) (e3 ∷ e4) =  {!e1 ∷ e3 ∷ addLists {?} {?} ? e2 e4 !}
+addLists : {n : ℕ} {e : Set}
+                     → Vec e n
+                     → Vec e n
+                     → Vec e (n + n)
+addLists l1 l2 = l1 ++ l2
+
+lem₀ : {n m : ℕ} → 2 ^ n + 0 ≡ 2 ^ n
+lem₀ {n} {m} = {!!}
 
 -- enumerate all the possible envs of a particular size.
-embellish : (n : ℕ) → Vec (Env n) (2 ^ n)
-embellish zero = [] ∷ []
-embellish (suc n) = addLists ({!!}) (map (doubleList false) (embellish n))
-                                           (map (doubleList true)  (embellish n))
-                    
+embellish : (n : ℕ) {- → 2 ^ n + 0 ≡ 2 ^ n
+                    → 2 ^ n     ≡ 2 ^ n + 0 * 2 ^ n -}
+                    → Vec (Env n) (2 ^ n)
+embellish zero     = [] ∷ []
+embellish (suc n)  = {!!}
+                          
 -- return the nn'th env with size n
 something : ∀ {n : ℕ} → (nn : Fin (2 ^ n)) → Env n
 something {n} nn = lookup nn (embellish n)
@@ -297,26 +295,147 @@ ex₁ {n} = surj (2 ^ n) something Surj-something
 
 open import Reflection
 
-isBoolExpr : Term → Bool
-isBoolExpr (var x args) = {!!}
-isBoolExpr (con c args) = {!!}
-isBoolExpr (def f args) = {!!}
-isBoolExpr (lam v t) = false
-isBoolExpr (pi t₁ t₂) = false
-isBoolExpr (sort x) = false
-isBoolExpr unknown = false
+≡' : Name
+≡' = quote _≡_
 
+open import Data.List
+isEquality : Term → Bool
+isEquality (def f args) with f ≟-Name ≡'
+isEquality (def f args) | yes p with args
+isEquality (def f args) | yes p | hiddenUnknown ∷ hiddenBool ∷ left ∷ right ∷ [] = true
+
+-- false otherwise
+isEquality (def f args) | yes p | hiddenUnknown ∷ hiddenBool ∷ left ∷ right ∷ l  = false
+isEquality (def f args) | yes p | [] = false
+isEquality (def f args) | yes p | hiddenUnknown  ∷ [] = false
+isEquality (def f args) | yes p | hiddenUnknown  ∷ right ∷ [] = false
+isEquality (def f args) | yes p | hiddenUnknown ∷ hiddenBool ∷ left  ∷ [] = false
+isEquality (def f args) | no ¬p = false
+isEquality (var x args) = false
+isEquality (con c args) = false
+isEquality (lam v t) = false
+isEquality (pi t₁ t₂) = false
+isEquality (sort x) = false
+isEquality unknown = false
+
+splitEquality : (t : Term) → .(isEquality t ≡ true) → Term × Term
+splitEquality (def f xs) eq with f ≟-Name ≡'
+splitEquality (def f xs) () | no p
+... | yes p with xs
+splitEquality (def f xs) eq | yes p | (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ x₃ ∷ []) = x₂ , x₃
+splitEquality (def f xs) () | yes p | []
+splitEquality (def f xs) () | yes p | x ∷ []
+splitEquality (def f xs) () | yes p | x ∷ x' ∷ []
+splitEquality (def f xs) () | yes p | x ∷ x' ∷ x'' ∷ []
+splitEquality (def f xs) () | yes p | x ∷ x' ∷ x'' ∷ x''' ∷ l -- y u still yellow
+splitEquality (var x args) ()
+splitEquality (con c args) ()
+splitEquality (lam v t) ()
+splitEquality (pi t₁ t₂) ()
+splitEquality (sort x) ()
+splitEquality unknown ()
+
+lhs : (t : Term) → .(isEquality t ≡ true) → Term
+lhs t pf = proj₁ (splitEquality t pf)
+rhs : (t : Term) → isEquality t ≡ true → Term
+rhs t pf = proj₂ (splitEquality t pf)
+
+isTrue  : (c : Name) (args : List (Arg Term)) → Bool
+isFalse : (c : Name) (args : List (Arg Term)) → Bool
+isAnd   : (f : Name) (args : List (Arg Term)) → Bool
+isOr    : (f : Name) (args : List (Arg Term)) → Bool
+isNot   : (f : Name) (args : List (Arg Term)) → Bool
+
+isName : Name → Name → List (Arg Term) → Bool
+isName cc f args with f ≟-Name cc | args
+isName cc f args | yes p | _ = true
+isName cc f args | no ¬p | _ = false
+
+lengthis : {a : Set} → List a → ℕ → Bool
+lengthis []        zero    = true
+lengthis (_ ∷ lst) (suc n) = lengthis lst n
+lengthis  _        _       = false
+
+isTrue  c as = isName (quote true) c as  ∧ lengthis as 0
+isFalse c as = isName (quote false) c as ∧ lengthis as 0
+isAnd   c as = isName (quote _∧_) c as   ∧ lengthis as 2
+isOr    c as = isName (quote _∨_) c as   ∧ lengthis as 2
+isNot   c as = isName (quote  ¬_) c as   ∧ lengthis as 1
+
+isBoolExpr : {n : ℕ} → Term → Bool
+isBoolExpr {n} (var x args) with suc x ≤? n
+... | yes p = true
+... | no ¬p = false
+isBoolExpr (con c args) = isTrue c args
+                        ∨ isFalse c args
+isBoolExpr (def f args) = isAnd f args
+                        ∨ isOr f args
+                        ∨ isNot f args
+isBoolExpr (lam v t)    = false
+isBoolExpr (pi t₁ t₂)   = false
+isBoolExpr (sort x)     = false
+isBoolExpr unknown      = false
 
 someThm : {p1 p2 q1 q2 : Bool} → (_≡_ ((p1 ∨ q1) ∧ (p2 ∨ q2)) ((q1 ∨ p1) ∧ (q2 ∨ p2)))
 someThm = quoteGoal g in {!isBoolExpr g!} -- C-c C-n in this goal is useful.
 
+-- this should take a LHS or RHS and turn it into
+-- something in our AST language
 represent : {n : ℕ} → (t : Term) →
-            isBoolExpr t ≡ true  →
+            isBoolExpr {n} t ≡ true  →
             BoolExpr n
-represent (var x args) = {!!}
-represent (con c args) = {!!}
-represent (def f args) = {!!}
-represent (lam v t) = {!!}
-represent (pi t₁ t₂) = {!!}
-represent (sort x) = {!!}
-represent unknown = {!!}
+represent {n} (var x args) eq with suc x ≤? n
+represent (var x args) eq | yes p = Atomic (fromℕ≤ p)
+represent (var x args) () | no ¬p
+represent (con c args) isBE with c ≟-Name (quote true)
+... | yes _ = Truth
+... | no _ with c ≟-Name (quote false)
+... | yes _ = Falsehood
+represent (con c args) () | no _ | no _ -- we only know true and false as constructors.
+represent (def f as) isBE with f ≟-Name (quote _∧_)
+represent (def f []) () | yes  _
+represent (def f (arg _ _ a₁ ∷ [])) () | yes  _
+represent (def f (arg _ _ a₁ ∷ arg _ _ a₂ ∷ l)) isBE | yes  _ = And (represent a₁ {!!}) (represent a₂ {!!})
+... | no _ with f ≟-Name (quote true)
+... | yes _ = Or (represent {!!} {!!}) (represent {!!} {!!})
+represent (def f as) pf | no _ | no _ = {!!} -- last option: not.
+represent (lam v t)    ()
+represent (pi t₁ t₂)   ()
+represent (sort x)     ()
+represent unknown      ()
+
+
+
+goal₁ : {a b : Bool} → a ∧ b ≡ b ∧ a
+goal₁ = quoteGoal e in {!e!}
+
+{-
+
+Thoughts about our workflow. What we'd like to do is the following, given some goal like this:
+
+goal₁ : {a b : Bool} a ∧ b ≡ b ∧ a
+
+then using quote:
+
+goal₁ = quoteGoal e in prove e
+
+Since quoteGoal gives us a Term, we'll need some things, such as:
+
+- read : Term → BoolExpr n
+- eval : BoolExpr n → NF  (Normal Form)
+- checkEqual : NF → NF → Bool
+
+- soundness : checkEqual a b ≡ true → a ≡ b
+
+Which allows us to define:
+
+prove something = left <- lhs something
+                  right <- rhs something
+                  _ <- isbool left
+                  _ <- isbool right
+                  normalL <- eval left
+                  normalR <- eval right
+                  equality <- checkEqual normalL normalR
+                  return soundness ... . . . . ?
+                  -}
+
