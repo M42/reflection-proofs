@@ -37,8 +37,7 @@ proof1 = {! refl!}   -- this won't work, since p1 != q1, etc!
 
 -- we'll make some DSL into which we're going to translate theorems
 -- (which are actually types of functions), and then use reflection
--- in some magical way... TBC
-
+-- in some unmagical way... see below.
 
 data BoolExpr : ℕ → Set where
   Truth     : {n : ℕ}                           → BoolExpr n
@@ -48,7 +47,6 @@ data BoolExpr : ℕ → Set where
   Not       : {n : ℕ} → BoolExpr n              → BoolExpr n
   Imp       : {n : ℕ} → BoolExpr n → BoolExpr n → BoolExpr n
   Atomic    : {n : ℕ} → Fin n                   → BoolExpr n
-
 
 -- ...and some way to interpret our representation
 -- of the formula at hand:
@@ -105,7 +103,7 @@ mutual
   soundness' env (Atomic x) dec pf  with lookup x env
   soundness' env (Atomic x) ()  pf | true
   soundness' env (Atomic x) dec pf | false = pf
-  
+
   -- soundness theorem:
   soundness : {n : ℕ} → (env : Env n) → (p : BoolExpr n) → decide env p ≡ true → ⟦ env ⊢ p ⟧
   soundness env (Truth) refl = tt
@@ -126,7 +124,7 @@ open import Data.Nat
 open import Relation.Nullary hiding (¬_)
 open import Data.Product hiding (map)
 
--- still required: 
+-- still required:
 -- * do actual reflection
 
 private
@@ -153,7 +151,7 @@ private
     --thm1 ov = soundness ov (Imp (Atomic zero) (Atomic zero)) refl
     thm1 (true ∷ []) = soundness (true ∷ []) (Imp (Atomic zero) (Atomic zero)) refl
     thm1 (false ∷ []) = soundness (false ∷ []) (Imp (Atomic zero) (Atomic zero)) refl
-    
+
 -- next step: try and avoid having to enumerate all the possible environments,
 -- as this will quickly become tedious (and remember, the challenge was to
 -- prove tautologies in n² and not 2ⁿ with n the number of variables...
@@ -185,13 +183,13 @@ private
   t  = suc (suc zero)
   th : Fin 4
   th = suc (suc (suc zero))
-  
+
   -- this means the following: ((p1 ∨ q1) ∧ (p2 ∨ q2) → (q1 ∨ p1) ∧ (q2 ∨ p2))
   -- ...which is cool, since we can now prove tautologies of this form.
   thm1bdef : BoolExpr 4
   thm1bdef = Imp (And (Or (Atomic zero) (Atomic t)) (Or (Atomic o) (Atomic th)))
                  (And (Or (Atomic t) (Atomic zero)) (Or (Atomic th) (Atomic o)))
-  
+
   thm1b : ∀ (ov : Env 4) → ⟦ ov ⊢ thm1bdef ⟧
   thm1b ov with automate 4 ov thm1bdef
   thm1b ov | just x = x
@@ -260,7 +258,7 @@ addlem {suc n} =
     ≡⟨ cong suc ( (cong (_+_ n) (cong suc (cong suc blah)))) ⟩
     suc (n + suc (suc (n + zero)))
   ∎
-  
+
 addLists : {n : ℕ} {e : Set}
                      → Vec e n
                      → Vec e n
@@ -276,7 +274,7 @@ embellish : (n : ℕ) {- → 2 ^ n + 0 ≡ 2 ^ n
                     → Vec (Env n) (2 ^ n)
 embellish zero     = [] ∷ []
 embellish (suc n)  = {!!}
-                          
+
 -- return the nn'th env with size n
 something : ∀ {n : ℕ} → (nn : Fin (2 ^ n)) → Env n
 something {n} nn = lookup nn (embellish n)
@@ -343,8 +341,8 @@ lengthis []        zero    = true
 lengthis (_ ∷ lst) (suc n) = lengthis lst n
 lengthis  _        _       = false
 
-isTrue  c as = isName (quote true) c as  b∧ lengthis as 0
-isFalse c as = isName (quote false) c as b∧ lengthis as 0
+isTrue  c as = isName (quote ⊤) c as     b∧ lengthis as 0
+isFalse c as = isName (quote ⊥) c as     b∧ lengthis as 0
 isAnd   c as = isName (quote _∧_) c as   b∧ lengthis as 2
 isOr    c as = isName (quote _∨_) c as   b∧ lengthis as 2
 isNot   c as = isName (quote ¬_) c as    b∧ lengthis as 1
@@ -355,7 +353,7 @@ allAnd = Data.List.foldr _b∧_ true
 mutual
   isBoolArg : {n : ℕ} → Arg Term → Bool
   isBoolArg {n} (arg v r x) = isBoolExpr {n} x
-  
+
   isBoolExpr : {n : ℕ} → Term → Bool
   isBoolExpr {n} (var x args) with suc x ≤? n
   ... | yes p = true
@@ -378,13 +376,13 @@ someThm = quoteGoal g in {! (lhs g refl)!} -- C-c C-n in this goal is useful.
 argsAreExpressions : {n : ℕ} {a : Term} {p₁ p₃ : Bool} →
                      p₁ b∧ (
                      isBoolExpr {n} a
-                     ) b∧ p₃ ≡ true → 
+                     ) b∧ p₃ ≡ true →
                      isBoolExpr {n} a ≡ true
 argsAreExpressions pf = {!!}
 argsAreExpressions₂ : {n : ℕ} {a : Term} {p₁ p₂ p₄ : Bool} →
                      p₁ b∧ p₂ b∧ (
                      isBoolExpr {n} a
-                     ) b∧ p₄ ≡ true → 
+                     ) b∧ p₄ ≡ true →
                      isBoolExpr {n} a ≡ true
 argsAreExpressions₂ pf = {!!}
 
@@ -397,9 +395,9 @@ term2boolexpr : {n : ℕ} → (t : Term) →
 term2boolexpr {n} (var x args) eq with suc x ≤? n
 term2boolexpr (var x args) eq | yes p = Atomic (fromℕ≤ p)
 term2boolexpr (var x args) () | no ¬p
-term2boolexpr (con c args) isBE with c ≟-Name (quote true)
+term2boolexpr (con c args) isBE with c ≟-Name (quote ⊤)
 ... | yes _ = Truth
-... | no _ with c ≟-Name (quote false)
+... | no _ with c ≟-Name (quote ⊥)
 ... | yes _ = Falsehood
 term2boolexpr (con c args) () | no _ | no _ -- we only know true and false as constructors.
 term2boolexpr (def f as) isBE with f ≟-Name (quote _∧_) -- is it an and?
@@ -410,7 +408,7 @@ term2boolexpr {n} (def f (arg _ _ a₁ ∷ arg _ _ a₂ ∷ l)) isBE | yes p = A
 ... | no _ with f ≟-Name (quote _∨_) -- or maybe an or?
 term2boolexpr {n} (def f (arg _ _ a₁ ∷ arg _ _ a₂ ∷ l)) isBE | no _ | yes p = Or (term2boolexpr a₁ (argsAreExpressions {n} isBE))
                                                                          (term2boolexpr a₂ (argsAreExpressions₂ {n} isBE))
-term2boolexpr (def f l) () | no _ | yes p 
+term2boolexpr (def f l) () | no _ | yes p
 term2boolexpr (def f as) pf | no _ | no _ with f ≟-Name (quote ¬_)
 ... | no _ = {!!}
 term2boolexpr {n} (def f (arg _ _ a₁ ∷ l)) isBE | no _ | no _ | yes p = Not (term2boolexpr a₁ (argsAreExpressions {n} isBE))
@@ -443,13 +441,13 @@ private
 --         (rexpr : isBoolExpr (rhs nopi eq) ≡ true) →
 --         Eq n _≡_ (curryⁿ ⟦ env ⊢ term2boolexpr (lhs nopi eq) lexpr ⟧) (curryⁿ ⟦ env ⊢ term2boolexpr (rhs nopi eq) rexpr ⟧)
 -- prove = {!!}
--- 
+--
 
 
-goal2 : ∀ (a b : Set) → (a ∧ b) → (b ∧ a) 
+goal2 : ∀ (a b : Set) → (a ∧ b) → (b ∧ a)
 goal2 = quoteGoal e in {!e!}
 
-goal₁ : ∀ a b → (a ∧ b → b ∧ a) 
+goal₁ : ∀ a b → (a ∧ b → b ∧ a)
 goal₁ = quoteGoal e in soundness (true ∷ true ∷ []) {!term2boolexpr (stripPi e) refl!} refl
 
 
