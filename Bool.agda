@@ -1,22 +1,36 @@
+{-# OPTIONS --type-in-type #-}
 module Bool where
 
 open import Relation.Binary.PropositionalEquality renaming ( [_] to by )
-open import Data.Bool
+open import Data.Bool renaming (_∧_ to _b∧_ ; _∨_ to _b∨_; not to bnot)
+open import Data.Nat
+open import Data.Fin hiding (_+_; pred)
+open import Data.Vec renaming (reverse to vreverse)
+open import Data.Unit hiding (_≤?_)
+open import Data.Empty
+open import Data.Sum hiding (map)
+open import Data.Product hiding (map)
+open import Data.List hiding (_++_)
 
-¬_ : Bool → Bool
-¬_ = not
+¬_ : Set → Set
+¬_ = λ p → ⊥
 
--- here's something the type system gives us
--- for free: (i.e. not not true is evaluated,
--- then refl works)
--- this works because the type system does beta-reduction.
-trueisnotnottrue : true ≡ ¬ ( ¬ true)
-trueisnotnottrue = refl
+_∧_ : Set → Set → Set
+_∧_ = _×_
+
+_∨_ : Set → Set → Set
+_∨_ = _⊎_
+
+-- here's an example of a manual proof
+trueandtrue : ⊤ ∧ ⊤ → ⊤
+trueandtrue (tt , tt) = tt
+-- wouldn't it be nice if we could automate this?
 
 -- eventually we'd like to prove these kinds of tautologies:
 myfavouritetheorem : Set
-myfavouritetheorem = {p1 q1 p2 q2 : Bool} → ((p1 ∨ q1) ∧ (p2 ∨ q2) ≡
-                                             (q1 ∨ p1) ∧ (q2 ∨ p2))
+myfavouritetheorem = ∀ {p1 q1 p2 q2} → (p1 ∨ q1) ∧ (p2 ∨ q2) →
+                                       (q1 ∨ p1) ∧ (q2 ∨ p2)
+
 proof1 : myfavouritetheorem
 proof1 = {! refl!}   -- this won't work, since p1 != q1, etc!
                      -- proving this manually would require 2ⁿ cases...
@@ -25,8 +39,6 @@ proof1 = {! refl!}   -- this won't work, since p1 != q1, etc!
 -- (which are actually types of functions), and then use reflection
 -- in some magical way... TBC
 
-open import Data.Nat
-open import Data.Fin hiding (_+_; pred)
 
 data BoolExpr : ℕ → Set where
   Truth     : {n : ℕ}                           → BoolExpr n
@@ -37,11 +49,6 @@ data BoolExpr : ℕ → Set where
   Imp       : {n : ℕ} → BoolExpr n → BoolExpr n → BoolExpr n
   Atomic    : {n : ℕ} → Fin n                   → BoolExpr n
 
-open import Data.Vec renaming (reverse to vreverse)
-open import Data.Unit hiding (_≤?_)
-open import Data.Empty
-open import Data.Sum hiding (map)
-open import Data.Product hiding (map)
 
 -- ...and some way to interpret our representation
 -- of the formula at hand:
@@ -59,7 +66,6 @@ Env = Vec Bool
 ⟦ env ⊢ Falsehood ⟧ = ⊥
 ⟦ env ⊢ And p q ⟧   = ⟦ env ⊢ p ⟧ × ⟦ env ⊢ q ⟧
 ⟦ env ⊢ Or p q ⟧    = ⟦ env ⊢ p ⟧ ⊎ ⟦ env ⊢ q ⟧
--- ⟦ env ⊢ Eq p q ⟧    = ⟦ env ⊢ p ⟧ ≡ ⟦ env ⊢ q ⟧
 ⟦ env ⊢ Imp p q ⟧   = ⟦ env ⊢ p ⟧ → ⟦ env ⊢ q ⟧
 ⟦ env ⊢ Atomic n ⟧ with lookup n env
 ... | true  = ⊤
@@ -72,10 +78,10 @@ Env = Vec Bool
 decide : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
 decide env (Truth)      = true
 decide env (Falsehood)  = false
-decide env (And be be₁) = decide env be ∧ decide env be₁
-decide env (Or be be₁)  = decide env be ∨ decide env be₁
-decide env (Not p)      = not (decide env p)
-decide env (Imp p q)    = not (decide env p) ∨ (decide env q)
+decide env (And be be₁) = decide env be b∧ decide env be₁
+decide env (Or be be₁)  = decide env be b∨ decide env be₁
+decide env (Not p)      = bnot (decide env p)
+decide env (Imp p q)    = bnot (decide env p) b∨ (decide env q)
 decide env (Atomic n)   = lookup n env
 
 open import Lemmas
@@ -92,7 +98,7 @@ mutual
   soundness' env (Or p q) dec (inj₁ x) | proj₁ , proj₂ = soundness' env p proj₁ x
   soundness' env (Or p q) dec (inj₂ y) | proj₁ , proj₂ = soundness' env q proj₂ y
   soundness' env (Not p) dec   pf = pf (soundness env p (not-false dec))
-  soundness' env (Imp p q) dec pf  with or-false (not (decide env p)) (decide env q) dec
+  soundness' env (Imp p q) dec pf  with or-false (bnot (decide env p)) (decide env q) dec
   soundness' env (Imp p q) dec pf | proj₁ , proj₂  with not-false proj₁
   ... | tmppat  with pf (soundness env p tmppat)
   ... | tmppatq = soundness' env q proj₂ tmppatq
@@ -175,7 +181,7 @@ private
 
   o  : Fin 4
   o  = suc zero
-  t : Fin 4
+  t  : Fin 4
   t  = suc (suc zero)
   th : Fin 4
   th = suc (suc (suc zero))
@@ -297,43 +303,6 @@ open import Reflection
 ≡' : Name
 ≡' = quote _≡_
 
-open import Data.List
-isEquality : Term → Bool
-isEquality (def f args) with f ≟-Name ≡'
-isEquality (def f args) | yes p with args
-isEquality (def f args) | yes p | hiddenUnknown ∷ hiddenBool ∷ left ∷ right ∷ [] = true
-
--- false otherwise
-isEquality (def f args) | yes p | hiddenUnknown ∷ hiddenBool ∷ left ∷ right ∷ l  = false
-isEquality (def f args) | yes p | [] = false
-isEquality (def f args) | yes p | hiddenUnknown  ∷ [] = false
-isEquality (def f args) | yes p | hiddenUnknown  ∷ right ∷ [] = false
-isEquality (def f args) | yes p | hiddenUnknown ∷ hiddenBool ∷ left  ∷ [] = false
-isEquality (def f args) | no ¬p = false
-isEquality (var x args) = false
-isEquality (con c args) = false
-isEquality (lam v t) = false
-isEquality (pi t₁ t₂) = false
-isEquality (sort x) = false
-isEquality unknown = false
-
-splitEquality : (t : Term) → .(isEquality t ≡ true) → Term × Term
-splitEquality (def f xs) eq with f ≟-Name ≡'
-splitEquality (def f xs) () | no p
-... | yes p with xs
-splitEquality (def f xs) eq | yes p | (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ x₃ ∷ []) = x₂ , x₃
-splitEquality (def f xs) () | yes p | []
-splitEquality (def f xs) () | yes p | x ∷ []
-splitEquality (def f xs) () | yes p | x ∷ x' ∷ []
-splitEquality (def f xs) () | yes p | x ∷ x' ∷ x'' ∷ []
-splitEquality (def f xs) () | yes p | x ∷ x' ∷ x'' ∷ x''' ∷ l -- y u still yellow
-splitEquality (var x args) ()
-splitEquality (con c args) ()
-splitEquality (lam v t) ()
-splitEquality (pi t₁ t₂) ()
-splitEquality (sort x) ()
-splitEquality unknown ()
-
 -- returns the number of the outermost pi quantified variables.
 
 argsNo : Term → ℕ
@@ -358,11 +327,6 @@ stripPi (lam v t) = lam v t
 stripPi (sort x) = sort x
 stripPi unknown = unknown
 
-lhs : (t : Term) → .(isEquality t ≡ true) → Term
-lhs t pf = proj₁ (splitEquality t pf)
-rhs : (t : Term) → isEquality t ≡ true → Term
-rhs t pf = proj₂ (splitEquality t pf)
-
 isTrue  : (c : Name) (args : List (Arg Term)) → Bool
 isFalse : (c : Name) (args : List (Arg Term)) → Bool
 isAnd   : (f : Name) (args : List (Arg Term)) → Bool
@@ -379,14 +343,14 @@ lengthis []        zero    = true
 lengthis (_ ∷ lst) (suc n) = lengthis lst n
 lengthis  _        _       = false
 
-isTrue  c as = isName (quote true) c as  ∧ lengthis as 0
-isFalse c as = isName (quote false) c as ∧ lengthis as 0
-isAnd   c as = isName (quote _∧_) c as   ∧ lengthis as 2
-isOr    c as = isName (quote _∨_) c as   ∧ lengthis as 2
-isNot   c as = isName (quote not) c as   ∧ lengthis as 1
+isTrue  c as = isName (quote true) c as  b∧ lengthis as 0
+isFalse c as = isName (quote false) c as b∧ lengthis as 0
+isAnd   c as = isName (quote _∧_) c as   b∧ lengthis as 2
+isOr    c as = isName (quote _∨_) c as   b∧ lengthis as 2
+isNot   c as = isName (quote ¬_) c as    b∧ lengthis as 1
 
 allAnd : List Bool → Bool
-allAnd = Data.List.foldr _∧_ true
+allAnd = Data.List.foldr _b∧_ true
 
 mutual
   isBoolArg : {n : ℕ} → Arg Term → Bool
@@ -397,30 +361,30 @@ mutual
   ... | yes p = true
   ... | no ¬p = false
   isBoolExpr {n} (con c args) = (isTrue c args
-                          ∨ isFalse c args)
-                          ∧ allAnd (Data.List.map (isBoolArg {n}) args)
+                          b∨ isFalse c args)
+                          b∧ allAnd (Data.List.map (isBoolArg {n}) args)
   isBoolExpr {n} (def f args) = (isAnd f args
-                          ∨ isOr f args
-                          ∨ isNot f args)
-                          ∧ allAnd (Data.List.map (isBoolArg {n}) args)
+                          b∨ isOr f args
+                          b∨ isNot f args)
+                          b∧ allAnd (Data.List.map (isBoolArg {n}) args)
   isBoolExpr (lam v t)    = false
   isBoolExpr (pi t₁ t₂)   = false
   isBoolExpr (sort x)     = false
   isBoolExpr unknown      = false
 
-someThm : {p1 p2 q1 q2 : Bool} → (_≡_ ((p1 ∨ q1) ∧ (p2 ∨ q2)) ((q1 ∨ p1) ∧ (q2 ∨ p2)))
+someThm : ∀ {p1 p2 q1 q2} → ((p1 ∨ q1) ∧ (p2 ∨ q2)) → ((q1 ∨ p1) ∧ (q2 ∨ p2))
 someThm = quoteGoal g in {! (lhs g refl)!} -- C-c C-n in this goal is useful.
 
 argsAreExpressions : {n : ℕ} {a : Term} {p₁ p₃ : Bool} →
-                     p₁ ∧ (
+                     p₁ b∧ (
                      isBoolExpr {n} a
-                     ) ∧ p₃ ≡ true → 
+                     ) b∧ p₃ ≡ true → 
                      isBoolExpr {n} a ≡ true
 argsAreExpressions pf = {!!}
 argsAreExpressions₂ : {n : ℕ} {a : Term} {p₁ p₂ p₄ : Bool} →
-                     p₁ ∧ p₂ ∧ (
+                     p₁ b∧ p₂ b∧ (
                      isBoolExpr {n} a
-                     ) ∧ p₄ ≡ true → 
+                     ) b∧ p₄ ≡ true → 
                      isBoolExpr {n} a ≡ true
 argsAreExpressions₂ pf = {!!}
 
@@ -447,7 +411,7 @@ term2boolexpr {n} (def f (arg _ _ a₁ ∷ arg _ _ a₂ ∷ l)) isBE | yes p = A
 term2boolexpr {n} (def f (arg _ _ a₁ ∷ arg _ _ a₂ ∷ l)) isBE | no _ | yes p = Or (term2boolexpr a₁ (argsAreExpressions {n} isBE))
                                                                          (term2boolexpr a₂ (argsAreExpressions₂ {n} isBE))
 term2boolexpr (def f l) () | no _ | yes p 
-term2boolexpr (def f as) pf | no _ | no _ with f ≟-Name (quote not)
+term2boolexpr (def f as) pf | no _ | no _ with f ≟-Name (quote ¬_)
 ... | no _ = {!!}
 term2boolexpr {n} (def f (arg _ _ a₁ ∷ l)) isBE | no _ | no _ | yes p = Not (term2boolexpr a₁ (argsAreExpressions {n} isBE))
 term2boolexpr (def f l) () | no _ | no _ | yes _
@@ -455,14 +419,6 @@ term2boolexpr (lam v t)    ()
 term2boolexpr (pi t₁ t₂)   ()
 term2boolexpr (sort x)     ()
 term2boolexpr unknown      ()
-
-
-_=>_ : Bool → Bool → Bool
-_=>_ p q = q ∨ ¬ p
-
-fromJust : {a : Set} → Maybe a → a
-fromJust (just a) = a
-fromJust nothing  = {!!}
 
 open import Data.Vec.N-ary
 
@@ -478,117 +434,6 @@ private
   -- simplefied notation, non-executable
   -- stripPi-ex : stripPi-ex t ≡ def ≡' (var 2 + var 1) ≡ (var 1 + var 0)
 
--------------------------------------------------------------------------
---  Wrapping the solve and prove function with the reflection helpers  --
--------------------------------------------------------------------------
-
-open import RingSolverForBool
-
--- first version
-
-kill : {n   : ℕ} 
-     → (t   : Term) 
-     → (ρ   : Vec ℕ n)
-     → (eq  : isEquality t ≡ true)
-     → (ipl : isBoolExpr {n} (lhs t eq) ≡ true)
-     → (irl : isBoolExpr {n} (rhs t eq) ≡ true)
-     → ⟦ term2boolexpr (lhs t eq) ipl ⟧↓ ρ ≡ ⟦ term2boolexpr (rhs t eq) irl ⟧↓ ρ 
-     → ⟦ term2boolexpr (lhs t eq) ipl ⟧  ρ ≡ ⟦ term2boolexpr (rhs t eq) irl ⟧  ρ
-
-kill t ρ eq ipl irl eq2 = prove ρ (term2boolexpr (lhs t eq) ipl) (term2boolexpr (rhs t eq) irl) eq2
-
-{- Example usage
-lemma : ∀ m n → suc (m + n + (m + n)) ≡ m + m + suc (n + n)
-lemma m n = quoteGoal e in kill e (n ∷ m ∷ []) refl refl refl refl
--}
-
-kil2 : (t0   : Term) → 
-     let n = argsNo  t0 in
-     let t = stripPi t0 in
-     (ρ   : Vec ℕ n)
-     → (eq  : isEquality t ≡ true)
-     → (ipl : isBoolExpr {n} (lhs t eq) ≡ true)
-     → (irl : isBoolExpr {n} (rhs t eq) ≡ true)
-     → ⟦ term2boolexpr (lhs t eq) ipl ⟧↓ ρ ≡ ⟦ term2boolexpr (rhs t eq) irl ⟧↓ ρ 
-     → ⟦ term2boolexpr (lhs t eq) ipl ⟧  ρ ≡ ⟦ term2boolexpr (rhs t eq) irl ⟧  ρ
-
-kil2 t0 ρ eq ipl irl eq2 = 
-  let t = stripPi t0 
-  in  prove ρ (term2boolexpr (lhs t eq) ipl) (term2boolexpr (rhs t eq) irl) eq2
-
-{- Example usage
-lemma' : ∀ m n → suc (m + n + (m + n)) ≡ m + m + suc (n + n)
-lemma' = quoteGoal e in λ m n → kil2 e (n ∷ m ∷ []) refl refl refl refl
--}
-
--------------------------------------------
--- The version with maximal reflection
-
-
--- Bind from the substituion monad
--- 
--- We essentially use this function to close the n free 
--- variables we got from the Reflection API by using stripPi.
-
-psubst : {n : ℕ} → Polynomial n → Vec (Polynomial n) n → Polynomial n
-psubst (op o e e₁) ρ = op o (psubst e ρ) (psubst e₁ ρ)
-psubst (con c)     ρ = con c
-psubst (var x)     ρ = lookup x ρ
-psubst (_:^_ e n₁) ρ = psubst e ρ :^ n₁ 
-psubst (:-_ e)     ρ = :- psubst e ρ
-
--- element-wise subst in a pair
-
-build-eq : {n : ℕ} 
-         → (lhs rhs : Polynomial n) 
-         → Vec (Polynomial n) n 
-         → (Polynomial n × Polynomial n)
-
-build-eq e₁ e₂ ρ = psubst e₁ (vreverse ρ) , psubst e₂ (vreverse ρ)
-
--- function copied from stdlib's Relation.Binary.Reflection
--- 
--- One can get this function by saying
---   open Reflection setoid var ⟦_⟧ ⟦_⟧↓ (nf-sound ∘ normalise)
---     public using (close; prove; solve) renaming (_⊜_ to _:=_)
--- instead of
---   open Reflection setoid var ⟦_⟧ ⟦_⟧↓ (nf-sound ∘ normalise)
---     public using (prove; solve) renaming (_⊜_ to _:=_)
--- in the Algebra.RingSolver stdlib's module
-
--- Applies the function to all possible "variables".
-
-close : ∀ {A : Set} n → N-ary n (Polynomial n) A → A
-close n f = f $ⁿ Data.Vec.map var (allFin n)
-
--- curried version of build-eq
-
-build-eq-curry : {n : ℕ} → (lhs rhs : Polynomial n) 
-               → N-ary n (Polynomial n) (Polynomial n × Polynomial n)
-
-build-eq-curry lhs rhs = curryⁿ (build-eq lhs rhs)
-
--- calculating front-end for solve
-
-ring : (t0 : Term) → 
-       let n = argsNo  t0 in
-       let t = stripPi t0 in
-       (eq  : isEquality t ≡ true)
-     → (ipl : isBoolExpr {n} (lhs t eq) ≡ true)
-     → (irl : isBoolExpr {n} (rhs t eq) ≡ true) → 
-       let l = term2boolexpr (lhs t eq) ipl in
-       let r = term2boolexpr (rhs t eq) irl in
-       let f = build-eq-curry l r in
-       Eqʰ n _≡_ (curryⁿ ⟦ proj₁ (close n f) ⟧↓) (curryⁿ ⟦ proj₂ (close n f) ⟧↓)
-     → Eq  n _≡_ (curryⁿ ⟦ proj₁ (close n f) ⟧)  (curryⁿ ⟦ proj₂ (close n f) ⟧)
-
-ring t0 eq ipl irl eqn =
-  let n = argsNo  t0 in
-  let t = stripPi t0 in
-  let l = term2boolexpr (lhs t eq) ipl in
-  let r = term2boolexpr (rhs t eq) irl in
-  let f = build-eq-curry l r in
-   solve n f eqn
 -- prove : (t : Term) →
 --         let n = argsNo t in
 --         let nopi = stripPi t in
@@ -599,8 +444,13 @@ ring t0 eq ipl irl eqn =
 --         Eq n _≡_ (curryⁿ ⟦ env ⊢ term2boolexpr (lhs nopi eq) lexpr ⟧) (curryⁿ ⟦ env ⊢ term2boolexpr (rhs nopi eq) rexpr ⟧)
 -- prove = {!!}
 -- 
--- goal₁ : ∀ a b → (a ∧ b => b ∧ a) ≡ true
--- goal₁ = quoteGoal e in prove e refl refl refl
+
+
+goal2 : ∀ (a b : Set) → (a ∧ b) → (b ∧ a) 
+goal2 = quoteGoal e in {!e!}
+
+goal₁ : ∀ a b → (a ∧ b → b ∧ a) 
+goal₁ = quoteGoal e in soundness (true ∷ true ∷ []) {!term2boolexpr (stripPi e) refl!} refl
 
 
 
