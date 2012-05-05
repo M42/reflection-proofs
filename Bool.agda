@@ -463,17 +463,18 @@ unsafeMinus zero m = zero
 unsafeMinus n₁ zero = n₁
 unsafeMinus (suc n₁) (suc m) = unsafeMinus n₁ m
 
-term2b : (n : ℕ) → (depth : ℕ) → (t : Term) → Maybe (BoolExpr n)
+term2b : (n : ℕ) → (depth : ℕ) → (t : Term) → (BoolExpr n)
 term2b n depth t with stripPi t
 term2b n depth t | var x args with suc x ≤? n | suc (unsafeMinus x depth) ≤? n
-term2b n depth t | var x args | yes p  | yes p2 = just (Atomic (fromℕ≤ {(unsafeMinus x depth)} p2))
-term2b n depth t | var x args | _ | _ = nothing
+term2b n depth t | var x args | yes p  | yes p2 = (Atomic (fromℕ≤ {(unsafeMinus x depth)} p2))
+term2b n depth t | var x args | _ | _ = Falsehood
 term2b n depth t | con c args = {!!}
 term2b n depth t | def f args = {!!}
 term2b n depth t | lam v t' = {!!}
-term2b n depth t | pi t₁ t₂ = {!!}
-term2b n depth t | sort x = nothing
-term2b n depth t | unknown = nothing
+term2b n depth t | pi (arg visible relevant (el _ t₁)) (el _ t₂) = Imp (term2b n depth t₁) (term2b n (suc depth) t₂)
+term2b n depth t | sort x = Falsehood
+term2b n depth t | unknown = Falsehood
+term2b n depth t | _ = Falsehood
 
 
 somethm : Set
