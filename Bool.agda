@@ -32,7 +32,7 @@ myfavouritetheorem = ∀ {p1 q1 p2 q2} → (p1 ∨ q1) ∧ (p2 ∨ q2) →
                                        (q1 ∨ p1) ∧ (q2 ∨ p2)
 
 proof1 : myfavouritetheorem
-proof1 = {! refl!}   -- this won't work, since p1 != q1, etc!
+proof1 = {! refl!}   -- this won't work, since p1 != q1, etc
                      -- proving this manually would require 2ⁿ cases...
 
 -- we'll make some DSL into which we're going to translate theorems
@@ -304,20 +304,24 @@ open import Reflection
 -- returns the number of the outermost pi quantified variables.
 
 argsNo : Term → ℕ
-argsNo (pi t₁ (el s t)) = suc (argsNo t)
+argsNo (pi (arg visible relevant (el (lit 0) (sort (lit 0)))) (el s t)) = suc (argsNo t)
+argsNo (pi (arg visible relevant (el (lit 0) (def  _ _))) (el s t)) = suc (argsNo t)
 argsNo (var x args) = 0
 argsNo (con c args) = 0
 argsNo (def f args) = 0
 argsNo (lam v t) = 0
 argsNo (sort x) = 0
 argsNo unknown = 0
+argsNo _ = 0
 
 -- peels off all the outermost Pi constructors,
 -- returning a term with argsNo free variables.
 
 stripPi : Term → Term
-stripPi (pi t₁ (el s t)) = stripPi t
+stripPi (pi (arg visible relevant (el (lit 0) (sort (lit 0)))) (el s t)) = stripPi t
+stripPi (pi (arg visible relevant (el (lit 0) (def  _ _))) (el s t)) = stripPi t
 -- identity otherwise
+stripPi (pi args t) = pi args t
 stripPi (var x args) = var x args
 stripPi (con c args) = con c args
 stripPi (def f args) = def f args
@@ -426,22 +430,17 @@ private
   term-ex : Term
   term-ex = quoteTerm ((n m k : ℕ) → n + m ≡ m + k)
 
+  term-ex₁ : Term
+  term-ex₁ = quoteTerm ((a b c d : Set) → b → a)
+
   argsNo-ex : argsNo term-ex ≡ 3
   argsNo-ex = refl
 
+  argsNo-ex₁ : argsNo term-ex₁ ≡ 4
+  argsNo-ex₁ = refl
+  
   -- simplefied notation, non-executable
   -- stripPi-ex : stripPi-ex t ≡ def ≡' (var 2 + var 1) ≡ (var 1 + var 0)
-
--- prove : (t : Term) →
---         let n = argsNo t in
---         let nopi = stripPi t in
---         let env = ? in
---         (eq : isEquality nopi ≡ true) →
---         (lexpr : isBoolExpr (lhs nopi eq) ≡ true) →
---         (rexpr : isBoolExpr (rhs nopi eq) ≡ true) →
---         Eq n _≡_ (curryⁿ ⟦ env ⊢ term2boolexpr (lhs nopi eq) lexpr ⟧) (curryⁿ ⟦ env ⊢ term2boolexpr (rhs nopi eq) rexpr ⟧)
--- prove = {!!}
---
 
 
 goal2 : ∀ (a b : Set) → (a ∧ b) → (b ∧ a)
@@ -450,13 +449,48 @@ goal2 = quoteGoal e in {!e!}
 goal₁ : ∀ a b → (a ∧ b → b ∧ a)
 goal₁ = quoteGoal e in soundness (true ∷ true ∷ []) {!term2boolexpr (stripPi e) refl!} refl
 
+lt1 : {m n : ℕ} → Data.Nat._≤_ m n → Data.Nat._≤_ m (suc n)
+lt1 {zero} {zero} p = z≤n
+lt1 {suc m} {zero} ()
+lt1 {zero} {n} z≤n = z≤n
+lt1 {suc m} {suc n} (s≤s p) = s≤s (lt1 p)
+
+lt : {m n : ℕ} → Data.Nat._≤_ (suc m) n → Data.Nat._≤_ m n
+lt (s≤s p) = lt1 p
+
+unsafeMinus : (a : ℕ) → (b : ℕ) → ℕ
+unsafeMinus zero m = zero
+unsafeMinus n₁ zero = n₁
+unsafeMinus (suc n₁) (suc m) = unsafeMinus n₁ m
+
+term2b : (n : ℕ) → (depth : ℕ) → (t : Term) → Maybe (BoolExpr n)
+term2b n depth t with stripPi t
+term2b n depth t | var x args with suc x ≤? n | suc (unsafeMinus x depth) ≤? n
+term2b n depth t | var x args | yes p  | yes p2 = just (Atomic (fromℕ≤ {(unsafeMinus x depth)} p2))
+term2b n depth t | var x args | _ | _ = nothing
+term2b n depth t | con c args = {!!}
+term2b n depth t | def f args = {!!}
+term2b n depth t | lam v t' = {!!}
+term2b n depth t | pi t₁ t₂ = {!!}
+term2b n depth t | sort x = nothing
+term2b n depth t | unknown = nothing
+
+
+somethm : Set
+somethm = (a b c d : Set) → a → b
+
+goal₀ : somethm
+goal₀ = quoteGoal e in {!stripPi e!}
+
+goalbla : somethm
+goalbla = quoteGoal e in {!term2b (argsNo e) 0 e !}
 
 
 {-
 
 Thoughts about our workflow. What we'd like to do is the following, given some goal like this:
 
-goal₁ : {a b : Bool} a ∧ b => b ∧ a ≡ true
+goal₁ : {a b : Bool} a ∧ b → b ∧ a
 
 then using quote:
 
@@ -466,9 +500,6 @@ where refl* means the right number of refl constructors
 Since quoteGoal gives us a Term, we'll need some things, such as:
 
 - term2boolexpr : Term → BoolExpr n
-- eval : BoolExpr n → NF  (Normal Form)
-- checkEqual : NF → NF → Bool
-
 - soundness : checkEqual a b ≡ true → a ≡ b
 
 Which allows us to define:
