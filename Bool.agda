@@ -469,16 +469,33 @@ term2b n depth t | var x args with suc x ≤? n | suc (unsafeMinus x depth) ≤?
 term2b n depth t | var x args | yes p  | yes p2 = (Atomic (fromℕ≤ {(unsafeMinus x depth)} p2))
 term2b n depth t | var x args | _ | _ = Falsehood
 term2b n depth t | con c args = {!!}
-term2b n depth t | def f args = {!!}
-term2b n depth t | lam v t' = {!!}
+term2b n depth t | def f args with f ≟-Name (quote Data.Product.Σ)
+term2b n depth t | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | yes p = And (term2b n depth t₁) (term2b n depth t₂)
+term2b n depth t | def f (_) | yes p = Falsehood
+term2b n depth t | def f args | no p = Falsehood
+term2b n depth t | lam v t' = term2b n (suc depth) t'
 term2b n depth t | pi (arg visible relevant (el _ t₁)) (el _ t₂) = Imp (term2b n depth t₁) (term2b n (suc depth) t₂)
 term2b n depth t | sort x = Falsehood
 term2b n depth t | unknown = Falsehood
 term2b n depth t | _ = Falsehood
 
+private
+  -- here we'll test the reflection a bit
+  test0 : Set
+  test0 = (a b c d : Set) → a ∧ b
+
+  test0-check : let t = quoteTerm test0 in
+                term2b (argsNo t) 0 t ≡ And (Atomic (suc (suc (suc zero)))) (Atomic (suc (suc zero)))
+  test0-check = refl
+  test1-check : let t = quoteTerm ( (a b d : Set) → a → b) in
+                term2b (argsNo t) 0 t ≡ Imp (Atomic ((suc (suc zero)))) (Atomic ((suc zero)))
+  test1-check = refl
+
+
+
 
 somethm : Set
-somethm = (a b c d : Set) → a → b
+somethm = (a b c d : Set) → a ∧ b → d -- still posing a problem.
 
 goal₀ : somethm
 goal₀ = quoteGoal e in {!stripPi e!}
