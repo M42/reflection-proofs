@@ -513,16 +513,15 @@ private
   test4-check = refl
 
 
+forallenvs : ∀ (n : ℕ)  (e : Env n) → (b : BoolExpr n) → decide e b ≡ true → ⟦ e ⊢ b ⟧
+forallenvs = {!!}
 
 
 somethm : Set
-somethm = (a b c d : Set) → ⊤ ∨ b
-
-goal₀ : somethm
-goal₀ = quoteGoal e in {!stripPi e!}
+somethm =  ⊤ ∨ ⊥
 
 goalbla : somethm
-goalbla = quoteGoal e in {!term2b (argsNo e) 0 e !}
+goalbla = quoteGoal e in soundness empty (term2b (argsNo e) 0 (stripPi e)) refl
 
 
 {-
