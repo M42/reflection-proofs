@@ -305,7 +305,7 @@ open import Reflection
 
 argsNo : Term → ℕ
 argsNo (pi (arg visible relevant (el (lit 0) (sort (lit 0)))) (el s t)) = suc (argsNo t)
-argsNo (pi (arg visible relevant (el (lit 0) (def  _ _))) (el s t)) = suc (argsNo t)
+-- argsNo (pi (arg visible relevant (el (lit 0) (def  _ _))) (el s t)) = suc (argsNo t)
 argsNo (var x args) = 0
 argsNo (con c args) = 0
 argsNo (def f args) = 0
@@ -427,14 +427,9 @@ open import Data.Vec.N-ary
 -- examples
 
 private
-  term-ex : Term
-  term-ex = quoteTerm ((n m k : ℕ) → n + m ≡ m + k)
 
   term-ex₁ : Term
   term-ex₁ = quoteTerm ((a b c d : Set) → b → a)
-
-  argsNo-ex : argsNo term-ex ≡ 3
-  argsNo-ex = refl
 
   argsNo-ex₁ : argsNo term-ex₁ ≡ 4
   argsNo-ex₁ = refl
@@ -518,7 +513,7 @@ forallenvs = {!!}
 
 
 somethm : Set
-somethm =  ⊤ ∨ ⊥
+somethm = ⊤ ∨ ⊥ → ⊤
 
 goalbla : somethm
 goalbla = quoteGoal e in soundness empty (term2b (argsNo e) 0 (stripPi e)) refl
