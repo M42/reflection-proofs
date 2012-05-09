@@ -465,25 +465,30 @@ unsafeMinus (suc n₁) (suc m) = unsafeMinus n₁ m
 
 term2b : (n : ℕ) → (depth : ℕ) → (t : Term) → (BoolExpr n)
 term2b n depth t with stripPi t
-term2b n depth t | var x args with suc x ≤? n | suc (unsafeMinus x depth) ≤? n
-term2b n depth t | var x args | yes p  | yes p2 = (Atomic (fromℕ≤ {(unsafeMinus x depth)} p2))
-term2b n depth t | var x args | no p | yes p1 = Atomic (fromℕ≤ {unsafeMinus x depth} p1)
-term2b n depth t | var x args | yes p | no p1 = Truth
-term2b n depth t | var x args | _     | _     = Falsehood
+term2b n depth t | var x args with suc (unsafeMinus x depth) ≤? n
+term2b n depth t | var x args | yes p2 = Atomic (fromℕ≤ {unsafeMinus x depth} p2)
+term2b n depth t | var x args | _      = Falsehood --warning
 term2b n depth t | con c args = {!!}
 term2b n depth t | def f args with f ≟-Name (quote Data.Product.Σ)
 term2b n depth t | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | yes p = And (term2b n depth t₁) (term2b n depth t₂)
 term2b n depth t | def f (_) | yes p = Falsehood -- wrong arguments for And
 term2b n depth t | def f args | no p  with f ≟-Name (quote Data.Empty.⊥)
-term2b n depth t | def f []                                     | no _ | yes p = Falsehood
-term2b n depth t | def f args                                   | no _ | yes p = Falsehood
-term2b n depth t | def f args                                   | no _ | no  p = Falsehood
+term2b n depth t | def f []   | no _ | yes p = Falsehood -- bonafide
+term2b n depth t | def f args | no _ | yes p = {!!}
+term2b n depth t | def f args | no _ | no  p with f ≟-Name (quote Data.Sum._⊎_)
+term2b n depth t | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | no _ | no _ | yes p = Or (term2b n depth t₁)
+                                                                                           (term2b n depth t₂)
+term2b n depth t | def f args | no _ | no _ | yes _  = Falsehood --warning
+term2b n depth t | def f args | no _ | no _ | no _ with f ≟-Name (quote Data.Unit.⊤)
+term2b n depth t | def f [] | no _   | no _    | no _    | yes _ = Truth
+term2b n depth t | def f _ | no _   | no _    | no _    | yes _ = Falsehood -- warning
+term2b n depth t | def f _  | no _   | no _    | no _    | no _ = Falsehood -- warning
 
 term2b n depth t | lam v t' = term2b n (suc depth) t'
 term2b n depth t | pi (arg visible relevant (el _ t₁)) (el _ t₂) = Imp (term2b n depth t₁) (term2b n (suc depth) t₂)
-term2b n depth t | sort x = Falsehood
-term2b n depth t | unknown = Falsehood
-term2b n depth t | _ = Falsehood
+term2b n depth t | sort x = Falsehood   -- warning
+term2b n depth t | unknown = Falsehood   -- warning
+term2b n depth t | _ = Falsehood   -- warning
 
 private
   -- here we'll test the reflection a bit
@@ -503,12 +508,15 @@ private
   test3-check : let t = quoteTerm ( (a b c d : Set) → ¬ a → b ) in
                 term2b (argsNo t) 0 t ≡ Imp (Imp Falsehood (Atomic (suc (suc (suc zero))))) (Atomic (suc (suc zero)))
   test3-check = refl
+  test4-check : let t = quoteTerm ( (a b c d : Set) → ⊥ ∨ b ) in
+                term2b (argsNo t) 0 t ≡ Or (Falsehood) (Atomic (suc (suc zero)))
+  test4-check = refl
 
 
 
 
 somethm : Set
-somethm = (a b c d : Set) → (¬ a) → b -- still posing a problem.
+somethm = (a b c d : Set) → ⊤ ∨ b
 
 goal₀ : somethm
 goal₀ = quoteGoal e in {!stripPi e!}
