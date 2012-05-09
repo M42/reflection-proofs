@@ -13,7 +13,7 @@ open import Data.Product hiding (map)
 open import Data.List hiding (_++_)
 
 ¬_ : Set → Set
-¬_ = λ p → ⊥
+¬_ = λ x → (⊥ → x)
 
 _∧_ : Set → Set → Set
 _∧_ = _×_
@@ -319,7 +319,7 @@ argsNo _ = 0
 
 stripPi : Term → Term
 stripPi (pi (arg visible relevant (el (lit 0) (sort (lit 0)))) (el s t)) = stripPi t
-stripPi (pi (arg visible relevant (el (lit 0) (def  _ _))) (el s t)) = stripPi t
+--stripPi (pi (arg visible relevant (el (lit 0) (def  _ _))) (el s t)) = stripPi t
 -- identity otherwise
 stripPi (pi args t) = pi args t
 stripPi (var x args) = var x args
@@ -467,12 +467,18 @@ term2b : (n : ℕ) → (depth : ℕ) → (t : Term) → (BoolExpr n)
 term2b n depth t with stripPi t
 term2b n depth t | var x args with suc x ≤? n | suc (unsafeMinus x depth) ≤? n
 term2b n depth t | var x args | yes p  | yes p2 = (Atomic (fromℕ≤ {(unsafeMinus x depth)} p2))
-term2b n depth t | var x args | _ | _ = Falsehood
+term2b n depth t | var x args | no p | yes p1 = Atomic (fromℕ≤ {unsafeMinus x depth} p1)
+term2b n depth t | var x args | yes p | no p1 = Truth
+term2b n depth t | var x args | _     | _     = Falsehood
 term2b n depth t | con c args = {!!}
 term2b n depth t | def f args with f ≟-Name (quote Data.Product.Σ)
 term2b n depth t | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | yes p = And (term2b n depth t₁) (term2b n depth t₂)
-term2b n depth t | def f (_) | yes p = Falsehood
-term2b n depth t | def f args | no p = Falsehood
+term2b n depth t | def f (_) | yes p = Falsehood -- wrong arguments for And
+term2b n depth t | def f args | no p  with f ≟-Name (quote Data.Empty.⊥)
+term2b n depth t | def f []                                     | no _ | yes p = Falsehood
+term2b n depth t | def f args                                   | no _ | yes p = Falsehood
+term2b n depth t | def f args                                   | no _ | no  p = Falsehood
+
 term2b n depth t | lam v t' = term2b n (suc depth) t'
 term2b n depth t | pi (arg visible relevant (el _ t₁)) (el _ t₂) = Imp (term2b n depth t₁) (term2b n (suc depth) t₂)
 term2b n depth t | sort x = Falsehood
@@ -481,6 +487,7 @@ term2b n depth t | _ = Falsehood
 
 private
   -- here we'll test the reflection a bit
+  -- sort of like a few units...
   test0 : Set
   test0 = (a b c d : Set) → a ∧ b
 
@@ -490,12 +497,18 @@ private
   test1-check : let t = quoteTerm ( (a b d : Set) → a → b) in
                 term2b (argsNo t) 0 t ≡ Imp (Atomic ((suc (suc zero)))) (Atomic ((suc zero)))
   test1-check = refl
+  test2-check : let t = quoteTerm ( (a b c : Set) → a ∧ c → b ) in
+                term2b (argsNo t) 0 t ≡ Imp (And (Atomic (suc (suc zero))) (Atomic zero)) (Atomic (suc zero))
+  test2-check = refl
+  test3-check : let t = quoteTerm ( (a b c d : Set) → ¬ a → b ) in
+                term2b (argsNo t) 0 t ≡ Imp (Imp Falsehood (Atomic (suc (suc (suc zero))))) (Atomic (suc (suc zero)))
+  test3-check = refl
 
 
 
 
 somethm : Set
-somethm = (a b c d : Set) → a ∧ b → d -- still posing a problem.
+somethm = (a b c d : Set) → (¬ a) → b -- still posing a problem.
 
 goal₀ : somethm
 goal₀ = quoteGoal e in {!stripPi e!}
