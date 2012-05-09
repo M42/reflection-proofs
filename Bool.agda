@@ -12,6 +12,8 @@ open import Data.Sum hiding (map)
 open import Data.Product hiding (map)
 open import Data.List hiding (_++_)
 
+-- first we define a few aliases, to make types look
+-- like propositions
 ¬_ : Set → Set
 ¬_ = λ x → (⊥ → x)
 
@@ -28,8 +30,8 @@ trueandtrue (tt , tt) = tt
 
 -- eventually we'd like to prove these kinds of tautologies:
 myfavouritetheorem : Set
-myfavouritetheorem = ∀ {p1 q1 p2 q2} → (p1 ∨ q1) ∧ (p2 ∨ q2) →
-                                       (q1 ∨ p1) ∧ (q2 ∨ p2)
+myfavouritetheorem = (p1 q1 p2 q2 : Set) → (p1 ∨ q1) ∧ (p2 ∨ q2)
+                                         → (q1 ∨ p1) ∧ (q2 ∨ p2)
 
 proof1 : myfavouritetheorem
 proof1 = {! refl!}   -- this won't work, since p1 != q1, etc
@@ -69,6 +71,8 @@ Env = Vec Bool
 ... | true  = ⊤
 ... | false = ⊥
 ⟦ env ⊢ Not p ⟧     = ⟦ env ⊢ p ⟧ → ⊥ -- if you manage to prove p, then Not p cannot hold
+
+
 
 -- decision procedure:
 -- return whether the given proposition is true
@@ -487,7 +491,7 @@ term2b n depth t | _ = Falsehood   -- warning
 
 private
   -- here we'll test the reflection a bit
-  -- sort of like a few units...
+  -- sort of like a few unit tests...
   test0 : Set
   test0 = (a b c d : Set) → a ∧ b
 
@@ -512,11 +516,37 @@ forallenvs : ∀ (n : ℕ)  (e : Env n) → (b : BoolExpr n) → decide e b ≡ 
 forallenvs = {!!}
 
 
+_⟦_⟧ : {n : ℕ} → (freeVars : ℕ) → (b : BoolExpr n) →  -- something
+                Set
+suc n ⟦ x ⟧ = Set → n ⟦ x ⟧ -- hoping this'll introduce a fresh variable?
+zero ⟦ Truth ⟧ = ⊤
+zero ⟦ Falsehood ⟧ = ⊥
+zero ⟦ And b b₁ ⟧ = (zero ⟦ b ⟧) × (zero ⟦ b₁ ⟧)
+zero ⟦ Or b b₁ ⟧ = (zero ⟦ b ⟧) ⊎ (zero ⟦ b₁ ⟧)
+zero ⟦ Not b ⟧ = ¬ (zero ⟦ b ⟧)
+zero ⟦ Imp b b₁ ⟧ = zero ⟦ b ⟧ → zero ⟦ b₁ ⟧
+zero ⟦ Atomic x ⟧ = {!!} -- uh, is this even possible?
+
+
+automate2 : (n : ℕ) → (p : BoolExpr n) → (∀ env → decide env p ≡ true) → n ⟦ p ⟧
+automate2 zero Truth pfunc = tt
+automate2 (suc n) Truth pfunc = {!!}
+automate2 zero Falsehood pfunc = {!!} -- we want absurd here, but you can't match on pfunc
+automate2 (suc n) Falsehood pfunc = {!!}
+automate2 n (And p p₁) pfunc = {!!}
+automate2 n (Or p p₁) pfunc = {!!}
+automate2 n (Not p) pfunc = {!!}
+automate2 n (Imp p p₁) pfunc = {!!}
+automate2 n (Atomic x) pfunc = {!!}
+
 somethm : Set
-somethm = ⊤ ∨ ⊥ → ⊤
+somethm = (b : Set) → ⊤ ∨ b → ⊤
+
+const : {a b : Set} → a → b → a
+const x y = x
 
 goalbla : somethm
-goalbla = quoteGoal e in soundness empty (term2b (argsNo e) 0 (stripPi e)) refl
+goalbla = quoteGoal e in automate2 (argsNo e) (term2b (argsNo e) 0 (stripPi e)) (const refl)
 
 
 {-
