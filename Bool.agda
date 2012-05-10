@@ -10,7 +10,7 @@ open import Data.Unit hiding (_≤?_)
 open import Data.Empty
 open import Data.Sum hiding (map)
 open import Data.Product hiding (map)
-open import Data.List hiding (_++_)
+open import Data.List hiding (_++_; map)
 
 -- first we define a few aliases, to make types look
 -- like propositions
@@ -272,25 +272,19 @@ addlem {suc n} =
     suc (n + suc (suc (n + zero)))
   ∎
 
-addLists : {n : ℕ} {e : Set}
-                     → Vec e n
-                     → Vec e n
-                     → Vec e (n + n)
-addLists l1 l2 = l1 ++ l2
-
 lem₀ : {n m : ℕ} → 2 ^ n + 0 ≡ 2 ^ n
 lem₀ {n} {m} = {!!}
 
 -- enumerate all the possible envs of a particular size.
-embellish : (n : ℕ) {- → 2 ^ n + 0 ≡ 2 ^ n
-                    → 2 ^ n     ≡ 2 ^ n + 0 * 2 ^ n -}
+embellish : (n : ℕ) {- → 2 ^ n + 0 ≡ 2 ^ n -}
+                    → 2 ^ n     ≡ 2 ^ n + 0 * 2 ^ n
                     → Vec (Env n) (2 ^ n)
-embellish zero     = [] ∷ []
-embellish (suc n)  = {!!}
+embellish zero    pf = [] ∷ []
+embellish (suc n) pf = {!(map (λ l → true ∷ l) (embellish n)) ++ (map (λ l → false ∷ l) (embellish n))!}
 
 -- return the nn'th env with size n
 something : ∀ {n : ℕ} → (nn : Fin (2 ^ n)) → Env n
-something {n} nn = lookup nn (embellish n)
+something {n} nn = lookup nn (embellish n ?)
 
 Surj-something : ∀ {n : ℕ} → Surj (something {n})
 Surj-something {n} y = {!!} , {!!}
@@ -364,8 +358,9 @@ isAnd   c as = isName (quote _∧_) c as   b∧ lengthis as 2
 isOr    c as = isName (quote _∨_) c as   b∧ lengthis as 2
 isNot   c as = isName (quote ¬_) c as    b∧ lengthis as 1
 
-allAnd : List Bool → Bool
-allAnd = Data.List.foldr _b∧_ true
+allTrue : {n : ℕ} → Vec Bool n → Bool
+allTrue {zero}  = λ _ → true
+allTrue {suc n} = foldr₁ _b∧_
 
 mutual
   isBoolArg : {n : ℕ} → Arg Term → Bool
@@ -377,11 +372,11 @@ mutual
   ... | no ¬p = false
   isBoolExpr {n} (con c args) = (isTrue c args
                           b∨ isFalse c args)
-                          b∧ allAnd (Data.List.map (isBoolArg {n}) args)
+                          b∧ allTrue (map (isBoolArg {n}) (fromList args))
   isBoolExpr {n} (def f args) = (isAnd f args
                           b∨ isOr f args
                           b∨ isNot f args)
-                          b∧ allAnd (Data.List.map (isBoolArg {n}) args)
+                          b∧ allTrue (map (isBoolArg {n}) (fromList args))
   isBoolExpr (lam v t)    = false
   isBoolExpr (pi t₁ t₂)   = false
   isBoolExpr (sort x)     = false
@@ -550,17 +545,23 @@ zero ⟦ Imp b b₁ ⟧ = zero ⟦ b ⟧ → zero ⟦ b₁ ⟧
 zero ⟦ SET a ⟧ = a
 zero ⟦ Atomic x ⟧ = {!!} -- we must make this absurd.
 
-automate2 : (n : ℕ) → (p : BoolExpr n) → (∀ env → decide env p ≡ true) → n ⟦ p ⟧
-automate2 zero Truth pfunc = tt
-automate2 (suc n) Truth pfunc = {!!}
-automate2 zero Falsehood pfunc = {!!} -- we want absurd here, but you can't match on pfunc
-automate2 (suc n) Falsehood pfunc = {!!}
-automate2 n (And p p₁) pfunc = {!!}
-automate2 n (Or p p₁) pfunc = {!!}
-automate2 n (Not p) pfunc = {!!}
-automate2 n (Imp p p₁) pfunc = {!!}
-automate2 n (Atomic x) pfunc = {!!}
-automate2 n (SET a) pfunc = {!!} 
+-- this checks, by brute force, if an expression is a tautology,
+-- that is, if it's true for all possible variable assignments.
+-- this would be where to implement a smarter solver.
+decideForallEnv : {n : ℕ} → BoolExpr n → Bool
+decideForallEnv {n} exp = allTrue (map (λ env → decide env exp) (embellish n ?))
+
+
+-- this is actually our soundness function.
+automate2 : {n : ℕ} → (p : BoolExpr n) → decideForallEnv p ≡ true → n ⟦ p ⟧
+automate2 Truth pfunc = {!tt!}
+automate2 Falsehood pfunc = {!!} -- we want absurd here, but you can't match on pfunc
+automate2 (And p p₁) pfunc = {!!}
+automate2 (Or p p₁) pfunc = {!!}
+automate2 (Not p) pfunc = {!!}
+automate2 (Imp p p₁) pfunc = {!!}
+automate2 (Atomic x) pfunc = {!!}
+automate2 (SET a) pfunc = {!!} 
 
 somethm : Set
 somethm = (b : Set) → ⊤ ∨ b → ⊤
@@ -569,6 +570,6 @@ const : {a b : Set} → a → b → a
 const x y = x
 
 goalbla : somethm
-goalbla = quoteGoal e in automate2 (argsNo e) (term2b (argsNo e) 0 (stripPi e)) (const refl)
+goalbla = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e)) refl
 
 
