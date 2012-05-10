@@ -1,7 +1,7 @@
 {-# OPTIONS --type-in-type #-}
 module Bool where
 
-open import Relation.Binary.PropositionalEquality renaming ( [_] to by )
+open import Relation.Binary.PropositionalEquality renaming ( [_] to by ; subst to substpe)
 open import Data.Bool renaming (_∧_ to _b∧_ ; _∨_ to _b∨_; not to bnot)
 open import Data.Nat
 open import Data.Fin hiding (_+_; pred)
@@ -41,6 +41,11 @@ proof1 = {! refl!}   -- this won't work, since p1 != q1, etc
 -- (which are actually types of functions), and then use reflection
 -- in some unmagical way... see below.
 
+{-
+The point of having SET is to have a place to put stuff subst gives us.
+i.e., if we want to go from BoolExpr -> Set, we need a way to reattach a
+variable in the Pi type to some term inside our boolean expression.
+-}
 data BoolExpr : ℕ → Set where
   Truth     : {n : ℕ}                           → BoolExpr n
   Falsehood : {n : ℕ}                           → BoolExpr n
@@ -49,6 +54,7 @@ data BoolExpr : ℕ → Set where
   Not       : {n : ℕ} → BoolExpr n              → BoolExpr n
   Imp       : {n : ℕ} → BoolExpr n → BoolExpr n → BoolExpr n
   Atomic    : {n : ℕ} → Fin n                   → BoolExpr n
+  SET       : {n : ℕ} → (a : Set)               → BoolExpr n
 
 -- ...and some way to interpret our representation
 -- of the formula at hand:
@@ -71,6 +77,7 @@ Env = Vec Bool
 ... | true  = ⊤
 ... | false = ⊥
 ⟦ env ⊢ Not p ⟧     = ⟦ env ⊢ p ⟧ → ⊥ -- if you manage to prove p, then Not p cannot hold
+⟦ env ⊢ SET a ⟧     = a
 
 
 
@@ -85,6 +92,7 @@ decide env (Or be be₁)  = decide env be b∨ decide env be₁
 decide env (Not p)      = bnot (decide env p)
 decide env (Imp p q)    = bnot (decide env p) b∨ (decide env q)
 decide env (Atomic n)   = lookup n env
+decide env (SET a)      = {!!} -- should prevent this with some predicate?
 
 open import Lemmas
 
@@ -107,6 +115,7 @@ mutual
   soundness' env (Atomic x) dec pf  with lookup x env
   soundness' env (Atomic x) ()  pf | true
   soundness' env (Atomic x) dec pf | false = pf
+  soundness' env (SET a)    dec pf = {!!}
 
   -- soundness theorem:
   soundness : {n : ℕ} → (env : Env n) → (p : BoolExpr n) → decide env p ≡ true → ⟦ env ⊢ p ⟧
@@ -123,6 +132,7 @@ mutual
   soundness env (Imp p q) pf | inj₂ y = λ x → soundness env q y
   soundness env (Atomic n) pf with lookup n env
   soundness env (Atomic n₁) refl | .true = tt
+  soundness env (SET a)   pf = {!!}
 
 open import Data.Nat
 open import Relation.Nullary hiding (¬_)
@@ -243,7 +253,6 @@ blah {suc n} = cong suc blah
 
 open import Data.Vec.Properties
 open import Data.Nat.Properties
-open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 
 sucLem : {n k : ℕ} → suc (n + k) ≡ n + suc k
@@ -515,18 +524,31 @@ private
 forallenvs : ∀ (n : ℕ)  (e : Env n) → (b : BoolExpr n) → decide e b ≡ true → ⟦ e ⊢ b ⟧
 forallenvs = {!!}
 
+-- this should be an fmap.
+subst : {n : ℕ} → (var : ℕ) → (t : Set) → BoolExpr n → BoolExpr n
+subst v t Truth = Truth
+subst v t Falsehood = Falsehood
+subst v t (And exp exp₁) = And (subst v t exp) (subst v t exp₁)
+subst v t (Or exp exp₁) = Or (subst v t exp) (subst v t exp₁)
+subst v t (Not exp) = Not (subst v t exp)
+subst v t (Imp exp exp₁) = Imp (subst v t exp) (subst v t exp₁)
+subst v t (Atomic x) with Data.Nat._≟_ (toℕ x) v
+subst v t (Atomic x) | yes p = SET t
+subst v t (Atomic x) | no ¬p = Atomic x
+subst v t (SET a) = SET a
+
 
 _⟦_⟧ : {n : ℕ} → (freeVars : ℕ) → (b : BoolExpr n) →  -- something
                 Set
-suc n ⟦ x ⟧ = Set → n ⟦ x ⟧ -- hoping this'll introduce a fresh variable?
+suc n ⟦ x ⟧ = (b : Set) → n ⟦ subst n b x ⟧ -- hoping this'll introduce a fresh variable? TODO check n is right. maybe we need (degree b - n)
 zero ⟦ Truth ⟧ = ⊤
 zero ⟦ Falsehood ⟧ = ⊥
 zero ⟦ And b b₁ ⟧ = (zero ⟦ b ⟧) × (zero ⟦ b₁ ⟧)
 zero ⟦ Or b b₁ ⟧ = (zero ⟦ b ⟧) ⊎ (zero ⟦ b₁ ⟧)
 zero ⟦ Not b ⟧ = ¬ (zero ⟦ b ⟧)
 zero ⟦ Imp b b₁ ⟧ = zero ⟦ b ⟧ → zero ⟦ b₁ ⟧
-zero ⟦ Atomic x ⟧ = {!!} -- uh, is this even possible?
-
+zero ⟦ SET a ⟧ = a
+zero ⟦ Atomic x ⟧ = {!!} -- we must make this absurd.
 
 automate2 : (n : ℕ) → (p : BoolExpr n) → (∀ env → decide env p ≡ true) → n ⟦ p ⟧
 automate2 zero Truth pfunc = tt
@@ -538,6 +560,7 @@ automate2 n (Or p p₁) pfunc = {!!}
 automate2 n (Not p) pfunc = {!!}
 automate2 n (Imp p p₁) pfunc = {!!}
 automate2 n (Atomic x) pfunc = {!!}
+automate2 n (SET a) pfunc = {!!} 
 
 somethm : Set
 somethm = (b : Set) → ⊤ ∨ b → ⊤
@@ -548,32 +571,4 @@ const x y = x
 goalbla : somethm
 goalbla = quoteGoal e in automate2 (argsNo e) (term2b (argsNo e) 0 (stripPi e)) (const refl)
 
-
-{-
-
-Thoughts about our workflow. What we'd like to do is the following, given some goal like this:
-
-goal₁ : {a b : Bool} a ∧ b → b ∧ a
-
-then using quote:
-
-goal₁ = quoteGoal e in prove e refl*
-where refl* means the right number of refl constructors
-
-Since quoteGoal gives us a Term, we'll need some things, such as:
-
-- term2boolexpr : Term → BoolExpr n
-- soundness : checkEqual a b ≡ true → a ≡ b
-
-Which allows us to define:
-
-prove something = left <- lhs something
-                  right <- rhs something
-                  _ <- isbool left
-                  _ <- isbool right
-                  normalL <- eval left
-                  normalR <- eval right
-                  equality <- checkEqual normalL normalR
-                  return soundness ... . . . . ?
-                  -}
 
