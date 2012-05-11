@@ -431,17 +431,27 @@ subst v t (Atomic x) | yes p = SET t
 subst v t (Atomic x) | no ¬p = Atomic x
 subst v t (SET a) = SET a
 
+isSubstituted : {n : ℕ} → (freeVars : ℕ) → (b : BoolExpr n) → Bool
+isSubstituted (suc fv) b = true
+isSubstituted zero (Atomic x) = false
+isSubstituted zero Truth = true
+isSubstituted zero Falsehood = true
+isSubstituted zero (And b b₁) = isSubstituted zero b b∧ isSubstituted zero b₁
+isSubstituted zero (Or b b₁) = isSubstituted zero b b∧ isSubstituted zero b₁
+isSubstituted zero (Imp b b₁) = isSubstituted zero b b∧ isSubstituted zero b₁
+isSubstituted zero (SET a) = true
 
-_⟦_⟧ : {n : ℕ} → (freeVars : ℕ) → (b : BoolExpr n) →  -- something
-                Set
-suc n ⟦ x ⟧ = (b : Set) → n ⟦ subst n b x ⟧ -- hoping this'll introduce a fresh variable? TODO check n is right. maybe we need (degree b - n)
-zero ⟦ Truth ⟧ = ⊤
-zero ⟦ Falsehood ⟧ = ⊥
-zero ⟦ And b b₁ ⟧ = (zero ⟦ b ⟧) × (zero ⟦ b₁ ⟧)
-zero ⟦ Or b b₁ ⟧ = (zero ⟦ b ⟧) ⊎ (zero ⟦ b₁ ⟧)
-zero ⟦ Imp b b₁ ⟧ = zero ⟦ b ⟧ → zero ⟦ b₁ ⟧
-zero ⟦ SET a ⟧ = a
-zero ⟦ Atomic x ⟧ = {!!} -- we must make this absurd.
+_⟦_⟧_ : {n : ℕ} → (freeVars : ℕ) → (b : BoolExpr n) →  -- something
+                 isSubstituted freeVars b ≡ true →
+                 Set
+suc n ⟦ x ⟧ pf = (b : Set) → n ⟦ subst n b x ⟧ {!!} -- hoping this'll introduce a fresh variable? TODO check n is right. maybe we need (degree b - n)
+zero ⟦ Truth ⟧ pf = ⊤
+zero ⟦ Falsehood ⟧ pf = ⊥
+zero ⟦ And b b₁ ⟧ pf = (zero ⟦ b ⟧ and-l pf) × (zero ⟦ b₁ ⟧ (and-r (isSubstituted zero b) (isSubstituted zero b₁) pf))
+zero ⟦ Or b b₁ ⟧ pf = (zero ⟦ b ⟧ and-l pf) ⊎ (zero ⟦ b₁ ⟧ and-r (isSubstituted zero b) (isSubstituted zero b₁) pf)
+zero ⟦ Imp b b₁ ⟧ pf = zero ⟦ b ⟧ and-l pf → zero ⟦ b₁ ⟧ and-r (isSubstituted zero b) (isSubstituted zero b₁) pf
+zero ⟦ SET a ⟧ pf = a
+zero ⟦ Atomic x ⟧ ()
 
 data Tree : ℕ → Set where
   Nil : Tree zero
