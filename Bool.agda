@@ -213,93 +213,11 @@ private
 -- then: prove that you can enumerate all possible Env's and use
 -- that to call decide...
 
-
-
-------------------------------------------------------------------------
-
-Surj : ∀ {A B}(f : A → B) → Set
-Surj f = ∀ y → ∃ λ x → f x ≡ y
-
-Inj : ∀ {A B}(f : A → B) → Set
-Inj f = ∀ x₁ x₂ → f x₁ ≡ f x₂ → x₁ ≡ x₂
-
-------------------------------------------------------------------------
-
-isZero : Fin 2 → Bool
-isZero zero    = true
-isZero (suc _) = false
-
-Surj-isZero : Surj isZero
-Surj-isZero true  = zero , refl
-Surj-isZero false = suc zero , refl
-
-data Enum (A : Set) : Set where
-  surj : (n : ℕ) (f : Fin n → A) → Surj f → Enum A
-  inj  : (n : ℕ) (f : A → Fin n) → Inj  f → Enum A
-
-ex₀ : Enum Bool
-ex₀ = surj 2 isZero Surj-isZero
-
-------------------------------------------------------------------------
-
--- integer exponentiation.
-_^_ : ℕ → ℕ → ℕ
-n ^ zero    = 1
-n ^ (suc m) = n * (n ^ m)
-
-blah : {n : ℕ}  → n ≡ Data.Nat._+_ n 0
-blah {zero} = refl
-blah {suc n} = cong suc blah
-
 open import Data.Vec.Properties
 open import Data.Nat.Properties
 open ≡-Reasoning
 
-sucLem : {n k : ℕ} → suc (n + k) ≡ n + suc k
-sucLem {zero} = refl
-sucLem {suc n} {k} =  cong suc (sucLem {n} {k })
-
-addlem : {n : ℕ} → suc (n + (1 * n)) ≡ n + (1 * suc n)
-addlem {zero} = refl
-addlem {suc n} =
-  begin
-    suc (suc (n + suc (n + zero)))
-    ≡⟨ cong suc (cong suc (sym (cong (_+_ n) (cong suc blah)))) ⟩
-    suc (suc (n + suc n))
-    ≡⟨ cong suc (sucLem {n}) ⟩
-    suc (n + suc (suc n))
-    ≡⟨ cong suc ( (cong (_+_ n) (cong suc (cong suc blah)))) ⟩
-    suc (n + suc (suc (n + zero)))
-  ∎
-
-lem₀ : {n m : ℕ} → 2 ^ n + 0 ≡ 2 ^ n
-lem₀ {n} {m} = {!!}
-
--- enumerate all the possible envs of a particular size.
-embellish : (n : ℕ) {- → 2 ^ n + 0 ≡ 2 ^ n -}
-                    → 2 ^ n     ≡ 2 ^ n + 0 * 2 ^ n
-                    → Vec (Env n) (2 ^ n)
-embellish zero    pf = [] ∷ []
-embellish (suc n) pf = {!(map (λ l → true ∷ l) (embellish n)) ++ (map (λ l → false ∷ l) (embellish n))!}
-
--- return the nn'th env with size n
-something : ∀ {n : ℕ} → (nn : Fin (2 ^ n)) → Env n
-something {n} nn = lookup nn (embellish n ?)
-
-Surj-something : ∀ {n : ℕ} → Surj (something {n})
-Surj-something {n} y = {!!} , {!!}
-
 open import Relation.Binary
-
-_≟-env_ : {n : ℕ} → Decidable {A = Env n} _≡_
-_≟-env_ = {!!}
-
-whichElem : {n : ℕ} → (a : Env n) → Vec (Env n) (2 ^ n) → Fin (2 ^ n)
-whichElem {zero} [] ([] ∷ []) = zero
-whichElem {suc n} elem l = {!l!}
-
-ex₁ : ∀ {n : ℕ} → Enum (Env n)
-ex₁ {n} = surj (2 ^ n) something Surj-something
 
 -- okay, next attempt: using quoteGoal
 
@@ -446,26 +364,13 @@ private
   -- stripPi-ex : stripPi-ex t ≡ def ≡' (var 2 + var 1) ≡ (var 1 + var 0)
 
 
-goal2 : ∀ (a b : Set) → (a ∧ b) → (b ∧ a)
-goal2 = quoteGoal e in {!e!}
-
-goal₁ : ∀ a b → (a ∧ b → b ∧ a)
-goal₁ = quoteGoal e in soundness (true ∷ true ∷ []) {!term2boolexpr (stripPi e) refl!} refl
-
-lt1 : {m n : ℕ} → Data.Nat._≤_ m n → Data.Nat._≤_ m (suc n)
-lt1 {zero} {zero} p = z≤n
-lt1 {suc m} {zero} ()
-lt1 {zero} {n} z≤n = z≤n
-lt1 {suc m} {suc n} (s≤s p) = s≤s (lt1 p)
-
-lt : {m n : ℕ} → Data.Nat._≤_ (suc m) n → Data.Nat._≤_ m n
-lt (s≤s p) = lt1 p
-
 unsafeMinus : (a : ℕ) → (b : ℕ) → ℕ
 unsafeMinus zero m = zero
 unsafeMinus n₁ zero = n₁
 unsafeMinus (suc n₁) (suc m) = unsafeMinus n₁ m
 
+-- we don't have a branch for Not, since that is immediately
+-- translated as "¬ P ⇒ λ ⊥ → P"
 term2b : (n : ℕ) → (depth : ℕ) → (t : Term) → (BoolExpr n)
 term2b n depth t with stripPi t
 term2b n depth t | var x args with suc (unsafeMinus x depth) ≤? n
@@ -545,31 +450,37 @@ zero ⟦ Imp b b₁ ⟧ = zero ⟦ b ⟧ → zero ⟦ b₁ ⟧
 zero ⟦ SET a ⟧ = a
 zero ⟦ Atomic x ⟧ = {!!} -- we must make this absurd.
 
+data Tree : ℕ → Set where
+  Nil : Tree zero
+  P   : {n : ℕ} → Tree n → Tree n → Tree (suc n) -- pair
+  
+-- enumerate all the possible envs of a particular size.
+allEnvs : (n : ℕ) → Tree n
+allEnvs zero    = Nil
+allEnvs (suc n) = P (allEnvs n) (allEnvs n)
+
 -- this checks, by brute force, if an expression is a tautology,
 -- that is, if it's true for all possible variable assignments.
 -- this would be where to implement a smarter solver.
-decideForallEnv : {n : ℕ} → BoolExpr n → Bool
-decideForallEnv {n} exp = allTrue (map (λ env → decide env exp) (embellish n ?))
+-- decideForallEnv : {n : ℕ} → BoolExpr n → Bool
+-- decideForallEnv {n} exp = allTrue (map (λ env → decide env exp) (allEnvs n))
 
 
--- this is actually our soundness function.
-automate2 : {n : ℕ} → (p : BoolExpr n) → decideForallEnv p ≡ true → n ⟦ p ⟧
-automate2 Truth pfunc = {!tt!}
-automate2 Falsehood pfunc = {!!} -- we want absurd here, but you can't match on pfunc
-automate2 (And p p₁) pfunc = {!!}
-automate2 (Or p p₁) pfunc = {!!}
-automate2 (Not p) pfunc = {!!}
-automate2 (Imp p p₁) pfunc = {!!}
-automate2 (Atomic x) pfunc = {!!}
-automate2 (SET a) pfunc = {!!} 
-
-somethm : Set
-somethm = (b : Set) → ⊤ ∨ b → ⊤
-
-const : {a b : Set} → a → b → a
-const x y = x
-
-goalbla : somethm
-goalbla = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e)) refl
+-- -- this is actually our soundness function.
+-- automate2 : {n : ℕ} → (p : BoolExpr n) → decideForallEnv p ≡ true → n ⟦ p ⟧
+-- automate2 Truth pfunc = {!tt!}
+-- automate2 Falsehood pfunc = {!!} -- we want absurd here, but you can't match on pfunc
+-- automate2 (And p p₁) pfunc = {!!}
+-- automate2 (Or p p₁) pfunc = {!!}
+-- automate2 (Not p) pfunc = {!!}
+-- automate2 (Imp p p₁) pfunc = {!!}
+-- automate2 (Atomic x) pfunc = {!!}
+-- automate2 (SET a) pfunc = {!!} 
+-- 
+-- somethm : Set
+-- somethm = (b : Set) → ⊤ ∨ b → ⊤
+-- 
+-- goalbla : somethm
+-- goalbla = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e)) refl
 
 
