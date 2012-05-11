@@ -253,7 +253,6 @@ isTrue  : (c : Name) (args : List (Arg Term)) → Bool
 isFalse : (c : Name) (args : List (Arg Term)) → Bool
 isAnd   : (f : Name) (args : List (Arg Term)) → Bool
 isOr    : (f : Name) (args : List (Arg Term)) → Bool
-isNot   : (f : Name) (args : List (Arg Term)) → Bool
 
 isName : Name → Name → List (Arg Term) → Bool
 isName cc f args with f ≟-Name cc | args
@@ -269,7 +268,6 @@ isTrue  c as = isName (quote ⊤) c as     b∧ lengthis as 0
 isFalse c as = isName (quote ⊥) c as     b∧ lengthis as 0
 isAnd   c as = isName (quote _∧_) c as   b∧ lengthis as 2
 isOr    c as = isName (quote _∨_) c as   b∧ lengthis as 2
-isNot   c as = isName (quote ¬_) c as    b∧ lengthis as 1
 
 allTrue : {n : ℕ} → Vec Bool n → Bool
 allTrue {zero}  = λ _ → true
@@ -287,8 +285,7 @@ mutual
                           b∨ isFalse c args)
                           b∧ allTrue (map (isBoolArg {n}) (fromList args))
   isBoolExpr {n} (def f args) = (isAnd f args
-                          b∨ isOr f args
-                          b∨ isNot f args)
+                          b∨ isOr f args)
                           b∧ allTrue (map (isBoolArg {n}) (fromList args))
   isBoolExpr (lam v t)    = false
   isBoolExpr (pi t₁ t₂)   = false
@@ -364,34 +361,61 @@ unsafeMinus zero m = zero
 unsafeMinus n₁ zero = n₁
 unsafeMinus (suc n₁) (suc m) = unsafeMinus n₁ m
 
+isBoolExprQ : (n : ℕ) → (depth : ℕ) → (t : Term) → Bool
+isBoolExprQ n depth t with stripPi t
+isBoolExprQ n depth t | var x args with suc (unsafeMinus x depth) ≤? n
+isBoolExprQ n depth t | var x args | yes p2 = true
+isBoolExprQ n depth t | var x args | _      = false
+isBoolExprQ n depth t | con c args = false
+isBoolExprQ n depth t | def f args with f ≟-Name (quote Data.Product.Σ)
+isBoolExprQ n depth t | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | yes p = _b∧_ (isBoolExprQ n depth t₁) (isBoolExprQ n depth t₂)
+isBoolExprQ n depth t | def f (_) | yes p = false
+isBoolExprQ n depth t | def f args | no p  with f ≟-Name (quote Data.Empty.⊥)
+isBoolExprQ n depth t | def f []   | no _ | yes p = true
+isBoolExprQ n depth t | def f args | no _ | yes p = false
+isBoolExprQ n depth t | def f args | no _ | no  p with f ≟-Name (quote Data.Sum._⊎_)
+isBoolExprQ n depth t | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | no _ | no _ | yes p = _b∧_ (isBoolExprQ (argsNo t₁) depth t₁)
+                                                                                           (isBoolExprQ (argsNo t₂) depth t₂)
+isBoolExprQ n depth t | def f args | no _ | no _ | yes _  = false
+isBoolExprQ n depth t | def f args | no _ | no _ | no _ with f ≟-Name (quote Data.Unit.⊤)
+isBoolExprQ n depth t | def f [] | no _   | no _    | no _    | yes _ = true
+isBoolExprQ n depth t | def f _ | no _   | no _    | no _    | yes _ = false
+isBoolExprQ n depth t | def f _  | no _   | no _    | no _    | no _ = false
+
+isBoolExprQ n depth t | lam v t' = isBoolExprQ n (suc depth) t'
+isBoolExprQ n depth t | pi (arg visible relevant (el _ t₁)) (el _ t₂) = _b∧_ (isBoolExprQ (argsNo t₁) depth t₁) (isBoolExprQ n (suc depth) t₂)
+isBoolExprQ n depth t | sort x = false
+isBoolExprQ n depth t | unknown = false
+isBoolExprQ n depth t | pi _ _ = false
+
 -- we don't have a branch for Not, since that is immediately
 -- translated as "¬ P ⇒ λ ⊥ → P"
-term2b : (n : ℕ) → (depth : ℕ) → (t : Term) → (BoolExpr n)
-term2b n depth t with stripPi t
-term2b n depth t | var x args with suc (unsafeMinus x depth) ≤? n
-term2b n depth t | var x args | yes p2 = Atomic (fromℕ≤ {unsafeMinus x depth} p2)
-term2b n depth t | var x args | _      = Falsehood --warning
-term2b n depth t | con c args = {!!}
-term2b n depth t | def f args with f ≟-Name (quote Data.Product.Σ)
-term2b n depth t | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | yes p = And (term2b n depth t₁) (term2b n depth t₂)
-term2b n depth t | def f (_) | yes p = Falsehood -- wrong arguments for And
-term2b n depth t | def f args | no p  with f ≟-Name (quote Data.Empty.⊥)
-term2b n depth t | def f []   | no _ | yes p = Falsehood -- bonafide
-term2b n depth t | def f args | no _ | yes p = {!!}
-term2b n depth t | def f args | no _ | no  p with f ≟-Name (quote Data.Sum._⊎_)
-term2b n depth t | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | no _ | no _ | yes p = Or (term2b n depth t₁)
-                                                                                           (term2b n depth t₂)
-term2b n depth t | def f args | no _ | no _ | yes _  = Falsehood --warning
-term2b n depth t | def f args | no _ | no _ | no _ with f ≟-Name (quote Data.Unit.⊤)
-term2b n depth t | def f [] | no _   | no _    | no _    | yes _ = Truth
-term2b n depth t | def f _ | no _   | no _    | no _    | yes _ = Falsehood -- warning
-term2b n depth t | def f _  | no _   | no _    | no _    | no _ = Falsehood -- warning
-
-term2b n depth t | lam v t' = term2b n (suc depth) t'
-term2b n depth t | pi (arg visible relevant (el _ t₁)) (el _ t₂) = Imp (term2b n depth t₁) (term2b n (suc depth) t₂)
-term2b n depth t | sort x = Falsehood   -- warning
-term2b n depth t | unknown = Falsehood   -- warning
-term2b n depth t | _ = Falsehood   -- warning
+term2b : (n : ℕ) → (depth : ℕ) → (t : Term) → isBoolExprQ (argsNo t) 0 t ≡ true → (BoolExpr n)
+term2b n depth t pf with stripPi t
+term2b n depth t pf | var x args with suc (unsafeMinus x depth) ≤? n
+term2b n depth t pf | var x args | yes p2 = Atomic (fromℕ≤ {unsafeMinus x depth} p2)
+term2b n depth t () | var x args | _
+term2b n depth t () | con c args
+term2b n depth t pf | def f args with f ≟-Name (quote Data.Product.Σ)
+term2b n depth t pf | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | yes p = And (term2b n depth t₁ (and-l {!!})) (term2b n depth t₂ (and-r {!!} {!!} pf))
+term2b n depth t () | def f (_) | yes p
+term2b n depth t pf | def f args | no p  with f ≟-Name (quote Data.Empty.⊥)
+term2b n depth t pf | def f []   | no _ | yes p = Falsehood
+term2b n depth t () | def f args | no _ | yes p
+term2b n depth t pf | def f args | no _ | no  p with f ≟-Name (quote Data.Sum._⊎_)
+term2b n depth t pf | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | no _ | no _ | yes p = Or (term2b n depth t₁ (and-l pf))
+                                                                                              (term2b n depth t₂ (and-r (isBoolExprQ (argsNo t₁) 0 t₁) (isBoolExprQ (argsNo t₂) 0 t₂) pf))
+term2b n depth t () | def f args | no _ | no _ | yes _
+term2b n depth t pf | def f args | no _ | no _ | no _ with f ≟-Name (quote Data.Unit.⊤)
+term2b n depth t pf | def f [] | no _   | no _    | no _    | yes _ = Truth
+term2b n depth t () | def f _ | no _   | no _    | no _    | yes _ 
+term2b n depth t () | def f _  | no _   | no _    | no _    | no _
+                   
+term2b n depth t pf | lam v t' = term2b n (suc depth) t' {!!}
+term2b n depth t pf | pi (arg visible relevant (el _ t₁)) (el _ t₂) = Imp (term2b n depth t₁ {!!}) (term2b n (suc depth) t₂ {!!})
+term2b n depth t () | sort x
+term2b n depth t () | unknown
+term2b n depth t () | pi _ _
 
 private
   -- here we'll test the reflection a bit
@@ -399,25 +423,21 @@ private
   test0 : Set
   test0 = (a b c d : Set) → a ∧ b
 
-  test0-check : let t = quoteTerm test0 in
-                term2b (argsNo t) 0 t ≡ And (Atomic (suc (suc (suc zero)))) (Atomic (suc (suc zero)))
-  test0-check = refl
-  test1-check : let t = quoteTerm ( (a b d : Set) → a → b) in
-                term2b (argsNo t) 0 t ≡ Imp (Atomic ((suc (suc zero)))) (Atomic ((suc zero)))
-  test1-check = refl
-  test2-check : let t = quoteTerm ( (a b c : Set) → a ∧ c → b ) in
-                term2b (argsNo t) 0 t ≡ Imp (And (Atomic (suc (suc zero))) (Atomic zero)) (Atomic (suc zero))
-  test2-check = refl
-  test3-check : let t = quoteTerm ( (a b c d : Set) → ¬ a → b ) in
-                term2b (argsNo t) 0 t ≡ Imp (Imp Falsehood (Atomic (suc (suc (suc zero))))) (Atomic (suc (suc zero)))
-  test3-check = refl
-  test4-check : let t = quoteTerm ( (a b c d : Set) → ⊥ ∨ b ) in
-                term2b (argsNo t) 0 t ≡ Or (Falsehood) (Atomic (suc (suc zero)))
-  test4-check = refl
-
-
-forallenvs : ∀ (n : ℕ)  (e : Env n) → (b : BoolExpr n) → decide e b ≡ true → ⟦ e ⊢ b ⟧
-forallenvs = {!!}
+ --  test0-check : let t = quoteTerm test0 in
+ --                term2b (argsNo t) 0 t refl ≡ And (Atomic (suc (suc (suc zero)))) (Atomic (suc (suc zero)))
+ --  test0-check = refl
+ --  test1-check : let t = quoteTerm ( (a b d : Set) → a → b) in
+ --                term2b (argsNo t) 0 t refl ≡ Imp (Atomic ((suc (suc zero)))) (Atomic ((suc zero)))
+ --  test1-check = refl
+ --  test2-check : let t = quoteTerm ( (a b c : Set) → a ∧ c → b ) in
+ --                term2b (argsNo t) 0 t refl ≡ Imp (And (Atomic (suc (suc zero))) (Atomic zero)) (Atomic (suc zero))
+ --  test2-check = refl
+ --  test3-check : let t = quoteTerm ( (a b c d : Set) → ¬ a → b ) in
+ --                term2b (argsNo t) 0 t refl ≡ Imp (Imp Falsehood (Atomic (suc (suc (suc zero))))) (Atomic (suc (suc zero)))
+ --  test3-check = refl
+--   test4-check : let t = quoteTerm ( (a b c d : Set) → ⊥ ∨ b ) in
+--                 term2b (argsNo t) 0 t refl ≡ Or (Falsehood) (Atomic (suc (suc zero)))
+--   test4-check = refl
 
 -- this should be an fmap.
 subst : {n : ℕ} → (var : ℕ) → (t : Set) → BoolExpr n → BoolExpr n
@@ -441,7 +461,7 @@ isSubstituted zero (Or b b₁) = isSubstituted zero b b∧ isSubstituted zero b�
 isSubstituted zero (Imp b b₁) = isSubstituted zero b b∧ isSubstituted zero b₁
 isSubstituted zero (SET a) = true
 
-_⟦_⟧_ : {n : ℕ} → (freeVars : ℕ) → (b : BoolExpr n) →  -- something
+_⟦_⟧_ : {n : ℕ} → (freeVars : ℕ) → (b : BoolExpr n) →
                  isSubstituted freeVars b ≡ true →
                  Set
 suc n ⟦ x ⟧ pf = (b : Set) → n ⟦ subst n b x ⟧ {!!} -- hoping this'll introduce a fresh variable? TODO check n is right. maybe we need (degree b - n)
@@ -453,6 +473,7 @@ zero ⟦ Imp b b₁ ⟧ pf = zero ⟦ b ⟧ and-l pf → zero ⟦ b₁ ⟧ and-r
 zero ⟦ SET a ⟧ pf = a
 zero ⟦ Atomic x ⟧ ()
 
+-- probably bumf
 data Tree : ℕ → Set where
   Nil : Tree zero
   P   : {n : ℕ} → Tree n → Tree n → Tree (suc n) -- pair
@@ -461,6 +482,19 @@ data Tree : ℕ → Set where
 allEnvs : (n : ℕ) → Tree n
 allEnvs zero    = Nil
 allEnvs (suc n) = P (allEnvs n) (allEnvs n)
+
+-- here P is some predicate which should hold for an environment.
+forallEnvs : (n : ℕ) → (P : Env n → Set) → Set
+forallEnvs zero p = p []
+forallEnvs (suc n) p = (forallEnvs n (λ env → p (true ∷ env))) × (forallEnvs n (λ env → p (false ∷ env)))
+
+-- foo shows us that, if we have that some P holds for all envs,
+-- we can find the corresponding proof if given some specific env.
+foo : {n : ℕ} → (env : Env n) → (P : Env n → Set) → forallEnvs n P → P env
+foo [] pred pf = pf
+foo (true ∷ p) pred (proj₁ , proj₂) = foo p (λ z → pred (true ∷ z)) proj₁
+foo (false ∷ p) pred (proj₁ , proj₂) = foo p (λ z → pred (false ∷ z)) proj₂
+
 
 -- this checks, by brute force, if an expression is a tautology,
 -- that is, if it's true for all possible variable assignments.
