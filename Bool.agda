@@ -51,7 +51,6 @@ data BoolExpr : ℕ → Set where
   Falsehood : {n : ℕ}                           → BoolExpr n
   And       : {n : ℕ} → BoolExpr n → BoolExpr n → BoolExpr n
   Or        : {n : ℕ} → BoolExpr n → BoolExpr n → BoolExpr n
-  Not       : {n : ℕ} → BoolExpr n              → BoolExpr n
   Imp       : {n : ℕ} → BoolExpr n → BoolExpr n → BoolExpr n
   Atomic    : {n : ℕ} → Fin n                   → BoolExpr n
   SET       : {n : ℕ} → (a : Set)               → BoolExpr n
@@ -76,7 +75,6 @@ Env = Vec Bool
 ⟦ env ⊢ Atomic n ⟧ with lookup n env
 ... | true  = ⊤
 ... | false = ⊥
-⟦ env ⊢ Not p ⟧     = ⟦ env ⊢ p ⟧ → ⊥ -- if you manage to prove p, then Not p cannot hold
 ⟦ env ⊢ SET a ⟧     = a
 
 
@@ -89,7 +87,6 @@ decide env (Truth)      = true
 decide env (Falsehood)  = false
 decide env (And be be₁) = decide env be b∧ decide env be₁
 decide env (Or be be₁)  = decide env be b∨ decide env be₁
-decide env (Not p)      = bnot (decide env p)
 decide env (Imp p q)    = bnot (decide env p) b∨ (decide env q)
 decide env (Atomic n)   = lookup n env
 decide env (SET a)      = {!!} -- should prevent this with some predicate?
@@ -107,7 +104,6 @@ mutual
   soundness' env (Or p q) dec  pf  with or-false (decide env p) (decide env q) dec
   soundness' env (Or p q) dec (inj₁ x) | proj₁ , proj₂ = soundness' env p proj₁ x
   soundness' env (Or p q) dec (inj₂ y) | proj₁ , proj₂ = soundness' env q proj₂ y
-  soundness' env (Not p) dec   pf = pf (soundness env p (not-false dec))
   soundness' env (Imp p q) dec pf  with or-false (bnot (decide env p)) (decide env q) dec
   soundness' env (Imp p q) dec pf | proj₁ , proj₂  with not-false proj₁
   ... | tmppat  with pf (soundness env p tmppat)
@@ -126,8 +122,7 @@ mutual
   soundness env (Or p p₁) pf  with or-lem (decide env p) (decide env p₁) pf
   soundness env (Or p p₁) pf | inj₁ x = inj₁ (soundness env p x)
   soundness env (Or p p₁) pf | inj₂ y = inj₂ (soundness env p₁ y)
-  soundness env (Not p) pf = soundness' env p (not-lemma pf)
-  soundness env (Imp p q) pf  with or-lem (decide env (Not p)) (decide env q) pf
+  soundness env (Imp p q) pf  with or-lem (bnot (decide env p)) (decide env q) pf
   soundness env (Imp p q) pf | inj₁ y = λ x → ⊥-elim (soundness' env p (not-lemma y) x)
   soundness env (Imp p q) pf | inj₂ y = λ x → soundness env q y
   soundness env (Atomic n) pf with lookup n env
@@ -157,9 +152,9 @@ private
     -- this also works if you set oneVar = true :: []. Next
     -- we want to automatically prove all cases.
     -- how to do this automatically?
-    thm0 : ∀ (ov : Env 1) → ⟦ ov ⊢ Or (Atomic zero) (Not (Atomic zero))⟧
-    thm0 (true ∷ [])  = soundness (true ∷ []) (Or (Atomic zero) (Not (Atomic zero))) refl
-    thm0 (false ∷ []) = soundness (false ∷ []) (Or (Atomic zero) (Not (Atomic zero))) refl
+    thm0 : ∀ (ov : Env 1) → ⟦ ov ⊢ Or (Atomic zero) (Imp (Falsehood) (Atomic zero))⟧
+    thm0 (true ∷ [])  = soundness (true ∷ []) (Or (Atomic zero) (Imp Falsehood (Atomic zero))) refl
+    thm0 (false ∷ []) = soundness (false ∷ []) (Or (Atomic zero) (Imp Falsehood (Atomic zero))) refl
 
     thm1 : ∀ (ov : Env 1) → ⟦ ov ⊢ Imp (Atomic zero) (Atomic zero) ⟧
     --thm1 ov = soundness ov (Imp (Atomic zero) (Atomic zero)) refl
@@ -181,8 +176,8 @@ automate n env p | true  | by eq = just (soundness env p eq)
 automate n env p | false | by eq = nothing
 
 private
-  thm2 : ∀ (ov : Env 1) → ⟦ ov ⊢ Or (Atomic zero) (Not (Atomic zero))⟧
-  thm2 ov  with automate 1 ov (Or (Atomic zero) (Not (Atomic zero)))
+  thm2 : ∀ (ov : Env 1) → ⟦ ov ⊢ Or (Atomic zero) (Imp Falsehood (Atomic zero))⟧
+  thm2 ov  with automate 1 ov (Or (Atomic zero) (Imp Falsehood (Atomic zero)))
   thm2 ov | just x = x
   thm2 ov | nothing = {!!}
 
@@ -341,7 +336,7 @@ term2boolexpr {n} (def f (arg _ _ a₁ ∷ arg _ _ a₂ ∷ l)) isBE | no _ | ye
 term2boolexpr (def f l) () | no _ | yes p
 term2boolexpr (def f as) pf | no _ | no _ with f ≟-Name (quote ¬_)
 ... | no _ = {!!}
-term2boolexpr {n} (def f (arg _ _ a₁ ∷ l)) isBE | no _ | no _ | yes p = Not (term2boolexpr a₁ (argsAreExpressions {n} isBE))
+term2boolexpr {n} (def f (arg _ _ a₁ ∷ l)) isBE | no _ | no _ | yes p = Imp Falsehood (term2boolexpr a₁ (argsAreExpressions {n} isBE))
 term2boolexpr (def f l) () | no _ | no _ | yes _
 term2boolexpr (lam v t)    ()
 term2boolexpr (pi t₁ t₂)   ()
@@ -430,7 +425,6 @@ subst v t Truth = Truth
 subst v t Falsehood = Falsehood
 subst v t (And exp exp₁) = And (subst v t exp) (subst v t exp₁)
 subst v t (Or exp exp₁) = Or (subst v t exp) (subst v t exp₁)
-subst v t (Not exp) = Not (subst v t exp)
 subst v t (Imp exp exp₁) = Imp (subst v t exp) (subst v t exp₁)
 subst v t (Atomic x) with Data.Nat._≟_ (toℕ x) v
 subst v t (Atomic x) | yes p = SET t
@@ -445,7 +439,6 @@ zero ⟦ Truth ⟧ = ⊤
 zero ⟦ Falsehood ⟧ = ⊥
 zero ⟦ And b b₁ ⟧ = (zero ⟦ b ⟧) × (zero ⟦ b₁ ⟧)
 zero ⟦ Or b b₁ ⟧ = (zero ⟦ b ⟧) ⊎ (zero ⟦ b₁ ⟧)
-zero ⟦ Not b ⟧ = ¬ (zero ⟦ b ⟧)
 zero ⟦ Imp b b₁ ⟧ = zero ⟦ b ⟧ → zero ⟦ b₁ ⟧
 zero ⟦ SET a ⟧ = a
 zero ⟦ Atomic x ⟧ = {!!} -- we must make this absurd.
