@@ -458,4 +458,4 @@ somethm = (b : Set) → ⊤ ∨ b → ⊤
 goalbla : somethm
 goalbla = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e) {!!}) refl
 
-
+-- next up!! using foo, find forallEnvs n (\ e -> [[ b ]] e)
