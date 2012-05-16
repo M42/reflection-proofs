@@ -5,12 +5,12 @@ open import Relation.Binary.PropositionalEquality renaming ( [_] to by ; subst t
 open import Data.Bool renaming (_∧_ to _b∧_ ; _∨_ to _b∨_; not to bnot)
 open import Data.Nat
 open import Data.Fin hiding (_+_; pred)
-open import Data.Vec renaming (reverse to vreverse)
+open import Data.Vec renaming (reverse to vreverse ; map to vmap; foldr to vfoldr; _++_ to _v++_)
 open import Data.Unit hiding (_≤?_)
 open import Data.Empty
 open import Data.Sum hiding (map)
 open import Data.Product hiding (map)
-open import Data.List hiding (_++_; map)
+open import Data.List
 
 open import Relation.Binary.PropositionalEquality.TrustMe
 
@@ -263,9 +263,8 @@ lengthis []        zero    = true
 lengthis (_ ∷ lst) (suc n) = lengthis lst n
 lengthis  _        _       = false
 
-allTrue : {n : ℕ} → Vec Bool n → Bool
-allTrue {zero}  = λ _ → true
-allTrue {suc n} = foldr₁ _b∧_
+allTrue : List Bool → Bool
+allTrue = foldr _b∧_ true
 
 
 someThm : ∀ {p1 p2 q1 q2} → ((p1 ∨ q1) ∧ (p2 ∨ q2)) → ((q1 ∨ p1) ∧ (q2 ∨ p2))
@@ -430,13 +429,15 @@ foo []          pred pf              = pf
 foo (true ∷ p)  pred (proj₁ , proj₂) = foo p (λ z → pred (true ∷ z)) proj₁
 foo (false ∷ p) pred (proj₁ , proj₂) = foo p (λ z → pred (false ∷ z)) proj₂
 
-
+allEnvs : (n : ℕ) → List (Env n)
+allEnvs zero = [] ∷ []
+allEnvs (suc n) = (map (_∷_ false) (allEnvs n)) ++ (map (_∷_ true) (allEnvs n))
 
 -- this checks, by brute force, if an expression is a tautology,
 -- that is, if it's true for all possible variable assignments.
 -- this would be where to implement a smarter solver.
 decideForallEnv : {n : ℕ} → BoolExpr n → Bool
-decideForallEnv {n} exp = {!!} -- allTrue (map (λ env → decide env exp) (allEnvs n))
+decideForallEnv {n} exp = allTrue (map (λ env → decide env exp) (allEnvs n))
 
 
 -- this is actually our soundness function.
@@ -448,9 +449,6 @@ automate2 (Or p p₁) pfunc = {!!}
 automate2 (Imp p p₁) pfunc = {!!}
 automate2 (Atomic x) pfunc = {!!}
 automate2 (SET a) pfunc = {!!} 
-
-
-
 
 somethm : Set
 somethm = (b : Set) → ⊤ ∨ b → ⊤
