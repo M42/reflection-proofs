@@ -400,15 +400,15 @@ isSubstituted (SET a)    = true
 ⟦ SSET a ⟧      = a
 
 be2substituted : {n : ℕ} → (b : BoolExpr n) → isSubstituted b ≡ true → Substituted
-be2substituted Truth pf = STruth
-be2substituted Falsehood pf = SFalsehood
-be2substituted (And b b₁) pf = SAnd (be2substituted b (and-l pf ))
+be2substituted Truth      pf = STruth
+be2substituted Falsehood  pf = SFalsehood
+be2substituted (And b b₁) pf = SAnd (be2substituted b  (and-l pf))
                                     (be2substituted b₁ (and-r (isSubstituted b) (isSubstituted b₁) pf))
-be2substituted (Or b b₁) pf = SOr (be2substituted b (and-l pf ))
-                                  (be2substituted b₁ (and-r (isSubstituted b) (isSubstituted b₁) pf ))
-be2substituted (Imp b b₁) pf = SImp (be2substituted b (and-l pf ))
-                                    (be2substituted b₁ (and-r (isSubstituted b) (isSubstituted b₁) pf ))
-be2substituted (SET a) pf = SSET a
+be2substituted (Or b b₁)  pf = SOr  (be2substituted b  (and-l pf))
+                                    (be2substituted b₁ (and-r (isSubstituted b) (isSubstituted b₁) pf))
+be2substituted (Imp b b₁) pf = SImp (be2substituted b  (and-l pf))
+                                    (be2substituted b₁ (and-r (isSubstituted b) (isSubstituted b₁) pf))
+be2substituted (SET a)    pf = SSET a
 be2substituted (Atomic x) ()
 
 -- adds a telescope type with the right number of free variables
@@ -416,7 +416,7 @@ be2substituted (Atomic x) ()
 telescope : {n : ℕ} → (freevars : ℕ) → BoolExpr n → Set
 telescope (suc n) x = (b : Set) → telescope n ( subst n b x ) -- TODO check n is right. maybe we need (degree b - n)
 telescope zero x    = ⟦ stdtd ⟧
-  where stdtd  = be2substituted x {!!}
+  where stdtd  = be2substituted x {!refl!}
 
 -- here P is some predicate which should hold for an environment.
 forallEnvs : (n : ℕ) → (P : Env n → Set) → Set
