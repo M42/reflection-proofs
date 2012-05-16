@@ -12,6 +12,8 @@ open import Data.Sum hiding (map)
 open import Data.Product hiding (map)
 open import Data.List hiding (_++_; map)
 
+open import Relation.Binary.PropositionalEquality.TrustMe
+
 -- first we define a few aliases, to make types look
 -- like propositions
 ¬_ : Set → Set
@@ -54,6 +56,13 @@ data BoolExpr : ℕ → Set where
   Imp       : {n : ℕ} → BoolExpr n → BoolExpr n → BoolExpr n
   Atomic    : {n : ℕ} → Fin n                   → BoolExpr n
   SET       : {n : ℕ} → (a : Set)               → BoolExpr n
+data Substituted : Set where
+  STruth     :                             Substituted
+  SFalsehood :                             Substituted
+  SAnd       : Substituted → Substituted → Substituted
+  SOr        : Substituted → Substituted → Substituted
+  SImp       : Substituted → Substituted → Substituted
+  SSET       : (a : Set)                 → Substituted
 
 -- ...and some way to interpret our representation
 -- of the formula at hand:
@@ -249,96 +258,18 @@ stripPi (lam v t) = lam v t
 stripPi (sort x) = sort x
 stripPi unknown = unknown
 
-isTrue  : (c : Name) (args : List (Arg Term)) → Bool
-isFalse : (c : Name) (args : List (Arg Term)) → Bool
-isAnd   : (f : Name) (args : List (Arg Term)) → Bool
-isOr    : (f : Name) (args : List (Arg Term)) → Bool
-
-isName : Name → Name → List (Arg Term) → Bool
-isName cc f args with f ≟-Name cc | args
-isName cc f args | yes p | _ = true
-isName cc f args | no ¬p | _ = false
-
 lengthis : {a : Set} → List a → ℕ → Bool
 lengthis []        zero    = true
 lengthis (_ ∷ lst) (suc n) = lengthis lst n
 lengthis  _        _       = false
 
-isTrue  c as = isName (quote ⊤) c as     b∧ lengthis as 0
-isFalse c as = isName (quote ⊥) c as     b∧ lengthis as 0
-isAnd   c as = isName (quote _∧_) c as   b∧ lengthis as 2
-isOr    c as = isName (quote _∨_) c as   b∧ lengthis as 2
-
 allTrue : {n : ℕ} → Vec Bool n → Bool
 allTrue {zero}  = λ _ → true
 allTrue {suc n} = foldr₁ _b∧_
 
-mutual
-  isBoolArg : {n : ℕ} → Arg Term → Bool
-  isBoolArg {n} (arg v r x) = isBoolExpr {n} x
-
-  isBoolExpr : {n : ℕ} → Term → Bool
-  isBoolExpr {n} (var x args) with suc x ≤? n
-  ... | yes p = true
-  ... | no ¬p = false
-  isBoolExpr {n} (con c args) = (isTrue c args
-                          b∨ isFalse c args)
-                          b∧ allTrue (map (isBoolArg {n}) (fromList args))
-  isBoolExpr {n} (def f args) = (isAnd f args
-                          b∨ isOr f args)
-                          b∧ allTrue (map (isBoolArg {n}) (fromList args))
-  isBoolExpr (lam v t)    = false
-  isBoolExpr (pi t₁ t₂)   = false
-  isBoolExpr (sort x)     = false
-  isBoolExpr unknown      = false
 
 someThm : ∀ {p1 p2 q1 q2} → ((p1 ∨ q1) ∧ (p2 ∨ q2)) → ((q1 ∨ p1) ∧ (q2 ∨ p2))
 someThm = quoteGoal g in {! (lhs g refl)!} -- C-c C-n in this goal is useful.
-
-argsAreExpressions : {n : ℕ} {a : Term} {p₁ p₃ : Bool} →
-                     p₁ b∧ (
-                     isBoolExpr {n} a
-                     ) b∧ p₃ ≡ true →
-                     isBoolExpr {n} a ≡ true
-argsAreExpressions pf = {!!}
-argsAreExpressions₂ : {n : ℕ} {a : Term} {p₁ p₂ p₄ : Bool} →
-                     p₁ b∧ p₂ b∧ (
-                     isBoolExpr {n} a
-                     ) b∧ p₄ ≡ true →
-                     isBoolExpr {n} a ≡ true
-argsAreExpressions₂ pf = {!!}
-
-
--- this should take a LHS or RHS and turn it into
--- something in our AST language
-term2boolexpr : {n : ℕ} → (t : Term) →
-            isBoolExpr {n} t ≡ true  →
-            BoolExpr n
-term2boolexpr {n} (var x args) eq with suc x ≤? n
-term2boolexpr (var x args) eq | yes p = Atomic (fromℕ≤ p)
-term2boolexpr (var x args) () | no ¬p
-term2boolexpr (con c args) isBE with c ≟-Name (quote ⊤)
-... | yes _ = Truth
-... | no _ with c ≟-Name (quote ⊥)
-... | yes _ = Falsehood
-term2boolexpr (con c args) () | no _ | no _ -- we only know true and false as constructors.
-term2boolexpr (def f as) isBE with f ≟-Name (quote _∧_) -- is it an and?
-term2boolexpr (def f []) () | yes  _
-term2boolexpr (def f (arg _ _ a₁ ∷ [])) () | yes  _
-term2boolexpr {n} (def f (arg _ _ a₁ ∷ arg _ _ a₂ ∷ l)) isBE | yes p = And (term2boolexpr a₁ (argsAreExpressions {n} isBE))
-                                                                   (term2boolexpr a₂ (argsAreExpressions₂ {n} isBE))
-... | no _ with f ≟-Name (quote _∨_) -- or maybe an or?
-term2boolexpr {n} (def f (arg _ _ a₁ ∷ arg _ _ a₂ ∷ l)) isBE | no _ | yes p = Or (term2boolexpr a₁ (argsAreExpressions {n} isBE))
-                                                                         (term2boolexpr a₂ (argsAreExpressions₂ {n} isBE))
-term2boolexpr (def f l) () | no _ | yes p
-term2boolexpr (def f as) pf | no _ | no _ with f ≟-Name (quote ¬_)
-... | no _ = {!!}
-term2boolexpr {n} (def f (arg _ _ a₁ ∷ l)) isBE | no _ | no _ | yes p = Imp Falsehood (term2boolexpr a₁ (argsAreExpressions {n} isBE))
-term2boolexpr (def f l) () | no _ | no _ | yes _
-term2boolexpr (lam v t)    ()
-term2boolexpr (pi t₁ t₂)   ()
-term2boolexpr (sort x)     ()
-term2boolexpr unknown      ()
 
 open import Data.Vec.N-ary
 
@@ -374,8 +305,8 @@ isBoolExprQ n depth t | def f args | no p  with f ≟-Name (quote Data.Empty.⊥
 isBoolExprQ n depth t | def f []   | no _ | yes p = true
 isBoolExprQ n depth t | def f args | no _ | yes p = false
 isBoolExprQ n depth t | def f args | no _ | no  p with f ≟-Name (quote Data.Sum._⊎_)
-isBoolExprQ n depth t | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | no _ | no _ | yes p = _b∧_ (isBoolExprQ (argsNo t₁) depth t₁)
-                                                                                           (isBoolExprQ (argsNo t₂) depth t₂)
+isBoolExprQ n depth t | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | no _ | no _ | yes p = _b∧_ (isBoolExprQ n depth t₁)
+                                                                                           (isBoolExprQ n depth t₂)
 isBoolExprQ n depth t | def f args | no _ | no _ | yes _  = false
 isBoolExprQ n depth t | def f args | no _ | no _ | no _ with f ≟-Name (quote Data.Unit.⊤)
 isBoolExprQ n depth t | def f [] | no _   | no _    | no _    | yes _ = true
@@ -403,8 +334,8 @@ term2b n depth t pf | def f args | no p  with f ≟-Name (quote Data.Empty.⊥)
 term2b n depth t pf | def f []   | no _ | yes p = Falsehood
 term2b n depth t () | def f args | no _ | yes p
 term2b n depth t pf | def f args | no _ | no  p with f ≟-Name (quote Data.Sum._⊎_)
-term2b n depth t pf | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | no _ | no _ | yes p = Or (term2b n depth t₁ (and-l pf))
-                                                                                              (term2b n depth t₂ (and-r (isBoolExprQ (argsNo t₁) 0 t₁) (isBoolExprQ (argsNo t₂) 0 t₂) pf))
+term2b n depth t pf | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | no _ | no _ | yes p = Or (term2b n depth t₁ (and-l {!!}))
+                                                                                              (term2b n depth t₂ (and-r (isBoolExprQ (argsNo t₁) 0 t₁) (isBoolExprQ (argsNo t₂) 0 t₂) {!!}))
 term2b n depth t () | def f args | no _ | no _ | yes _
 term2b n depth t pf | def f args | no _ | no _ | no _ with f ≟-Name (quote Data.Unit.⊤)
 term2b n depth t pf | def f [] | no _   | no _    | no _    | yes _ = Truth
@@ -441,47 +372,51 @@ private
 
 -- this should be an fmap.
 subst : {n : ℕ} → (var : ℕ) → (t : Set) → BoolExpr n → BoolExpr n
-subst v t Truth = Truth
-subst v t Falsehood = Falsehood
-subst v t (And exp exp₁) = And (subst v t exp) (subst v t exp₁)
-subst v t (Or exp exp₁) = Or (subst v t exp) (subst v t exp₁)
-subst v t (Imp exp exp₁) = Imp (subst v t exp) (subst v t exp₁)
+subst v t Truth              = Truth
+subst v t Falsehood          = Falsehood
+subst v t (And exp exp₁)     = And (subst v t exp) (subst v t exp₁)
+subst v t (Or exp exp₁)      = Or (subst v t exp) (subst v t exp₁)
+subst v t (Imp exp exp₁)     = Imp (subst v t exp) (subst v t exp₁)
 subst v t (Atomic x) with Data.Nat._≟_ (toℕ x) v
 subst v t (Atomic x) | yes p = SET t
 subst v t (Atomic x) | no ¬p = Atomic x
-subst v t (SET a) = SET a
+subst v t (SET a)            = SET a
 
-isSubstituted : {n : ℕ} → (freeVars : ℕ) → (b : BoolExpr n) → Bool
-isSubstituted (suc fv) b = true
-isSubstituted zero (Atomic x) = false
-isSubstituted zero Truth = true
-isSubstituted zero Falsehood = true
-isSubstituted zero (And b b₁) = isSubstituted zero b b∧ isSubstituted zero b₁
-isSubstituted zero (Or b b₁) = isSubstituted zero b b∧ isSubstituted zero b₁
-isSubstituted zero (Imp b b₁) = isSubstituted zero b b∧ isSubstituted zero b₁
-isSubstituted zero (SET a) = true
+isSubstituted : {n : ℕ} → (b : BoolExpr n) → Bool
+isSubstituted (Atomic x) = false
+isSubstituted Truth      = true
+isSubstituted Falsehood  = true
+isSubstituted (And b b₁) = isSubstituted b b∧ isSubstituted b₁
+isSubstituted (Or b b₁)  = isSubstituted b b∧ isSubstituted b₁
+isSubstituted (Imp b b₁) = isSubstituted b b∧ isSubstituted b₁
+isSubstituted (SET a)    = true
 
-_⟦_⟧_ : {n : ℕ} → (freeVars : ℕ) → (b : BoolExpr n) →
-                 isSubstituted freeVars b ≡ true →
-                 Set
-suc n ⟦ x ⟧ pf = (b : Set) → n ⟦ subst n b x ⟧ {!!} -- hoping this'll introduce a fresh variable? TODO check n is right. maybe we need (degree b - n)
-zero ⟦ Truth ⟧ pf = ⊤
-zero ⟦ Falsehood ⟧ pf = ⊥
-zero ⟦ And b b₁ ⟧ pf = (zero ⟦ b ⟧ and-l pf) × (zero ⟦ b₁ ⟧ (and-r (isSubstituted zero b) (isSubstituted zero b₁) pf))
-zero ⟦ Or b b₁ ⟧ pf = (zero ⟦ b ⟧ and-l pf) ⊎ (zero ⟦ b₁ ⟧ and-r (isSubstituted zero b) (isSubstituted zero b₁) pf)
-zero ⟦ Imp b b₁ ⟧ pf = zero ⟦ b ⟧ and-l pf → zero ⟦ b₁ ⟧ and-r (isSubstituted zero b) (isSubstituted zero b₁) pf
-zero ⟦ SET a ⟧ pf = a
-zero ⟦ Atomic x ⟧ ()
+⟦_⟧ : Substituted → Set
+⟦ STruth ⟧      = ⊤
+⟦ SFalsehood ⟧  = ⊥
+⟦ SAnd b b₁ ⟧   = ⟦ b ⟧ × ⟦ b₁ ⟧
+⟦ SOr b b₁ ⟧    = ⟦ b ⟧ ⊎ ⟦ b₁ ⟧
+⟦ SImp b b₁ ⟧   = ⟦ b ⟧ → ⟦ b₁ ⟧
+⟦ SSET a ⟧      = a
 
--- probably bumf
-data Tree : ℕ → Set where
-  Nil : Tree zero
-  P   : {n : ℕ} → Tree n → Tree n → Tree (suc n) -- pair
-  
--- enumerate all the possible envs of a particular size.
-allEnvs : (n : ℕ) → Tree n
-allEnvs zero    = Nil
-allEnvs (suc n) = P (allEnvs n) (allEnvs n)
+be2substituted : {n : ℕ} → (b : BoolExpr n) → isSubstituted b ≡ true → Substituted
+be2substituted Truth pf = STruth
+be2substituted Falsehood pf = SFalsehood
+be2substituted (And b b₁) pf = SAnd (be2substituted b (and-l pf ))
+                                    (be2substituted b₁ (and-r (isSubstituted b) (isSubstituted b₁) pf))
+be2substituted (Or b b₁) pf = SOr (be2substituted b (and-l pf ))
+                                  (be2substituted b₁ (and-r (isSubstituted b) (isSubstituted b₁) pf ))
+be2substituted (Imp b b₁) pf = SImp (be2substituted b (and-l pf ))
+                                    (be2substituted b₁ (and-r (isSubstituted b) (isSubstituted b₁) pf ))
+be2substituted (SET a) pf = SSET a
+be2substituted (Atomic x) ()
+
+-- adds a telescope type with the right number of free variables
+-- to a type/proposition.
+telescope : {n : ℕ} → (freevars : ℕ) → BoolExpr n → Set
+telescope (suc n) x = (b : Set) → telescope n ( subst n b x ) -- TODO check n is right. maybe we need (degree b - n)
+telescope zero x    = ⟦ stdtd ⟧
+  where stdtd  = be2substituted x {!!}
 
 -- here P is some predicate which should hold for an environment.
 forallEnvs : (n : ℕ) → (P : Env n → Set) → Set
@@ -491,33 +426,36 @@ forallEnvs (suc n) p = (forallEnvs n (λ env → p (true ∷ env))) × (forallEn
 -- foo shows us that, if we have that some P holds for all envs,
 -- we can find the corresponding proof if given some specific env.
 foo : {n : ℕ} → (env : Env n) → (P : Env n → Set) → forallEnvs n P → P env
-foo [] pred pf = pf
-foo (true ∷ p) pred (proj₁ , proj₂) = foo p (λ z → pred (true ∷ z)) proj₁
+foo []          pred pf              = pf
+foo (true ∷ p)  pred (proj₁ , proj₂) = foo p (λ z → pred (true ∷ z)) proj₁
 foo (false ∷ p) pred (proj₁ , proj₂) = foo p (λ z → pred (false ∷ z)) proj₂
+
 
 
 -- this checks, by brute force, if an expression is a tautology,
 -- that is, if it's true for all possible variable assignments.
 -- this would be where to implement a smarter solver.
--- decideForallEnv : {n : ℕ} → BoolExpr n → Bool
--- decideForallEnv {n} exp = allTrue (map (λ env → decide env exp) (allEnvs n))
+decideForallEnv : {n : ℕ} → BoolExpr n → Bool
+decideForallEnv {n} exp = {!!} -- allTrue (map (λ env → decide env exp) (allEnvs n))
 
 
--- -- this is actually our soundness function.
--- automate2 : {n : ℕ} → (p : BoolExpr n) → decideForallEnv p ≡ true → n ⟦ p ⟧
--- automate2 Truth pfunc = {!tt!}
--- automate2 Falsehood pfunc = {!!} -- we want absurd here, but you can't match on pfunc
--- automate2 (And p p₁) pfunc = {!!}
--- automate2 (Or p p₁) pfunc = {!!}
--- automate2 (Not p) pfunc = {!!}
--- automate2 (Imp p p₁) pfunc = {!!}
--- automate2 (Atomic x) pfunc = {!!}
--- automate2 (SET a) pfunc = {!!} 
--- 
--- somethm : Set
--- somethm = (b : Set) → ⊤ ∨ b → ⊤
--- 
--- goalbla : somethm
--- goalbla = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e)) refl
+-- this is actually our soundness function.
+automate2 : {n : ℕ} → (p : BoolExpr n) → decideForallEnv p ≡ true → telescope n p
+automate2 Truth pfunc = {!tt!}
+automate2 Falsehood pfunc = {!!} -- we want absurd here, but you can't match on pfunc
+automate2 (And p p₁) pfunc = {!!}
+automate2 (Or p p₁) pfunc = {!!}
+automate2 (Imp p p₁) pfunc = {!!}
+automate2 (Atomic x) pfunc = {!!}
+automate2 (SET a) pfunc = {!!} 
+
+
+
+
+somethm : Set
+somethm = (b : Set) → ⊤ ∨ b → ⊤
+
+goalbla : somethm
+goalbla = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e) {!!}) refl
 
 
