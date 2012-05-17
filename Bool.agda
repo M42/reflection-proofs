@@ -450,9 +450,10 @@ automate2 (Atomic x) pfunc = {!!}
 automate2 (SET a) pfunc = {!!} 
 
 somethm : Set
-somethm = (b : Set) → b ∨ ⊤
+somethm = (a b c : Set) → (b → b ∨ ⊤) ∧ (c ∨ ¬ c)
 
 goalbla : somethm
 goalbla = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e) refl) refl
+
 
 -- next up!! using foo, find forallEnvs n (\ e -> [[ b ]] e)
