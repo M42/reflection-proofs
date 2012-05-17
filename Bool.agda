@@ -238,10 +238,10 @@ argsNo (pi (arg visible relevant (el (lit 0) (sort (lit 0)))) (el s t)) = suc (a
 argsNo (var x args) = 0
 argsNo (con c args) = 0
 argsNo (def f args) = 0
-argsNo (lam v t) = 0
-argsNo (sort x) = 0
-argsNo unknown = 0
-argsNo _ = 0
+argsNo (lam v t)    = 0
+argsNo (sort x)     = 0
+argsNo unknown      = 0
+argsNo _            = 0
 
 -- peels off all the outermost Pi constructors,
 -- returning a term with argsNo free variables.
@@ -250,13 +250,13 @@ stripPi : Term → Term
 stripPi (pi (arg visible relevant (el (lit 0) (sort (lit 0)))) (el s t)) = stripPi t
 --stripPi (pi (arg visible relevant (el (lit 0) (def  _ _))) (el s t)) = stripPi t
 -- identity otherwise
-stripPi (pi args t) = pi args t
-stripPi (var x args) = var x args
-stripPi (con c args) = con c args
-stripPi (def f args) = def f args
-stripPi (lam v t) = lam v t
-stripPi (sort x) = sort x
-stripPi unknown = unknown
+stripPi (pi args t)  = pi   args t
+stripPi (var x args) = var  x    args
+stripPi (con c args) = con  c    args
+stripPi (def f args) = def  f    args
+stripPi (lam v t)    = lam  v    t
+stripPi (sort x)     = sort x
+stripPi unknown      = unknown
 
 lengthis : {a : Set} → List a → ℕ → Bool
 lengthis []        zero    = true
@@ -265,7 +265,6 @@ lengthis  _        _       = false
 
 allTrue : List Bool → Bool
 allTrue = foldr _b∧_ true
-
 
 someThm : ∀ {p1 p2 q1 q2} → ((p1 ∨ q1) ∧ (p2 ∨ q2)) → ((q1 ∨ p1) ∧ (q2 ∨ p2))
 someThm = quoteGoal g in {! (lhs g refl)!} -- C-c C-n in this goal is useful.
@@ -295,7 +294,7 @@ isBoolExprQ : (n : ℕ) → (depth : ℕ) → (t : Term) → Bool
 isBoolExprQ n depth t with stripPi t
 isBoolExprQ n depth t | var x args with suc (unsafeMinus x depth) ≤? n
 isBoolExprQ n depth t | var x args | yes p2 = true
-isBoolExprQ n depth t | var x args | _      = false
+isBoolExprQ n depth t | var x args | _      = true -- huh? 
 isBoolExprQ n depth t | con c args = false
 isBoolExprQ n depth t | def f args with f ≟-Name (quote Data.Product.Σ)
 isBoolExprQ n depth t | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | yes p = _b∧_ (isBoolExprQ n depth t₁) (isBoolExprQ n depth t₂)
@@ -309,8 +308,8 @@ isBoolExprQ n depth t | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ [])
 isBoolExprQ n depth t | def f args | no _ | no _ | yes _  = false
 isBoolExprQ n depth t | def f args | no _ | no _ | no _ with f ≟-Name (quote Data.Unit.⊤)
 isBoolExprQ n depth t | def f [] | no _   | no _    | no _    | yes _ = true
-isBoolExprQ n depth t | def f _ | no _   | no _    | no _    | yes _ = false
-isBoolExprQ n depth t | def f _  | no _   | no _    | no _    | no _ = false
+isBoolExprQ n depth t | def f _  | no _   | no _    | no _    | yes _ = false
+isBoolExprQ n depth t | def f _  | no _   | no _    | no _    | no _  = false
 
 isBoolExprQ n depth t | lam v t' = isBoolExprQ n (suc depth) t'
 isBoolExprQ n depth t | pi (arg visible relevant (el _ t₁)) (el _ t₂) = _b∧_ (isBoolExprQ (argsNo t₁) depth t₁) (isBoolExprQ n (suc depth) t₂)
@@ -451,9 +450,9 @@ automate2 (Atomic x) pfunc = {!!}
 automate2 (SET a) pfunc = {!!} 
 
 somethm : Set
-somethm = (b : Set) → ⊤ ∨ b → ⊤
+somethm = (b : Set) → b ∨ ⊤
 
 goalbla : somethm
-goalbla = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e) {!!}) refl
+goalbla = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e) refl) refl
 
 -- next up!! using foo, find forallEnvs n (\ e -> [[ b ]] e)
