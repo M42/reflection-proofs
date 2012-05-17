@@ -28,6 +28,11 @@ _∨_ = _⊎_
 -- here's an example of a manual proof
 trueandtrue : ⊤ ∧ ⊤ → ⊤
 trueandtrue (tt , tt) = tt
+
+-- or, another one:
+bOrNotb : (b : Set) → b ∨ ¬ b
+bOrNotb b = inj₂ (λ ())
+
 -- wouldn't it be nice if we could automate this?
 
 -- eventually we'd like to prove these kinds of tautologies:
@@ -36,8 +41,8 @@ myfavouritetheorem = (p1 q1 p2 q2 : Set) → (p1 ∨ q1) ∧ (p2 ∨ q2)
                                          → (q1 ∨ p1) ∧ (q2 ∨ p2)
 
 proof1 : myfavouritetheorem
-proof1 = {! refl!}   -- this won't work, since p1 != q1, etc
-                     -- proving this manually would require 2ⁿ cases...
+proof1 = {!!}   -- this is painful, since p1 != q1, etc
+                -- proving this manually would require 2ⁿ cases...
 
 -- we'll make some DSL into which we're going to translate theorems
 -- (which are actually types of functions), and then use reflection
@@ -429,8 +434,9 @@ foo (true ∷ p)  pred (proj₁ , proj₂) = foo p (λ z → pred (true ∷ z)) 
 foo (false ∷ p) pred (proj₁ , proj₂) = foo p (λ z → pred (false ∷ z)) proj₂
 
 allEnvs : (n : ℕ) → List (Env n)
-allEnvs zero = [] ∷ []
-allEnvs (suc n) = (map (_∷_ false) (allEnvs n)) ++ (map (_∷_ true) (allEnvs n))
+allEnvs zero    = [] ∷ []
+allEnvs (suc n) = (map (_∷_ false) (allEnvs n)) ++
+                  (map (_∷_ true)  (allEnvs n))
 
 -- this checks, by brute force, if an expression is a tautology,
 -- that is, if it's true for all possible variable assignments.
@@ -438,16 +444,36 @@ allEnvs (suc n) = (map (_∷_ false) (allEnvs n)) ++ (map (_∷_ true) (allEnvs 
 decideForallEnv : {n : ℕ} → BoolExpr n → Bool
 decideForallEnv {n} exp = allTrue (map (λ env → decide env exp) (allEnvs n))
 
+-- decideforallenv ==true -> forallenvs??
+
+-- allTrue→elemTrue : (l : List Bool) → allTrue l ≡ true → x ≡ true -- forall x ∈ l
+-- allTrue→elemTrue l x p = ?
+
+s : {n : ℕ} → (p : BoolExpr n) → decideForallEnv p ≡ true → forallEnvs n (λ env → decide env p ≡ true)
+s {zero}  Truth         refl = refl
+s {zero}  Falsehood      ()
+s {zero}  (And exp exp₁) dec = and-l dec
+s {zero}  (Or exp exp₁)  dec = and-l dec
+s {zero}  (Imp exp exp₁) dec = and-l dec
+s {zero}  (Atomic ())    dec
+s {zero}  (SET a)        dec = and-l dec
+s {suc n} Truth dec = s Truth {!!}
+s {suc n} Falsehood dec = {!!}
+s {suc n} (And exp exp₁) dec = {!!}
+s {suc n} (Or exp exp₁) dec = {!!}
+s {suc n} (Imp exp exp₁) dec = {!!}
+s {suc n} (Atomic x) dec = {!!}
+s {suc n} (SET a) dec = {!!}
 
 -- this is actually our soundness function.
 automate2 : {n : ℕ} → (p : BoolExpr n) → decideForallEnv p ≡ true → telescope n p
-automate2 Truth pfunc = {!tt!}
-automate2 Falsehood pfunc = {!!} -- we want absurd here, but you can't match on pfunc
-automate2 (And p p₁) pfunc = {!!}
-automate2 (Or p p₁) pfunc = {!!}
-automate2 (Imp p p₁) pfunc = {!!}
-automate2 (Atomic x) pfunc = {!!}
-automate2 (SET a) pfunc = {!!} 
+automate2 Truth pfunc      = s Truth pfunc
+automate2 Falsehood pfunc  = s Falsehood pfunc -- we want absurd here, but you can't match on pfunc
+automate2 (And p p₁) pfunc = (s {!!} {!!})
+automate2 (Or p p₁) pfunc  = (s {!!} {!!})
+automate2 (Imp p p₁) pfunc = s {!!} {!!}
+automate2 (Atomic x) pfunc = s {!!} {!!}
+automate2 (SET a) pfunc    = s {!!} {!!} 
 
 somethm : Set
 somethm = (a b c : Set) → (b → b ∨ ⊤) ∧ (c ∨ ¬ c)
@@ -455,5 +481,7 @@ somethm = (a b c : Set) → (b → b ∨ ⊤) ∧ (c ∨ ¬ c)
 goalbla : somethm
 goalbla = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e) refl) refl
 
+goalbla2 : myfavouritetheorem
+goalbla2 = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e) refl) refl
 
 -- next up!! using foo, find forallEnvs n (\ e -> [[ b ]] e)
