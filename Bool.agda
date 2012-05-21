@@ -103,7 +103,7 @@ decide env (And be be₁) = decide env be b∧ decide env be₁
 decide env (Or be be₁)  = decide env be b∨ decide env be₁
 decide env (Imp p q)    = bnot (decide env p) b∨ (decide env q)
 decide env (Atomic n)   = lookup n env
-decide env (SET a)      = {!!} -- should prevent this with some predicate?
+decide env (SET a)      = {!!} -- should prevent this with some predicate? alternatively give false.
 
 open import Lemmas
 
@@ -167,12 +167,12 @@ private
     -- we want to automatically prove all cases.
     -- how to do this automatically?
     thm0 : ∀ (ov : Env 1) → ⟦ ov ⊢ Or (Atomic zero) (Imp (Falsehood) (Atomic zero))⟧
-    thm0 (true ∷ [])  = soundness (true ∷ []) (Or (Atomic zero) (Imp Falsehood (Atomic zero))) refl
+    thm0 (true ∷ [])  = soundness (true ∷ [])  (Or (Atomic zero) (Imp Falsehood (Atomic zero))) refl
     thm0 (false ∷ []) = soundness (false ∷ []) (Or (Atomic zero) (Imp Falsehood (Atomic zero))) refl
 
     thm1 : ∀ (ov : Env 1) → ⟦ ov ⊢ Imp (Atomic zero) (Atomic zero) ⟧
     --thm1 ov = soundness ov (Imp (Atomic zero) (Atomic zero)) refl
-    thm1 (true ∷ []) = soundness (true ∷ []) (Imp (Atomic zero) (Atomic zero)) refl
+    thm1 (true ∷ [])  = soundness (true ∷ [])  (Imp (Atomic zero) (Atomic zero)) refl
     thm1 (false ∷ []) = soundness (false ∷ []) (Imp (Atomic zero) (Atomic zero)) refl
 
 -- next step: try and avoid having to enumerate all the possible environments,
@@ -262,11 +262,6 @@ stripPi (def f args) = def  f    args
 stripPi (lam v t)    = lam  v    t
 stripPi (sort x)     = sort x
 stripPi unknown      = unknown
-
-lengthis : {a : Set} → List a → ℕ → Bool
-lengthis []        zero    = true
-lengthis (_ ∷ lst) (suc n) = lengthis lst n
-lengthis  _        _       = false
 
 allTrue : List Bool → Bool
 allTrue = foldr _b∧_ true
@@ -402,24 +397,55 @@ isSubstituted (SET a)    = true
 ⟦ SImp b b₁ ⟧   = ⟦ b ⟧ → ⟦ b₁ ⟧
 ⟦ SSET a ⟧      = a
 
-be2substituted : {n : ℕ} → (b : BoolExpr n) → isSubstituted b ≡ true → Substituted
-be2substituted Truth      pf = STruth
-be2substituted Falsehood  pf = SFalsehood
-be2substituted (And b b₁) pf = SAnd (be2substituted b  (and-l pf))
-                                    (be2substituted b₁ (and-r (isSubstituted b) (isSubstituted b₁) pf))
-be2substituted (Or b b₁)  pf = SOr  (be2substituted b  (and-l pf))
-                                    (be2substituted b₁ (and-r (isSubstituted b) (isSubstituted b₁) pf))
-be2substituted (Imp b b₁) pf = SImp (be2substituted b  (and-l pf))
-                                    (be2substituted b₁ (and-r (isSubstituted b) (isSubstituted b₁) pf))
-be2substituted (SET a)    pf = SSET a
-be2substituted (Atomic x) ()
+be2substituted : (b : BoolExpr zero) → Substituted
+be2substituted Truth      = STruth
+be2substituted Falsehood  = SFalsehood
+be2substituted (And b b₁) = SAnd (be2substituted b)
+                                 (be2substituted b₁)
+be2substituted (Or b b₁)  = SOr  (be2substituted b)
+                                 (be2substituted b₁)
+be2substituted (Imp b b₁) = SImp (be2substituted b)
+                                 (be2substituted b₁)
+be2substituted (SET a)    = SSET a
+be2substituted (Atomic ()) 
+
+toZero : {n : ℕ} → (b : BoolExpr n) → isSubstituted b ≡ true → BoolExpr zero
+toZero {zero}  x          pf = x         -- verbose identity.
+toZero {suc n} Truth      pf = Truth     -- verbose casting.
+toZero {suc n} Falsehood  pf = Falsehood
+toZero {suc n} (And x x₁) pf = And (toZero x (and-l pf))
+                                   (toZero x₁ (and-r (isSubstituted x) (isSubstituted x₁) pf) )
+toZero {suc n} (Or x x₁)  pf = Or  (toZero x (and-l pf))
+                                   (toZero x₁ (and-r (isSubstituted x) (isSubstituted x₁) pf) )
+toZero {suc n} (Imp x x₁) pf = Imp (toZero x (and-l pf))
+                                   (toZero x₁ (and-r (isSubstituted x) (isSubstituted x₁) pf))
+toZero {suc n} (Atomic x) ()
+toZero {suc n} (SET a)    pf = SET a
+
+freeVars : {n : ℕ} → BoolExpr n → ℕ
+freeVars Truth = 0
+freeVars Falsehood = 0
+freeVars (And x x₁) = (freeVars x) + (freeVars x₁)
+freeVars (Or x x₁) = (freeVars x) + (freeVars x₁)
+freeVars (Imp x x₁) = (freeVars x) + (freeVars x₁)
+freeVars (Atomic x) = 1
+freeVars (SET a) = 0
+
+noFree⇒isSubstituted : {n : ℕ} → (x : BoolExpr n) → freeVars x ≡ zero → isSubstituted x ≡ true
+noFree⇒isSubstituted Truth pf = refl
+noFree⇒isSubstituted Falsehood pf = refl
+noFree⇒isSubstituted (And x x₁) pf = {!!}
+noFree⇒isSubstituted (Or x x₁) pf = {!!}
+noFree⇒isSubstituted (Imp x x₁) pf = {!!}
+noFree⇒isSubstituted (Atomic x) pf = {!!}
+noFree⇒isSubstituted (SET a) pf = {!!}
 
 -- adds a telescope type with the right number of free variables
 -- to a type/proposition.
 telescope : {n : ℕ} → (freevars : ℕ) → BoolExpr n → Set
 telescope (suc n) x = (b : Set) → telescope n ( subst n b x ) -- TODO check n is right. maybe we need (degree b - n)
 telescope zero x    = ⟦ stdtd ⟧
-  where stdtd  = be2substituted x {!refl!}
+  where stdtd  = be2substituted (toZero x (noFree⇒isSubstituted x {!refl!}))
 
 -- here P is some predicate which should hold for an environment.
 forallEnvs : (n : ℕ) → (P : Env n → Set) → Set
@@ -449,6 +475,9 @@ decideForallEnv {n} exp = allTrue (map (λ env → decide env exp) (allEnvs n))
 -- allTrue→elemTrue : (l : List Bool) → allTrue l ≡ true → x ≡ true -- forall x ∈ l
 -- allTrue→elemTrue l x p = ?
 
+unfoldTruth : {as : List Bool} {a : Bool} → foldr _b∧_ true (a ∷ as) ≡ true → foldr _b∧_ true as ≡ true
+unfoldTruth {as} {a} x = and-r a (foldr _b∧_ true as) x
+
 s : {n : ℕ} → (p : BoolExpr n) → decideForallEnv p ≡ true → forallEnvs n (λ env → decide env p ≡ true)
 s {zero}  Truth         refl = refl
 s {zero}  Falsehood      ()
@@ -457,8 +486,8 @@ s {zero}  (Or exp exp₁)  dec = and-l dec
 s {zero}  (Imp exp exp₁) dec = and-l dec
 s {zero}  (Atomic ())    dec
 s {zero}  (SET a)        dec = and-l dec
-s {suc n} Truth dec = s Truth {!!}
-s {suc n} Falsehood dec = {!!}
+s {suc n} Truth dec = s Truth (unfoldTruth dec)
+s {suc n} Falsehood dec = s {!!} {!!}
 s {suc n} (And exp exp₁) dec = {!!}
 s {suc n} (Or exp exp₁) dec = {!!}
 s {suc n} (Imp exp exp₁) dec = {!!}
@@ -469,11 +498,11 @@ s {suc n} (SET a) dec = {!!}
 automate2 : {n : ℕ} → (p : BoolExpr n) → decideForallEnv p ≡ true → telescope n p
 automate2 Truth pfunc      = s Truth pfunc
 automate2 Falsehood pfunc  = s Falsehood pfunc -- we want absurd here, but you can't match on pfunc
-automate2 (And p p₁) pfunc = (s {!!} {!!})
-automate2 (Or p p₁) pfunc  = (s {!!} {!!})
-automate2 (Imp p p₁) pfunc = s {!!} {!!}
-automate2 (Atomic x) pfunc = s {!!} {!!}
-automate2 (SET a) pfunc    = s {!!} {!!} 
+automate2 (And p p₁) pfunc = foo {!!} {!!} {!!}
+automate2 (Or p p₁) pfunc  = {!!}
+automate2 (Imp p p₁) pfunc = {!!}
+automate2 (Atomic x) pfunc = {!!}
+automate2 (SET a) pfunc    = {!!}
 
 somethm : Set
 somethm = (a b c : Set) → (b → b ∨ ⊤) ∧ (c ∨ ¬ c)
