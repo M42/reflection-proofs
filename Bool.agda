@@ -440,9 +440,11 @@ noFree⇒isSubstituted (Imp x x₁) pf = {!!}
 noFree⇒isSubstituted (Atomic x) pf = {!!}
 noFree⇒isSubstituted (SET a) pf = {!!}
 
-data Tree (A : Set) : Set where
-  Leaf : A ->          Tree A
-  Node : Tree A → Tree A → Tree A
+data Tree {n : ℕ} (b : BoolExpr n) : (depth : ℕ) → (height : ℕ) → Set where
+  Node : {depth h : ℕ}
+       → (l : Tree b (suc depth) h)
+       → (r : Tree b (suc depth) h) → Tree b depth (suc h)
+  Leaf : (env : Env n) → decide env b ≡ true → Tree b n 0
   
 -- adds a telescope type with the right number of free variables
 -- to a type/proposition.
