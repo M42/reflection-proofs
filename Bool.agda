@@ -2,6 +2,18 @@
 module Bool where
 
 open import Relation.Binary.PropositionalEquality renaming ( [_] to by ; subst to substpe)
+open import Lemmas
+open import Data.Maybe hiding (Eq)
+open import Data.Nat
+open import Relation.Nullary hiding (¬_)
+open import Data.Product hiding (map)
+open import Data.Vec.Properties
+open import Data.Nat.Properties
+open ≡-Reasoning
+open import Relation.Binary
+open import Reflection
+
+open import Data.Vec.N-ary
 open import Data.Bool renaming (_∧_ to _b∧_ ; _∨_ to _b∨_; not to bnot)
 open import Data.Nat
 open import Data.Fin hiding (_+_; pred)
@@ -13,6 +25,7 @@ open import Data.Product hiding (map)
 open import Data.List
 
 open import Relation.Binary.PropositionalEquality.TrustMe
+
 
 -- first we define a few aliases, to make types look
 -- like propositions
@@ -105,7 +118,6 @@ decide env (Imp p q)    = bnot (decide env p) b∨ (decide env q)
 decide env (Atomic n)   = lookup n env
 decide env (SET a)      = {!!} -- should prevent this with some predicate? alternatively give false.
 
-open import Lemmas
 
 mutual
   -- first a helper for the cases where a proposition isn't true
@@ -143,9 +155,6 @@ mutual
   soundness env (Atomic n₁) refl | .true = tt
   soundness env (SET a)   pf = {!!}
 
-open import Data.Nat
-open import Relation.Nullary hiding (¬_)
-open import Data.Product hiding (map)
 
 -- still required:
 -- * do actual reflection
@@ -179,7 +188,6 @@ private
 -- as this will quickly become tedious (and remember, the challenge was to
 -- prove tautologies in n² and not 2ⁿ with n the number of variables...
 
-open import Data.Maybe hiding (Eq)
 
 -- TODO write a version which returns a
 -- proof either way, not a maybe. possibly using a predicate to be instantiated
@@ -222,15 +230,8 @@ private
 -- then: prove that you can enumerate all possible Env's and use
 -- that to call decide...
 
-open import Data.Vec.Properties
-open import Data.Nat.Properties
-open ≡-Reasoning
-
-open import Relation.Binary
-
 -- okay, next attempt: using quoteGoal
 
-open import Reflection
 
 ≡' : Name
 ≡' = quote _≡_
@@ -269,7 +270,6 @@ allTrue = foldr _b∧_ true
 someThm : ∀ {p1 p2 q1 q2} → ((p1 ∨ q1) ∧ (p2 ∨ q2)) → ((q1 ∨ p1) ∧ (q2 ∨ p2))
 someThm = quoteGoal g in {! (lhs g refl)!} -- C-c C-n in this goal is useful.
 
-open import Data.Vec.N-ary
 
 -- examples
 
@@ -440,6 +440,10 @@ noFree⇒isSubstituted (Imp x x₁) pf = {!!}
 noFree⇒isSubstituted (Atomic x) pf = {!!}
 noFree⇒isSubstituted (SET a) pf = {!!}
 
+data Tree (A : Set) : Set where
+  Leaf : A ->          Tree A
+  Node : Tree A → Tree A → Tree A
+  
 -- adds a telescope type with the right number of free variables
 -- to a type/proposition.
 telescope : {n : ℕ} → (freevars : ℕ) → BoolExpr n → Set
@@ -459,16 +463,18 @@ foo []          pred pf              = pf
 foo (true ∷ p)  pred (proj₁ , proj₂) = foo p (λ z → pred (true ∷ z)) proj₁
 foo (false ∷ p) pred (proj₁ , proj₂) = foo p (λ z → pred (false ∷ z)) proj₂
 
-allEnvs : (n : ℕ) → List (Env n)
-allEnvs zero    = [] ∷ []
-allEnvs (suc n) = (map (_∷_ false) (allEnvs n)) ++
-                  (map (_∷_ true)  (allEnvs n))
+
+
+-- allEnvs : (n : ℕ) → Tree (Env n)
+-- allEnvs zero    = Leaf []
+-- allEnvs (suc n) = Node ( (allEnvs n)) -- false branch?
+--                        ( (allEnvs n)) -- true branch?
 
 -- this checks, by brute force, if an expression is a tautology,
 -- that is, if it's true for all possible variable assignments.
 -- this would be where to implement a smarter solver.
 decideForallEnv : {n : ℕ} → BoolExpr n → Bool
-decideForallEnv {n} exp = allTrue (map (λ env → decide env exp) (allEnvs n))
+decideForallEnv {n} exp = {!!} -- (allEnvs n)
 
 -- decideforallenv ==true -> forallenvs??
 
@@ -479,13 +485,7 @@ unfoldTruth : {as : List Bool} {a : Bool} → foldr _b∧_ true (a ∷ as) ≡ t
 unfoldTruth {as} {a} x = and-r a (foldr _b∧_ true as) x
 
 s : {n : ℕ} → (p : BoolExpr n) → decideForallEnv p ≡ true → forallEnvs n (λ env → decide env p ≡ true)
-s {zero}  Truth         refl = refl
-s {zero}  Falsehood      ()
-s {zero}  (And exp exp₁) dec = and-l dec
-s {zero}  (Or exp exp₁)  dec = and-l dec
-s {zero}  (Imp exp exp₁) dec = and-l dec
-s {zero}  (Atomic ())    dec
-s {zero}  (SET a)        dec = and-l dec
+s {zero}  x  dec = and-l dec
 s {suc n} Truth dec = s Truth (unfoldTruth dec)
 s {suc n} Falsehood dec = s {!!} {!!}
 s {suc n} (And exp exp₁) dec = {!!}
@@ -495,22 +495,18 @@ s {suc n} (Atomic x) dec = {!!}
 s {suc n} (SET a) dec = {!!}
 
 -- this is actually our soundness function.
-automate2 : {n : ℕ} → (p : BoolExpr n) → decideForallEnv p ≡ true → telescope n p
-automate2 Truth pfunc      = s Truth pfunc
-automate2 Falsehood pfunc  = s Falsehood pfunc -- we want absurd here, but you can't match on pfunc
-automate2 (And p p₁) pfunc = foo {!!} {!!} {!!}
-automate2 (Or p p₁) pfunc  = {!!}
-automate2 (Imp p p₁) pfunc = {!!}
-automate2 (Atomic x) pfunc = {!!}
-automate2 (SET a) pfunc    = {!!}
+automate2 : {n : ℕ} → (p : BoolExpr n) → forallEnvs n (λ env → decide env p ≡ true) → telescope n p
+--automate2 : {n : ℕ} → (p : BoolExpr n) → decideForallEnv p ≡ true → telescope n p
+automate2 {zero} x pfunc = s {!!} pfunc
+automate2 {suc n} x pfunc = {!!}
 
 somethm : Set
 somethm = (a b c : Set) → (b → b ∨ ⊤) ∧ (c ∨ ¬ c)
 
 goalbla : somethm
-goalbla = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e) refl) refl
+goalbla = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e) refl) {!!}
 
 goalbla2 : myfavouritetheorem
-goalbla2 = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e) refl) refl
+goalbla2 = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e) refl) {!!}
 
 -- next up!! using foo, find forallEnvs n (\ e -> [[ b ]] e)
