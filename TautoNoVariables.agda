@@ -27,11 +27,14 @@ open import Data.List
 open import Relation.Binary.PropositionalEquality.TrustMe
 
 _⇒_ : Bool → Bool → Bool
-p ⇒ q = {!!}
+true  ⇒ true  = true
+true  ⇒ false = false
+false ⇒ true  = true
+false ⇒ false = true
 
 -- here's an example of a manual proof
 trueandtrue : true ∧ true ⇒ true ≡ true
-trueandtrue = {!!}
+trueandtrue = refl
 
 
 -- wouldn't it be nice if we could automate this?
