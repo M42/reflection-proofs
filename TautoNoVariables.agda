@@ -51,8 +51,8 @@ i.e., if we want to go from BoolExpr -> Set, we need a way to reattach a
 variable in the Pi type to some term inside our boolean expression.
 -}
 data BoolExpr : Set where
-  Truth     :                           BoolExpr
-  Falsehood :                           BoolExpr
+  Truth     :                       BoolExpr
+  Falsehood :                       BoolExpr
   And       : BoolExpr → BoolExpr → BoolExpr
   Or        : BoolExpr → BoolExpr → BoolExpr
   Imp       : BoolExpr → BoolExpr → BoolExpr
@@ -64,12 +64,12 @@ data BoolExpr : Set where
 
 -- S = BoolExpr (the syntactic realm)
 -- D = the domain of our Props
-⟦_⟧ : BoolExpr → Set
-⟦ Truth ⟧     = ⊤
-⟦ Falsehood ⟧ = ⊥
-⟦ And p q ⟧   = ⟦ p ⟧ × ⟦ q ⟧
-⟦ Or p q ⟧    = ⟦ p ⟧ ⊎ ⟦ q ⟧
-⟦ Imp p q ⟧   = ⟦ p ⟧ → ⟦ q ⟧
+⟦_⟧ : BoolExpr → Bool
+⟦ Truth ⟧     = true
+⟦ Falsehood ⟧ = false
+⟦ And p q ⟧   = ⟦ p ⟧ ∧ ⟦ q ⟧
+⟦ Or p q ⟧    = ⟦ p ⟧ ∨ ⟦ q ⟧
+⟦ Imp p q ⟧   = ⟦ p ⟧ ⇒ ⟦ q ⟧
 
 
 
@@ -86,32 +86,33 @@ decide (Imp p q)    = ¬ decide p ∨ decide q
 
 mutual
   -- first a helper for the cases where a proposition isn't true
-  soundness' : (p : BoolExpr) → decide p ≡ false → ⟦ p ⟧ → ⊥
+  soundness' : (p : BoolExpr) → decide p ≡ false → ⟦ p ⟧ ≡ true → ⊥
   soundness' Truth () pf
-  soundness' Falsehood dec  pf = pf
+  soundness' Falsehood dec  pf = {!!}
   soundness' (And p q) dec pf  with and-false (decide p) (decide q) dec
-  soundness' (And p q) dec (proj₁ , proj₂) | inj₁ x = soundness' p x proj₁
-  soundness' (And p q) dec (proj₁ , proj₂) | inj₂ y = soundness' q y proj₂
-  soundness' (Or p q) dec  pf  with or-false (decide p) (decide q) dec
-  soundness' (Or p q) dec (inj₁ x) | proj₁ , proj₂ = soundness' p proj₁ x
-  soundness' (Or p q) dec (inj₂ y) | proj₁ , proj₂ = soundness' q proj₂ y
-  soundness' (Imp p q) dec pf  with or-false (¬ (decide p)) (decide q) dec
-  soundness' (Imp p q) dec pf | proj₁ , proj₂  with not-false proj₁
-  ... | tmppat  with pf (soundness p tmppat)
-  ... | tmppatq = soundness' q proj₂ tmppatq
+  soundness' (And p q) dec pf | inj₁ x = soundness' p x {!!}
+  soundness' (And p q) dec pf | inj₂ y = soundness' q y {!!}
+  soundness' (Or p q)  dec pf  with or-false (decide p) (decide q) dec
+  soundness' (Or p q)  dec pf | proj₁ , proj₂ = soundness' p proj₁ {!!}
+ -- soundness' (Or p q)  dec pf | proj₁ , proj₂ = soundness' q proj₂ ?
+  soundness' (Imp p q) dec pf = {!!}
+  -- soundness' (Imp p q) dec pf  with or-false (¬ (decide p)) (decide q) dec
+  -- soundness' (Imp p q) dec pf | proj₁ , proj₂  with not-false proj₁
+  -- ... | tmppat  with pf (soundness p tmppat)
+  -- ... | tmppatq = soundness' q proj₂ tmppatq
 
   -- soundness theorem:
-  soundness : (p : BoolExpr) → decide p ≡ true → ⟦ p ⟧
-  soundness (Truth) refl = tt
+  soundness : (p : BoolExpr) → decide p ≡ true → ⟦ p ⟧ ≡ true
+  soundness (Truth) refl = {!!}
   soundness (Falsehood) ()
-  soundness (And p p₁) pf = (soundness p  (and-l pf)) ,
-                                (soundness p₁ (and-r (decide p) (decide p₁) pf))
+  soundness (And p p₁) pf = {!!} --   (soundness p  (and-l pf)) ,
+                              --   (soundness p₁ (and-r (decide p) (decide p₁) pf))
   soundness (Or p p₁) pf  with or-lem (decide p) (decide p₁) pf
-  soundness (Or p p₁) pf | inj₁ x = inj₁ (soundness p x)
-  soundness (Or p p₁) pf | inj₂ y = inj₂ (soundness p₁ y)
+  soundness (Or p p₁) pf | inj₁ x = {!!} -- inj₁ (soundness p x)
+  soundness (Or p p₁) pf | inj₂ y = {!!} -- inj₂ (soundness p₁ y)
   soundness (Imp p q) pf  with or-lem (¬ (decide p)) (decide q) pf
-  soundness (Imp p q) pf | inj₁ y = λ x → ⊥-elim (soundness' p (not-lemma y) x)
-  soundness (Imp p q) pf | inj₂ y = λ x → soundness q y
+  soundness (Imp p q) pf | inj₁ y = {!!} -- λ x → ⊥-elim (soundness' p (not-lemma y) x)
+  soundness (Imp p q) pf | inj₂ y = {!!} -- λ x → soundness q y
 
 
 -- still required:
@@ -124,17 +125,17 @@ private
 -- you give the type in terms of the AST
 -- of course, later we want to generate the AST ourselves.
 
-    somethingIWantToProve : ⟦ Or (Truth) (Falsehood) ⟧
+    somethingIWantToProve : ⟦ Or (Truth) (Falsehood) ⟧ ≡ true
     somethingIWantToProve  = soundness (Or (Truth) (Falsehood)) refl
 
 private
     -- this also works if you set oneVar = true :: []. Next
     -- we want to automatically prove all cases.
     -- how to do this automatically?
-    thm0 : ⟦ Or (Truth) (Imp (Falsehood) (Truth))⟧
+    thm0 : ⟦ Or (Truth) (Imp (Falsehood) (Truth))⟧ ≡ true
     thm0 = soundness (Or (Truth) (Imp Falsehood (Truth))) refl
 
-    thm1 : ⟦ Imp (Truth) (Truth) ⟧
+    thm1 : ⟦ Imp (Truth) (Truth) ⟧ ≡ true
     --thm1 ov = soundness ov (Imp (Atomic zero) (Atomic zero)) refl
     thm1 = soundness (Imp (Truth) (Truth)) refl
 
@@ -146,18 +147,18 @@ private
 -- TODO write a version which returns a
 -- proof either way, not a maybe. possibly using a predicate to be instantiated
 -- to refl?
-automate : (p : BoolExpr) → Maybe ⟦ p ⟧
+automate : (p : BoolExpr) → Maybe (⟦ p ⟧ ≡ true)
 automate p  with decide p | inspect (decide ) p
 automate p | true  | by eq = just (soundness p eq)
 automate p | false | by eq = nothing
 
 private
-  thm2 : ⟦ Or (Truth) (Imp Falsehood (Truth))⟧
+  thm2 : ⟦ Or (Truth) (Imp Falsehood (Truth))⟧ ≡ true
   thm2  with automate (Or (Truth) (Imp Falsehood (Truth)))
   thm2 | just x = x
   thm2 | nothing = {!!}
 
-  thm3 : ⟦ Imp (Truth) (Truth) ⟧
+  thm3 : ⟦ Imp (Truth) (Truth) ⟧ ≡ true
   thm3  with automate (Imp (Truth) (Truth))
   thm3 | just x = x
   thm3 | nothing = {!!}
@@ -175,7 +176,7 @@ private
   thm1bdef = Imp (And (Or (Truth) (Truth)) (Or (Truth) (Truth)))
                  (And (Or (Truth) (Truth)) (Or (Truth) (Truth)))
 
-  thm1b : ⟦ thm1bdef ⟧
+  thm1b : ⟦ thm1bdef ⟧ ≡ true
   thm1b with automate thm1bdef
   thm1b | just x = x
   thm1b | nothing = {!!} -- we want absurd here.
