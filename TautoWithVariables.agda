@@ -1,5 +1,5 @@
 {-# OPTIONS --type-in-type #-}
-module Bool where
+module TautoWithVariables where
 
 open import Relation.Binary.PropositionalEquality renaming ( [_] to by ; subst to substpe)
 open import Lemmas
