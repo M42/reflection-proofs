@@ -239,7 +239,7 @@ private
 -- returns the number of the outermost pi quantified variables.
 
 argsNo : Term → ℕ
-argsNo (pi (arg visible relevant (el (lit 0) (sort (lit 0)))) (el s t)) = suc (argsNo t)
+argsNo (pi (arg visible relevant (el (lit _) (sort (lit _)))) (el s t)) = suc (argsNo t)
 -- argsNo (pi (arg visible relevant (el (lit 0) (def  _ _))) (el s t)) = suc (argsNo t)
 argsNo (var x args) = 0
 argsNo (con c args) = 0
@@ -253,7 +253,7 @@ argsNo _            = 0
 -- returning a term with argsNo free variables.
 
 stripPi : Term → Term
-stripPi (pi (arg visible relevant (el (lit 0) (sort (lit 0)))) (el s t)) = stripPi t
+stripPi (pi (arg visible relevant (el (lit _) (sort (lit _)))) (el s t)) = stripPi t
 --stripPi (pi (arg visible relevant (el (lit 0) (def  _ _))) (el s t)) = stripPi t
 -- identity otherwise
 stripPi (pi args t)  = pi   args t
@@ -440,6 +440,13 @@ noFree⇒isSubstituted (Imp x x₁) pf = {!!}
 noFree⇒isSubstituted (Atomic x) pf = {!!}
 noFree⇒isSubstituted (SET a) pf = {!!}
 
+{-
+TODO:
+
+- enforce that the environments are what you'd expect (i.e. prepend false right, true left,
+  when building up tree
+-
+-}
 data Tree {n : ℕ} (b : BoolExpr n) : (depth : ℕ) → (height : ℕ) → Set where
   Node : {depth h : ℕ}
        → (l : Tree b (suc depth) h)
@@ -462,7 +469,7 @@ forallEnvs (suc n) p = (forallEnvs n (λ env → p (true ∷ env))) × (forallEn
 -- we can find the corresponding proof if given some specific env.
 foo : {n : ℕ} → (env : Env n) → (P : Env n → Set) → forallEnvs n P → P env
 foo []          pred pf              = pf
-foo (true ∷ p)  pred (proj₁ , proj₂) = foo p (λ z → pred (true ∷ z)) proj₁
+foo (true ∷ p)  pred (proj₁ , proj₂) = foo p (λ z → pred (true ∷ z))  proj₁
 foo (false ∷ p) pred (proj₁ , proj₂) = foo p (λ z → pred (false ∷ z)) proj₂
 
 
@@ -477,6 +484,24 @@ foo (false ∷ p) pred (proj₁ , proj₂) = foo p (λ z → pred (false ∷ z))
 -- this would be where to implement a smarter solver.
 decideForallEnv : {n : ℕ} → BoolExpr n → Bool
 decideForallEnv {n} exp = {!!} -- (allEnvs n)
+
+exp0 : BoolExpr 0
+exp0 = Imp Truth Truth
+
+test00 : Tree exp0 0 0
+test00 = Leaf [] refl
+
+exp1 : BoolExpr 1
+exp1 = Imp (Atomic zero) (Atomic zero)
+
+test : Tree exp1 0 1
+test = Node (Leaf (true ∷ []) refl) {!Leaf (false ∷ []) refl!}
+
+findInTree : {m : ℕ} → (b : BoolExpr m) → Tree b 0 m → (∀ env → ⟦ env ⊢ b ⟧)
+findInTree expr t    = {!!} 
+
+generalises : {n : ℕ} → (b : BoolExpr n) → (∀ env → ⟦ env ⊢ b ⟧) → telescope n b
+generalises lk = {!!}
 
 -- decideforallenv ==true -> forallenvs??
 
@@ -506,9 +531,10 @@ somethm : Set
 somethm = (a b c : Set) → (b → b ∨ ⊤) ∧ (c ∨ ¬ c)
 
 goalbla : somethm
-goalbla = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e) refl) {!!}
+goalbla = quoteGoal e in {!!} -- automate2 (term2b (argsNo e) 0 (stripPi e) ?) {!!}
 
 goalbla2 : myfavouritetheorem
-goalbla2 = quoteGoal e in automate2 (term2b (argsNo e) 0 (stripPi e) refl) {!!}
+goalbla2 = quoteGoal e in {!!} -- automate2 (term2b (argsNo e) 0 (stripPi e) ?) {!!}
 
 -- next up!! using foo, find forallEnvs n (\ e -> [[ b ]] e)
+-- possible using Tree.
