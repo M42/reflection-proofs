@@ -462,7 +462,7 @@ telescope zero x    = ⟦ stdtd ⟧
 
 -- here P is some predicate which should hold for an environment.
 forallEnvs : (n : ℕ) → (P : Env n → Set) → Set
-forallEnvs zero p = p []
+forallEnvs zero    p = p []
 forallEnvs (suc n) p = (forallEnvs n (λ env → p (true ∷ env))) × (forallEnvs n (λ env → p (false ∷ env)))
 
 -- foo shows us that, if we have that some P holds for all envs,
