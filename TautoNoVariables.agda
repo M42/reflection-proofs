@@ -207,19 +207,19 @@ isBoolExprQ' (def f args) with f ≟-Name (quote Data.Bool._∧_)
 isBoolExprQ' (def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ [])) | yes p = _∧_ (isBoolExprQ' t₁) (isBoolExprQ' t₂)
 isBoolExprQ' (def f _) | yes p = false
 isBoolExprQ' (def f args) | no p  with f ≟-Name (quote Data.Bool.false)
-isBoolExprQ' (def f []  ) | no _ | yes p = true
+isBoolExprQ' (def f []  ) | no _ | yes p = false
 isBoolExprQ' (def f args) | no _ | yes p = false
 isBoolExprQ' (def f args) | no _ | no  p with f ≟-Name (quote Data.Bool._∨_)
 isBoolExprQ' (def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ [])) | no _ | no _ | yes p = _∧_ (isBoolExprQ' t₁)
                                                                                  (isBoolExprQ' t₂)
 isBoolExprQ' (def f args) | no _ | no _ | yes _  = false
 isBoolExprQ' (def f args) | no _ | no _ | no _ with f ≟-Name (quote Data.Bool.true)
-isBoolExprQ' (def f []) | no _   | no _    | no _    | yes _ = true
+isBoolExprQ' (def f []) | no _   | no _    | no _    | yes _ = false
 isBoolExprQ' (def f _ ) | no _   | no _    | no _    | yes _ = false
 isBoolExprQ' (def f _ ) | no _   | no _    | no _    | no _  = false
 
 isBoolExprQ' (lam v t') = isBoolExprQ' t'
-isBoolExprQ' (pi (arg visible relevant (el _ t₁)) (el _ t₂)) = _∧_ (isBoolExprQ' t₁) (isBoolExprQ' t₂)
+isBoolExprQ' (pi (arg visible relevant (el _ t₁)) (el _ t₂)) = false
 isBoolExprQ' (sort x )= false
 isBoolExprQ' (unknown) = false
 isBoolExprQ' (pi _ _) = false
@@ -229,25 +229,25 @@ isBoolExprQ : (t : Term) → outerIsEq t ≡ true → Bool
 isBoolExprQ t pf with noEQ t pf
 isBoolExprQ t pf | t' = isBoolExprQ' t'
 
-term2b : (t : Term) → isBoolExprQ t {!!} ≡ true → BoolExpr
-term2b t pf with noEQ t {!!}
-term2b t pf | var x args = {!!}
-term2b t pf | con c args with c ≟-Name (quote true)
-term2b t pf | con c args | yes p = Truth
-term2b t pf | con c args | no ¬p with c ≟-Name (quote false)
-term2b t pf | con c args | no ¬p | yes p = Falsehood
-term2b t pf | con c args | no ¬p₁ | no ¬p = {!pf!}
-term2b t pf | def f args = {!!}
-term2b t pf | lam v t' = {!!}
-term2b t pf | pi t₁ t₂ = {!!}
-term2b t pf | sort x = {!!}
-term2b t pf | unknown = {!!}
+term2b : (t : Term) → (pf : outerIsEq t ≡ true) → isBoolExprQ t pf ≡ true → BoolExpr
+term2b t pf0 pf with noEQ t pf0
+term2b t pf0 () | var x args
+term2b t pf0 pf | con c args with c ≟-Name (quote true)
+term2b t pf0 pf | con c args | yes p = Truth
+term2b t pf0 pf | con c args | no ¬p with c ≟-Name (quote false)
+term2b t pf0 pf | con c args | no ¬p | yes p = Falsehood
+term2b t pf0 () | con c args | no ¬p₁ | no ¬p 
+term2b t pf0 pf | def f args = {!!}
+term2b t pf0 pf | lam v t' = {!!}
+term2b t pf0 () | pi t₁ t₂ 
+term2b t pf0 () | sort x
+term2b t pf0 () | unknown
 
 private
   -- here we'll test the reflection a bit
   -- sort of like a few unit tests...
   test0 : Set
-  test0 = (a b c d : Bool) → a ∧ b ≡ true
+  test0 = (a b : Bool) → a ∧ b ≡ true
 
  --  test0-check : let t = quoteTerm test0 in
  --                term2b (argsNo t) 0 t refl ≡ And (Atomic (suc (suc (suc zero)))) (Atomic (suc (suc zero)))
@@ -275,18 +275,11 @@ TODO:
 exp0 : BoolExpr
 exp0 = Imp Truth Truth
 
-exp1 : BoolExpr
-exp1 = Imp (Truth) (Truth)
-
-
--- this is actually our soundness function.
-
 somethm : Set
 somethm = (true ⇒ true ∨ true) ∧ (false ∨ true) ≡ true
 
 goalbla : somethm
-goalbla = quoteGoal e in soundness (term2b e refl) refl -- automate2 (term2b (argsNo e) 0 (stripPi e) ?) {!!}
+goalbla = quoteGoal e in soundness (term2b e refl refl) refl
 
-
--- next up!! using foo, find forallEnvs n (\ e -> [[ b ]] e)
--- possible using Tree.
+goaltest0 : test0
+goaltest0 = quoteGoal e in {!!}
