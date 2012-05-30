@@ -9,7 +9,6 @@ open import Relation.Nullary hiding (¬_)
 open import Data.Product hiding (map)
 open import Data.Vec.Properties
 open import Data.Nat.Properties
-open ≡-Reasoning
 open import Relation.Binary hiding (_⇒_)
 open import Reflection
 
@@ -32,8 +31,8 @@ true  ⇒ false = false
 false ⇒ true  = true
 false ⇒ false = true
 
--- here's an example of a manual proof
-trueandtrue : true ∧ true ⇒ true ≡ true
+-- here's an example of a manual proof (not so complex in this case, unfortunately.)
+trueandtrue : true ∧ true ⇒ true ∨ false ≡ true
 trueandtrue = refl
 
 
@@ -88,7 +87,7 @@ mutual
   -- first a helper for the cases where a proposition isn't true
   soundness' : (p : BoolExpr) → decide p ≡ false → ⟦ p ⟧ ≡ true → ⊥
   soundness' Truth () pf
-  soundness' Falsehood dec  pf = {!!}
+  soundness' Falsehood dec  pf = {!pf!}
   soundness' (And p q) dec pf  with and-false (decide p) (decide q) dec
   soundness' (And p q) dec pf | inj₁ x = soundness' p x {!!}
   soundness' (And p q) dec pf | inj₂ y = soundness' q y {!!}
@@ -115,9 +114,6 @@ mutual
   soundness (Imp p q) pf | inj₂ y = {!!} -- λ x → soundness q y
 
 
--- still required:
--- * do actual reflection
-
 private
 -- we can only prove "propositions" that eventually evaluate to true.
 -- somethingIWantToProve : true ∨ false ≡ true
@@ -143,44 +139,6 @@ private
 -- as this will quickly become tedious (and remember, the challenge was to
 -- prove tautologies in n² and not 2ⁿ with n the number of variables...
 
-
--- TODO write a version which returns a
--- proof either way, not a maybe. possibly using a predicate to be instantiated
--- to refl?
-automate : (p : BoolExpr) → Maybe (⟦ p ⟧ ≡ true)
-automate p  with decide p | inspect (decide ) p
-automate p | true  | by eq = just (soundness p eq)
-automate p | false | by eq = nothing
-
-private
-  thm2 : ⟦ Or (Truth) (Imp Falsehood (Truth))⟧ ≡ true
-  thm2  with automate (Or (Truth) (Imp Falsehood (Truth)))
-  thm2 | just x = x
-  thm2 | nothing = {!!}
-
-  thm3 : ⟦ Imp (Truth) (Truth) ⟧ ≡ true
-  thm3  with automate (Imp (Truth) (Truth))
-  thm3 | just x = x
-  thm3 | nothing = {!!}
-
-  o  : Fin 4
-  o  = suc zero
-  t  : Fin 4
-  t  = suc (suc zero)
-  th : Fin 4
-  th = suc (suc (suc zero))
-
-  -- this means the following: ((p1 ∨ q1) ∧ (p2 ∨ q2) → (q1 ∨ p1) ∧ (q2 ∨ p2))
-  -- ...which is cool, since we can now prove tautologies of this form.
-  thm1bdef : BoolExpr
-  thm1bdef = Imp (And (Or (Truth) (Truth)) (Or (Truth) (Truth)))
-                 (And (Or (Truth) (Truth)) (Or (Truth) (Truth)))
-
-  thm1b : ⟦ thm1bdef ⟧ ≡ true
-  thm1b with automate thm1bdef
-  thm1b | just x = x
-  thm1b | nothing = {!!} -- we want absurd here.
-
 -- First: return proof either way, not maybe, from automate,
 -- then: prove that you can enumerate all possible Env's and use
 -- that to call decide...
@@ -191,115 +149,99 @@ private
 ≡' : Name
 ≡' = quote _≡_
 
--- returns the number of the outermost pi quantified variables.
+ff : Name
+ff = quote false
 
-argsNo : Term → ℕ
-argsNo (pi (arg visible relevant (el (lit _) (sort (lit _)))) (el s t)) = suc (argsNo t)
--- argsNo (pi (arg visible relevant (el (lit 0) (def  _ _))) (el s t)) = suc (argsNo t)
-argsNo (var x args) = 0
-argsNo (con c args) = 0
-argsNo (def f args) = 0
-argsNo (lam v t)    = 0
-argsNo (sort x)     = 0
-argsNo unknown      = 0
-argsNo _            = 0
+-- returns the number of the outermost pi quantified variables.
 
 -- peels off all the outermost Pi constructors,
 -- returning a term with argsNo free variables.
 
-stripPi : Term → Term
-stripPi (pi (arg visible relevant (el (lit _) (sort (lit _)))) (el s t)) = stripPi t
---stripPi (pi (arg visible relevant (el (lit 0) (def  _ _))) (el s t)) = stripPi t
--- identity otherwise
-stripPi (pi args t)  = pi   args t
-stripPi (var x args) = var  x    args
-stripPi (con c args) = con  c    args
-stripPi (def f args) = def  f    args
-stripPi (lam v t)    = lam  v    t
-stripPi (sort x)     = sort x
-stripPi unknown      = unknown
 
-allTrue : List Bool → Bool
-allTrue = foldr _∧_ true
-
-someThm : ∀ {p1 p2 q1 q2} → ((p1 ∨ q1) ∧ (p2 ∨ q2)) ⇒ ((q1 ∨ p1) ∧ (q2 ∨ p2)) ≡ true
-someThm = quoteGoal g in {! (lhs g refl)!} -- C-c C-n in this goal is useful.
+-- someThm : ∀ {p1 p2 q1 q2} → ((p1 ∨ q1) ∧ (p2 ∨ q2)) ⇒ ((q1 ∨ p1) ∧ (q2 ∨ p2)) ≡ true
+-- someThm = quoteGoal g in {! (lhs g refl)!} -- C-c C-n in this goal is useful.
 
 
--- examples
-
-private
-
-  term-ex₁ : Term
-  term-ex₁ = quoteTerm ((a b c d : Set) → b → a)
-
-  argsNo-ex₁ : argsNo term-ex₁ ≡ 4
-  argsNo-ex₁ = refl
   
   -- simplefied notation, non-executable
   -- stripPi-ex : stripPi-ex t ≡ def ≡' (var 2 + var 1) ≡ (var 1 + var 0)
 
+outerIsEq : (t : Term) → Bool
+outerIsEq (var x args) = false
+outerIsEq (con c args) = false
+outerIsEq (def f (a ∷ b ∷ c ∷ (arg _ _ (con ff [])) ∷ [])) with f ≟-Name ≡'
+... | yes p = true
+... | no ¬p = false
+outerIsEq (def f as)   = false
+outerIsEq (lam v t)    = false
+outerIsEq (pi t₁ t₂)   = false
+outerIsEq (sort x)     = false
+outerIsEq unknown      = false
 
-unsafeMinus : (a : ℕ) → (b : ℕ) → ℕ
-unsafeMinus zero m = zero
-unsafeMinus n₁ zero = n₁
-unsafeMinus (suc n₁) (suc m) = unsafeMinus n₁ m
+noEQ : (t : Term) → outerIsEq t ≡ true → Term
+noEQ (var x args) ()
+noEQ (con c args) ()
+noEQ (def f []) ()
+noEQ (def f (x ∷ [])) ()
+noEQ (def f (x ∷ x₁ ∷ [])) ()
+noEQ (def f (x ∷ x₁ ∷ x₂ ∷ [])) ()
+noEQ (def f (x ∷ x₁ ∷ x₂ ∷ (arg _ _ (con ff [])) ∷ [])) pf with f ≟-Name ≡'
+noEQ (def f (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ (con ff []) ∷ [])) pf | yes p = x₂
+noEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con ff []) ∷ [])) () | no ¬p
+noEQ (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ [])) ()
+noEQ (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args)) ()
+noEQ (lam v t) ()
+noEQ (pi t₁ t₂) ()
+noEQ (sort x) ()
+noEQ unknown ()
 
-isBoolExprQ : (n : ℕ) → (depth : ℕ) → (t : Term) → Bool
-isBoolExprQ n depth t with stripPi t
-isBoolExprQ n depth t | var x args with suc (unsafeMinus x depth) ≤? n
-isBoolExprQ n depth t | var x args | yes p2 = true
-isBoolExprQ n depth t | var x args | _      = true -- huh? 
-isBoolExprQ n depth t | con c args = false
-isBoolExprQ n depth t | def f args with f ≟-Name (quote Data.Product.Σ)
-isBoolExprQ n depth t | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | yes p = _∧_ (isBoolExprQ n depth t₁) (isBoolExprQ n depth t₂)
-isBoolExprQ n depth t | def f (_) | yes p = false
-isBoolExprQ n depth t | def f args | no p  with f ≟-Name (quote Data.Empty.⊥)
-isBoolExprQ n depth t | def f []   | no _ | yes p = true
-isBoolExprQ n depth t | def f args | no _ | yes p = false
-isBoolExprQ n depth t | def f args | no _ | no  p with f ≟-Name (quote Data.Sum._⊎_)
-isBoolExprQ n depth t | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | no _ | no _ | yes p = _∧_ (isBoolExprQ n depth t₁)
-                                                                                           (isBoolExprQ n depth t₂)
-isBoolExprQ n depth t | def f args | no _ | no _ | yes _  = false
-isBoolExprQ n depth t | def f args | no _ | no _ | no _ with f ≟-Name (quote Data.Unit.⊤)
-isBoolExprQ n depth t | def f [] | no _   | no _    | no _    | yes _ = true
-isBoolExprQ n depth t | def f _  | no _   | no _    | no _    | yes _ = false
-isBoolExprQ n depth t | def f _  | no _   | no _    | no _    | no _  = false
 
-isBoolExprQ n depth t | lam v t' = isBoolExprQ n (suc depth) t'
-isBoolExprQ n depth t | pi (arg visible relevant (el _ t₁)) (el _ t₂) = _∧_ (isBoolExprQ (argsNo t₁) depth t₁) (isBoolExprQ n (suc depth) t₂)
-isBoolExprQ n depth t | sort x = false
-isBoolExprQ n depth t | unknown = false
-isBoolExprQ n depth t | pi _ _ = false
+isBoolExprQ' : (t : Term) → Bool
+isBoolExprQ' (var x args) = false
+isBoolExprQ' (con c args) with c ≟-Name (quote false)
+isBoolExprQ' (con c args) | yes p = true
+isBoolExprQ' (con c args) | no ¬p with c ≟-Name (quote true)
+isBoolExprQ' (con c args) | no ¬p | yes p = true
+isBoolExprQ' (con c args) | no ¬p₁ | no ¬p = false
+isBoolExprQ' (def f args) with f ≟-Name (quote Data.Bool._∧_)
+isBoolExprQ' (def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ [])) | yes p = _∧_ (isBoolExprQ' t₁) (isBoolExprQ' t₂)
+isBoolExprQ' (def f _) | yes p = false
+isBoolExprQ' (def f args) | no p  with f ≟-Name (quote Data.Bool.false)
+isBoolExprQ' (def f []  ) | no _ | yes p = true
+isBoolExprQ' (def f args) | no _ | yes p = false
+isBoolExprQ' (def f args) | no _ | no  p with f ≟-Name (quote Data.Bool._∨_)
+isBoolExprQ' (def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ [])) | no _ | no _ | yes p = _∧_ (isBoolExprQ' t₁)
+                                                                                 (isBoolExprQ' t₂)
+isBoolExprQ' (def f args) | no _ | no _ | yes _  = false
+isBoolExprQ' (def f args) | no _ | no _ | no _ with f ≟-Name (quote Data.Bool.true)
+isBoolExprQ' (def f []) | no _   | no _    | no _    | yes _ = true
+isBoolExprQ' (def f _ ) | no _   | no _    | no _    | yes _ = false
+isBoolExprQ' (def f _ ) | no _   | no _    | no _    | no _  = false
 
--- we don't have a branch for Not, since that is immediately
--- translated as "¬ P ⇒ λ ⊥ → P"
-term2b : (n : ℕ) → (depth : ℕ) → (t : Term) → isBoolExprQ (argsNo t) 0 t ≡ true → BoolExpr
-term2b n depth t pf with stripPi t
-term2b n depth t pf | var x args with suc (unsafeMinus x depth) ≤? n
-term2b n depth t pf | var x args | yes p2 = {!!}
-term2b n depth t () | var x args | _
-term2b n depth t () | con c args
-term2b n depth t pf | def f args with f ≟-Name (quote Data.Product.Σ)
-term2b n depth t pf | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | yes p = And (term2b n depth t₁ (and-l {!!})) (term2b n depth t₂ (and-r {!!} {!!} pf))
-term2b n depth t () | def f (_) | yes p
-term2b n depth t pf | def f args | no p  with f ≟-Name (quote Data.Empty.⊥)
-term2b n depth t pf | def f []   | no _ | yes p = Falsehood
-term2b n depth t () | def f args | no _ | yes p
-term2b n depth t pf | def f args | no _ | no  p with f ≟-Name (quote Data.Sum._⊎_)
-term2b n depth t pf | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | no _ | no _ | yes p = Or (term2b n depth t₁ (and-l {!!}))
-                                                                                              (term2b n depth t₂ (and-r (isBoolExprQ (argsNo t₁) 0 t₁) (isBoolExprQ (argsNo t₂) 0 t₂) {!!}))
-term2b n depth t () | def f args | no _ | no _ | yes _
-term2b n depth t pf | def f args | no _ | no _ | no _ with f ≟-Name (quote Data.Unit.⊤)
-term2b n depth t pf | def f [] | no _   | no _    | no _    | yes _ = Truth
-term2b n depth t () | def f _ | no _   | no _    | no _    | yes _ 
-term2b n depth t () | def f _  | no _   | no _    | no _    | no _
-                   
-term2b n depth t pf | lam v t' = term2b n (suc depth) t' {!!}
-term2b n depth t pf | pi (arg visible relevant (el _ t₁)) (el _ t₂) = Imp (term2b n depth t₁ {!!}) (term2b n (suc depth) t₂ {!!})
-term2b n depth t () | sort x
-term2b n depth t () | unknown
-term2b n depth t () | pi _ _
+isBoolExprQ' (lam v t') = isBoolExprQ' t'
+isBoolExprQ' (pi (arg visible relevant (el _ t₁)) (el _ t₂)) = _∧_ (isBoolExprQ' t₁) (isBoolExprQ' t₂)
+isBoolExprQ' (sort x )= false
+isBoolExprQ' (unknown) = false
+isBoolExprQ' (pi _ _) = false
+
+
+isBoolExprQ : (t : Term) → outerIsEq t ≡ true → Bool
+isBoolExprQ t pf with noEQ t pf
+isBoolExprQ t pf | t' = isBoolExprQ' t'
+
+term2b : (t : Term) → isBoolExprQ t {!!} ≡ true → BoolExpr
+term2b t pf with noEQ t {!!}
+term2b t pf | var x args = {!!}
+term2b t pf | con c args with c ≟-Name (quote true)
+term2b t pf | con c args | yes p = Truth
+term2b t pf | con c args | no ¬p with c ≟-Name (quote false)
+term2b t pf | con c args | no ¬p | yes p = Falsehood
+term2b t pf | con c args | no ¬p₁ | no ¬p = {!pf!}
+term2b t pf | def f args = {!!}
+term2b t pf | lam v t' = {!!}
+term2b t pf | pi t₁ t₂ = {!!}
+term2b t pf | sort x = {!!}
+term2b t pf | unknown = {!!}
 
 private
   -- here we'll test the reflection a bit
@@ -326,10 +268,8 @@ private
 
 {-
 TODO:
-
 - enforce that the environments are what you'd expect (i.e. prepend false right, true left,
   when building up tree
--
 -}
 
 exp0 : BoolExpr
@@ -342,10 +282,10 @@ exp1 = Imp (Truth) (Truth)
 -- this is actually our soundness function.
 
 somethm : Set
-somethm = (a b c : Bool) → (b ⇒ b ∨ true) ∧ (c ∨ ¬ c) ≡ true
+somethm = (true ⇒ true ∨ true) ∧ (false ∨ true) ≡ true
 
 goalbla : somethm
-goalbla = quoteGoal e in {!!} -- automate2 (term2b (argsNo e) 0 (stripPi e) ?) {!!}
+goalbla = quoteGoal e in soundness (term2b e refl) refl -- automate2 (term2b (argsNo e) 0 (stripPi e) ?) {!!}
 
 
 -- next up!! using foo, find forallEnvs n (\ e -> [[ b ]] e)
