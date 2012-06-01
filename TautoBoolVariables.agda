@@ -27,9 +27,9 @@ open import Data.List
 open import Relation.Binary.PropositionalEquality.TrustMe
 
 _⇒_ : Bool → Bool → Bool
-true ⇒ true = true
-true ⇒ false = false
-false ⇒ q = true
+true  ⇒ true  = true
+true  ⇒ false = false
+false ⇒ q     = true
 
 -- here's an example of a manual proof
 trueandtrue : true ∧ true ⇒ true ≡ true
@@ -239,7 +239,7 @@ argsNo _            = 0
 -- returning a term with argsNo free variables.
 
 stripPi : Term → Term
-stripPi (pi (arg visible relevant (el (lit _) (sort (lit _)))) (el s t)) = stripPi t
+stripPi (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = stripPi t
 --stripPi (pi (arg visible relevant (el (lit 0) (def  _ _))) (el s t)) = stripPi t
 -- identity otherwise
 stripPi (pi args t)  = pi   args t
@@ -332,36 +332,6 @@ term2b n depth t () | sort x
 term2b n depth t () | unknown
 term2b n depth t () | pi _ _
 
-  -- here we'll test the reflection a bit
-  -- sort of like a few unit tests...
-
- --  test0-check : let t = quoteTerm test0 in
- --                term2b (argsNo t) 0 t refl ≡ And (Atomic (suc (suc (suc zero)))) (Atomic (suc (suc zero)))
- --  test0-check = refl
- --  test1-check : let t = quoteTerm ( (a b d : Set) → a → b) in
- --                term2b (argsNo t) 0 t refl ≡ Imp (Atomic ((suc (suc zero)))) (Atomic ((suc zero)))
- --  test1-check = refl
- --  test2-check : let t = quoteTerm ( (a b c : Set) → a ∧ c → b ) in
- --                term2b (argsNo t) 0 t refl ≡ Imp (And (Atomic (suc (suc zero))) (Atomic zero)) (Atomic (suc zero))
- --  test2-check = refl
- --  test3-check : let t = quoteTerm ( (a b c d : Set) → ¬ a → b ) in
- --                term2b (argsNo t) 0 t refl ≡ Imp (Imp Falsehood (Atomic (suc (suc (suc zero))))) (Atomic (suc (suc zero)))
- --  test3-check = refl
---   test4-check : let t = quoteTerm ( (a b c d : Set) → ⊥ ∨ b ) in
---                 term2b (argsNo t) 0 t refl ≡ Or (Falsehood) (Atomic (suc (suc zero)))
---   test4-check = refl
-
--- this should be an fmap.
--- subst : {n : ℕ} → (var : ℕ) → (t : Set) → BoolExpr n → BoolExpr n
--- subst v t Truth              = Truth
--- subst v t Falsehood          = Falsehood
--- subst v t (And exp exp₁)     = And (subst v t exp) (subst v t exp₁)
--- subst v t (Or exp exp₁)      = Or (subst v t exp) (subst v t exp₁)
--- subst v t (Imp exp exp₁)     = Imp (subst v t exp) (subst v t exp₁)
--- subst v t (Atomic x) with Data.Nat._≟_ (toℕ x) v
--- subst v t (Atomic x) | yes p = SET t
--- subst v t (Atomic x) | no ¬p = Atomic x
--- subst v t (SET a)            = SET a
 
 isSubstituted : {n : ℕ} → (b : BoolExpr n) → Bool
 isSubstituted (Atomic x) = false
@@ -371,25 +341,40 @@ isSubstituted (And b b₁) = isSubstituted b ∧ isSubstituted b₁
 isSubstituted (Or b b₁)  = isSubstituted b ∧ isSubstituted b₁
 isSubstituted (Imp b b₁) = isSubstituted b ∧ isSubstituted b₁
 
--- ⟦_⟧ : Substituted → Set
--- ⟦ STruth ⟧      = ⊤
--- ⟦ SFalsehood ⟧  = ⊥
--- ⟦ SAnd b b₁ ⟧   = ⟦ b ⟧ × ⟦ b₁ ⟧
--- ⟦ SOr b b₁ ⟧    = ⟦ b ⟧ ⊎ ⟦ b₁ ⟧
--- ⟦ SImp b b₁ ⟧   = ⟦ b ⟧ → ⟦ b₁ ⟧
--- ⟦ SSET a ⟧      = a
+ff : Name
+ff = quote false
 
--- be2substituted : (b : BoolExpr zero) → Substituted
--- be2substituted Truth      = STruth
--- be2substituted Falsehood  = SFalsehood
--- be2substituted (And b b₁) = SAnd (be2substituted b)
---                                  (be2substituted b₁)
--- be2substituted (Or b b₁)  = SOr  (be2substituted b)
---                                  (be2substituted b₁)
--- be2substituted (Imp b b₁) = SImp (be2substituted b)
---                                  (be2substituted b₁)
--- be2substituted (SET a)    = SSET a
--- be2substituted (Atomic ()) 
+tr : Name
+tr = quote true
+
+outerIsEq : (t : Term) → Bool
+outerIsEq (var x args) = false
+outerIsEq (con c args) = false
+outerIsEq (def f (a ∷ b ∷ c ∷ (arg _ _ (con tr [])) ∷ [])) with f ≟-Name ≡'
+outerIsEq (def f (a ∷ b ∷ c ∷ arg v r (con tr []) ∷ [])) | yes p = true
+outerIsEq (def f (a ∷ b ∷ c ∷ arg v r (con tr []) ∷ [])) | no ¬p = false
+outerIsEq (def f as) = false
+outerIsEq (lam v t) = false
+outerIsEq (pi t₁ t₂) = false
+outerIsEq (sort x) = false
+outerIsEq unknown = false
+
+withoutEQ : (t : Term) → outerIsEq t ≡ true → Term
+withoutEQ (var x args) ()
+withoutEQ (con c args) ()
+withoutEQ (def f []) ()
+withoutEQ (def f (x ∷ [])) ()
+withoutEQ (def f (x ∷ x₁ ∷ [])) ()
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ [])) ()
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ (arg _ _ (con ff [])) ∷ [])) pf with f ≟-Name ≡'
+withoutEQ (def f (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ (con ff []) ∷ [])) pf | yes p = x₂
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con ff []) ∷ [])) () | no ¬p
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ [])) ()
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args)) ()
+withoutEQ (lam v t) ()
+withoutEQ (pi t₁ t₂) ()
+withoutEQ (sort x) ()
+withoutEQ unknown ()
 
 toZero : {n : ℕ} → (b : BoolExpr n) → isSubstituted b ≡ true → BoolExpr zero
 toZero {zero}  x          pf = x         -- verbose identity.
@@ -505,14 +490,24 @@ s {suc n} (Atomic x) dec = {! !}
 -- automate2 {zero} x pfunc = s {!!} pfunc
 -- automate2 {suc n} x pfunc = {!!}
 
+-- automate : (t : Term)
+--            → outerIsEq t ≡ true
+--            → isBoolExprQ t ≡ true
+--            → ⟦ 
+
+
 somethm : Set
 somethm = (b c : Bool) → (b ⇒ b ∨ true) ∧ (c ∨ ¬ c) ≡ true
 
 goalbla : somethm
-goalbla = quoteGoal e in {!!} -- automate2 (term2b (argsNo e) 0 (stripPi e) ?) {!!}
+goalbla = quoteGoal e in {!outerIsEq (stripPi e)!}
+-- automate2 (term2b (argsNo e) 0 (stripPi e) ?) {!!}
 
 goalbla2 : myfavouritetheorem
 goalbla2 = quoteGoal e in {!!}
+
+-- modify term2b a bit.
+
 
 -- next up!! using foo, find forallEnvs n (\ e -> [[ b ]] e)
 -- possible using Tree.
