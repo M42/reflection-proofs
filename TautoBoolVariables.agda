@@ -438,22 +438,35 @@ foo (false ∷ p) pred (proj₁ , proj₂) = foo p (λ z → pred (false ∷ z))
 -- that is, if it's true for all possible variable assignments.
 -- this would be where to implement a smarter solver.
 decideForallEnv : {n : ℕ} → BoolExpr n → Bool
-decideForallEnv {n} exp = {!!} -- (allEnvs n)
+decideForallEnv {n} exp = {!!}
 
-⟦_⟧ : {n : ℕ} → BoolExpr n → Set
-⟦ t ⟧ = {!!}
+unsafeLookup : {a : Set} → ℕ → List a → a
+unsafeLookup zero [] = {!pech!}
+unsafeLookup zero (x ∷ as) = x
+unsafeLookup (suc n) [] = {!pech!}
+unsafeLookup (suc n) (x ∷ as) = unsafeLookup n as
+
+interp : {n : ℕ} → BoolExpr n → List Bool → Bool
+interp (Truth    ) env = true
+interp (Falsehood) env = false
+interp (And t t₁ ) env = interp t env ∧ interp t₁ env
+interp (Or t t₁  ) env = interp t env ∨ interp t₁ env
+interp (Imp t t₁ ) env = interp t env ⇒ interp t₁ env
+interp (Atomic x ) env = unsafeLookup (toℕ x) env
+    
+⟦_⟧_,_ : {n : ℕ} → BoolExpr n → (m : ℕ) → List Bool → Set
+⟦ t ⟧ zero    , env = interp t env ≡ true
+⟦ t ⟧ (suc n) , env = (a : Bool) → ⟦ t ⟧ n , (a ∷ env)
 
 -- this is actually our soundness function.
--- automate2 : {n : ℕ} → (p : BoolExpr n) → forallEnvs n (λ env → decide env p ≡ true) → telescope n p
--- --automate2 : {n : ℕ} → (p : BoolExpr n) → decideForallEnv p ≡ true → telescope n p
--- automate2 {zero} x pfunc = s {!!} pfunc
--- automate2 {suc n} x pfunc = {!!}
 
+-- insert clever solver here.
 automate2 : (t : Term)
           → (pf : outerIsEq t ≡ true)
           → (bex : isBoolExprQ (argsNo t) 0 t pf ≡ true)
-          → ⟦ term2b (argsNo t) 0 t pf bex ⟧
-automate2 t pf1 pf2 = {!!}
+          → decideForallEnv (term2b (argsNo t) 0 t pf bex) ≡ true
+          → ⟦ term2b (argsNo t) 0 t pf bex ⟧ (argsNo t) , []
+automate2 t pf1 pf2 pf3 = {!!}
 
 
 somethm : Set
@@ -461,8 +474,7 @@ somethm = (b c : Bool) → (b ⇒ b ∨ true) ∧ (c ∨ c) ≡ true
 -- TODO add ¬_ support
 
 goalbla : somethm
-goalbla = quoteGoal e in {!automate2 (stripPi e) refl refl!}
--- automate2 (term2b (argsNo e) 0 (stripPi e) ?) {!!}
+goalbla = quoteGoal e in automate2 e refl refl refl
 
 goalbla2 : somethm
 goalbla2 = quoteGoal e in {!isBoolExprQ (argsNo e) 0 e refl!}
