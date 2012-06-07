@@ -10,7 +10,6 @@ open import Relation.Nullary hiding (¬_)
 open import Data.Product hiding (map)
 open import Data.Vec.Properties
 open import Data.Nat.Properties
-open ≡-Reasoning
 open import Relation.Binary hiding (_⇒_)
 open import Reflection
 
@@ -125,60 +124,48 @@ unsafeMinus zero m = zero
 unsafeMinus n₁ zero = n₁
 unsafeMinus (suc n₁) (suc m) = unsafeMinus n₁ m
 
-ff : Name
-ff = quote false
-
-tr : Name
-tr = quote true
-
 outerIsEq : (t : Term) → Bool
-outerIsEq t' with stripPi t'
-outerIsEq t' | (var x args) = false
-outerIsEq t' | (con c args) = false
-outerIsEq t' | (def f (a ∷ b ∷ c ∷ (arg _ _ (con tr [])) ∷ [])) with f ≟-Name ≡'
-outerIsEq t' | (def f (a ∷ b ∷ c ∷ arg v r (con tr []) ∷ [])) | yes p = true
-outerIsEq t' | (def f (a ∷ b ∷ c ∷ arg v r (con tr []) ∷ [])) | no ¬p = false
-outerIsEq t' | (def f as) = false
-outerIsEq t' | (lam v t) = false
-outerIsEq t' | (pi t₁ t₂) = false
-outerIsEq t' | (sort x) = false
-outerIsEq t' | unknown = false
+outerIsEq (var x args) = false
+outerIsEq (con c args) = false
+outerIsEq (def f (a ∷ b ∷ c ∷ arg v r (con tr []) ∷ [])) with f ≟-Name ≡' | tr ≟-Name quote true
+outerIsEq (def f (a ∷ b ∷ c ∷ arg v r (con tr []) ∷ [])) | yes p | yes p1 = true
+outerIsEq (def f (a ∷ b ∷ c ∷ arg v r (con tr []) ∷ [])) |    _  | _ = false
+outerIsEq (def f as)   = false
+outerIsEq (lam v t)    = false
+outerIsEq (pi t₁ t₂)   = false
+outerIsEq (sort x)     = false
+outerIsEq unknown      = false
 
 withoutEQ : (t : Term) → outerIsEq t ≡ true → Term
-withoutEQ t pf = withoutEQ' (stripPi t) pf
-  where
-    withoutEQ' : Term → outerIsEq t ≡ true → Term
-    withoutEQ'  (var x args) pf = {!!}
-    withoutEQ'  (con c args) pf = {!!}
-    withoutEQ'  (def f []) pf = {!!}
-    withoutEQ'  (def f (x ∷ [])) pf = {!!}
-    withoutEQ'  (def f (x ∷ x₁ ∷ [])) pf = {!!}
-    withoutEQ'  (def f (x ∷ x₁ ∷ x₂ ∷ [])) pf = {!!}
-    withoutEQ'  (def f (x ∷ x₁ ∷ x₂ ∷ (arg _ _ (con ff [])) ∷ [])) pf with f ≟-Name ≡'
-    withoutEQ'  (def f (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ (con ff []) ∷ [])) pf | yes p = x₂
-    withoutEQ'  (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con ff []) ∷ [])) pf | no ¬p = {!!}
-    withoutEQ'  (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ [])) pf = {!!}
-    withoutEQ'  (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args)) pf = {!!}
-    withoutEQ'  (lam v t) pf = {!!}
-    withoutEQ'  (pi t₁ t₂) pf = {!!}
-    withoutEQ'  (sort x) pf = {!!}
-    withoutEQ'  unknown pf = {!!}
+withoutEQ (var x args) ()
+withoutEQ (con c args) ()
+withoutEQ (def f []) ()
+withoutEQ (def f (x ∷ [])) ()
+withoutEQ (def f (x ∷ x₁ ∷ [])) ()
+withoutEQ (def f (x ∷ x₁ ∷ x₂         ∷ []                               )) ()
+withoutEQ (def f (x ∷ x₁ ∷ x₂         ∷ (arg _ _ (con ff [])) ∷ []       )) pf with f ≟-Name ≡'
+withoutEQ (def f (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ (con ff []) ∷ []       )) pf | yes p = x₂
+withoutEQ (def f (x ∷ x₁ ∷ x₂         ∷ arg v r (con ff [])   ∷ []       )) () | no ¬p
+withoutEQ (def f (x ∷ x₁ ∷ x₂         ∷ x₃                    ∷ []       )) pf = {!pf!}
+withoutEQ (def f (x ∷ x₁ ∷ x₂         ∷ x₃                    ∷ x₄ ∷ args)) pf = {!pf!}
+withoutEQ (lam v t) ()
+withoutEQ (pi t₁ t₂) ()
+withoutEQ (sort x) ()
+withoutEQ unknown ()
 
 isBoolExprQ' : (n : ℕ) → (depth : ℕ) → (t : Term) → Bool
-isBoolExprQ' n depth t with stripPi t
-... | t' = {!!}
+isBoolExprQ' n depth t = {!!}
 
 
 isBoolExprQ : (n : ℕ) → (depth : ℕ) → (t : Term) → outerIsEq t ≡ true → Bool
 isBoolExprQ n depth t pf with withoutEQ t pf
 isBoolExprQ n depth t pf | t' = isBoolExprQ' n depth t'
 
--- the holes here should be absurds, but only Agda>=2.3.1 understands
--- the needed unification.
+-- the holes here should be absurds, but only Agda>=2.3.1 manages
+-- the unification.
 term2b' : (n : ℕ)
         → (depth : ℕ)
         → (t : Term)
-        -- → (pf : outerIsEq t ≡ true)
         → isBoolExprQ' n 0 t ≡ true
         → BoolExpr n
 term2b' n depth (var x args) pf with suc (unsafeMinus x depth) ≤? n
@@ -205,17 +192,13 @@ term2b' n depth (pi t₁ t₂) pf = {!!}
 term2b' n depth (sort x) pf = {!!}
 term2b' n depth unknown pf = {!unreach!}
 
--- we don't have a branch for Not, since that is immediately
--- translated as "¬ P ⇒ λ ⊥ → P"
 term2b : (n : ℕ)
        → (depth : ℕ)
        → (t : Term)
        → (pf : outerIsEq t ≡ true)
        → isBoolExprQ n 0 t pf ≡ true
        → BoolExpr n
--- term2b n depth t pf with stripPi t
 term2b n depth t pf pf2 = term2b' n depth (withoutEQ t pf) pf2
-
 
 data Diff : ℕ -> ℕ -> Set where
   Base : forall {n} -> Diff n n
@@ -226,24 +209,23 @@ nForalls .m m Base b env = decide env b ≡ true
 nForalls n m (Step y) b env = (a : Bool) -> nForalls (suc n) m y b (a ∷ env)
 
 zeroId : (n : ℕ) -> n ≡ n + 0
-zeroId zero = refl
-zeroId (suc n) with n + 0 | zeroId n
-zeroId (suc .w) | w | refl = refl
+zeroId zero                           = refl
+zeroId (suc  n) with n + 0 | zeroId n
+zeroId (suc .w)    | w     | refl     = refl
 
 succLemma : (n m : ℕ) -> suc (n + m) ≡ n + suc m
-succLemma zero m = refl
+succLemma zero m    = refl
 succLemma (suc n) m = cong suc (succLemma n m)
 
 coerceDiff : {n m k : ℕ} -> n ≡ m -> Diff k n -> Diff k m
 coerceDiff refl d = d
 
 zero-least : (k n : ℕ) -> Diff k (k + n)
-zero-least k zero = coerceDiff (zeroId k) Base
+zero-least k zero    = coerceDiff (zeroId k) Base
 zero-least k (suc n) = Step (coerceDiff (succLemma k n) (zero-least (suc k) n))
 
 forallBool : (m : ℕ) -> BoolExpr m -> Set
 forallBool m b = nForalls zero m (zero-least 0 m) b []
-
 
 {-
 notice that u is automatically instantiated, since
@@ -259,12 +241,12 @@ foo' = 5
 foo'' : {u : ⊤ × ⊥} -> ℕ
 foo'' = 5
 
-
 baz : ℕ
 baz = foo'
 
 data Error (a : String) : Set where
 
+-- very much like ⊥-elim, but for errors.
 Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
 Error-elim ()
 
@@ -286,7 +268,7 @@ dif false t f = f
 
 soundnessAcc : {m : ℕ} -> (b : BoolExpr m) ->
                {n : ℕ} -> (env : Env n) -> (d : Diff n m) ->
-                forallsAcc b env d ->
+               forallsAcc b env d ->
                nForalls n m d b env
 soundnessAcc bexp env Base H with decide env bexp
 soundnessAcc bexp env Base H | true = refl
@@ -298,19 +280,10 @@ soundnessAcc {m} bexp {n} env (Step y) H = \a -> dif {\b -> nForalls (suc n) m y
 soundness : {n : ℕ} -> (b : BoolExpr n) -> {i : foralls b} -> forallBool n b
 soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 
--- goalbla2 : somethm
--- goalbla2 = quoteGoal e in {!isBoolExprQ (argsNo e) 0 e refl!}
+goalbla : (b c : Bool) → (b ∨ true) ∧ (c ∨ true) ≡ true
+goalbla = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
 
--- goaltest2 : (f f' : Bool) → f ∨ f ≡ true
--- goaltest2 = quoteGoal e in {!term2b (argsNo e) 0 e refl refl!}
--- -- modify term2b a bit.
--- goaltest3 : (f : Bool) → f ∨ f ≡ true
--- goaltest3 = quoteGoal e in {!withoutEQ e refl!}
+goalbla2 : (b : Bool) → b ∨ true ≡ true
+goalbla2 = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
 
-somethm : Set
-somethm = (b c : Bool) → (b ∨ true) ∧ (c ∨ c) ≡ true
--- TODO add ¬_ support
-
-goalbla : somethm
-goalbla = quoteGoal e in soundness (term2b (argsNo e) 0 e refl refl)
-
+-- problem with Imp?
