@@ -2,6 +2,7 @@
 module TautoBoolVariables where
 
 open import Relation.Binary.PropositionalEquality renaming ( [_] to by ; subst to substpe)
+open import Data.String
 open import Lemmas
 open import Data.Maybe hiding (Eq)
 open import Data.Nat
@@ -262,9 +263,14 @@ foo'' = 5
 baz : ℕ
 baz = foo'
 
+data Error (a : String) : Set where
+
+Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
+Error-elim ()
+
 So : Bool -> Set
 So true  = ⊤
-So false = ⊥
+So false = Error "Expression isn't a tautology"
 
 forallsAcc : {n m : ℕ} -> (b : BoolExpr m) -> Env n -> Diff n m -> Set
 forallsAcc b' env Base = So (decide env b')
@@ -284,7 +290,7 @@ soundnessAcc : {m : ℕ} -> (b : BoolExpr m) ->
                nForalls n m d b env
 soundnessAcc bexp env Base H with decide env bexp
 soundnessAcc bexp env Base H | true = refl
-soundnessAcc bexp env Base H | false = ⊥-elim H
+soundnessAcc bexp env Base H | false = Error-elim H
 soundnessAcc {m} bexp {n} env (Step y) H = \a -> dif {\b -> nForalls (suc n) m y bexp (b ∷ env)} a
   (soundnessAcc bexp (true  ∷ env) y (proj₁ H))
   (soundnessAcc bexp (false ∷ env) y (proj₂ H))
