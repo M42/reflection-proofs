@@ -31,10 +31,7 @@ true  ⇒ true  = true
 true  ⇒ false = false
 false ⇒ q     = true
 
--- here's an example of a manual proof
-trueandtrue : true ∧ true ⇒ true ≡ true
-trueandtrue = refl
-
+-- inspiration for style of proof
 -- or, another one:
 bOrNotb : (b : Bool) → b ∨ ¬ b ≡ true
 bOrNotb true  = refl
@@ -47,10 +44,6 @@ myfavouritetheorem : Set
 myfavouritetheorem = (p1 q1 p2 q2 : Bool) → (p1 ∨ q1) ∧ (p2 ∨ q2)
                                           ⇒ (q1 ∨ p1) ∧ (q2 ∨ p2)
                                           ≡ true
-
-proof1 : myfavouritetheorem
-proof1 = {!!}   -- this is painful, since p1 != q1, etc
-                -- proving this manually would require 2ⁿ cases...
 
 -- we'll make some DSL into which we're going to translate theorems
 -- (which are actually types of functions), and then use reflection
@@ -81,20 +74,6 @@ Env = Vec Bool
 -- S = BoolExpr (the syntactic realm)
 -- D = the domain of our Props
 
-⟦_⊢_⟧' : {n : ℕ} → Env n → BoolExpr n → Bool
-⟦ env ⊢ Truth ⟧'     = true
-⟦ env ⊢ Falsehood ⟧' = false
-⟦ env ⊢ And p q ⟧'   = ⟦ env ⊢ p ⟧' ∧ ⟦ env ⊢ q ⟧'
-⟦ env ⊢ Or p q ⟧'    = ⟦ env ⊢ p ⟧' ∨ ⟦ env ⊢ q ⟧'
-⟦ env ⊢ Imp p q ⟧'   = ⟦ env ⊢ p ⟧' ⇒ ⟦ env ⊢ q ⟧'
-⟦ env ⊢ Atomic n ⟧' with lookup n env
-... | true  = true
-... | false = false
-
-⟦_⊢_⟧ : {n : ℕ} → Env n → BoolExpr n → Set
-⟦ env ⊢ p ⟧ = ⟦ env ⊢ p ⟧' ≡ true
-
-
 -- decision procedure:
 -- return whether the given proposition is true
 -- this is like our isEvenQ
@@ -107,116 +86,9 @@ decide env (Imp p q)    = ¬ (decide env p) ∨ (decide env q)
 decide env (Atomic n)   = lookup n env
 
 
-mutual
-  -- first a helper for the cases where a proposition isn't true
-  soundness' : {n : ℕ} → (env : Env n) → (p : BoolExpr n) → decide env p ≡ false → ⟦ env ⊢ p ⟧ → ⊥
-  soundness' env Truth () pf
-  soundness' env Falsehood dec  pf = {!!}
-  soundness' env (And p q) dec pf  = {!!} -- with and-false (decide env p) (decide env q) dec
-  -- soundness' env (And p q) dec (proj₁ , proj₂) | inj₁ x = soundness' env p x proj₁
-  -- soundness' env (And p q) dec (proj₁ , proj₂) | inj₂ y = soundness' env q y proj₂
-  soundness' env (Or p q) dec  pf  = {!!} -- with or-false (decide env p) (decide env q) dec
-  -- soundness' env (Or p q) dec (inj₁ x) | proj₁ , proj₂ = soundness' env p proj₁ x
-  -- soundness' env (Or p q) dec (inj₂ y) | proj₁ , proj₂ = soundness' env q proj₂ y
-  soundness' env (Imp p q) dec pf  with or-false (¬ (decide env p)) (decide env q) dec
-  soundness' env (Imp p q) dec pf | proj₁ , proj₂  with not-false proj₁
-  ... | tmppat  = {!!} -- with pf (soundness env p tmppat)
-  -- ... | tmppatq = soundness' env q proj₂ tmppatq
-  soundness' env (Atomic x) dec pf  with lookup x env
-  soundness' env (Atomic x) ()  pf | true
-  soundness' env (Atomic x) dec pf | false = {!!}
-
-  -- soundness theorem:
-  soundness : {n : ℕ} → (env : Env n) → (p : BoolExpr n) → decide env p ≡ true → ⟦ env ⊢ p ⟧
-  soundness env (Truth) refl = {!!}
-  soundness env (Falsehood) ()
-  soundness env (And p p₁) pf = {!!} -- (soundness env p  (and-l pf)) ,
-                                  -- (soundness env p₁ (and-r (decide env p) (decide env p₁) pf))
-  soundness env (Or p p₁) pf  with or-lem (decide env p) (decide env p₁) pf
-  soundness env (Or p p₁) pf | inj₁ x = {!!} -- inj₁ (soundness env p x)
-  soundness env (Or p p₁) pf | inj₂ y = {!!} -- inj₂ (soundness env p₁ y)
-  soundness env (Imp p q) pf  with or-lem (¬ (decide env p)) (decide env q) pf
-  soundness env (Imp p q) pf | inj₁ y = {!!} -- λ x → ⊥-elim (soundness' env p (not-lemma y) x)
-  soundness env (Imp p q) pf | inj₂ y = {!!} -- λ x → soundness env q y
-  soundness env (Atomic n) pf with lookup n env
-  soundness env (Atomic n₁) refl | .true = {!!} 
-
 
 -- still required:
 -- * do actual reflection
-
-private
--- we can only prove "propositions" that eventually evaluate to true.
--- somethingIWantToProve : true ∨ false ≡ true
--- this should be formulated as follows:
--- you give the type in terms of the AST
--- of course, later we want to generate the AST ourselves.
-    empty : Env zero
-    empty = []
-
-    somethingIWantToProve : ⟦ empty ⊢ Or (Truth) (Falsehood) ⟧
-    somethingIWantToProve  = soundness empty (Or (Truth) (Falsehood)) refl
-
-private
-    -- this also works if you set oneVar = true :: []. Next
-    -- we want to automatically prove all cases.
-    -- how to do this automatically?
-    thm0 : ∀ (ov : Env 1) → ⟦ ov ⊢ Or (Atomic zero) (Imp (Falsehood) (Atomic zero))⟧
-    thm0 (true ∷ [])  = soundness (true ∷ [])  (Or (Atomic zero) (Imp Falsehood (Atomic zero))) refl
-    thm0 (false ∷ []) = soundness (false ∷ []) (Or (Atomic zero) (Imp Falsehood (Atomic zero))) refl
-
-    thm1 : ∀ (ov : Env 1) → ⟦ ov ⊢ Imp (Atomic zero) (Atomic zero) ⟧
-    --thm1 ov = soundness ov (Imp (Atomic zero) (Atomic zero)) refl
-    thm1 (true ∷ [])  = soundness (true ∷ [])  (Imp (Atomic zero) (Atomic zero)) refl
-    thm1 (false ∷ []) = soundness (false ∷ []) (Imp (Atomic zero) (Atomic zero)) refl
-
--- next step: try and avoid having to enumerate all the possible environments,
--- as this will quickly become tedious (and remember, the challenge was to
--- prove tautologies in n² and not 2ⁿ with n the number of variables...
-
-
--- TODO write a version which returns a
--- proof either way, not a maybe. possibly using a predicate to be instantiated
--- to refl?
-automate : ∀ (n : ℕ) (env : Env n) (p : BoolExpr n) → Maybe ⟦ env ⊢ p ⟧
-automate n env p  with decide env p | inspect (decide env) p
-automate n env p | true  | by eq = just (soundness env p eq)
-automate n env p | false | by eq = nothing
-
-private
-  thm2 : ∀ (ov : Env 1) → ⟦ ov ⊢ Or (Atomic zero) (Imp Falsehood (Atomic zero))⟧
-  thm2 ov  with automate 1 ov (Or (Atomic zero) (Imp Falsehood (Atomic zero)))
-  thm2 ov | just x = x
-  thm2 ov | nothing = {!!}
-
-  thm3 : ∀ (ov : Env 1) → ⟦ ov ⊢ Imp (Atomic zero) (Atomic zero) ⟧
-  thm3 ov  with automate 1 ov (Imp (Atomic zero) (Atomic zero))
-  thm3 ov | just x = x
-  thm3 ov | nothing = {!!}
-
-  o  : Fin 4
-  o  = suc zero
-  t  : Fin 4
-  t  = suc (suc zero)
-  th : Fin 4
-  th = suc (suc (suc zero))
-
-  -- this means the following: ((p1 ∨ q1) ∧ (p2 ∨ q2) → (q1 ∨ p1) ∧ (q2 ∨ p2))
-  -- ...which is cool, since we can now prove tautologies of this form.
-  thm1bdef : BoolExpr 4
-  thm1bdef = Imp (And (Or (Atomic zero) (Atomic t)) (Or (Atomic o) (Atomic th)))
-                 (And (Or (Atomic t) (Atomic zero)) (Or (Atomic th) (Atomic o)))
-
-  thm1b : ∀ (ov : Env 4) → ⟦ ov ⊢ thm1bdef ⟧
-  thm1b ov with automate 4 ov thm1bdef
-  thm1b ov | just x = x
-  thm1b ov | nothing = {!!} -- we want absurd here.
-
--- First: return proof either way, not maybe, from automate,
--- then: prove that you can enumerate all possible Env's and use
--- that to call decide...
-
--- okay, next attempt: using quoteGoal
 
 
 ≡' : Name
@@ -248,27 +120,7 @@ stripPi (lam v t)    = lam  v    t
 stripPi (sort x)     = sort x
 stripPi unknown      = unknown
 
-allTrue : List Bool → Bool
-allTrue = foldr _∧_ true
-
-someThm : ∀ {p1 p2 q1 q2} → ((p1 ∨ q1) ∧ (p2 ∨ q2)) ⇒ ((q1 ∨ p1) ∧ (q2 ∨ p2)) ≡ true
-someThm = quoteGoal g in {! (lhs g refl)!} -- C-c C-n in this goal is useful.
-
-
 -- examples
-
-private
-
-  term-ex₁ : Term
-  term-ex₁ = quoteTerm ((a b c d : Bool) → b ∧ a ≡ true)
-
-  argsNo-ex₁ : argsNo term-ex₁ ≡ 4
-  argsNo-ex₁ = refl
-  
-  -- simplefied notation, non-executable
-  -- stripPi-ex : stripPi-ex t ≡ def ≡' (var 2 + var 1) ≡ (var 1 + var 0)
-
-
 unsafeMinus : (a : ℕ) → (b : ℕ) → ℕ
 unsafeMinus zero m = zero
 unsafeMinus n₁ zero = n₁
@@ -297,21 +149,21 @@ withoutEQ : (t : Term) → outerIsEq t ≡ true → Term
 withoutEQ t pf = withoutEQ' (stripPi t) pf
   where 
     withoutEQ' : Term → outerIsEq t ≡ true → Term
-    withoutEQ'  (var x args) ()
-    withoutEQ'  (con c args) ()
-    withoutEQ'  (def f []) ()
-    withoutEQ'  (def f (x ∷ [])) ()
-    withoutEQ'  (def f (x ∷ x₁ ∷ [])) ()
-    withoutEQ'  (def f (x ∷ x₁ ∷ x₂ ∷ [])) ()
+    withoutEQ'  (var x args) pf = {!!}
+    withoutEQ'  (con c args) pf = {!!}
+    withoutEQ'  (def f []) pf = {!!}
+    withoutEQ'  (def f (x ∷ [])) pf = {!!}
+    withoutEQ'  (def f (x ∷ x₁ ∷ [])) pf = {!!}
+    withoutEQ'  (def f (x ∷ x₁ ∷ x₂ ∷ [])) pf = {!!}
     withoutEQ'  (def f (x ∷ x₁ ∷ x₂ ∷ (arg _ _ (con ff [])) ∷ [])) pf with f ≟-Name ≡'
     withoutEQ'  (def f (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ (con ff []) ∷ [])) pf | yes p = x₂
-    withoutEQ'  (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con ff []) ∷ [])) () | no ¬p
-    withoutEQ'  (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ [])) ()
-    withoutEQ'  (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args)) ()
-    withoutEQ'  (lam v t) ()
-    withoutEQ'  (pi t₁ t₂) ()
-    withoutEQ'  (sort x) ()
-    withoutEQ'  unknown ()
+    withoutEQ'  (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con ff []) ∷ [])) pf | no ¬p = {!!}
+    withoutEQ'  (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ [])) pf = {!!}
+    withoutEQ'  (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args)) pf = {!!}
+    withoutEQ'  (lam v t) pf = {!!}
+    withoutEQ'  (pi t₁ t₂) pf = {!!}
+    withoutEQ'  (sort x) pf = {!!}
+    withoutEQ'  unknown pf = {!!}
 
 isBoolExprQ' : (n : ℕ) → (depth : ℕ) → (t : Term) → Bool
 isBoolExprQ' n depth t with stripPi t
@@ -322,6 +174,8 @@ isBoolExprQ : (n : ℕ) → (depth : ℕ) → (t : Term) → outerIsEq t ≡ tru
 isBoolExprQ n depth t pf with withoutEQ t pf
 isBoolExprQ n depth t pf | t' = isBoolExprQ' n depth t'
 
+-- the holes here should be absurds, but only Agda>=2.3.1 understands
+-- the needed unification.
 term2b' : (n : ℕ)
         → (depth : ℕ)
         → (t : Term)
@@ -351,30 +205,6 @@ term2b' n depth (lam v t) pf = {!!}
 term2b' n depth (pi t₁ t₂) pf = {!!}
 term2b' n depth (sort x) pf = {!!}
 term2b' n depth unknown pf = {!unreach!}
--- term2b'  n depth t pf pf2 | var x args with suc (unsafeMinus x depth) ≤? n
--- term2b'  n depth t pf pf2 | var x args | yes p2 = {!!} -- Atomic (fromℕ≤ {unsafeMinus x depth} p2)
--- term2b'  n depth t () pf2 | var x args | _
--- term2b'  n depth t () pf2 | con c args
--- term2b'  n depth t pf pf2 | def f args with f ≟-Name (quote Data.Product.Σ)
--- term2b'  n depth t pf pf2 | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | yes p = {!!} -- And (term2b n depth t₁ (and-l {!!})) (term2b n depth t₂ (and-r {!!} {!!} pf))
--- term2b'  n depth t () pf2 | def f (_) | yes p
--- term2b'  n depth t pf pf2 | def f args | no p  with f ≟-Name (quote Data.Empty.⊥)
--- term2b'  n depth t pf pf2 | def f []   | no _ | yes p = {!!} -- Falsehood
--- term2b'  n depth t () pf2 | def f args | no _ | yes p
--- term2b'  n depth t pf pf2 | def f args | no _ | no  p with f ≟-Name (quote Data.Sum._⊎_)
--- term2b'  n depth t pf pf2 | def f (_ ∷ _ ∷ arg _ _ t₁ ∷ arg _ _ t₂ ∷ []) | no _ | no _ | yes p = {!!} -- Or (term2b n depth t₁ (and-l {!!}))
---                                                                                                     -- (term2b n depth t₂ (and-r (isBoolExprQ (argsNo t₁) 0 t₁) (isBoolExprQ (argsNo t₂) 0 t₂) {!!}))
--- term2b'  n depth t () pf2 | def f args | no _ | no _ | yes _
--- term2b'  n depth t pf pf2 | def f args | no _ | no _ | no _ with f ≟-Name (quote Data.Unit.⊤)
--- term2b'  n depth t pf pf2 | def f [] | no _   | no _    | no _    | yes _ = {!!} -- Truth
--- term2b'  n depth t () pf2 | def f _ | no _   | no _    | no _    | yes _ 
--- term2b'  n depth t () pf2 | def f _  | no _   | no _    | no _    | no _
-                     
--- term2b'  n depth t pf pf2 | lam v t' = {!!} -- term2b n (suc depth) t' {!!}
--- term2b'  n depth t pf pf2 | pi (arg visible relevant (el _ t₁)) (el _ t₂) = {!!} -- Imp (term2b n depth t₁ {!!}) (term2b n (suc depth) t₂ {!!})
--- term2b'  n depth t () pf2 | sort x
--- term2b'  n depth t () pf2 | unknown
--- term2b'  n depth t () pf2 | pi _ _
 
 -- we don't have a branch for Not, since that is immediately
 -- translated as "¬ P ⇒ λ ⊥ → P"
@@ -386,34 +216,6 @@ term2b : (n : ℕ)
        → BoolExpr n
 -- term2b n depth t pf with stripPi t
 term2b n depth t pf pf2 = term2b' n depth (withoutEQ t pf) pf2
-
-
-
-
-
-isSubstituted : {n : ℕ} → (b : BoolExpr n) → Bool
-isSubstituted (Atomic x) = false
-isSubstituted Truth      = true
-isSubstituted Falsehood  = true
-isSubstituted (And b b₁) = isSubstituted b ∧ isSubstituted b₁
-isSubstituted (Or b b₁)  = isSubstituted b ∧ isSubstituted b₁
-isSubstituted (Imp b b₁) = isSubstituted b ∧ isSubstituted b₁
-
-
-{-
-TODO:
-
-- enforce that the environments are what you'd expect (i.e. prepend false right, true left,
-  when building up tree
--
--}
-  
--- adds a telescope type with the right number of free variables
--- to a type/proposition.
--- telescope : {n : ℕ} → (freevars : ℕ) → BoolExpr n → Set
--- telescope (suc n) x = (b : Set) → telescope n ( subst n b x ) -- TODO check n is right. maybe we need (degree b - n)
--- telescope zero x    = ⟦ stdtd ⟧
---   where stdtd  = be2substituted (toZero x (noFree⇒isSubstituted x {!refl!}))
 
 -- here P is some predicate which should hold for an environment.
 forallEnvs : (n : ℕ) → (P : Env n → Set) → Set
@@ -480,17 +282,9 @@ goalbla = quoteGoal e in automate2 e refl refl refl
 goalbla2 : somethm
 goalbla2 = quoteGoal e in {!isBoolExprQ (argsNo e) 0 e refl!}
 
-
 goaltest2 : (f f' : Bool) → f ∨ f ≡ true
 goaltest2 = quoteGoal e in {!term2b (argsNo e) 0 e refl refl!}
 -- modify term2b a bit.
 goaltest3 : (f : Bool) → f ∨ f ≡ true
 goaltest3 = quoteGoal e in {!withoutEQ e refl!}
 
-
-
-
-test  = withoutEQ (quoteTerm ((f : Bool) → f ∨ f ≡ true)) refl
-test2 = outerIsEq (quoteTerm ((f : Bool) → f ∨ f ≡ true))
-test3 = (quoteTerm ((f : Bool) → f ∨ f ≡ true))
-test4 = stripPi (quoteTerm ((f : Bool) → f ∨ f ≡ true))
