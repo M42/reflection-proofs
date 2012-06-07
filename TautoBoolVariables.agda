@@ -85,8 +85,6 @@ decide env (Or be be₁)  = decide env be ∨ decide env be₁
 decide env (Imp p q)    = ¬ (decide env p) ∨ (decide env q)
 decide env (Atomic n)   = lookup n env
 
-
-
 -- still required:
 -- * do actual reflection
 
@@ -120,7 +118,7 @@ stripPi (lam v t)    = lam  v    t
 stripPi (sort x)     = sort x
 stripPi unknown      = unknown
 
--- examples
+-- TODO get rid of this!
 unsafeMinus : (a : ℕ) → (b : ℕ) → ℕ
 unsafeMinus zero m = zero
 unsafeMinus n₁ zero = n₁
@@ -217,31 +215,6 @@ term2b : (n : ℕ)
 -- term2b n depth t pf with stripPi t
 term2b n depth t pf pf2 = term2b' n depth (withoutEQ t pf) pf2
 
--- here P is some predicate which should hold for an environment.
-forallEnvs : (n : ℕ) → (P : Env n → Set) → Set
-forallEnvs zero    p = p []
-forallEnvs (suc n) p = (forallEnvs n (λ env → p (true ∷ env))) × (forallEnvs n (λ env → p (false ∷ env)))
-
--- foo shows us that, if we have that some P holds for all envs,
--- we can find the corresponding proof if given some specific env.
-foo : {n : ℕ} → (env : Env n) → (P : Env n → Set) → forallEnvs n P → P env
-foo []          pred pf              = pf
-foo (true ∷ p)  pred (proj₁ , proj₂) = foo p (λ z → pred (true ∷ z))  proj₁
-foo (false ∷ p) pred (proj₁ , proj₂) = foo p (λ z → pred (false ∷ z)) proj₂
-
-
-
--- allEnvs : (n : ℕ) → Tree (Env n)
--- allEnvs zero    = Leaf []
--- allEnvs (suc n) = Node ( (allEnvs n)) -- false branch?
---                        ( (allEnvs n)) -- true branch?
-
--- this checks, by brute force, if an expression is a tautology,
--- that is, if it's true for all possible variable assignments.
--- this would be where to implement a smarter solver.
-decideForallEnv : {n : ℕ} → BoolExpr n → Bool
-decideForallEnv {n} exp = {!!} -- hier is de truuk om op een handige manier te bewijzen dat iets een tauto is;
-                                -- het is namelijk straks nodig om het in automate2 uit elkaar te pluizen...
 
 data Diff : ℕ -> ℕ -> Set where
   Base : forall {n} -> Diff n n
@@ -270,6 +243,15 @@ zero-least k (suc n) = Step (coerceDiff (succLemma k n) (zero-least (suc k) n))
 forallBool : (m : ℕ) -> BoolExpr m -> Set
 forallBool m b = nForalls zero m (zero-least 0 m) b []
 
+
+{-
+notice that u is automatically instantiated, since
+there is only one option, namely tt,tt. this is special and
+cool, the type system is doing work for us. Note that this is
+because eta-reduction only is done in the type system for records
+and not for general data types. possibly the reason is because this is
+safe in records because recursion isn't allowed. question for agda-café?
+-}
 foo' : {u : ⊤ × ⊤} -> ℕ
 foo' = 5
 
@@ -284,7 +266,6 @@ So : Bool -> Set
 So true  = ⊤
 So false = ⊥
 
-
 forallsAcc : {n m : ℕ} -> (b : BoolExpr m) -> Env n -> Diff n m -> Set
 forallsAcc b' env Base = So (decide env b')
 forallsAcc b' env (Step y) = forallsAcc b' (true ∷ env) y × forallsAcc b' (false ∷ env) y
@@ -292,9 +273,9 @@ forallsAcc b' env (Step y) = forallsAcc b' (true ∷ env) y × forallsAcc b' (fa
 foralls : {n : ℕ} -> (b : BoolExpr n) -> Set
 foralls {n} b = forallsAcc b [] (zero-least 0 n)
 
-
+-- dependently typed If
 dif : {P : Bool -> Set} -> (b : Bool) -> P true -> P false -> P b
-dif true t f = t
+dif true  t f = t
 dif false t f = f
 
 soundnessAcc : {m : ℕ} -> (b : BoolExpr m) ->
@@ -319,33 +300,6 @@ soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 -- -- modify term2b a bit.
 -- goaltest3 : (f : Bool) → f ∨ f ≡ true
 -- goaltest3 = quoteGoal e in {!withoutEQ e refl!}
-
-
-
-unsafeLookup : ℕ → List Bool → Bool
-unsafeLookup zero    [] = false -- pech
-unsafeLookup zero    (x ∷ as) = x
-unsafeLookup (suc n) [] = false -- pech
-unsafeLookup (suc n) (x ∷ as) = unsafeLookup n as
-
-interp : {n : ℕ} → BoolExpr n → List Bool → Bool
-interp (Truth    ) env = true
-interp (Falsehood) env = false
-interp (And t t₁ ) env = interp t env ∧ interp t₁ env
-interp (Or t t₁  ) env = interp t env ∨ interp t₁ env
-interp (Imp t t₁ ) env = interp t env ⇒ interp t₁ env
-interp (Atomic x ) env = unsafeLookup (toℕ x) env
-
-⟦_⟧_,_ : {n : ℕ} → BoolExpr n → (m : ℕ) → List Bool → Set
-⟦ t ⟧ zero    , env = interp t env ≡ true
-⟦ t ⟧ (suc n) , env = (a : Bool) → ⟦ t ⟧ n , (a ∷ env)
-
-automate2 : (t : Term)
-          → (pf : outerIsEq t ≡ true)
-          → (bex : isBoolExprQ (argsNo t) 0 t pf ≡ true)
-          → decideForallEnv (term2b (argsNo t) 0 t pf bex) ≡ true
-          → ⟦ term2b (argsNo t) 0 t pf bex ⟧ (argsNo t) , []
-automate2 t pf1 pf2 pf3 = {!!}
 
 somethm : Set
 somethm = (b c : Bool) → (b ∨ true) ∧ (c ∨ c) ≡ true
