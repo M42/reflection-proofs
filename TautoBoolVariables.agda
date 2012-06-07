@@ -22,7 +22,7 @@ open import Data.Unit hiding (_≤?_)
 open import Data.Empty
 open import Data.Sum hiding (map)
 open import Data.Product hiding (map)
-open import Data.List
+open import Data.List hiding (_∷ʳ_)
 
 open import Relation.Binary.PropositionalEquality.TrustMe
 
@@ -147,7 +147,7 @@ outerIsEq t' | unknown = false
 
 withoutEQ : (t : Term) → outerIsEq t ≡ true → Term
 withoutEQ t pf = withoutEQ' (stripPi t) pf
-  where 
+  where
     withoutEQ' : Term → outerIsEq t ≡ true → Term
     withoutEQ'  (var x args) pf = {!!}
     withoutEQ'  (con c args) pf = {!!}
@@ -243,6 +243,85 @@ decideForallEnv : {n : ℕ} → BoolExpr n → Bool
 decideForallEnv {n} exp = {!!} -- hier is de truuk om op een handige manier te bewijzen dat iets een tauto is;
                                 -- het is namelijk straks nodig om het in automate2 uit elkaar te pluizen...
 
+data Diff : ℕ -> ℕ -> Set where
+  Base : forall {n} -> Diff n n
+  Step : forall {n m} -> Diff (suc n) m -> Diff n m
+
+nForalls : (n m : ℕ) -> Diff n m -> BoolExpr m -> Env n -> Set
+nForalls .m m Base b env = decide env b ≡ true
+nForalls n m (Step y) b env = (a : Bool) -> nForalls (suc n) m y b (a ∷ env)
+
+zeroId : (n : ℕ) -> n ≡ n + 0
+zeroId zero = refl
+zeroId (suc n) with n + 0 | zeroId n
+zeroId (suc .w) | w | refl = refl
+
+succLemma : (n m : ℕ) -> suc (n + m) ≡ n + suc m
+succLemma zero m = refl
+succLemma (suc n) m = cong suc (succLemma n m)
+
+coerceDiff : {n m k : ℕ} -> n ≡ m -> Diff k n -> Diff k m
+coerceDiff refl d = d
+
+zero-least : (k n : ℕ) -> Diff k (k + n)
+zero-least k zero = coerceDiff (zeroId k) Base
+zero-least k (suc n) = Step (coerceDiff (succLemma k n) (zero-least (suc k) n))
+
+forallBool : (m : ℕ) -> BoolExpr m -> Set
+forallBool m b = nForalls zero m (zero-least 0 m) b []
+
+foo' : {u : ⊤ × ⊤} -> ℕ
+foo' = 5
+
+foo'' : {u : ⊤ × ⊥} -> ℕ
+foo'' = 5
+
+
+baz : ℕ
+baz = foo'
+
+So : Bool -> Set
+So true  = ⊤
+So false = ⊥
+
+
+forallsAcc : {n m : ℕ} -> (b : BoolExpr m) -> Env n -> Diff n m -> Set
+forallsAcc b' env Base = So (decide env b')
+forallsAcc b' env (Step y) = forallsAcc b' (true ∷ env) y × forallsAcc b' (false ∷ env) y
+
+foralls : {n : ℕ} -> (b : BoolExpr n) -> Set
+foralls {n} b = forallsAcc b [] (zero-least 0 n)
+
+
+dif : {P : Bool -> Set} -> (b : Bool) -> P true -> P false -> P b
+dif true t f = t
+dif false t f = f
+
+soundnessAcc : {m : ℕ} -> (b : BoolExpr m) ->
+               {n : ℕ} -> (env : Env n) -> (d : Diff n m) ->
+                forallsAcc b env d ->
+               nForalls n m d b env
+soundnessAcc bexp env Base H with decide env bexp
+soundnessAcc bexp env Base H | true = refl
+soundnessAcc bexp env Base H | false = ⊥-elim H
+soundnessAcc {m} bexp {n} env (Step y) H = \a -> dif {\b -> nForalls (suc n) m y bexp (b ∷ env)} a
+  (soundnessAcc bexp (true  ∷ env) y (proj₁ H))
+  (soundnessAcc bexp (false ∷ env) y (proj₂ H))
+
+soundness : {n : ℕ} -> (b : BoolExpr n) -> {i : foralls b} -> forallBool n b
+soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
+
+-- goalbla2 : somethm
+-- goalbla2 = quoteGoal e in {!isBoolExprQ (argsNo e) 0 e refl!}
+
+-- goaltest2 : (f f' : Bool) → f ∨ f ≡ true
+-- goaltest2 = quoteGoal e in {!term2b (argsNo e) 0 e refl refl!}
+-- -- modify term2b a bit.
+-- goaltest3 : (f : Bool) → f ∨ f ≡ true
+-- goaltest3 = quoteGoal e in {!withoutEQ e refl!}
+
+
+
 unsafeLookup : ℕ → List Bool → Bool
 unsafeLookup zero    [] = false -- pech
 unsafeLookup zero    (x ∷ as) = x
@@ -256,14 +335,11 @@ interp (And t t₁ ) env = interp t env ∧ interp t₁ env
 interp (Or t t₁  ) env = interp t env ∨ interp t₁ env
 interp (Imp t t₁ ) env = interp t env ⇒ interp t₁ env
 interp (Atomic x ) env = unsafeLookup (toℕ x) env
-    
+
 ⟦_⟧_,_ : {n : ℕ} → BoolExpr n → (m : ℕ) → List Bool → Set
 ⟦ t ⟧ zero    , env = interp t env ≡ true
 ⟦ t ⟧ (suc n) , env = (a : Bool) → ⟦ t ⟧ n , (a ∷ env)
 
--- this is actually our soundness function.
-
--- insert clever solver here.
 automate2 : (t : Term)
           → (pf : outerIsEq t ≡ true)
           → (bex : isBoolExprQ (argsNo t) 0 t pf ≡ true)
@@ -271,20 +347,10 @@ automate2 : (t : Term)
           → ⟦ term2b (argsNo t) 0 t pf bex ⟧ (argsNo t) , []
 automate2 t pf1 pf2 pf3 = {!!}
 
-
 somethm : Set
-somethm = (b c : Bool) → (b ⇒ b ∨ true) ∧ (c ∨ c) ≡ true
+somethm = (b c : Bool) → (b ∨ true) ∧ (c ∨ c) ≡ true
 -- TODO add ¬_ support
 
 goalbla : somethm
-goalbla = quoteGoal e in automate2 e refl refl refl
-
-goalbla2 : somethm
-goalbla2 = quoteGoal e in {!isBoolExprQ (argsNo e) 0 e refl!}
-
-goaltest2 : (f f' : Bool) → f ∨ f ≡ true
-goaltest2 = quoteGoal e in {!term2b (argsNo e) 0 e refl refl!}
--- modify term2b a bit.
-goaltest3 : (f : Bool) → f ∨ f ≡ true
-goaltest3 = quoteGoal e in {!withoutEQ e refl!}
+goalbla = quoteGoal e in soundness (term2b (argsNo e) 0 e refl refl)
 
