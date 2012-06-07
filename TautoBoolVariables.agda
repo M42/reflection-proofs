@@ -82,7 +82,7 @@ decide env (Truth)      = true
 decide env (Falsehood)  = false
 decide env (And be be₁) = decide env be ∧ decide env be₁
 decide env (Or be be₁)  = decide env be ∨ decide env be₁
-decide env (Imp p q)    = ¬ (decide env p) ∨ (decide env q)
+decide env (Imp p q)    = (¬ decide env p) ∨ (decide env q)
 decide env (Atomic n)   = lookup n env
 
 -- still required:
@@ -185,7 +185,7 @@ term2b' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | no ¬p  | yes p = 
 term2b' n depth (def f args) pf | no ¬p  | yes p = {! unreach !}
 term2b' n depth (def f args) pf | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
 term2b' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | no ¬p₁ | no ¬p | yes p = Imp (term2b' n depth a {!!}) (term2b' n depth b {!!})
-term2b' n depth (def f args) pf | no ¬p₁ | no ¬p | yes p = {! unreach !}
+term2b' n depth (def f args) pf | no ¬p₁ | no ¬p  | yes p = {! unreach !}
 term2b' n depth (def f args) pf | no ¬p₂ | no ¬p₁ | no ¬p = {!unreach!}
 term2b' n depth (lam v t) pf = {!!}
 term2b' n depth (pi t₁ t₂) pf = {!!}
@@ -280,8 +280,8 @@ soundnessAcc {m} bexp {n} env (Step y) H = \a -> dif {\b -> nForalls (suc n) m y
 soundness : {n : ℕ} -> (b : BoolExpr n) -> {i : foralls b} -> forallBool n b
 soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 
-goalbla : (b c : Bool) → (b ∨ true) ∧ (c ∨ true) ≡ true
-goalbla = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
+goalbla  : (b c : Bool) → (b ∨ true) ∧ (c ∨ true) ≡ true
+goalbla  = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
 
 goalbla2 : (b : Bool) → b ∨ true ≡ true
 goalbla2 = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
