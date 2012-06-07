@@ -438,12 +438,13 @@ foo (false ∷ p) pred (proj₁ , proj₂) = foo p (λ z → pred (false ∷ z))
 -- that is, if it's true for all possible variable assignments.
 -- this would be where to implement a smarter solver.
 decideForallEnv : {n : ℕ} → BoolExpr n → Bool
-decideForallEnv {n} exp = {!!}
+decideForallEnv {n} exp = {!!} -- hier is de truuk om op een handige manier te bewijzen dat iets een tauto is;
+                                -- het is namelijk straks nodig om het in automate2 uit elkaar te pluizen...
 
-unsafeLookup : {a : Set} → ℕ → List a → a
-unsafeLookup zero [] = {!pech!}
-unsafeLookup zero (x ∷ as) = x
-unsafeLookup (suc n) [] = {!pech!}
+unsafeLookup : ℕ → List Bool → Bool
+unsafeLookup zero    [] = false -- pech
+unsafeLookup zero    (x ∷ as) = x
+unsafeLookup (suc n) [] = false -- pech
 unsafeLookup (suc n) (x ∷ as) = unsafeLookup n as
 
 interp : {n : ℕ} → BoolExpr n → List Bool → Bool
