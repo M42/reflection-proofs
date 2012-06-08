@@ -87,12 +87,6 @@ decide env (Or be be₁)  = decide env be ∨ decide env be₁
 decide env (Imp p q)    = ¬ (decide env p ∧ (¬ decide env q))
 decide env (Atomic n)   = lookup n env
 
--- still required:
--- * do actual reflection
-
-≡' : Name
-≡' = quote _≡_
-
 -- returns the number of the outermost pi quantified variables.
 
 argsNo : Term → ℕ
