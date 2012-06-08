@@ -71,7 +71,7 @@ data BoolExpr : ℕ → Set where
 -- the environment
 Env : ℕ → Set
 Env = Vec Bool
-  -- lijst van lengte n met daarin een Set / Bool
+-- lijst van lengte n met daarin een Set / Bool
 
 -- S = BoolExpr (the syntactic realm)
 -- D = the domain of our Props
@@ -90,7 +90,6 @@ decide env (Atomic n)   = lookup n env
 -- still required:
 -- * do actual reflection
 
-
 ≡' : Name
 ≡' = quote _≡_
 
@@ -98,13 +97,13 @@ decide env (Atomic n)   = lookup n env
 
 argsNo : Term → ℕ
 argsNo (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = suc (argsNo t)
+argsNo (pi a b)     = 0
 argsNo (var x args) = 0
 argsNo (con c args) = 0
 argsNo (def f args) = 0
 argsNo (lam v t)    = 0
 argsNo (sort x)     = 0
 argsNo unknown      = 0
-argsNo _            = 0
 
 -- peels off all the outermost Pi constructors,
 -- returning a term with argsNo free variables.
@@ -180,12 +179,14 @@ isBoolExprQ' : (n : ℕ) → (depth : ℕ) → (t : Term) → Bool
 isBoolExprQ' n depth (var x args) with suc (unsafeMinus x depth) ≤? n
 isBoolExprQ' n depth (var x args) | yes p = true
 isBoolExprQ' n depth (var x args) | no ¬p = false
-isBoolExprQ' n depth (con tf []) with tf ≟-Name quote true
-isBoolExprQ' n depth (con tf []) | yes p = true
-isBoolExprQ' n depth (con tf []) | no ¬p with tf ≟-Name quote false
-isBoolExprQ' n depth (con tf []) | no ¬p  | yes p = true
-isBoolExprQ' n depth (con tf []) | no ¬p₁ | no ¬p = false
-isBoolExprQ' n depth (con tf as) = false
+isBoolExprQ' n depth (con tf as) with Data.Nat._≟_ 0 (length as)
+isBoolExprQ' n depth (con tf []) | yes pp with tf ≟-Name quote true
+isBoolExprQ' n depth (con tf []) | yes pp | yes p = true
+isBoolExprQ' n depth (con tf []) | yes pp | no ¬p with tf ≟-Name quote false
+isBoolExprQ' n depth (con tf []) | yes pp | no ¬p  | yes p = true
+isBoolExprQ' n depth (con tf []) | yes pp | no ¬p₁ | no ¬p = false
+isBoolExprQ' n depth (con tf (x ∷ as)) | yes p = false
+isBoolExprQ' n depth (con tf as) | no ¬p = false
 isBoolExprQ' n depth (def f args) with f ≟-Name quote _∧_
 isBoolExprQ' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | yes p = isBoolExprQ' n depth a ∧ isBoolExprQ' n depth b
 isBoolExprQ' n depth (def f a) | yes p = false
