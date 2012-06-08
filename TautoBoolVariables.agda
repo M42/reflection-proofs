@@ -1,4 +1,3 @@
-{-# OPTIONS --type-in-type #-}
 module TautoBoolVariables where
 
 open import Relation.Binary.PropositionalEquality renaming ([_] to by ; subst to substpe)
@@ -24,12 +23,11 @@ open import Data.Sum hiding (map)
 open import Data.Product hiding (map)
 open import Data.List hiding (_∷ʳ_)
 
-open import Relation.Binary.PropositionalEquality.TrustMe
-
 _⇒_ : Bool → Bool → Bool
 true  ⇒ true  = true
 true  ⇒ false = false
-false ⇒ q     = true
+false ⇒ true  = true
+false ⇒ false = true
 
 -- inspiration for style of proof
 -- or, another one:
@@ -131,13 +129,6 @@ unsafeMinus (suc n₁) (suc m) = unsafeMinus n₁ m
 outerIsEq : (t : Term) → Bool
 outerIsEq (var x args) = false
 outerIsEq (con c args) = false
--- outerIsEq (def f [])   = false
--- outerIsEq (def f (x ∷ [])) = false
--- outerIsEq (def f (x ∷ x₁ ∷ [])) = false
--- outerIsEq (def f (x ∷ x₁ ∷ x₂         ∷ []                               )) = false
--- outerIsEq (def f (x ∷ x₁ ∷ x₂         ∷ (arg _ _ (con ff [])) ∷ []       )) with f ≟-Name ≡'
--- outerIsEq (def f (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ (con ff []) ∷ []       )) | yes p = true
--- outerIsEq (def f (x ∷ x₁ ∷ x₂         ∷ arg v r (con ff [])   ∷ []       )) | no ¬p = false
 outerIsEq (def f args) with Data.Nat._≟_ (length args) 4
 outerIsEq (def f []) | yes ()
 outerIsEq (def f (x ∷ [])) | yes ()
@@ -171,14 +162,14 @@ withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ [])) pf | yes ()
 withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (var x₃ args) ∷ [])) () | yes p
 withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) pf | yes p with f ≟-Name quote _≡_ | c ≟-Name quote true
 withoutEQ (def f (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ (con c args) ∷ [])) pf | yes p₂ | yes p | yes p₁ = x₂
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) () | yes p₁ | yes p | no ¬p
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) () | yes p | no ¬p | a
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) ()  | yes p₁ | yes p | no ¬p
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) ()  | yes p | no ¬p | a
 withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (def f₁ args) ∷ [])) () | yes p
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (lam v₁ x₃) ∷ [])) () | yes p
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (pi t₁ t₂) ∷ [])) () | yes p
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (sort x₃) ∷ [])) () | yes p
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r unknown ∷ [])) () | yes p
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args)) pf | yes ()
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (lam v₁ x₃) ∷ [])) ()   | yes p
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (pi t₁ t₂) ∷ [])) ()    | yes p
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (sort x₃) ∷ [])) ()     | yes p
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r unknown ∷ [])) ()       | yes p
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args)) pf             | yes ()
 withoutEQ (def f args) pf | no ¬p = {!pf!}
 withoutEQ (lam v t)    ()
 withoutEQ (pi t₁ t₂)   ()
