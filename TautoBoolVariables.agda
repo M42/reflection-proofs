@@ -37,6 +37,10 @@ bOrNotb : (b : Bool) → b ∨ ¬ b ≡ true
 bOrNotb true  = refl
 bOrNotb false = refl
 
+bImpb : (b : Bool) → b ⇒ b ≡ true
+bImpb true  = refl
+bImpb false = refl
+
 -- wouldn't it be nice if we could automate this?
 
 -- eventually we'd like to prove these kinds of tautologies:
@@ -82,7 +86,7 @@ decide env (Truth)      = true
 decide env (Falsehood)  = false
 decide env (And be be₁) = decide env be ∧ decide env be₁
 decide env (Or be be₁)  = decide env be ∨ decide env be₁
-decide env (Imp p q)    = (¬ decide env p) ∨ (decide env q)
+decide env (Imp p q)    = ¬ (decide env p ∧ (¬ decide env q))
 decide env (Atomic n)   = lookup n env
 
 -- still required:
@@ -127,10 +131,30 @@ unsafeMinus (suc n₁) (suc m) = unsafeMinus n₁ m
 outerIsEq : (t : Term) → Bool
 outerIsEq (var x args) = false
 outerIsEq (con c args) = false
-outerIsEq (def f (a ∷ b ∷ c ∷ arg v r (con tr []) ∷ [])) with f ≟-Name ≡' | tr ≟-Name quote true
-outerIsEq (def f (a ∷ b ∷ c ∷ arg v r (con tr []) ∷ [])) | yes p | yes p1 = true
-outerIsEq (def f (a ∷ b ∷ c ∷ arg v r (con tr []) ∷ [])) |    _  | _      = false
-outerIsEq (def f as)   = false
+-- outerIsEq (def f [])   = false
+-- outerIsEq (def f (x ∷ [])) = false
+-- outerIsEq (def f (x ∷ x₁ ∷ [])) = false
+-- outerIsEq (def f (x ∷ x₁ ∷ x₂         ∷ []                               )) = false
+-- outerIsEq (def f (x ∷ x₁ ∷ x₂         ∷ (arg _ _ (con ff [])) ∷ []       )) with f ≟-Name ≡'
+-- outerIsEq (def f (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ (con ff []) ∷ []       )) | yes p = true
+-- outerIsEq (def f (x ∷ x₁ ∷ x₂         ∷ arg v r (con ff [])   ∷ []       )) | no ¬p = false
+outerIsEq (def f args) with length args Data.Nat.≟ 4
+outerIsEq (def f []) | yes ()
+outerIsEq (def f (x ∷ [])) | yes ()
+outerIsEq (def f (x ∷ x₁ ∷ [])) | yes ()
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ [])) | yes ()
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (var x₃ args) ∷ [])) | yes p = false
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) | yes p with f ≟-Name quote _≡_ | c ≟-Name quote true
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) | yes p₂ | yes p | yes p₁ = true
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) | yes p₁ | yes p | no ¬p = false
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) | yes p | no ¬p  | a = false
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (def f₁ args) ∷ [])) | yes p = false
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (lam v₁ x₃) ∷ [])) | yes p = false
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (pi t₁ t₂) ∷ [])) | yes p = false
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (sort x₃) ∷ [])) | yes p = false
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r unknown ∷ [])) | yes p = false
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args)) | yes ()
+outerIsEq (def f args) | no ¬p = false
 outerIsEq (lam v t)    = false
 outerIsEq (pi t₁ t₂)   = false
 outerIsEq (sort x)     = false
@@ -139,15 +163,23 @@ outerIsEq unknown      = false
 withoutEQ : (t : Term) → outerIsEq t ≡ true → Term
 withoutEQ (var x args) ()
 withoutEQ (con c args) ()
-withoutEQ (def f [])   ()
-withoutEQ (def f (x ∷ [])) ()
-withoutEQ (def f (x ∷ x₁ ∷ [])) ()
-withoutEQ (def f (x ∷ x₁ ∷ x₂         ∷ []                               )) ()
-withoutEQ (def f (x ∷ x₁ ∷ x₂         ∷ (arg _ _ (con ff [])) ∷ []       )) pf with f ≟-Name ≡'
-withoutEQ (def f (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ (con ff []) ∷ []       )) pf | yes p = x₂
-withoutEQ (def f (x ∷ x₁ ∷ x₂         ∷ arg v r (con ff [])   ∷ []       )) () | no ¬p
-withoutEQ (def f (x ∷ x₁ ∷ x₂         ∷ x₃                    ∷ []       )) pf = {!pf!}
-withoutEQ (def f (x ∷ x₁ ∷ x₂         ∷ x₃                    ∷ x₄ ∷ args)) pf = {!pf!}
+withoutEQ (def f args) pf with length args Data.Nat.≟ 4
+withoutEQ (def f []) pf | yes ()
+withoutEQ (def f (x ∷ [])) pf | yes ()
+withoutEQ (def f (x ∷ x₁ ∷ [])) pf | yes ()
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ [])) pf | yes ()
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (var x₃ args) ∷ [])) () | yes p
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) pf | yes p with f ≟-Name quote _≡_ | c ≟-Name quote true
+withoutEQ (def f (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ (con c args) ∷ [])) pf | yes p₂ | yes p | yes p₁ = x₂
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) () | yes p₁ | yes p | no ¬p
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) () | yes p | no ¬p | a
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (def f₁ args) ∷ [])) () | yes p
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (lam v₁ x₃) ∷ [])) () | yes p
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (pi t₁ t₂) ∷ [])) () | yes p
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (sort x₃) ∷ [])) () | yes p
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r unknown ∷ [])) () | yes p
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args)) pf | yes ()
+withoutEQ (def f args) pf | no ¬p = {!pf!}
 withoutEQ (lam v t)    ()
 withoutEQ (pi t₁ t₂)   ()
 withoutEQ (sort x)     ()
@@ -315,6 +347,16 @@ goalbla2 : (b : Bool) → b ∨ true ≡ true
 goalbla2 = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
 
 
-goalbla3 : (b : Bool) → b ⇒ b ≡ true
-goalbla3 = quoteGoal e in {!soundness (term2b (argsNo e) 0 (stripPi e) refl refl)!}
+goalbla3 : (b : Bool) → true ≡ true
+goalbla3 = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
+
 -- problem with Imp?
+imp : (b : Bool) → b ⇒ b ≡ true
+imp = quoteGoal e in {! soundness (term2b (argsNo e) 0 (stripPi e) refl refl)!}
+
+peirce : (p q  : Bool) → (((p ⇒ q) ⇒ p) ⇒ p) ≡ true
+peirce = quoteGoal e in {!soundness (term2b (argsNo e) 0 (stripPi e) refl refl)!}
+
+
+mft : myfavouritetheorem
+mft = quoteGoal e in {!!}
