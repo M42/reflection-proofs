@@ -1,7 +1,7 @@
 {-# OPTIONS --type-in-type #-}
 module TautoBoolVariables where
 
-open import Relation.Binary.PropositionalEquality renaming ( [_] to by ; subst to substpe)
+open import Relation.Binary.PropositionalEquality renaming ([_] to by ; subst to substpe)
 open import Data.String
 open import Lemmas
 open import Data.Maybe hiding (Eq)
@@ -129,7 +129,7 @@ outerIsEq (var x args) = false
 outerIsEq (con c args) = false
 outerIsEq (def f (a ∷ b ∷ c ∷ arg v r (con tr []) ∷ [])) with f ≟-Name ≡' | tr ≟-Name quote true
 outerIsEq (def f (a ∷ b ∷ c ∷ arg v r (con tr []) ∷ [])) | yes p | yes p1 = true
-outerIsEq (def f (a ∷ b ∷ c ∷ arg v r (con tr []) ∷ [])) |    _  | _ = false
+outerIsEq (def f (a ∷ b ∷ c ∷ arg v r (con tr []) ∷ [])) |    _  | _      = false
 outerIsEq (def f as)   = false
 outerIsEq (lam v t)    = false
 outerIsEq (pi t₁ t₂)   = false
@@ -139,7 +139,7 @@ outerIsEq unknown      = false
 withoutEQ : (t : Term) → outerIsEq t ≡ true → Term
 withoutEQ (var x args) ()
 withoutEQ (con c args) ()
-withoutEQ (def f []) ()
+withoutEQ (def f [])   ()
 withoutEQ (def f (x ∷ [])) ()
 withoutEQ (def f (x ∷ x₁ ∷ [])) ()
 withoutEQ (def f (x ∷ x₁ ∷ x₂         ∷ []                               )) ()
@@ -148,13 +148,35 @@ withoutEQ (def f (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ (con ff []) ∷ 
 withoutEQ (def f (x ∷ x₁ ∷ x₂         ∷ arg v r (con ff [])   ∷ []       )) () | no ¬p
 withoutEQ (def f (x ∷ x₁ ∷ x₂         ∷ x₃                    ∷ []       )) pf = {!pf!}
 withoutEQ (def f (x ∷ x₁ ∷ x₂         ∷ x₃                    ∷ x₄ ∷ args)) pf = {!pf!}
-withoutEQ (lam v t) ()
-withoutEQ (pi t₁ t₂) ()
-withoutEQ (sort x) ()
-withoutEQ unknown ()
+withoutEQ (lam v t)    ()
+withoutEQ (pi t₁ t₂)   ()
+withoutEQ (sort x)     ()
+withoutEQ unknown      ()
 
 isBoolExprQ' : (n : ℕ) → (depth : ℕ) → (t : Term) → Bool
-isBoolExprQ' n depth t = {!!}
+isBoolExprQ' n depth (var x args) with suc (unsafeMinus x depth) ≤? n
+isBoolExprQ' n depth (var x args) | yes p = true
+isBoolExprQ' n depth (var x args) | no ¬p = false
+isBoolExprQ' n depth (con tf []) with tf ≟-Name quote true
+isBoolExprQ' n depth (con tf []) | yes p = true
+isBoolExprQ' n depth (con tf []) | no ¬p with tf ≟-Name quote false
+isBoolExprQ' n depth (con tf []) | no ¬p  | yes p = true
+isBoolExprQ' n depth (con tf []) | no ¬p₁ | no ¬p = false
+isBoolExprQ' n depth (con tf as) = false
+isBoolExprQ' n depth (def f args) with f ≟-Name quote _∧_
+isBoolExprQ' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | yes p = isBoolExprQ' n depth a ∧ isBoolExprQ' n depth b
+isBoolExprQ' n depth (def f a) | yes p = false
+isBoolExprQ' n depth (def f args) | no ¬p with f ≟-Name quote _∨_
+isBoolExprQ' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | no ¬p  | yes p = isBoolExprQ' n depth a ∧ isBoolExprQ' n depth b
+isBoolExprQ' n depth (def f args) | no ¬p  | yes p = false
+isBoolExprQ' n depth (def f args) | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
+isBoolExprQ' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | no ¬p₁ | no ¬p | yes p = isBoolExprQ' n depth a ∧ isBoolExprQ' n depth b
+isBoolExprQ' n depth (def f args) | no ¬p₁ | no ¬p  | yes p = false
+isBoolExprQ' n depth (def f args) | no ¬p₂ | no ¬p₁ | no ¬p = false
+isBoolExprQ' n depth (lam v t) = false
+isBoolExprQ' n depth (pi t₁ t₂) = false
+isBoolExprQ' n depth (sort y) = false
+isBoolExprQ' n depth unknown = false
 
 
 isBoolExprQ : (n : ℕ) → (depth : ℕ) → (t : Term) → outerIsEq t ≡ true → Bool
@@ -170,27 +192,33 @@ term2b' : (n : ℕ)
         → BoolExpr n
 term2b' n depth (var x args) pf with suc (unsafeMinus x depth) ≤? n
 term2b' n depth (var x args) pf | yes p = Atomic (fromℕ≤ {unsafeMinus x depth} p)
-term2b' n depth (var x args) pf | no ¬p = {!unreach!}
+term2b' n depth (var x args) pf | no ¬p = {!pf!}
 term2b' n depth (con tf []) pf with tf ≟-Name quote true
 term2b' n depth (con tf []) pf | yes p = Truth
 term2b' n depth (con tf []) pf | no ¬p with tf ≟-Name quote false
 term2b' n depth (con tf []) pf | no ¬p  | yes p = Falsehood
-term2b' n depth (con tf []) pf | no ¬p₁ | no ¬p = {!unreach!}
-term2b' n depth (con c args) pf = {!unreach!}
+term2b' n depth (con tf []) () | no ¬p₁ | no ¬p
+term2b' n depth (con c args) pf = {!pf!}
 term2b' n depth (def f args) pf with f ≟-Name quote _∧_
-term2b' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | yes p = And (term2b' n depth a {!!}) (term2b' n depth b {!!})
-term2b' n depth (def f a) pf | yes p = {! unreach !}
+term2b' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | yes p = And
+  (term2b' n depth a (and-l pf))
+  (term2b' n depth b (and-r (isBoolExprQ' n 0 a) (isBoolExprQ' n 0 b) pf))
+term2b' n depth (def f a) pf | yes p = {! pf !}
 term2b' n depth (def f args) pf | no ¬p with f ≟-Name quote _∨_
-term2b' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | no ¬p  | yes p = Or (term2b' n depth a {!!}) (term2b' n depth b {!!})
-term2b' n depth (def f args) pf | no ¬p  | yes p = {! unreach !}
+term2b' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | no ¬p  | yes p = Or
+  (term2b' n depth a (and-l pf))
+  (term2b' n depth b (and-r (isBoolExprQ' n 0 a) (isBoolExprQ' n 0 b) pf))
+term2b' n depth (def f args) pf | no ¬p  | yes p = {! pf !}
 term2b' n depth (def f args) pf | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
-term2b' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | no ¬p₁ | no ¬p | yes p = Imp (term2b' n depth a {!!}) (term2b' n depth b {!!})
-term2b' n depth (def f args) pf | no ¬p₁ | no ¬p  | yes p = {! unreach !}
-term2b' n depth (def f args) pf | no ¬p₂ | no ¬p₁ | no ¬p = {!unreach!}
-term2b' n depth (lam v t) pf = {!!}
-term2b' n depth (pi t₁ t₂) pf = {!!}
-term2b' n depth (sort x) pf = {!!}
-term2b' n depth unknown pf = {!unreach!}
+term2b' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | no ¬p₁ | no ¬p | yes p = Imp
+  (term2b' n depth a (and-l pf))
+  (term2b' n depth b (and-r (isBoolExprQ' n 0 a) (isBoolExprQ' n 0 b) pf))
+term2b' n depth (def f args) pf | no ¬p₁ | no ¬p  | yes p = {! pf !}
+term2b' n depth (def f args) () | no ¬p₂ | no ¬p₁ | no ¬p
+term2b' n depth (lam v t)  ()
+term2b' n depth (pi t₁ t₂) ()
+term2b' n depth (sort x)   ()
+term2b' n depth unknown    ()
 
 term2b : (n : ℕ)
        → (depth : ℕ)
@@ -286,4 +314,7 @@ goalbla  = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
 goalbla2 : (b : Bool) → b ∨ true ≡ true
 goalbla2 = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
 
+
+goalbla3 : (b : Bool) → b ⇒ b ≡ true
+goalbla3 = quoteGoal e in {!soundness (term2b (argsNo e) 0 (stripPi e) refl refl)!}
 -- problem with Imp?
