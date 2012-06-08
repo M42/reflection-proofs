@@ -138,7 +138,7 @@ outerIsEq (con c args) = false
 -- outerIsEq (def f (x ∷ x₁ ∷ x₂         ∷ (arg _ _ (con ff [])) ∷ []       )) with f ≟-Name ≡'
 -- outerIsEq (def f (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ (con ff []) ∷ []       )) | yes p = true
 -- outerIsEq (def f (x ∷ x₁ ∷ x₂         ∷ arg v r (con ff [])   ∷ []       )) | no ¬p = false
-outerIsEq (def f args) with length args Data.Nat.≟ 4
+outerIsEq (def f args) with Data.Nat._≟_ (length args) 4
 outerIsEq (def f []) | yes ()
 outerIsEq (def f (x ∷ [])) | yes ()
 outerIsEq (def f (x ∷ x₁ ∷ [])) | yes ()
@@ -163,7 +163,7 @@ outerIsEq unknown      = false
 withoutEQ : (t : Term) → outerIsEq t ≡ true → Term
 withoutEQ (var x args) ()
 withoutEQ (con c args) ()
-withoutEQ (def f args) pf with length args Data.Nat.≟ 4
+withoutEQ (def f args) pf with Data.Nat._≟_ (length args) 4
 withoutEQ (def f []) pf | yes ()
 withoutEQ (def f (x ∷ [])) pf | yes ()
 withoutEQ (def f (x ∷ x₁ ∷ [])) pf | yes ()
