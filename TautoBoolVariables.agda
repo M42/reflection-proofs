@@ -357,3 +357,10 @@ peirce = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
 
 mft : myfavouritetheorem
 mft = quoteGoal e in {!!}
+
+seeInterpretation : {n : ℕ} → BoolExpr n → Set
+seeInterpretation {n} be = nForalls zero n (zero-least zero n) be []
+
+anotherTheorem : (a b : Bool) → (a ∧ b) ⇒ (b ∧ a) ≡ true
+anotherTheorem = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
+
