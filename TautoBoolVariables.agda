@@ -86,7 +86,7 @@ decide env (Falsehood)  = false
 decide env (And be be₁) = decide env be ∧ decide env be₁
 decide env (Or be be₁)  = decide env be ∨ decide env be₁
 decide env (Not be)     = ¬ decide env be
-decide env (Imp p q)    = ¬ (decide env p ∧ (¬ decide env q))
+decide env (Imp p q)    = decide env p ⇒ decide env q
 decide env (Atomic n)   = lookup n env
 
 -- returns the number of the outermost pi quantified variables.
@@ -345,13 +345,15 @@ goalbla2 = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
 goalbla3 : (b : Bool) → true ≡ true
 goalbla3 = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
 
--- problem with Imp?
-imp : (b : Bool) → b ∨ ¬ b ≡ true
-imp = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
+not : (b : Bool) → b ∨ ¬ b ≡ true
+not = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
+
+imp0 : (b : Bool) → b ⇒ b ≡ true
+imp0 = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
+
 
 peirce : (p q  : Bool) → (((p ⇒ q) ⇒ p) ⇒ p) ≡ true
-peirce = quoteGoal e in {!soundness (term2b (argsNo e) 0 (stripPi e) refl refl)!}
-
+peirce = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
 
 mft : myfavouritetheorem
 mft = quoteGoal e in {!!}
