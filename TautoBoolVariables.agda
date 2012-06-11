@@ -347,8 +347,7 @@ goalbla3 = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
 
 -- problem with Imp?
 imp : (b : Bool) → b ∨ ¬ b ≡ true
-imp = quoteGoal e in {!-- isBoolExprQ (argsNo e) 0 (stripPi e) refl
- term2b (argsNo e) 0 (stripPi e) refl refl!}
+imp = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
 
 peirce : (p q  : Bool) → (((p ⇒ q) ⇒ p) ⇒ p) ≡ true
 peirce = quoteGoal e in {!soundness (term2b (argsNo e) 0 (stripPi e) refl refl)!}
