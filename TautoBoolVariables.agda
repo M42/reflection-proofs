@@ -23,6 +23,8 @@ open import Data.Sum hiding (map)
 open import Data.Product hiding (map)
 open import Data.List hiding (_∷ʳ_)
 
+infixr 4 _⇒_
+
 _⇒_ : Bool → Bool → Bool
 true  ⇒ true  = true
 true  ⇒ false = false
@@ -356,11 +358,11 @@ peirce : (p q  : Bool) → (((p ⇒ q) ⇒ p) ⇒ p) ≡ true
 peirce = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
 
 mft : myfavouritetheorem
-mft = quoteGoal e in {!!}
+mft = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
 
 seeInterpretation : {n : ℕ} → BoolExpr n → Set
 seeInterpretation {n} be = nForalls zero n (zero-least zero n) be []
 
-anotherTheorem : (a b : Bool) → (a ∧ b) ⇒ (b ∧ a) ≡ true
+anotherTheorem : (a b : Bool) → a ∧ b ⇒ b ∧ a ≡ true
 anotherTheorem = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
 
