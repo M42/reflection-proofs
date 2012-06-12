@@ -142,7 +142,8 @@ outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (pi t₁ t₂) ∷ [])) | yes 
 outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (sort x₃) ∷ [])) | yes p = false
 outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r unknown ∷ [])) | yes p = false
 outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args)) | yes ()
-outerIsEq (def f args) | no ¬p = false
+outerIsEq (def f []) | no ¬p = false
+outerIsEq (def f (x ∷ xs)) | no ¬p = false
 outerIsEq (lam v t)    = false
 outerIsEq (pi t₁ t₂)   = false
 outerIsEq (sort x)     = false
@@ -167,79 +168,89 @@ withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (pi t₁ t₂) ∷ [])) ()    
 withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (sort x₃) ∷ [])) ()     | yes p
 withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r unknown ∷ [])) ()       | yes p
 withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args)) pf             | yes ()
-withoutEQ (def f args) pf | no ¬p = {!!}
+withoutEQ (def f []) () | no ¬p
+withoutEQ (def f (x ∷ xs)) () | no ¬p
 withoutEQ (lam v t)    ()
 withoutEQ (pi t₁ t₂)   ()
 withoutEQ (sort x)     ()
 withoutEQ unknown      ()
 
-isBoolExprQ' : (t : Term) → Bool
-isBoolExprQ' (var x args) = true
-isBoolExprQ' (con tf as) with Data.Nat._≟_ 0 (length as)
-isBoolExprQ' (con tf []) | yes pp with tf ≟-Name quote true
-isBoolExprQ' (con tf []) | yes pp | yes p = true
-isBoolExprQ' (con tf []) | yes pp | no ¬p with tf ≟-Name quote false
-isBoolExprQ' (con tf []) | yes pp | no ¬p  | yes p = true
-isBoolExprQ' (con tf []) | yes pp | no ¬p₁ | no ¬p = false
-isBoolExprQ' (con tf (x ∷ as)) | yes p = false
-isBoolExprQ' (con tf as) | no ¬p = false
-isBoolExprQ' (def f args) with f ≟-Name quote _∧_
-isBoolExprQ' (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | yes p = isBoolExprQ' a ∧ isBoolExprQ' b
-isBoolExprQ' (def f a) | yes p = false
-isBoolExprQ' (def f args) | no ¬p with f ≟-Name quote _∨_
-isBoolExprQ' (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | no ¬p  | yes p = isBoolExprQ' a ∧ isBoolExprQ' b
-isBoolExprQ' (def f args) | no ¬p  | yes p = false
-isBoolExprQ' (def f args) | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
-isBoolExprQ' (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | no ¬p₁ | no ¬p | yes p = isBoolExprQ' a ∧ isBoolExprQ' b
-isBoolExprQ' (def f args) | no ¬p₁ | no ¬p  | yes p = false
-isBoolExprQ' (def f args) | no ¬p₂ | no ¬p₁ | no ¬p with f ≟-Name quote ¬_
-isBoolExprQ' (def f []) | no ¬p₂ | no ¬p₁ | no ¬p | yes p = false
-isBoolExprQ' (def f (arg v r x ∷ [])) | no ¬p₂ | no ¬p₁ | no ¬p | yes p = isBoolExprQ' x
-isBoolExprQ' (def f (x ∷ x₁ ∷ args)) | no ¬p₂ | no ¬p₁ | no ¬p | yes p = false 
-isBoolExprQ' (def f args) | no ¬p₃ | no ¬p₂ | no ¬p₁ | no ¬p = false
-isBoolExprQ' (lam v t) = false
-isBoolExprQ' (pi t₁ t₂) = false
-isBoolExprQ' (sort y) = false
-isBoolExprQ' unknown = false
+isBoolExprQ' : (n : ℕ) → (t : Term) → Bool
+isBoolExprQ' n (var x args) with suc (unsafeMinus x 0) ≤? n
+isBoolExprQ' n (var x args) | yes p = true
+isBoolExprQ' n (var x args) | no ¬p = false
+isBoolExprQ' n (con tf as) with Data.Nat._≟_ 0 (length as)
+isBoolExprQ' n (con tf []) | yes pp with tf ≟-Name quote true
+isBoolExprQ' n (con tf []) | yes pp | yes p = true
+isBoolExprQ' n (con tf []) | yes pp | no ¬p with tf ≟-Name quote false
+isBoolExprQ' n (con tf []) | yes pp | no ¬p  | yes p = true
+isBoolExprQ' n (con tf []) | yes pp | no ¬p₁ | no ¬p = false
+isBoolExprQ' n (con tf (x ∷ as)) | yes p = false
+isBoolExprQ' n (con tf []) | no ¬p = false
+isBoolExprQ' n (con tf (a ∷ s)) | no ¬p = false
+isBoolExprQ' n (def f args) with f ≟-Name quote _∧_
+isBoolExprQ' n (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | yes p = isBoolExprQ' n a ∧ isBoolExprQ' n b
+isBoolExprQ' n (def f []) | yes p = false
+isBoolExprQ' n (def f (a ∷ s)) | yes p = false
+isBoolExprQ' n (def f args) | no ¬p with f ≟-Name quote _∨_
+isBoolExprQ' n (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | no ¬p  | yes p = isBoolExprQ' n a ∧ isBoolExprQ' n b
+isBoolExprQ' n (def f []) | no ¬p  | yes p = false
+isBoolExprQ' n (def f (ar ∷ gs)) | no ¬p  | yes p = false
+isBoolExprQ' n (def f args) | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
+isBoolExprQ' n (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | no ¬p₁ | no ¬p | yes p = isBoolExprQ' n a ∧ isBoolExprQ' n b
+isBoolExprQ' n (def f []) | no ¬p₁ | no ¬p  | yes p = false
+isBoolExprQ' n (def f (ar ∷ gs)) | no ¬p₁ | no ¬p  | yes p = false
+isBoolExprQ' n (def f args) | no ¬p₂ | no ¬p₁ | no ¬p with f ≟-Name quote ¬_
+isBoolExprQ' n (def f []) | no ¬p₂ | no ¬p₁ | no ¬p | yes p = false
+isBoolExprQ' n (def f (arg v r x ∷ [])) | no ¬p₂ | no ¬p₁ | no ¬p | yes p = isBoolExprQ' n x
+isBoolExprQ' n (def f (x ∷ x₁ ∷ args)) | no ¬p₂ | no ¬p₁ | no ¬p | yes p = false 
+isBoolExprQ' n (def f args) | no ¬p₃ | no ¬p₂ | no ¬p₁ | no ¬p = false
+isBoolExprQ' n (lam v t) = false
+isBoolExprQ' n (pi t₁ t₂) = false
+isBoolExprQ' n (sort y) = false
+isBoolExprQ' n unknown = false
 
-isBoolExprQ : (t : Term) → outerIsEq t ≡ true → Bool
-isBoolExprQ t pf with withoutEQ t pf
-isBoolExprQ t pf | t' = isBoolExprQ' t'
+isBoolExprQ : (freeVars : ℕ) → (t : Term) → outerIsEq t ≡ true → Bool
+isBoolExprQ n t pf with withoutEQ t pf
+isBoolExprQ n t pf | t' = isBoolExprQ' n t'
 
 -- the holes here should be absurds, but only Agda>=2.3.1 manages
 -- the unification.
 term2b' : (n : ℕ)
         → (t : Term)
-        → isBoolExprQ' t ≡ true
+        → isBoolExprQ' n t ≡ true
         → BoolExpr n
 term2b' n (var x args) pf with suc (unsafeMinus x 0) ≤? n
 term2b' n (var x args) pf | yes p = Atomic (fromℕ≤ {unsafeMinus x 0} p)
-term2b' n (var x args) pf | no ¬p = {!pf!}
+term2b' n (var x args) () | no ¬p
 term2b' n (con tf []) pf with tf ≟-Name quote true
 term2b' n (con tf []) pf | yes p = Truth
 term2b' n (con tf []) pf | no ¬p with tf ≟-Name quote false
 term2b' n (con tf []) pf | no ¬p  | yes p = Falsehood
 term2b' n (con tf []) () | no ¬p₁ | no ¬p
-term2b' n (con c args) pf = {!pf!}
+term2b' n (con c (a ∷ rgs)) ()
 term2b' n (def f args) pf with f ≟-Name quote _∧_
 term2b' n (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | yes p = And
   (term2b' n a (and-l pf))
-  (term2b' n b (and-r (isBoolExprQ' a) (isBoolExprQ' b) pf))
-term2b' n (def f a) pf | yes p = {! pf !}
+  (term2b' n b (and-r (isBoolExprQ' n a) (isBoolExprQ' n b) pf))
+term2b' n (def f []) () | yes p
+term2b' n (def f (x ∷ a)) () | yes p
 term2b' n (def f args) pf | no ¬p with f ≟-Name quote _∨_
 term2b' n (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | no ¬p  | yes p = Or
   (term2b' n a (and-l pf))
-  (term2b' n b (and-r (isBoolExprQ' a) (isBoolExprQ' b) pf))
-term2b' n (def f args) pf | no ¬p  | yes p = {! pf !}
+  (term2b' n b (and-r (isBoolExprQ' n a) (isBoolExprQ' n b) pf))
+term2b' n (def f []) () | no ¬p | yes p
+term2b' n (def f (x ∷ args)) () | no ¬p | yes p
 term2b' n (def f args) pf | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
 term2b' n (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | no ¬p₁ | no ¬p | yes p = Imp
   (term2b' n a (and-l pf))
-  (term2b' n b (and-r (isBoolExprQ' a) (isBoolExprQ' b) pf))
-term2b' n (def f args) pf | no ¬p₁ | no ¬p  | yes p = {! !}
+  (term2b' n b (and-r (isBoolExprQ' n a) (isBoolExprQ' n b) pf))
+term2b' n (def f []) () | no ¬p₁ | no ¬p | yes p
+term2b' n (def f (x ∷ args)) () | no ¬p₁ | no ¬p | yes p
 term2b' n (def f args) pf | no ¬p₂ | no ¬p₁ | no ¬p with f ≟-Name quote ¬_
 term2b' n (def f []) () | no ¬p₂ | no ¬p₁ | no ¬p | yes p
 term2b' n (def f (arg _ _ x ∷ [])) pf | no ¬p₂ | no ¬p₁ | no ¬p | yes p = Not (term2b' n x pf)
-term2b' n (def f (x ∷ x₁ ∷ args)) pf | no ¬p₂ | no ¬p₁ | no ¬p | yes p = {!pf!}
+term2b' n (def f (x ∷ x₁ ∷ args)) () | no ¬p₂ | no ¬p₁ | no ¬p | yes p
 term2b' n (def f args) () | no ¬p₃ | no ¬p₂ | no ¬p₁ | no ¬p
 term2b' n (lam v t)  ()
 term2b' n (pi t₁ t₂) ()
@@ -249,7 +260,7 @@ term2b' n unknown    ()
 term2b : (n : ℕ)
        → (t : Term)
        → (pf : outerIsEq t ≡ true)
-       → isBoolExprQ t pf ≡ true
+       → isBoolExprQ n t pf ≡ true
        → BoolExpr n
 term2b n t pf pf2 = term2b' n (withoutEQ t pf) pf2
 
