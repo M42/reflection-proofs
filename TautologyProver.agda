@@ -1,4 +1,4 @@
-module TautoBoolVariables where
+module TautologyProver where
 
 open import Relation.Binary.PropositionalEquality renaming ([_] to by ; subst to substpe)
 open import Data.String
