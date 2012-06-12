@@ -55,7 +55,7 @@ myfavouritetheorem = (p1 q1 p2 q2 : Bool) → (p1 ∨ q1) ∧ (p2 ∨ q2)
 
 {-
 The point of having SET is to have a place to put stuff subst gives us.
-i.e., if we want to go from BoolExpr -> Set, we need a way to reattach a
+i.e., if we want to go from BoolExpr → Set, we need a way to reattach a
 variable in the Pi type to some term inside our boolean expression.
 -}
 data BoolExpr : ℕ → Set where
@@ -264,32 +264,32 @@ term2b : (n : ℕ)
        → BoolExpr n
 term2b n t pf pf2 = term2b' n (withoutEQ t pf) pf2
 
-data Diff : ℕ -> ℕ -> Set where
-  Base : forall {n} -> Diff n n
-  Step : forall {n m} -> Diff (suc n) m -> Diff n m
+data Diff : ℕ → ℕ → Set where
+  Base : forall {n} → Diff n n
+  Step : forall {n m} → Diff (suc n) m → Diff n m
 
-nForalls : (n m : ℕ) -> Diff n m -> BoolExpr m -> Env n -> Set
-nForalls .m m Base b env = decide env b ≡ true
-nForalls n m (Step y) b env = (a : Bool) -> nForalls (suc n) m y b (a ∷ env)
+buildPi : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
+buildPi .m m (Base  ) b env = decide env b ≡ true
+buildPi n m  (Step y) b env = (a : Bool) → buildPi (suc n) m y b (a ∷ env)
 
-zeroId : (n : ℕ) -> n ≡ n + 0
+zeroId : (n : ℕ) → n ≡ n + 0
 zeroId zero                           = refl
 zeroId (suc  n) with n + 0 | zeroId n
 zeroId (suc .w)    | w     | refl     = refl
 
-succLemma : (n m : ℕ) -> suc (n + m) ≡ n + suc m
+succLemma : (n m : ℕ) → suc (n + m) ≡ n + suc m
 succLemma zero m    = refl
 succLemma (suc n) m = cong suc (succLemma n m)
 
-coerceDiff : {n m k : ℕ} -> n ≡ m -> Diff k n -> Diff k m
+coerceDiff : {n m k : ℕ} → n ≡ m → Diff k n → Diff k m
 coerceDiff refl d = d
 
-zero-least : (k n : ℕ) -> Diff k (k + n)
+zero-least : (k n : ℕ) → Diff k (k + n)
 zero-least k zero    = coerceDiff (zeroId k) Base
 zero-least k (suc n) = Step (coerceDiff (succLemma k n) (zero-least (suc k) n))
 
-forallBool : (m : ℕ) -> BoolExpr m -> Set
-forallBool m b = nForalls zero m (zero-least 0 m) b []
+forallBool : (m : ℕ) → BoolExpr m → Set
+forallBool m b = buildPi zero m (zero-least 0 m) b []
 
 {-
 notice that u is automatically instantiated, since
@@ -299,10 +299,10 @@ because eta-reduction only is done in the type system for records
 and not for general data types. possibly the reason is because this is
 safe in records because recursion isn't allowed. question for agda-café?
 -}
-foo' : {u : ⊤ × ⊤} -> ℕ
+foo' : {u : ⊤ × ⊤} → ℕ
 foo' = 5
 
-foo'' : {u : ⊤ × ⊥} -> ℕ
+foo'' : {u : ⊤ × ⊥} → ℕ
 foo'' = 5
 
 baz : ℕ
@@ -314,34 +314,35 @@ data Error (a : String) : Set where
 Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
 Error-elim ()
 
-So : Bool -> Set
+So : Bool → Set
 So true  = ⊤
 So false = Error "Expression isn't a tautology"
 
-forallsAcc : {n m : ℕ} -> (b : BoolExpr m) -> Env n -> Diff n m -> Set
-forallsAcc b' env Base = So (decide env b')
+forallsAcc : {n m : ℕ} → (b : BoolExpr m) → Env n → Diff n m → Set
+forallsAcc b' env (Base  ) = So (decide env b')
 forallsAcc b' env (Step y) = forallsAcc b' (true ∷ env) y × forallsAcc b' (false ∷ env) y
 
-foralls : {n : ℕ} -> (b : BoolExpr n) -> Set
+foralls : {n : ℕ} → (b : BoolExpr n) → Set
 foralls {n} b = forallsAcc b [] (zero-least 0 n)
 
 -- dependently typed If
-dif : {P : Bool -> Set} -> (b : Bool) -> P true -> P false -> P b
+dif : {P : Bool → Set} → (b : Bool) → P true → P false → P b
 dif true  t f = t
 dif false t f = f
 
-soundnessAcc : {m : ℕ} -> (b : BoolExpr m) ->
-               {n : ℕ} -> (env : Env n) -> (d : Diff n m) ->
-               forallsAcc b env d ->
-               nForalls n m d b env
-soundnessAcc bexp env Base H with decide env bexp
-soundnessAcc bexp env Base H | true = refl
-soundnessAcc bexp env Base H | false = Error-elim H
-soundnessAcc {m} bexp {n} env (Step y) H = \a -> dif {\b -> nForalls (suc n) m y bexp (b ∷ env)} a
-  (soundnessAcc bexp (true  ∷ env) y (proj₁ H))
-  (soundnessAcc bexp (false ∷ env) y (proj₂ H))
+soundnessAcc : {m : ℕ} → (b : BoolExpr m) →
+               {n : ℕ} → (env : Env n) → (d : Diff n m) →
+               forallsAcc b env d →
+               buildPi n m d b env
+soundnessAcc     bexp     env Base     H with decide env bexp
+soundnessAcc     bexp     env Base     H | true = refl
+soundnessAcc     bexp     env Base     H | false = Error-elim H
+soundnessAcc {m} bexp {n} env (Step y) H =
+  λ a → dif {λ b → buildPi (suc n) m y bexp (b ∷ env)} a
+    (soundnessAcc bexp (true  ∷ env) y (proj₁ H))
+    (soundnessAcc bexp (false ∷ env) y (proj₂ H))
 
-soundness : {n : ℕ} -> (b : BoolExpr n) -> {i : foralls b} -> forallBool n b
+soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBool n b
 soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 
 goalbla  : (b c : Bool) → (b ∨ true) ∧ (c ∨ true) ≡ true
@@ -367,9 +368,7 @@ mft : myfavouritetheorem
 mft = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 
 seeInterpretation : {n : ℕ} → BoolExpr n → Set
-seeInterpretation {n} be = nForalls zero n (zero-least zero n) be []
-
+seeInterpretation {n} be = buildPi zero n (zero-least zero n) be []
 
 anotherTheorem : (a b : Bool) → a ∧ b ⇒ b ∧ a ≡ true
 anotherTheorem = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
-
