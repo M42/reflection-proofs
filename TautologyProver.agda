@@ -24,7 +24,6 @@ open import Data.Product hiding (map)
 open import Data.List hiding (_∷ʳ_)
 
 infixr 4 _⇒_
-
 _⇒_ : Bool → Bool → Bool
 true  ⇒ true  = true
 true  ⇒ false = false
@@ -127,49 +126,53 @@ outerIsEq : (t : Term) → Bool
 outerIsEq (var x args) = false
 outerIsEq (con c args) = false
 outerIsEq (def f args) with Data.Nat._≟_ (length args) 4
-outerIsEq (def f []) | yes ()
-outerIsEq (def f (x ∷ [])) | yes ()
-outerIsEq (def f (x ∷ x₁ ∷ [])) | yes ()
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ [])) | yes ()
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (var x₃ args) ∷ [])) | yes p = false
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) | yes p with f ≟-Name quote _≡_ | c ≟-Name quote true
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) | yes p₂ | yes p | yes p₁ = true
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) | yes p₁ | yes p | no ¬p = false
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) | yes p | no ¬p  | a = false
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (def f₁ args) ∷ [])) | yes p = false
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (lam v₁ x₃) ∷ [])) | yes p = false
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (pi t₁ t₂) ∷ [])) | yes p = false
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (sort x₃) ∷ [])) | yes p = false
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r unknown ∷ [])) | yes p = false
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args)) | yes ()
-outerIsEq (def f []) | no ¬p = false
-outerIsEq (def f (x ∷ xs)) | no ¬p = false
-outerIsEq (lam v t)    = false
-outerIsEq (pi t₁ t₂)   = false
-outerIsEq (sort x)     = false
-outerIsEq unknown      = false
+outerIsEq (def f args) | yes p with tt
+outerIsEq (def f [])                                         | yes () | tt
+outerIsEq (def f (x ∷ []))                                   | yes () | tt
+outerIsEq (def f (x ∷ x₁ ∷ []))                              | yes () | tt
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ []))                         | yes () | tt
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (var x₃ args) ∷ [])) | yes p  | tt = false
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ []))  | yes p  | tt with f ≟-Name quote _≡_ | c ≟-Name quote true
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ []))  | yes p₂ | tt | yes p | yes p₁ = true
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ []))  | yes p₁ | tt | yes p | no ¬p  = false
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ []))  | yes p  | tt | no ¬p | a      = false
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (def f₁ args) ∷ [])) | yes p | tt = false
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (lam v₁ x₃) ∷ []))   | yes p | tt = false
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (pi t₁ t₂) ∷ []))    | yes p | tt = false
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (sort x₃) ∷ []))     | yes p | tt = false
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r unknown ∷ []))       | yes p | tt = false
+outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args))             | yes () | tt
+outerIsEq (def f args)                                       | no ¬p with tt
+outerIsEq (def f [])                                         | no ¬p | tt = false
+outerIsEq (def f (x ∷ xs))                                   | no ¬p | tt = false
+outerIsEq (lam v t)                                          = false
+outerIsEq (pi t₁ t₂)                                         = false
+outerIsEq (sort x)                                           = false
+outerIsEq unknown                                            = false
 
 withoutEQ : (t : Term) → outerIsEq t ≡ true → Term
 withoutEQ (var x args) ()
 withoutEQ (con c args) ()
 withoutEQ (def f args) pf with Data.Nat._≟_ (length args) 4
-withoutEQ (def f []) pf | yes ()
-withoutEQ (def f (x ∷ [])) pf | yes ()
-withoutEQ (def f (x ∷ x₁ ∷ [])) pf | yes ()
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ [])) pf | yes ()
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (var x₃ args) ∷ [])) () | yes p
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) pf | yes p with f ≟-Name quote _≡_ | c ≟-Name quote true
-withoutEQ (def f (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ (con c args) ∷ [])) pf | yes p₂ | yes p | yes p₁ = x₂
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) ()  | yes p₁ | yes p | no ¬p
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) ()  | yes p | no ¬p | a
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (def f₁ args) ∷ [])) () | yes p
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (lam v₁ x₃) ∷ [])) ()   | yes p
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (pi t₁ t₂) ∷ [])) ()    | yes p
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (sort x₃) ∷ [])) ()     | yes p
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r unknown ∷ [])) ()       | yes p
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args)) pf             | yes ()
-withoutEQ (def f []) () | no ¬p
-withoutEQ (def f (x ∷ xs)) () | no ¬p
+withoutEQ (def f args) pf | yes p with tt
+withoutEQ (def f []) pf | yes () | tt
+withoutEQ (def f (x ∷ [])) pf | yes () | tt
+withoutEQ (def f (x ∷ x₁ ∷ [])) pf | yes () | tt
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ [])) pf | yes () | tt
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (var x₃ args) ∷ [])) () | yes p | tt
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) pf | yes p | tt with f ≟-Name quote _≡_ | c ≟-Name quote true
+withoutEQ (def f (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ (con c args) ∷ [])) pf | yes p₂ | tt | yes p | yes p₁ = x₂
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) ()  | yes p₁ | tt | yes p | no ¬p
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) ()  | yes p | tt |  no ¬p | a
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (def f₁ args) ∷ [])) () | yes p | tt
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (lam v₁ x₃) ∷ [])) ()   | yes p | tt
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (pi t₁ t₂) ∷ [])) ()    | yes p | tt
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (sort x₃) ∷ [])) ()     | yes p | tt
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r unknown ∷ [])) ()       | yes p | tt
+withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args)) pf             | yes () | tt
+withoutEQ (def f xs) pf | no ¬p with tt
+withoutEQ (def f []) () | no ¬p | tt
+withoutEQ (def f (x ∷ xs)) () | no ¬p | tt
 withoutEQ (lam v t)    ()
 withoutEQ (pi t₁ t₂)   ()
 withoutEQ (sort x)     ()
