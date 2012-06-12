@@ -167,95 +167,91 @@ withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (pi t₁ t₂) ∷ [])) ()    
 withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (sort x₃) ∷ [])) ()     | yes p
 withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r unknown ∷ [])) ()       | yes p
 withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args)) pf             | yes ()
-withoutEQ (def f args) pf | no ¬p = {!pf!}
+withoutEQ (def f args) pf | no ¬p = {!!}
 withoutEQ (lam v t)    ()
 withoutEQ (pi t₁ t₂)   ()
 withoutEQ (sort x)     ()
 withoutEQ unknown      ()
 
-isBoolExprQ' : (n : ℕ) → (depth : ℕ) → (t : Term) → Bool
-isBoolExprQ' n depth (var x args) with suc (unsafeMinus x depth) ≤? n
-isBoolExprQ' n depth (var x args) | yes p = true
-isBoolExprQ' n depth (var x args) | no ¬p = false
-isBoolExprQ' n depth (con tf as) with Data.Nat._≟_ 0 (length as)
-isBoolExprQ' n depth (con tf []) | yes pp with tf ≟-Name quote true
-isBoolExprQ' n depth (con tf []) | yes pp | yes p = true
-isBoolExprQ' n depth (con tf []) | yes pp | no ¬p with tf ≟-Name quote false
-isBoolExprQ' n depth (con tf []) | yes pp | no ¬p  | yes p = true
-isBoolExprQ' n depth (con tf []) | yes pp | no ¬p₁ | no ¬p = false
-isBoolExprQ' n depth (con tf (x ∷ as)) | yes p = false
-isBoolExprQ' n depth (con tf as) | no ¬p = false
-isBoolExprQ' n depth (def f args) with f ≟-Name quote _∧_
-isBoolExprQ' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | yes p = isBoolExprQ' n depth a ∧ isBoolExprQ' n depth b
-isBoolExprQ' n depth (def f a) | yes p = false
-isBoolExprQ' n depth (def f args) | no ¬p with f ≟-Name quote _∨_
-isBoolExprQ' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | no ¬p  | yes p = isBoolExprQ' n depth a ∧ isBoolExprQ' n depth b
-isBoolExprQ' n depth (def f args) | no ¬p  | yes p = false
-isBoolExprQ' n depth (def f args) | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
-isBoolExprQ' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | no ¬p₁ | no ¬p | yes p = isBoolExprQ' n depth a ∧ isBoolExprQ' n depth b
-isBoolExprQ' n depth (def f args) | no ¬p₁ | no ¬p  | yes p = false
-isBoolExprQ' n depth (def f args) | no ¬p₂ | no ¬p₁ | no ¬p with f ≟-Name quote ¬_
-isBoolExprQ' n depth (def f []) | no ¬p₂ | no ¬p₁ | no ¬p | yes p = false
-isBoolExprQ' n depth (def f (arg v r x ∷ [])) | no ¬p₂ | no ¬p₁ | no ¬p | yes p = isBoolExprQ' n depth x
-isBoolExprQ' n depth (def f (x ∷ x₁ ∷ args)) | no ¬p₂ | no ¬p₁ | no ¬p | yes p = false 
-isBoolExprQ' n depth (def f args) | no ¬p₃ | no ¬p₂ | no ¬p₁ | no ¬p = false
-isBoolExprQ' n depth (lam v t) = false
-isBoolExprQ' n depth (pi t₁ t₂) = false
-isBoolExprQ' n depth (sort y) = false
-isBoolExprQ' n depth unknown = false
+isBoolExprQ' : (t : Term) → Bool
+isBoolExprQ' (var x args) = true
+isBoolExprQ' (con tf as) with Data.Nat._≟_ 0 (length as)
+isBoolExprQ' (con tf []) | yes pp with tf ≟-Name quote true
+isBoolExprQ' (con tf []) | yes pp | yes p = true
+isBoolExprQ' (con tf []) | yes pp | no ¬p with tf ≟-Name quote false
+isBoolExprQ' (con tf []) | yes pp | no ¬p  | yes p = true
+isBoolExprQ' (con tf []) | yes pp | no ¬p₁ | no ¬p = false
+isBoolExprQ' (con tf (x ∷ as)) | yes p = false
+isBoolExprQ' (con tf as) | no ¬p = false
+isBoolExprQ' (def f args) with f ≟-Name quote _∧_
+isBoolExprQ' (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | yes p = isBoolExprQ' a ∧ isBoolExprQ' b
+isBoolExprQ' (def f a) | yes p = false
+isBoolExprQ' (def f args) | no ¬p with f ≟-Name quote _∨_
+isBoolExprQ' (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | no ¬p  | yes p = isBoolExprQ' a ∧ isBoolExprQ' b
+isBoolExprQ' (def f args) | no ¬p  | yes p = false
+isBoolExprQ' (def f args) | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
+isBoolExprQ' (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | no ¬p₁ | no ¬p | yes p = isBoolExprQ' a ∧ isBoolExprQ' b
+isBoolExprQ' (def f args) | no ¬p₁ | no ¬p  | yes p = false
+isBoolExprQ' (def f args) | no ¬p₂ | no ¬p₁ | no ¬p with f ≟-Name quote ¬_
+isBoolExprQ' (def f []) | no ¬p₂ | no ¬p₁ | no ¬p | yes p = false
+isBoolExprQ' (def f (arg v r x ∷ [])) | no ¬p₂ | no ¬p₁ | no ¬p | yes p = isBoolExprQ' x
+isBoolExprQ' (def f (x ∷ x₁ ∷ args)) | no ¬p₂ | no ¬p₁ | no ¬p | yes p = false 
+isBoolExprQ' (def f args) | no ¬p₃ | no ¬p₂ | no ¬p₁ | no ¬p = false
+isBoolExprQ' (lam v t) = false
+isBoolExprQ' (pi t₁ t₂) = false
+isBoolExprQ' (sort y) = false
+isBoolExprQ' unknown = false
 
-isBoolExprQ : (n : ℕ) → (depth : ℕ) → (t : Term) → outerIsEq t ≡ true → Bool
-isBoolExprQ n depth t pf with withoutEQ t pf
-isBoolExprQ n depth t pf | t' = isBoolExprQ' n depth t'
+isBoolExprQ : (t : Term) → outerIsEq t ≡ true → Bool
+isBoolExprQ t pf with withoutEQ t pf
+isBoolExprQ t pf | t' = isBoolExprQ' t'
 
 -- the holes here should be absurds, but only Agda>=2.3.1 manages
 -- the unification.
 term2b' : (n : ℕ)
-        → (depth : ℕ)
         → (t : Term)
-        → isBoolExprQ' n 0 t ≡ true
+        → isBoolExprQ' t ≡ true
         → BoolExpr n
-term2b' n depth (var x args) pf with suc (unsafeMinus x depth) ≤? n
-term2b' n depth (var x args) pf | yes p = Atomic (fromℕ≤ {unsafeMinus x depth} p)
-term2b' n depth (var x args) pf | no ¬p = {!pf!}
-term2b' n depth (con tf []) pf with tf ≟-Name quote true
-term2b' n depth (con tf []) pf | yes p = Truth
-term2b' n depth (con tf []) pf | no ¬p with tf ≟-Name quote false
-term2b' n depth (con tf []) pf | no ¬p  | yes p = Falsehood
-term2b' n depth (con tf []) () | no ¬p₁ | no ¬p
-term2b' n depth (con c args) pf = {!pf!}
-term2b' n depth (def f args) pf with f ≟-Name quote _∧_
-term2b' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | yes p = And
-  (term2b' n depth a (and-l pf))
-  (term2b' n depth b (and-r (isBoolExprQ' n 0 a) (isBoolExprQ' n 0 b) pf))
-term2b' n depth (def f a) pf | yes p = {! pf !}
-term2b' n depth (def f args) pf | no ¬p with f ≟-Name quote _∨_
-term2b' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | no ¬p  | yes p = Or
-  (term2b' n depth a (and-l pf))
-  (term2b' n depth b (and-r (isBoolExprQ' n 0 a) (isBoolExprQ' n 0 b) pf))
-term2b' n depth (def f args) pf | no ¬p  | yes p = {! pf !}
-term2b' n depth (def f args) pf | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
-term2b' n depth (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | no ¬p₁ | no ¬p | yes p = Imp
-  (term2b' n depth a (and-l pf))
-  (term2b' n depth b (and-r (isBoolExprQ' n 0 a) (isBoolExprQ' n 0 b) pf))
-term2b' n depth (def f args) pf | no ¬p₁ | no ¬p  | yes p = {! !}
-term2b' n depth (def f args) pf | no ¬p₂ | no ¬p₁ | no ¬p with f ≟-Name quote ¬_
-term2b' n depth (def f []) pf | no ¬p₂ | no ¬p₁ | no ¬p | yes p = {!!}
-term2b' n depth (def f (arg _ _ x ∷ [])) pf | no ¬p₂ | no ¬p₁ | no ¬p | yes p = Not (term2b' n depth x pf)
-term2b' n depth (def f (x ∷ x₁ ∷ args)) pf | no ¬p₂ | no ¬p₁ | no ¬p | yes p = {!!}
-term2b' n depth (def f args) pf | no ¬p₃ | no ¬p₂ | no ¬p₁ | no ¬p = {!!}
-term2b' n depth (lam v t)  ()
-term2b' n depth (pi t₁ t₂) ()
-term2b' n depth (sort x)   ()
-term2b' n depth unknown    ()
+term2b' n (var x args) pf with suc (unsafeMinus x 0) ≤? n
+term2b' n (var x args) pf | yes p = Atomic (fromℕ≤ {unsafeMinus x 0} p)
+term2b' n (var x args) pf | no ¬p = {!pf!}
+term2b' n (con tf []) pf with tf ≟-Name quote true
+term2b' n (con tf []) pf | yes p = Truth
+term2b' n (con tf []) pf | no ¬p with tf ≟-Name quote false
+term2b' n (con tf []) pf | no ¬p  | yes p = Falsehood
+term2b' n (con tf []) () | no ¬p₁ | no ¬p
+term2b' n (con c args) pf = {!pf!}
+term2b' n (def f args) pf with f ≟-Name quote _∧_
+term2b' n (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | yes p = And
+  (term2b' n a (and-l pf))
+  (term2b' n b (and-r (isBoolExprQ' a) (isBoolExprQ' b) pf))
+term2b' n (def f a) pf | yes p = {! pf !}
+term2b' n (def f args) pf | no ¬p with f ≟-Name quote _∨_
+term2b' n (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | no ¬p  | yes p = Or
+  (term2b' n a (and-l pf))
+  (term2b' n b (and-r (isBoolExprQ' a) (isBoolExprQ' b) pf))
+term2b' n (def f args) pf | no ¬p  | yes p = {! pf !}
+term2b' n (def f args) pf | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
+term2b' n (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | no ¬p₁ | no ¬p | yes p = Imp
+  (term2b' n a (and-l pf))
+  (term2b' n b (and-r (isBoolExprQ' a) (isBoolExprQ' b) pf))
+term2b' n (def f args) pf | no ¬p₁ | no ¬p  | yes p = {! !}
+term2b' n (def f args) pf | no ¬p₂ | no ¬p₁ | no ¬p with f ≟-Name quote ¬_
+term2b' n (def f []) () | no ¬p₂ | no ¬p₁ | no ¬p | yes p
+term2b' n (def f (arg _ _ x ∷ [])) pf | no ¬p₂ | no ¬p₁ | no ¬p | yes p = Not (term2b' n x pf)
+term2b' n (def f (x ∷ x₁ ∷ args)) pf | no ¬p₂ | no ¬p₁ | no ¬p | yes p = {!pf!}
+term2b' n (def f args) () | no ¬p₃ | no ¬p₂ | no ¬p₁ | no ¬p
+term2b' n (lam v t)  ()
+term2b' n (pi t₁ t₂) ()
+term2b' n (sort x)   ()
+term2b' n unknown    ()
 
 term2b : (n : ℕ)
-       → (depth : ℕ)
        → (t : Term)
        → (pf : outerIsEq t ≡ true)
-       → isBoolExprQ n 0 t pf ≡ true
+       → isBoolExprQ t pf ≡ true
        → BoolExpr n
-term2b n depth t pf pf2 = term2b' n depth (withoutEQ t pf) pf2
+term2b n t pf pf2 = term2b' n (withoutEQ t pf) pf2
 
 data Diff : ℕ -> ℕ -> Set where
   Base : forall {n} -> Diff n n
@@ -338,31 +334,31 @@ soundness : {n : ℕ} -> (b : BoolExpr n) -> {i : foralls b} -> forallBool n b
 soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 
 goalbla  : (b c : Bool) → (b ∨ true) ∧ (c ∨ true) ≡ true
-goalbla  = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
+goalbla  = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 
 goalbla2 : (b : Bool) → b ∨ true ≡ true
-goalbla2 = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
+goalbla2 = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 
 
 goalbla3 : (b : Bool) → true ≡ true
-goalbla3 = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
+goalbla3 = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 
 not : (b : Bool) → b ∨ ¬ b ≡ true
-not = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
+not = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 
 imp0 : (b : Bool) → b ⇒ b ≡ true
-imp0 = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
-
+imp0 = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 
 peirce : (p q  : Bool) → (((p ⇒ q) ⇒ p) ⇒ p) ≡ true
-peirce = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
+peirce = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 
 mft : myfavouritetheorem
-mft = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
+mft = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 
 seeInterpretation : {n : ℕ} → BoolExpr n → Set
 seeInterpretation {n} be = nForalls zero n (zero-least zero n) be []
 
+
 anotherTheorem : (a b : Bool) → a ∧ b ⇒ b ∧ a ≡ true
-anotherTheorem = quoteGoal e in soundness (term2b (argsNo e) 0 (stripPi e) refl refl)
+anotherTheorem = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 
