@@ -24,6 +24,7 @@ Hi, this is a test.
 
 Proof by reflection is a technique bla.
 
+\section{Proof by reflection}
 
 The idea behind proof by reflection is that one needn't produce a large proof tree
 for each proof instance one wants to have, but rather proves the soundness of
@@ -44,6 +45,8 @@ open import Data.Nat
 }
 
 
+\subsection{Simple example}
+
 Take for example the property of evenness on natural numbers. One has two
 rules (TODO insert rules), namely the rule that says that zero is even, and the
 rule that says that if $n$ is even, then $n+2$ is also even.
@@ -53,9 +56,9 @@ as follows.
 
 
 \begin{code}
-data Even  : ℕ → Set where
-  isEvenZ  : Even 0
-  isEvenSS : {n : ℕ} → Even n → Even (2 + n)
+data Even      : ℕ → Set where
+  isEvenZ      :                          Even 0
+  isEvenSS     : {n : ℕ} → Even n     →   Even (2 + n)
 \end{code}
 
 If one has to use these rules to produce the proof tree each time a
@@ -79,9 +82,9 @@ This function is rather simple in our case.
 
 \begin{code}
 even? : ℕ → Bool
-even? zero          = true
-even? (suc zero)    = false
-even? (suc (suc n)) = even? n
+even? zero              = true
+even? (suc zero)        = false
+even? (suc (suc n))     = even? n
 \end{code}
 
 Now one can ask whether some value is even or not. Next we need to show that
@@ -92,9 +95,9 @@ giving a recipe for proof trees such as the one we manually defined for |isEven6
 
 \begin{code}
 soundnessEven : {n : ℕ} → even? n ≡ true → Even n
-soundnessEven {0} refl        = isEvenZ
-soundnessEven {1} ()
-soundnessEven {suc (suc n)} s = isEvenSS (soundnessEven s)
+soundnessEven {0}              refl        = isEvenZ
+soundnessEven {1}              ()
+soundnessEven {suc (suc n)}    s           = isEvenSS (soundnessEven s)
 \end{code}
 
 Now that this has been done, if we need a proof that some arbitrary $n$ is even,
@@ -104,16 +107,34 @@ a proof that |even? n| returns |true| for that particular $n$. Since in a
 dependently typed setting $\beta$-reduction (evaluation) happens in the type system, |refl| is a valid proof. 
 
 \begin{code}
-isEven28 : Even 28
-isEven28 = soundnessEven refl
+isEven28        : Even 28
+isEven28        = soundnessEven refl
 
-isEven8772 : Even 8772
-isEven8772 = soundnessEven refl
+isEven8772      : Even 8772
+isEven8772      = soundnessEven refl
 \end{code}
 
-Now we can easily get a proof that even large numbers are even, without having
-to explicitly write down a large proof tree.
+Now we can easily get a proof that arbitrarily large numbers are even,
+without having to explicitly write down a large proof tree.
 
+
+\subsection{Boolean tautologies example}
+
+Another example of an application of the proof by reflection technique is
+boolean expressions which are a tautology. We will follow the same recipe
+as for even naturals.
+
+We start off by defining boolean expressions with $n$ free variables.
+
+\begin{code}
+
+
+
+
+
+\end{code}
+
+Next, 
 
 
 \section{Conclusion}
