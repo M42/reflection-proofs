@@ -4,6 +4,8 @@
 %include unicode.fmt
 %include agda.fmt
 
+\usepackage{amsmath}
+
 \newcommand{\ignore}[1]{}
 
 \author{Paul van der Walt \and Wouter Swierstra}
@@ -115,7 +117,15 @@ isEven8772      = soundnessEven refl
 \end{code}
 
 Now we can easily get a proof that arbitrarily large numbers are even,
-without having to explicitly write down a large proof tree.
+without having to explicitly write down a large proof tree. Note that
+it's not possible to write something with type |Even 27|, or any other uneven
+number, since the parameter |even? n ≡ true| cannot be instantiated, thus
+|refl| won't be accepted where it is in the |Even 28| example. This will
+produce a |true !≡ false| type error at compile-time.
+
+\subsection{Abstract proof by reflection}
+
+Talk about S and D and interpretation function \&c. here. 
 
 
 \subsection{Boolean tautologies example}
@@ -124,10 +134,37 @@ Another example of an application of the proof by reflection technique is
 boolean expressions which are a tautology. We will follow the same recipe
 as for even naturals.
 
-We start off by defining boolean expressions with $n$ free variables, using de Bruijn indices.
-There isn't anything
-surprising about this definition; we use the type |Fin n| to ensure that variables (represented
-by |Atomic|) are always in scope.
+Take as an example the boolean formula in equation \ref{eqn:tauto-example}.
+
+\begin{align}\label{eqn:tauto-example}
+(p_1 \vee q_1) \wedge (p_2 \vee q_2) \Rightarrow (q_1 \vee p_1) \wedge (q_2 \vee p_2)
+\end{align}
+
+It is trivial to see that this is a tautology, but proving this fact using basic
+equivalence rules for booleans would be rather tedious. It's even worse if we want
+to check if the formula always holds by trying all possible variable assignments,
+since this will give $2^n$ cases, where $n$ is the number of variables.
+
+To try to automate this process, we'll follow a similar approach to the one given
+above for proving evenness of arbitrary (even) naturals.
+
+We start off by defining boolean expressions with $n$ free variables,
+using de Bruijn indices.  There isn't anything surprising about this
+definition; we use the type |Fin n| to ensure that variables
+(represented by |Atomic|) are always in scope.
+
+Our language supports boolean and, or, not, implication and arbitrary unknown
+boolean formulae represented by the constructor |Atomic|. 
+
+Now we can define our decision function, which decides if a given
+boolean expression is a tautology. It does this by evaluating (interpreting)
+the formula's AST. For example, |And| is converted to the boolean function |_∧_|,
+and it's two arguments in turn are recursively interpreted.
+
+Note that the interpretation function also requires an environment to be
+provided, which gives maps the free variables to actual boolean values.
+
+
 
 \begin{code}
 
@@ -137,7 +174,6 @@ by |Atomic|) are always in scope.
 
 \end{code}
 
-Next, 
 
 
 \section{Conclusion}
