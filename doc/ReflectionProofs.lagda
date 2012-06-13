@@ -124,7 +124,10 @@ Another example of an application of the proof by reflection technique is
 boolean expressions which are a tautology. We will follow the same recipe
 as for even naturals.
 
-We start off by defining boolean expressions with $n$ free variables.
+We start off by defining boolean expressions with $n$ free variables, using de Bruijn indices.
+There isn't anything
+surprising about this definition; we use the type |Fin n| to ensure that variables (represented
+by |Atomic|) are always in scope.
 
 \begin{code}
 
