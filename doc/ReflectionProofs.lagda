@@ -4,6 +4,8 @@
 %include unicode.fmt
 %include agda.fmt
 
+\newcommand{\ignore}[1]{}
+
 \author{Paul van der Walt \and Wouter Swierstra}
 \date{\today}
 \title{Proof by reflection by reflection}
@@ -31,7 +33,7 @@ when necessary.
 
 
 
-First we have some preamble.
+\ignore{
 \begin{code}
 module ReflectionProofs where
 
@@ -39,6 +41,9 @@ open import Relation.Binary.PropositionalEquality
 open import Data.Bool
 open import Data.Nat
 \end{code}
+}
+
+
 Take for example the property of evenness on natural numbers. One has two
 rules (TODO insert rules), namely the rule that says that zero is even, and the
 rule that says that if $n$ is even, then $n+2$ is also even.
