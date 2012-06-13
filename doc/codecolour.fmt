@@ -33,6 +33,10 @@
 %format Bool = "\ty{Bool}"
 
 
+
+
+%%%% some aliases.
+
 %format or = "\ensuremath{\vee}"
 %format neg = "\ensuremath{\neg}"
 
