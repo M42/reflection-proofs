@@ -11,35 +11,29 @@ data Even  : ℕ → Set where
   isEvenZ  : Even 0
   isEvenSS : {n : ℕ} → Even n → Even (2 + n)
   
-
-n2isEven : {n : ℕ} → Even n → Even (n + n)
-n2isEven isEvenZ = isEvenZ
-n2isEven (isEvenSS proof) = {!!}
-
--- we want to prove that 2*n is always even, ∀n.
+-- we want to prove that 2*n is even, ∀(2*n).
 
 -- therefore, first make a decision function which tells us
 -- if a given n is even
-isEvenQ : ℕ → Bool
-isEvenQ 0 = true
-isEvenQ 1 = false
-isEvenQ (suc (suc n)) = isEvenQ n
+even? : ℕ → Bool
+even? zero          = true
+even? (suc zero)    = false
+even? (suc (suc n)) = even? n
 
 -- now prove that n is even precisely when our function
 -- returns true
-soundIsEvenQ : {n : ℕ} → isEvenQ n ≡ true → Even n
-soundIsEvenQ {0} refl          = isEvenZ
-soundIsEvenQ {1} ()
-soundIsEvenQ {suc (suc n)} s = isEvenSS (soundIsEvenQ s)
+soundnessEven : {n : ℕ} → even? n ≡ true → Even n
+soundnessEven {0} refl        = isEvenZ
+soundnessEven {1} ()
+soundnessEven {suc (suc n)} s = isEvenSS (soundnessEven s)
 
 -- now we can prove instances by applying the soundness theorem
 -- with reflexivity proofs
 
 -- For example, it turns out that 28 is even:
 isEven28 : Even 28
-isEven28 = soundIsEvenQ refl
+isEven28 = soundnessEven refl
 
 -- or something which would otherwise have a rather large proof tree
 isEven8772 : Even 8772
-isEven8772 = soundIsEvenQ refl
-
+isEven8772 = soundnessEven refl
