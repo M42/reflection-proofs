@@ -1,7 +1,7 @@
 \documentclass[a4paper]{article}
 
 %include polycode.fmt
-%include unicode.fmt
+%include codecolour.fmt
 %include agda.fmt
 
 \usepackage{amsmath}
