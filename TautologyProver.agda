@@ -53,9 +53,9 @@ bImpb false = refl
 
 -- eventually we'd like to prove these kinds of tautologies:
 myfavouritetheorem : Set
-myfavouritetheorem = (p1 q1 p2 q2 : Bool) → (p1 ∨ q1) ∧ (p2 ∨ q2)
-                                          ⇒ (q1 ∨ p1) ∧ (q2 ∨ p2)
-                                          ≡ true
+myfavouritetheorem = (p1 q1 p2 q2 : Bool) → P(  (p1 ∨ q1) ∧ (p2 ∨ q2)
+                                              ⇒ (q1 ∨ p1) ∧ (q2 ∨ p2)
+                                              )
 
 -- we'll make some DSL into which we're going to translate theorems
 -- (which are actually types of functions), and then use reflection
@@ -131,33 +131,6 @@ unsafeMinus zero m = zero
 unsafeMinus n₁ zero = n₁
 unsafeMinus (suc n₁) (suc m) = unsafeMinus n₁ m
 
-outerIsEq : (t : Term) → Bool
-outerIsEq (var x args) = false
-outerIsEq (con c args) = false
-outerIsEq (def f args) with Data.Nat._≟_ (length args) 4
-outerIsEq (def f args) | yes p with tt
-outerIsEq (def f [])                                         | yes () | tt
-outerIsEq (def f (x ∷ []))                                   | yes () | tt
-outerIsEq (def f (x ∷ x₁ ∷ []))                              | yes () | tt
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ []))                         | yes () | tt
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (var x₃ args) ∷ [])) | yes p  | tt = false
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ []))  | yes p  | tt with f ≟-Name quote _≡_ | c ≟-Name quote true
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ []))  | yes p₂ | tt | yes p | yes p₁ = true
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ []))  | yes p₁ | tt | yes p | no ¬p  = false
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ []))  | yes p  | tt | no ¬p | a      = false
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (def f₁ args) ∷ [])) | yes p | tt = false
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (lam v₁ x₃) ∷ []))   | yes p | tt = false
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (pi t₁ t₂) ∷ []))    | yes p | tt = false
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (sort x₃) ∷ []))     | yes p | tt = false
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ arg v r unknown ∷ []))       | yes p | tt = false
-outerIsEq (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args))             | yes () | tt
-outerIsEq (def f args)                                       | no ¬p with tt
-outerIsEq (def f [])                                         | no ¬p | tt = false
-outerIsEq (def f (x ∷ xs))                                   | no ¬p | tt = false
-outerIsEq (lam v t)                                          = false
-outerIsEq (pi t₁ t₂)                                         = false
-outerIsEq (sort x)                                           = false
-outerIsEq unknown                                            = false
 
 outerIsSo : (t : Term) → Bool
 outerIsSo (var x args) = false
@@ -199,34 +172,6 @@ withoutSo (sort x)     ()
 withoutSo unknown      ()
 
 
-withoutEQ : (t : Term) → outerIsEq t ≡ true → Term
-withoutEQ (var x args) ()
-withoutEQ (con c args) ()
-withoutEQ (def f args) pf with Data.Nat._≟_ (length args) 4
-withoutEQ (def f args) pf | yes p with tt
-withoutEQ (def f []) pf | yes () | tt
-withoutEQ (def f (x ∷ [])) pf | yes () | tt
-withoutEQ (def f (x ∷ x₁ ∷ [])) pf | yes () | tt
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ [])) pf | yes () | tt
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (var x₃ args) ∷ [])) () | yes p | tt
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) pf | yes p | tt with f ≟-Name quote _≡_ | c ≟-Name quote true
-withoutEQ (def f (x ∷ x₁ ∷ arg v r x₂ ∷ arg v₁ r₁ (con c args) ∷ [])) pf | yes p₂ | tt | yes p | yes p₁ = x₂
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) ()  | yes p₁ | tt | yes p | no ¬p
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (con c args) ∷ [])) ()  | yes p | tt |  no ¬p | a
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (def f₁ args) ∷ [])) () | yes p | tt
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (lam v₁ x₃) ∷ [])) ()   | yes p | tt
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (pi t₁ t₂) ∷ [])) ()    | yes p | tt
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r (sort x₃) ∷ [])) ()     | yes p | tt
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ arg v r unknown ∷ [])) ()       | yes p | tt
-withoutEQ (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ args)) pf             | yes () | tt
-withoutEQ (def f xs)       pf | no ¬p with tt
-withoutEQ (def f [])       () | no ¬p | tt
-withoutEQ (def f (x ∷ xs)) () | no ¬p | tt
-withoutEQ (lam v t)    ()
-withoutEQ (pi t₁ t₂)   ()
-withoutEQ (sort x)     ()
-withoutEQ unknown      ()
-
 isBoolExprQ' : (n : ℕ) → (t : Term) → Bool
 isBoolExprQ' n (var x args) with suc (unsafeMinus x 0) ≤? n
 isBoolExprQ' n (var x args) | yes p = true
@@ -256,10 +201,6 @@ isBoolExprQ' n (lam v t) = false
 isBoolExprQ' n (pi t₁ t₂) = false
 isBoolExprQ' n (sort y) = false
 isBoolExprQ' n unknown = false
-
-isBoolExprQ : (freeVars : ℕ) → (t : Term) → outerIsEq t ≡ true → Bool
-isBoolExprQ n t pf with withoutEQ t pf
-isBoolExprQ n t pf | t' = isBoolExprQ' n t'
 
 isBoolExprQSo : (freeVars : ℕ) → (t : Term) → outerIsSo t ≡ true → Bool
 isBoolExprQSo n t pf with withoutSo t pf
@@ -303,13 +244,6 @@ term2b' n (pi t₁ t₂) ()
 term2b' n (sort x)   ()
 term2b' n unknown    ()
 
-term2b : (n : ℕ)
-       → (t : Term)
-       → (pf : outerIsEq t ≡ true)
-       → isBoolExprQ n t pf ≡ true
-       → BoolExpr n
-term2b n t pf pf2 = term2b' n (withoutEQ t pf) pf2
-
 term2bSo : (n : ℕ)
        → (t : Term)
        → (pf : outerIsSo t ≡ true)
@@ -326,9 +260,6 @@ data Diff : ℕ → ℕ → Set where
   Base : ∀ {n}   → Diff n n
   Step : ∀ {n m} → Diff (suc n) m → Diff n m
 
-buildPi : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
-buildPi .m m (Base  ) b env = decide env b ≡ true
-buildPi n m  (Step y) b env = (a : Bool) → buildPi (suc n) m y b (a ∷ env)
 
 buildPiSo : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
 buildPiSo .m m (Base  ) b env = P(decide env b)
@@ -349,9 +280,6 @@ coerceDiff refl d = d
 zero-least : (k n : ℕ) → Diff k (k + n)
 zero-least k zero    = coerceDiff (zeroId k) Base
 zero-least k (suc n) = Step (coerceDiff (succLemma k n) (zero-least (suc k) n))
-
-forallBool : (m : ℕ) → BoolExpr m → Set
-forallBool m b = buildPi zero m (zero-least 0 m) b []
 
 forallBoolSo : (m : ℕ) → BoolExpr m → Set
 forallBoolSo m b = buildPiSo zero m (zero-least 0 m) b []
@@ -389,18 +317,6 @@ dif : {P : Bool → Set} → (b : Bool) → P true → P false → P b
 dif true  t f = t
 dif false t f = f
 
-soundnessAcc : {m : ℕ} → (b : BoolExpr m) →
-               {n : ℕ} → (env : Env n) → (d : Diff n m) →
-               forallsAcc b env d →
-               buildPi n m d b env
-soundnessAcc     bexp     env Base     H with decide env bexp
-soundnessAcc     bexp     env Base     H | true = refl
-soundnessAcc     bexp     env Base     H | false = Error-elim H
-soundnessAcc {m} bexp {n} env (Step y) H =
-  λ a → dif {λ b → buildPi (suc n) m y bexp (b ∷ env)} a
-    (soundnessAcc bexp (true  ∷ env) y (proj₁ H))
-    (soundnessAcc bexp (false ∷ env) y (proj₂ H))
-    
 soundnessAccSo : {m : ℕ} → (b : BoolExpr m) →
                {n : ℕ} → (env : Env n) → (d : Diff n m) →
                forallsAcc b env d →
@@ -413,36 +329,20 @@ soundnessAccSo {m} bexp {n} env (Step y) H =
     (soundnessAccSo bexp (true  ∷ env) y (proj₁ H))
     (soundnessAccSo bexp (false ∷ env) y (proj₂ H))
 
-soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBool n b
-soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
-
 soundnessSo : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBoolSo n b
 soundnessSo {n} b {i} = soundnessAccSo b [] (zero-least 0 n) i
 
-goalbla  : (b c : Bool) → (b ∨ true) ∧ (c ∨ true) ≡ true
-goalbla  = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
+goalbla2 : (b : Bool) → P(b ∨ true)
+goalbla2 = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) refl refl)
 
-goalbla2 : (b : Bool) → b ∨ true ≡ true
-goalbla2 = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
+not : (b : Bool) → P(b ∨ ¬ b)
+not = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) refl refl)
 
-
-goalbla3 : (b : Bool) → true ≡ true
-goalbla3 = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
-
-not : (b : Bool) → b ∨ ¬ b ≡ true
-not = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
-
-imp0 : (b : Bool) → b ⇒ b ≡ true
-imp0 = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
-
-peirce : (p q  : Bool) → (((p ⇒ q) ⇒ p) ⇒ p) ≡ true
-peirce = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
+peirce : (p q  : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
+peirce = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) refl refl)
 
 mft : myfavouritetheorem
-mft = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
-
-seeInterpretation : {n : ℕ} → BoolExpr n → Set
-seeInterpretation {n} be = buildPi zero n (zero-least zero n) be []
+mft = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) refl refl)
 
 anotherTheorem : (a b : Bool) → P(a ∧ b ⇒ b ∧ a)
 anotherTheorem = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) refl refl)
