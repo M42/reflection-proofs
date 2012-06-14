@@ -345,8 +345,7 @@ soundnessSo {n} b {i} = soundnessAccSo b [] (zero-least 0 n) i
 --mft = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) ? {!!})
 --
 
-wrap : 
-         (t : Term)
+wrap :   (t : Term)
        → {pf : outerIsSo (stripPi t)}
        → {pf2 : isBoolExprQSo (argsNo t) (stripPi t) pf}
        → BoolExpr (argsNo t)
@@ -365,9 +364,10 @@ wrap2 e {pf} {pf2} {i} = soundnessSo {argsNo e} (wrap e) {i}
 anotherTheorem : (a b : Bool) → P(a ∧ b ⇒ b ∧ a)
 anotherTheorem = quoteGoal e in wrap2 e
 
-thing : {err : String} {a : Bool} → So err a → a ≡ true
-thing ⊤ = ?
-
-another : (a b : Bool) → a ∧ b ⇒ b ∧ a ≡ true
-another a b with anotherTheorem a b
-...  | asdf = {!asdf!}
+-- acknowledge Ruud:
+-- thing : {err : String} {a : Bool} → So err a → a ≡ true
+-- thing ⊤ = {!!}
+-- 
+-- another : (a b : Bool) → a ∧ b ⇒ b ∧ a ≡ true
+-- another a b with anotherTheorem a b
+-- ...  | asdf = {!asdf!}
