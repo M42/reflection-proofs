@@ -193,15 +193,16 @@ isBoolExprQ' n (con tf []) | no ¬p = false
 isBoolExprQ' n (con tf (a ∷ s)) | no ¬p = false
 isBoolExprQ' n (def f args) with f ≟-Name quote _∧_
 isBoolExprQ' n (def f args) | yes p with tt
-isBoolExprQ' n (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | yes p | tt = isBoolExprQ' n a ∧ isBoolExprQ' n b
 isBoolExprQ' n (def f []) | yes p | tt = false
 isBoolExprQ' n (def f (a ∷ [])) | yes p | tt = false
+isBoolExprQ' n (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | yes p | tt = isBoolExprQ' n a ∧ isBoolExprQ' n b
 isBoolExprQ' n (def f (a ∷ x ∷ x₁ ∷ s)) | yes p | tt = false
 isBoolExprQ' n (def f args) | no p with tt
 isBoolExprQ' n (def f args) | no ¬p | tt with f ≟-Name quote _∨_
-isBoolExprQ' n (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | no ¬p | tt | yes p = isBoolExprQ' n a ∧ isBoolExprQ' n b
 isBoolExprQ' n (def f []) | no ¬p | tt | yes p = false
-isBoolExprQ' n (def f (ar ∷ gs)) | no ¬p | tt | yes p = false
+isBoolExprQ' n (def f (a ∷ [])) | no ¬p | tt | yes p = false
+isBoolExprQ' n (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | no ¬p | tt | yes p = isBoolExprQ' n a ∧ isBoolExprQ' n b
+isBoolExprQ' n (def f (a₁ ∷ a₂ ∷ gs)) | no ¬p | tt | yes p = false
 isBoolExprQ' n (def f args) | no ¬p₁ | tt | no ¬p with f ≟-Name quote _⇒_
 isBoolExprQ' n (def f (arg _ _ a ∷ arg _ _ b ∷ [])) | no ¬p₁ | tt | no ¬p | yes p = isBoolExprQ' n a ∧ isBoolExprQ' n b
 isBoolExprQ' n (def f []) | no ¬p₁ | tt | no ¬p  | yes p = false
@@ -237,11 +238,11 @@ term2b' n (con tf []) () | no ¬p₁ | no ¬p
 term2b' n (con c (a ∷ rgs)) ()
 term2b' n (def f args) pf with f ≟-Name quote _∧_
 term2b' n (def f args) pf | yes p with tt
+term2b' n (def f []) () | yes p | tt
+term2b' n (def f (x ∷ [])) () | yes p | tt
 term2b' n (def f (arg _ _ a ∷ arg _ _ b ∷ [])) pf | yes p | tt = And
   (term2b' n a (and-l pf))
   (term2b' n b (and-r (isBoolExprQ' n a) (isBoolExprQ' n b) pf))
-term2b' n (def f []) () | yes p | tt
-term2b' n (def f (x ∷ [])) pf | yes p | tt = {!!}
 term2b' n (def f (x ∷ x₁ ∷ x₂ ∷ a)) pf | yes p | tt = {!!}
 term2b' n (def f args) pf | no p with tt
 term2b' n (def f args) pf | no ¬p | tt with f ≟-Name quote _∨_
