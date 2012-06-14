@@ -132,27 +132,27 @@ unsafeMinus n₁ zero = n₁
 unsafeMinus (suc n₁) (suc m) = unsafeMinus n₁ m
 
 
-outerIsSo : (t : Term) → Bool
-outerIsSo (var x args) = false
-outerIsSo (con c args) = false
+outerIsSo : (t : Term) → Set
+outerIsSo (var x args) = ⊥
+outerIsSo (con c args) = ⊥
 outerIsSo (def f args) with Data.Nat._≟_ (length args) 2
 outerIsSo (def f args) | yes p with tt
 outerIsSo (def f [])                        | yes () | tt
 outerIsSo (def f (x ∷ []))                  | yes () | tt
 outerIsSo (def f (a ∷ arg v r x ∷ []))      | yes p  | tt with f ≟-Name quote So
-outerIsSo (def f (a ∷ arg v r x ∷ [])) | yes p₁ | tt | yes p = true
-outerIsSo (def f (a ∷ arg v r x ∷ [])) | yes p | tt | no ¬p = false
+outerIsSo (def f (a ∷ arg v r x ∷ [])) | yes p₁ | tt | yes p = ⊤
+outerIsSo (def f (a ∷ arg v r x ∷ [])) | yes p | tt | no ¬p = ⊥
 outerIsSo (def f (x ∷ x₃ ∷ x₄ ∷ args))      | yes () | tt
 outerIsSo (def f args)                      | no ¬p with tt
-outerIsSo (def f [])                        | no ¬p | tt = false
-outerIsSo (def f (x ∷ xs))                  | no ¬p | tt = false
-outerIsSo (lam v t)                         = false
-outerIsSo (pi t₁ t₂)                        = false
-outerIsSo (sort x)                          = false
-outerIsSo unknown                           = false
+outerIsSo (def f [])                        | no ¬p | tt = ⊥
+outerIsSo (def f (x ∷ xs))                  | no ¬p | tt = ⊥
+outerIsSo (lam v t)                         = ⊥
+outerIsSo (pi t₁ t₂)                        = ⊥
+outerIsSo (sort x)                          = ⊥
+outerIsSo unknown                           = ⊥
 
 
-withoutSo : (t : Term) → outerIsSo t ≡ true → Term
+withoutSo : (t : Term) → outerIsSo t → Term
 withoutSo (var x args) ()
 withoutSo (con c args) ()
 withoutSo (def f args) pf with Data.Nat._≟_ (length args) 2
@@ -172,37 +172,37 @@ withoutSo (sort x)     ()
 withoutSo unknown      ()
 
 
-isBoolExprQ' : (n : ℕ) → (t : Term) → Bool
+isBoolExprQ' : (n : ℕ) → (t : Term) → Set
 isBoolExprQ' n (var x args) with suc (unsafeMinus x 0) ≤? n
-isBoolExprQ' n (var x args) | yes p = true
-isBoolExprQ' n (var x args) | no ¬p = false
+isBoolExprQ' n (var x args) | yes p = ⊤
+isBoolExprQ' n (var x args) | no ¬p = ⊥
 isBoolExprQ' n (con tf as) with Data.Nat._≟_ 0 (length as)
 isBoolExprQ' n (con tf []) | yes pp with tf ≟-Name quote true
-isBoolExprQ' n (con tf []) | yes pp | yes p = true
+isBoolExprQ' n (con tf []) | yes pp | yes p = ⊤
 isBoolExprQ' n (con tf []) | yes pp | no ¬p with tf ≟-Name quote false
-isBoolExprQ' n (con tf []) | yes pp | no ¬p  | yes p = true
-isBoolExprQ' n (con tf []) | yes pp | no ¬p₁ | no ¬p = false
-isBoolExprQ' n (con tf (x ∷ as)) | yes p = false
-isBoolExprQ' n (con tf []) | no ¬p = false
-isBoolExprQ' n (con tf (a ∷ s)) | no ¬p = false
-isBoolExprQ' n (def f []) = false
+isBoolExprQ' n (con tf []) | yes pp | no ¬p  | yes p = ⊤
+isBoolExprQ' n (con tf []) | yes pp | no ¬p₁ | no ¬p = ⊥
+isBoolExprQ' n (con tf (x ∷ as)) | yes ()
+isBoolExprQ' n (con tf []) | no ¬p = ⊥-elim (¬p refl)
+isBoolExprQ' n (con tf (a ∷ s)) | no ¬p = ⊥
+isBoolExprQ' n (def f []) = ⊥
 isBoolExprQ' n (def f (arg v r x ∷ [])) with f ≟-Name quote ¬_
 isBoolExprQ' n (def f (arg v r x ∷ [])) | yes p = isBoolExprQ' n x
-isBoolExprQ' n (def f (arg v r x ∷ [])) | no ¬p = false
+isBoolExprQ' n (def f (arg v r x ∷ [])) | no ¬p = ⊥
 isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) with f ≟-Name quote _∧_
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | yes p = (isBoolExprQ' n x) ∧ (isBoolExprQ' n x₁)
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | yes p = (isBoolExprQ' n x) × (isBoolExprQ' n x₁)
 isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p with f ≟-Name quote _∨_
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p | yes p = (isBoolExprQ' n x) ∧ (isBoolExprQ' n x₁)
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p | yes p = (isBoolExprQ' n x) × (isBoolExprQ' n x₁)
 isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | no ¬p | yes p = (isBoolExprQ' n x) ∧ (isBoolExprQ' n x₁)
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₂ | no ¬p₁ | no ¬p = false
-isBoolExprQ' n (def f (x ∷ x₁ ∷ x₂ ∷ args)) = false
-isBoolExprQ' n (lam v t) = false
-isBoolExprQ' n (pi t₁ t₂) = false
-isBoolExprQ' n (sort y) = false
-isBoolExprQ' n unknown = false
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | no ¬p | yes p = (isBoolExprQ' n x) × (isBoolExprQ' n x₁)
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₂ | no ¬p₁ | no ¬p = ⊥
+isBoolExprQ' n (def f (x ∷ x₁ ∷ x₂ ∷ args)) = ⊥
+isBoolExprQ' n (lam v t) = ⊥
+isBoolExprQ' n (pi t₁ t₂) = ⊥
+isBoolExprQ' n (sort y) = ⊥
+isBoolExprQ' n unknown = ⊥
 
-isBoolExprQSo : (freeVars : ℕ) → (t : Term) → outerIsSo t ≡ true → Bool
+isBoolExprQSo : (freeVars : ℕ) → (t : Term) → outerIsSo t → Set
 isBoolExprQSo n t pf with withoutSo t pf
 isBoolExprQSo n t pf | t' = isBoolExprQ' n t'
 
@@ -210,7 +210,7 @@ isBoolExprQSo n t pf | t' = isBoolExprQ' n t'
 -- the unification.
 term2b' : (n : ℕ)
         → (t : Term)
-        → isBoolExprQ' n t ≡ true
+        → isBoolExprQ' n t
         → BoolExpr n
 term2b' n (var x args) pf with suc (unsafeMinus x 0) ≤? n
 term2b' n (var x args) pf | yes p = Atomic (fromℕ≤ {unsafeMinus x 0} p)
@@ -226,17 +226,17 @@ term2b' n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
 term2b' n (def f (arg v r x ∷ [])) pf | yes p = Not (term2b' n x pf)
 term2b' n (def f (arg v r x ∷ [])) () | no ¬p
 term2b' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) pf with f ≟-Name quote _∧_
-term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | yes p = And
-  (term2b' n x (and-l pf))
-  (term2b' n x₁ (and-r (isBoolExprQ' n x) (isBoolExprQ' n x₁) pf))
+term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | yes p = And
+  (term2b' n x proj₁)
+  (term2b' n x₁ proj₂)
 term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no p with f ≟-Name quote _∨_
-term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no ¬p | yes p = Or
-  (term2b' n x (and-l pf))
-  (term2b' n x₁ (and-r (isBoolExprQ' n x) (isBoolExprQ' n x₁) pf))
+term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | no ¬p | yes p = Or
+  (term2b' n x proj₁)
+  (term2b' n x₁ proj₂)
 term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no ¬p | no p with f ≟-Name quote _⇒_
-term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no ¬p₁ | no ¬p | yes p = Imp
-  (term2b' n x (and-l pf))
-  (term2b' n x₁ (and-r (isBoolExprQ' n x) (isBoolExprQ' n x₁) pf))
+term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | no ¬p₁ | no ¬p | yes p = Imp
+  (term2b' n x proj₁)
+  (term2b' n x₁ proj₂)
 term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) () | no ¬p | no p | no p₁
 term2b' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ x₂ ∷ args)) ()
 term2b' n (lam v t)  ()
@@ -246,8 +246,8 @@ term2b' n unknown    ()
 
 term2bSo : (n : ℕ)
        → (t : Term)
-       → (pf : outerIsSo t ≡ true)
-       → isBoolExprQSo n t pf ≡ true
+       → (pf : outerIsSo t)
+       → isBoolExprQSo n t pf
        → BoolExpr n
 term2bSo n t pf pf2 = term2b' n (withoutSo t pf) pf2
 
@@ -332,17 +332,17 @@ soundnessAccSo {m} bexp {n} env (Step y) H =
 soundnessSo : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBoolSo n b
 soundnessSo {n} b {i} = soundnessAccSo b [] (zero-least 0 n) i
 
-goalbla2 : (b : Bool) → P(b ∨ true)
-goalbla2 = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) refl refl)
-
-not : (b : Bool) → P(b ∨ ¬ b)
-not = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) refl refl)
-
-peirce : (p q  : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
-peirce = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) refl refl)
-
-mft : myfavouritetheorem
-mft = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) refl refl)
-
+--goalbla2 : (b : Bool) → P(b ∨ true)
+--goalbla2 = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) {!!} {!!})
+--
+--not : (b : Bool) → P(b ∨ ¬ b)
+--not = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) ? {!!})
+--
+--peirce : (p q  : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
+--peirce = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) ? {!!})
+--
+--mft : myfavouritetheorem
+--mft = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) ? {!!})
+--
 anotherTheorem : (a b : Bool) → P(a ∧ b ⇒ b ∧ a)
-anotherTheorem = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) refl refl)
+anotherTheorem = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) tt ((tt , tt) , tt , tt))
