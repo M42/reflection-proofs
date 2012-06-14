@@ -30,6 +30,15 @@ true  ⇒ false = false
 false ⇒ true  = true
 false ⇒ false = true
 
+data Error (a : String) : Set where
+
+So : String → Bool → Set
+So _ true  = ⊤
+So s false = Error s
+
+P : Bool → Set
+P = So "Expression isn't shizzle?"
+
 -- inspiration for style of proof
 -- or, another one:
 bOrNotb : (b : Bool) → b ∨ ¬ b ≡ true
@@ -150,6 +159,46 @@ outerIsEq (pi t₁ t₂)                                         = false
 outerIsEq (sort x)                                           = false
 outerIsEq unknown                                            = false
 
+outerIsSo : (t : Term) → Bool
+outerIsSo (var x args) = false
+outerIsSo (con c args) = false
+outerIsSo (def f args) with Data.Nat._≟_ (length args) 2
+outerIsSo (def f args) | yes p with tt
+outerIsSo (def f [])                        | yes () | tt
+outerIsSo (def f (x ∷ []))                  | yes () | tt
+outerIsSo (def f (a ∷ arg v r x ∷ []))      | yes p  | tt with f ≟-Name quote So
+outerIsSo (def f (a ∷ arg v r x ∷ [])) | yes p₁ | tt | yes p = true
+outerIsSo (def f (a ∷ arg v r x ∷ [])) | yes p | tt | no ¬p = false
+outerIsSo (def f (x ∷ x₃ ∷ x₄ ∷ args))      | yes () | tt
+outerIsSo (def f args)                      | no ¬p with tt
+outerIsSo (def f [])                        | no ¬p | tt = false
+outerIsSo (def f (x ∷ xs))                  | no ¬p | tt = false
+outerIsSo (lam v t)                         = false
+outerIsSo (pi t₁ t₂)                        = false
+outerIsSo (sort x)                          = false
+outerIsSo unknown                           = false
+
+
+withoutSo : (t : Term) → outerIsSo t ≡ true → Term
+withoutSo (var x args) ()
+withoutSo (con c args) ()
+withoutSo (def f args) pf with Data.Nat._≟_ (length args) 2
+withoutSo (def f args) pf | yes p with tt
+withoutSo (def f [])   pf                      | yes () | tt
+withoutSo (def f (x ∷ [])) pf                  | yes () | tt
+withoutSo (def f (a ∷ arg v r x ∷ [])) pf      | yes p  | tt with f ≟-Name quote So
+withoutSo (def f (a ∷ arg v r x ∷ [])) pf  | yes p₁ | tt | yes p = x
+withoutSo (def f (a ∷ arg v r x ∷ [])) () | yes p | tt | no ¬p
+withoutSo (def f (x ∷ x₃ ∷ x₄ ∷ args)) pf     | yes () | tt
+withoutSo (def f args)             pf         | no ¬p with tt
+withoutSo (def f []) () | no ¬p | tt
+withoutSo (def f (x ∷ xs)) () | no ¬p | tt
+withoutSo (lam v t)    ()
+withoutSo (pi t₁ t₂)   ()
+withoutSo (sort x)     ()
+withoutSo unknown      ()
+
+
 withoutEQ : (t : Term) → outerIsEq t ≡ true → Term
 withoutEQ (var x args) ()
 withoutEQ (con c args) ()
@@ -212,6 +261,9 @@ isBoolExprQ : (freeVars : ℕ) → (t : Term) → outerIsEq t ≡ true → Bool
 isBoolExprQ n t pf with withoutEQ t pf
 isBoolExprQ n t pf | t' = isBoolExprQ' n t'
 
+isBoolExprQSo : (freeVars : ℕ) → (t : Term) → outerIsSo t ≡ true → Bool
+isBoolExprQSo n t pf with withoutSo t pf
+isBoolExprQSo n t pf | t' = isBoolExprQ' n t'
 
 -- the holes here should be absurds, but only Agda>=2.3.1 manages
 -- the unification.
@@ -258,6 +310,13 @@ term2b : (n : ℕ)
        → BoolExpr n
 term2b n t pf pf2 = term2b' n (withoutEQ t pf) pf2
 
+term2bSo : (n : ℕ)
+       → (t : Term)
+       → (pf : outerIsSo t ≡ true)
+       → isBoolExprQSo n t pf ≡ true
+       → BoolExpr n
+term2bSo n t pf pf2 = term2b' n (withoutSo t pf) pf2
+
 -- useful for things like Env n → Env m → Env n ⊕ m
 _⊕_ : ℕ → ℕ → ℕ
 zero  ⊕ m = m
@@ -270,6 +329,10 @@ data Diff : ℕ → ℕ → Set where
 buildPi : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
 buildPi .m m (Base  ) b env = decide env b ≡ true
 buildPi n m  (Step y) b env = (a : Bool) → buildPi (suc n) m y b (a ∷ env)
+
+buildPiSo : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
+buildPiSo .m m (Base  ) b env = P(decide env b)
+buildPiSo n m  (Step y) b env = (a : Bool) → buildPiSo (suc n) m y b (a ∷ env)
 
 zeroId : (n : ℕ) → n ≡ n + 0
 zeroId zero                           = refl
@@ -290,6 +353,8 @@ zero-least k (suc n) = Step (coerceDiff (succLemma k n) (zero-least (suc k) n))
 forallBool : (m : ℕ) → BoolExpr m → Set
 forallBool m b = buildPi zero m (zero-least 0 m) b []
 
+forallBoolSo : (m : ℕ) → BoolExpr m → Set
+forallBoolSo m b = buildPiSo zero m (zero-least 0 m) b []
 {-
 notice that u is automatically instantiated, since
 there is only one option, namely tt,tt. this is special and
@@ -307,15 +372,10 @@ foo'' = 5
 baz : ℕ
 baz = foo'
 
-data Error (a : String) : Set where
-
 -- very much like ⊥-elim, but for errors.
 Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
 Error-elim ()
 
-So : String → Bool → Set
-So _ true  = ⊤
-So s false = Error s
 
 forallsAcc : {n m : ℕ} → (b : BoolExpr m) → Env n → Diff n m → Set
 forallsAcc b' env (Base  ) = So "Expression isn't a tautology" (decide env b')
@@ -340,9 +400,24 @@ soundnessAcc {m} bexp {n} env (Step y) H =
   λ a → dif {λ b → buildPi (suc n) m y bexp (b ∷ env)} a
     (soundnessAcc bexp (true  ∷ env) y (proj₁ H))
     (soundnessAcc bexp (false ∷ env) y (proj₂ H))
+    
+soundnessAccSo : {m : ℕ} → (b : BoolExpr m) →
+               {n : ℕ} → (env : Env n) → (d : Diff n m) →
+               forallsAcc b env d →
+               buildPiSo n m d b env
+soundnessAccSo     bexp     env Base     H with decide env bexp
+soundnessAccSo     bexp     env Base     H | true  = H
+soundnessAccSo     bexp     env Base     H | false = Error-elim H
+soundnessAccSo {m} bexp {n} env (Step y) H =
+  λ a → dif {λ b → buildPiSo (suc n) m y bexp (b ∷ env)} a
+    (soundnessAccSo bexp (true  ∷ env) y (proj₁ H))
+    (soundnessAccSo bexp (false ∷ env) y (proj₂ H))
 
 soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBool n b
 soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
+
+soundnessSo : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBoolSo n b
+soundnessSo {n} b {i} = soundnessAccSo b [] (zero-least 0 n) i
 
 goalbla  : (b c : Bool) → (b ∨ true) ∧ (c ∨ true) ≡ true
 goalbla  = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
@@ -369,5 +444,5 @@ mft = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 seeInterpretation : {n : ℕ} → BoolExpr n → Set
 seeInterpretation {n} be = buildPi zero n (zero-least zero n) be []
 
-anotherTheorem : (a b : Bool) → a ∧ b ⇒ b ∧ a ≡ true
-anotherTheorem = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
+anotherTheorem : (a b : Bool) → P(a ∧ b ⇒ b ∧ a)
+anotherTheorem = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) refl refl)
