@@ -246,10 +246,10 @@ term2b' n unknown    ()
 
 term2bSo : (n : ℕ)
        → (t : Term)
-       → (pf : outerIsSo t)
-       → isBoolExprQSo n t pf
+       → {pf : outerIsSo t}
+       → {pf2 : isBoolExprQSo n t pf}
        → BoolExpr n
-term2bSo n t pf pf2 = term2b' n (withoutSo t pf) pf2
+term2bSo n t {pf} {pf2} = term2b' n (withoutSo t pf) pf2
 
 -- useful for things like Env n → Env m → Env n ⊕ m
 _⊕_ : ℕ → ℕ → ℕ
@@ -345,4 +345,4 @@ soundnessSo {n} b {i} = soundnessAccSo b [] (zero-least 0 n) i
 --mft = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) ? {!!})
 --
 anotherTheorem : (a b : Bool) → P(a ∧ b ⇒ b ∧ a)
-anotherTheorem = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) tt ((tt , tt) , tt , tt))
+anotherTheorem = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e))
