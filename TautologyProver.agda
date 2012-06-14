@@ -329,12 +329,12 @@ data Error (a : String) : Set where
 Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
 Error-elim ()
 
-So : Bool → Set
-So true  = ⊤
-So false = Error "Expression isn't a tautology"
+So : String → Bool → Set
+So _ true  = ⊤
+So s false = Error s
 
 forallsAcc : {n m : ℕ} → (b : BoolExpr m) → Env n → Diff n m → Set
-forallsAcc b' env (Base  ) = So (decide env b')
+forallsAcc b' env (Base  ) = So "Expression isn't a tautology" (decide env b')
 forallsAcc b' env (Step y) = forallsAcc b' (true ∷ env) y × forallsAcc b' (false ∷ env) y
 
 foralls : {n : ℕ} → (b : BoolExpr n) → Set
