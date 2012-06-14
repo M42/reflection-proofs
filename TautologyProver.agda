@@ -191,30 +191,18 @@ isBoolExprQ' n (con tf []) | yes pp | no ¬p₁ | no ¬p = false
 isBoolExprQ' n (con tf (x ∷ as)) | yes p = false
 isBoolExprQ' n (con tf []) | no ¬p = false
 isBoolExprQ' n (con tf (a ∷ s)) | no ¬p = false
-isBoolExprQ' n (def f args) with Data.Nat._≟_ 2 (length args)
-isBoolExprQ' n (def f []) | yes ()
-isBoolExprQ' n (def f (x ∷ [])) | yes ()
-isBoolExprQ' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) | yes p with f ≟-Name quote _∧_
-isBoolExprQ' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) | yes p₁ | yes p = isBoolExprQ' n x ∧ isBoolExprQ' n x₁
-isBoolExprQ' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) | yes p | no ¬p with f ≟-Name quote _∨_
-isBoolExprQ' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) | yes p₁ | no ¬p | yes p = isBoolExprQ' n x ∧ isBoolExprQ' n x₁
-isBoolExprQ' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) | yes p | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
-isBoolExprQ' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) | yes p₁ | no ¬p₁ | no ¬p | yes p = isBoolExprQ' n x ∧ isBoolExprQ' n x₁
-isBoolExprQ' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) | yes p | no ¬p₂ | no ¬p₁ | no ¬p = false
-isBoolExprQ' n (def f (x ∷ x₁ ∷ x₂ ∷ args)) | yes ()
-isBoolExprQ' n (def f args) | no ¬p with Data.Nat._≟_ 1 (length args)
-isBoolExprQ' n (def f []) | no ¬p | yes ()
-isBoolExprQ' n (def f (x ∷ [])) | no ¬p | yes p with f ≟-Name quote ¬_
-isBoolExprQ' n (def f (arg v r x ∷ [])) | no ¬p | yes p₁ | yes p = isBoolExprQ' n x
-isBoolExprQ' n (def f (x ∷ [])) | no ¬p₁ | yes p | no ¬p = false
-isBoolExprQ' n (def f (x ∷ x₁ ∷ args)) | no ¬p | yes ()
-isBoolExprQ' n (def f []) | no ¬p₁ | no ¬p = false
-isBoolExprQ' n (def f (x ∷ args)) | no ¬p₁ | no ¬p with length args ≤? 2
-isBoolExprQ' n (def f (x ∷ [])) | no ¬p₁ | no ¬p | yes p = ⊥-elim (¬p refl)
-isBoolExprQ' n (def f (x₁ ∷ x ∷ [])) | no ¬p₁ | no ¬p | yes p = ⊥-elim (¬p₁ refl)
-isBoolExprQ' n (def f (x₂ ∷ x ∷ x₁ ∷ [])) | no ¬p₁ | no ¬p | yes p = false
-isBoolExprQ' n (def f (x₃ ∷ x ∷ x₁ ∷ x₂ ∷ args)) | no ¬p₁ | no ¬p | yes (s≤s (s≤s ()))
-isBoolExprQ' n (def f (x ∷ args)) | no ¬p₂ | no ¬p₁ | no ¬p = false
+isBoolExprQ' n (def f []) = false
+isBoolExprQ' n (def f (arg v r x ∷ [])) with f ≟-Name quote ¬_
+isBoolExprQ' n (def f (arg v r x ∷ [])) | yes p = isBoolExprQ' n x
+isBoolExprQ' n (def f (arg v r x ∷ [])) | no ¬p = false
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) with f ≟-Name quote _∧_
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | yes p = (isBoolExprQ' n x) ∧ (isBoolExprQ' n x₁)
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p with f ≟-Name quote _∨_
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p | yes p = (isBoolExprQ' n x) ∧ (isBoolExprQ' n x₁)
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | no ¬p | yes p = (isBoolExprQ' n x) ∧ (isBoolExprQ' n x₁)
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₂ | no ¬p₁ | no ¬p = false
+isBoolExprQ' n (def f (x ∷ x₁ ∷ x₂ ∷ args)) = false
 isBoolExprQ' n (lam v t) = false
 isBoolExprQ' n (pi t₁ t₂) = false
 isBoolExprQ' n (sort y) = false
@@ -240,36 +228,24 @@ term2b' n (con tf []) pf | no ¬p with tf ≟-Name quote false
 term2b' n (con tf []) pf | no ¬p  | yes p = Falsehood
 term2b' n (con tf []) () | no ¬p₁ | no ¬p
 term2b' n (con c (a ∷ rgs)) ()
-term2b' n (def f args) pf with Data.Nat._≟_ 2 (length args)
-term2b' n (def f []) pf | yes ()
-term2b' n (def f (x ∷ [])) pf | yes ()
-term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | yes p with f ≟-Name quote _∧_
-term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | yes p₁ | yes p = And
+term2b' n (def f []) ()
+term2b' n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
+term2b' n (def f (arg v r x ∷ [])) pf | yes p = Not (term2b' n x pf)
+term2b' n (def f (arg v r x ∷ [])) () | no ¬p
+term2b' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) pf with f ≟-Name quote _∧_
+term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | yes p = And
   (term2b' n x (and-l pf))
   (term2b' n x₁ (and-r (isBoolExprQ' n x) (isBoolExprQ' n x₁) pf))
-term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | yes p | no ¬p with f ≟-Name quote _∨_
-term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | yes p₁ | no ¬p | yes p = Or
+term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no p with f ≟-Name quote _∨_
+term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no ¬p | yes p = Or
   (term2b' n x (and-l pf))
   (term2b' n x₁ (and-r (isBoolExprQ' n x) (isBoolExprQ' n x₁) pf))
-term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | yes p | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
-term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | yes p₁ | no ¬p₁ | no ¬p | yes p = Imp
+term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no ¬p | no p with f ≟-Name quote _⇒_
+term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no ¬p₁ | no ¬p | yes p = Imp
   (term2b' n x (and-l pf))
   (term2b' n x₁ (and-r (isBoolExprQ' n x) (isBoolExprQ' n x₁) pf))
-term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) () | yes p | no ¬p₂ | no ¬p₁ | no ¬p
-term2b' n (def f (x ∷ x₁ ∷ x₂ ∷ args)) pf | yes ()
-term2b' n (def f args) pf | no ¬p with Data.Nat._≟_ 1 (length args)
-term2b' n (def f []) pf | no ¬p | yes ()
-term2b' n (def f (x ∷ [])) pf | no ¬p | yes p with f ≟-Name quote ¬_
-term2b' n (def f (arg v r x ∷ [])) pf | no ¬p | yes p₁ | yes p = Not (term2b' n x pf)
-term2b' n (def f (x ∷ [])) () | no ¬p₁ | yes p | no ¬p
-term2b' n (def f (x ∷ x₁ ∷ args)) pf | no ¬p | yes ()
-term2b' n (def f []) () | no ¬p₁ | no ¬p
-term2b' n (def f (x ∷ args)) pf | no ¬p₁ | no ¬p with length args ≤? 2
-term2b' n (def f (x ∷ [])) pf | no ¬p₁ | no ¬p | yes p = ⊥-elim (¬p refl)
-term2b' n (def f (x₁ ∷ x ∷ [])) pf | no ¬p₁ | no ¬p | yes p = ⊥-elim (¬p₁ refl)
-term2b' n (def f (x₂ ∷ x ∷ x₁ ∷ [])) pf | no ¬p₁ | no ¬p | yes p = {!!}
-term2b' n (def f (x₃ ∷ x ∷ x₁ ∷ x₂ ∷ args)) pf | no ¬p₁ | no ¬p | yes (s≤s (s≤s ()))
-term2b' n (def f (x ∷ args)) pf | no ¬p₂ | no ¬p₁ | no ¬p = {!!}
+term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) () | no ¬p | no p | no p₁
+term2b' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ x₂ ∷ args)) ()
 term2b' n (lam v t)  ()
 term2b' n (pi t₁ t₂) ()
 term2b' n (sort x)   ()
