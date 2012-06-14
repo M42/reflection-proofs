@@ -246,10 +246,10 @@ term2b' n unknown    ()
 
 term2bSo : (n : ℕ)
        → (t : Term)
-       → {pf : outerIsSo t}
-       → {pf2 : isBoolExprQSo n t pf}
+       → (pf : outerIsSo t)
+       → isBoolExprQSo n t pf
        → BoolExpr n
-term2bSo n t {pf} {pf2} = term2b' n (withoutSo t pf) pf2
+term2bSo n t pf pf2 = term2b' n (withoutSo t pf) pf2
 
 -- useful for things like Env n → Env m → Env n ⊕ m
 _⊕_ : ℕ → ℕ → ℕ
@@ -344,5 +344,30 @@ soundnessSo {n} b {i} = soundnessAccSo b [] (zero-least 0 n) i
 --mft : myfavouritetheorem
 --mft = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) ? {!!})
 --
+
+wrap : 
+         (t : Term)
+       → {pf : outerIsSo (stripPi t)}
+       → {pf2 : isBoolExprQSo (argsNo t) (stripPi t) pf}
+       → BoolExpr (argsNo t)
+wrap t {pf} {pf2} = term2b' (argsNo t) (withoutSo (stripPi t) pf) pf2
+
+
+
+wrap2 : (t : Term) →
+        {pf : outerIsSo (stripPi t)} →
+        {pf2 : isBoolExprQSo (argsNo t) (stripPi t) pf} →
+        let b = wrap t {pf} {pf2} in
+        {i : foralls b} →
+        forallBoolSo (argsNo t) b
+wrap2 e {pf} {pf2} {i} = soundnessSo {argsNo e} (wrap e) {i}
+
 anotherTheorem : (a b : Bool) → P(a ∧ b ⇒ b ∧ a)
-anotherTheorem = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e))
+anotherTheorem = quoteGoal e in wrap2 e
+
+thing : {err : String} {a : Bool} → So err a → a ≡ true
+thing ⊤ = ?
+
+another : (a b : Bool) → a ∧ b ⇒ b ∧ a ≡ true
+another a b with anotherTheorem a b
+...  | asdf = {!asdf!}
