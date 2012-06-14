@@ -341,33 +341,33 @@ soundnessAcc {m} bexp {n} env (Step y) H =
     (soundnessAcc bexp (true  ∷ env) y (proj₁ H))
     (soundnessAcc bexp (false ∷ env) y (proj₂ H))
 
--- soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBool n b
--- soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
+soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBool n b
+soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 
--- goalbla  : (b c : Bool) → (b ∨ true) ∧ (c ∨ true) ≡ true
--- goalbla  = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
+goalbla  : (b c : Bool) → (b ∨ true) ∧ (c ∨ true) ≡ true
+goalbla  = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 
--- goalbla2 : (b : Bool) → b ∨ true ≡ true
--- goalbla2 = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
+goalbla2 : (b : Bool) → b ∨ true ≡ true
+goalbla2 = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 
 
--- goalbla3 : (b : Bool) → true ≡ true
--- goalbla3 = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
+goalbla3 : (b : Bool) → true ≡ true
+goalbla3 = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 
--- not : (b : Bool) → b ∨ ¬ b ≡ true
--- not = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
+not : (b : Bool) → b ∨ ¬ b ≡ true
+not = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 
--- imp0 : (b : Bool) → b ⇒ b ≡ true
--- imp0 = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
+imp0 : (b : Bool) → b ⇒ b ≡ true
+imp0 = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 
--- peirce : (p q  : Bool) → (((p ⇒ q) ⇒ p) ⇒ p) ≡ true
--- peirce = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
+peirce : (p q  : Bool) → (((p ⇒ q) ⇒ p) ⇒ p) ≡ true
+peirce = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 
--- mft : myfavouritetheorem
--- mft = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
+mft : myfavouritetheorem
+mft = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
 
--- seeInterpretation : {n : ℕ} → BoolExpr n → Set
--- seeInterpretation {n} be = buildPi zero n (zero-least zero n) be []
+seeInterpretation : {n : ℕ} → BoolExpr n → Set
+seeInterpretation {n} be = buildPi zero n (zero-least zero n) be []
 
--- anotherTheorem : (a b : Bool) → a ∧ b ⇒ b ∧ a ≡ true
--- anotherTheorem = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
+anotherTheorem : (a b : Bool) → a ∧ b ⇒ b ∧ a ≡ true
+anotherTheorem = quoteGoal e in soundness (term2b (argsNo e) (stripPi e) refl refl)
