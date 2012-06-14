@@ -273,6 +273,11 @@ term2b : (n : ℕ)
        → BoolExpr n
 term2b n t pf pf2 = term2b' n (withoutEQ t pf) pf2
 
+-- useful for things like Env n → Env m → Env n ⊕ m
+_⊕_ : ℕ → ℕ → ℕ
+zero  ⊕ m = m
+suc n ⊕ m = n ⊕ suc m
+
 data Diff : ℕ → ℕ → Set where
   Base : ∀ {n}   → Diff n n
   Step : ∀ {n m} → Diff (suc n) m → Diff n m
