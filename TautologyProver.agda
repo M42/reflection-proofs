@@ -298,9 +298,9 @@ foralls : {n : ℕ} → (b : BoolExpr n) → Set
 foralls {n} b = forallsAcc b [] (zero-least 0 n)
 
 -- dependently typed if-statement
-if : (P : Bool → Set) → (b : Bool) → P true → P false → P b
-if p true  t f = t
-if p false t f = f
+if : {P : Bool → Set} → (b : Bool) → P true → P false → P b
+if true  t f = t
+if false t f = f
 
 soundnessAcc : {m : ℕ} →
                  (b : BoolExpr m) →
@@ -313,14 +313,15 @@ soundnessAcc     bexp     env Base     H with ⟦ env ⊢ bexp ⟧
 soundnessAcc     bexp     env Base     H | true  = H
 soundnessAcc     bexp     env Base     H | false = Error-elim H
 soundnessAcc {m} bexp {n} env (Step y) H =
-  λ a → if (λ b → prependTelescope (suc n) m y bexp (b ∷ env)) a
+  λ a → if {λ b → prependTelescope (suc n) m y bexp (b ∷ env)} a
     (soundnessAcc bexp (true  ∷ env) y (proj₁ H))
     (soundnessAcc bexp (false ∷ env) y (proj₂ H))
 
 soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBoolSo n b
 soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 
-concrete2abstract :   (t : Term)
+concrete2abstract :
+         (t : Term)
        → {pf : isSoExprQ (stripPi t)}
        → {pf2 : isBoolExprQ (freeVars t) (stripPi t) pf}
        → BoolExpr (freeVars t)
@@ -330,8 +331,8 @@ proveTautology : (t : Term) →
         {pf : isSoExprQ (stripPi t)} →
         {pf2 : isBoolExprQ (freeVars t) (stripPi t) pf} →
         let b = concrete2abstract t {pf} {pf2} in
-        {i : foralls b} →
-        forallBoolSo (freeVars t) b
+            {i : foralls b} →
+            forallBoolSo (freeVars t) b
 proveTautology e {pf} {pf2} {i} = soundness {freeVars e} (concrete2abstract e) {i}
 
 anotherTheorem : (a b : Bool) → P(a ∧ b ⇒ b ∧ a)
