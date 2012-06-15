@@ -12,7 +12,7 @@ open import Relation.Binary hiding (_⇒_)
 open import Reflection
 
 open import Data.Vec.N-ary
-open import Data.Bool renaming (not to ¬_)
+open import Data.Bool renaming (not to ¬_ )
 open import Data.Nat
 open import Data.Fin hiding (_+_; pred)
 open import Data.Vec renaming (reverse to vreverse ; map to vmap; foldr to vfoldr; _++_ to _v++_)
@@ -88,28 +88,28 @@ Env = Vec Bool
 -- return whether the given proposition is true
 -- this is like our isEvenQ
 ⟦_⊢_⟧ : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
-⟦ env ⊢ (Truth)      ⟧ = true
-⟦ env ⊢ (Falsehood)  ⟧ = false
-⟦ env ⊢ (And be be₁) ⟧ = ⟦ env ⊢ be ⟧ ∧ ⟦ env ⊢ be₁ ⟧
-⟦ env ⊢ (Or be be₁)  ⟧ = ⟦ env ⊢ be ⟧ ∨ ⟦ env ⊢ be₁ ⟧
-⟦ env ⊢ (Not be)     ⟧ = ¬ ⟦ env ⊢ be ⟧
-⟦ env ⊢ (Imp be be₁) ⟧ = ⟦ env ⊢ be ⟧ ⇒ ⟦ env ⊢ be₁ ⟧
-⟦ env ⊢ (Atomic n)   ⟧ = lookup n env
+⟦ env ⊢ Truth      ⟧ = true
+⟦ env ⊢ Falsehood  ⟧ = false
+⟦ env ⊢ And be be₁ ⟧ = ⟦ env ⊢ be ⟧ ∧ ⟦ env ⊢ be₁ ⟧
+⟦ env ⊢ Or be be₁  ⟧ = ⟦ env ⊢ be ⟧ ∨ ⟦ env ⊢ be₁ ⟧
+⟦ env ⊢ Not be     ⟧ = ¬ ⟦ env ⊢ be ⟧
+⟦ env ⊢ Imp be be₁ ⟧ = ⟦ env ⊢ be ⟧ ⇒ ⟦ env ⊢ be₁ ⟧
+⟦ env ⊢ Atomic n   ⟧ = lookup n env
 
 -- returns the number of the outermost pi quantified variables.
 
-argsNo : Term → ℕ
-argsNo (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = suc (argsNo t)
-argsNo (pi a b)     = 0
-argsNo (var x args) = 0
-argsNo (con c args) = 0
-argsNo (def f args) = 0
-argsNo (lam v t)    = 0
-argsNo (sort x)     = 0
-argsNo unknown      = 0
+freeVars : Term → ℕ
+freeVars (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = suc (freeVars t)
+freeVars (pi a b)     = 0
+freeVars (var x args) = 0
+freeVars (con c args) = 0
+freeVars (def f args) = 0
+freeVars (lam v t)    = 0
+freeVars (sort x)     = 0
+freeVars unknown      = 0
 
 -- peels off all the outermost Pi constructors,
--- returning a term with argsNo free variables.
+-- returning a term with freeVars free variables.
 
 stripPi : Term → Term
 stripPi (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = stripPi t
@@ -129,44 +129,44 @@ unsafeMinus n₁ zero = n₁
 unsafeMinus (suc n₁) (suc m) = unsafeMinus n₁ m
 
 
-outerIsSo : (t : Term) → Set
-outerIsSo (var x args) = ⊥
-outerIsSo (con c args) = ⊥
-outerIsSo (def f args) with Data.Nat._≟_ (length args) 2
-outerIsSo (def f args) | yes p with tt
-outerIsSo (def f [])                        | yes () | tt
-outerIsSo (def f (x ∷ []))                  | yes () | tt
-outerIsSo (def f (a ∷ arg v r x ∷ []))      | yes p  | tt with f ≟-Name quote So
-outerIsSo (def f (a ∷ arg v r x ∷ [])) | yes p₁ | tt | yes p = ⊤
-outerIsSo (def f (a ∷ arg v r x ∷ [])) | yes p | tt | no ¬p = ⊥
-outerIsSo (def f (x ∷ x₃ ∷ x₄ ∷ args))      | yes () | tt
-outerIsSo (def f args)                      | no ¬p with tt
-outerIsSo (def f [])                        | no ¬p | tt = ⊥
-outerIsSo (def f (x ∷ xs))                  | no ¬p | tt = ⊥
-outerIsSo (lam v t)                         = ⊥
-outerIsSo (pi t₁ t₂)                        = ⊥
-outerIsSo (sort x)                          = ⊥
-outerIsSo unknown                           = ⊥
+isSoExprQ : (t : Term) → Set
+isSoExprQ (var x args) = ⊥
+isSoExprQ (con c args) = ⊥
+isSoExprQ (def f args) with Data.Nat._≟_ (length args) 2
+isSoExprQ (def f args) | yes p with tt
+isSoExprQ (def f [])                        | yes () | tt
+isSoExprQ (def f (x ∷ []))                  | yes () | tt
+isSoExprQ (def f (a ∷ arg v r x ∷ []))      | yes p  | tt with f ≟-Name quote So
+isSoExprQ (def f (a ∷ arg v r x ∷ [])) | yes p₁ | tt | yes p = ⊤
+isSoExprQ (def f (a ∷ arg v r x ∷ [])) | yes p | tt | no ¬p = ⊥
+isSoExprQ (def f (x ∷ x₃ ∷ x₄ ∷ args))      | yes () | tt
+isSoExprQ (def f args)                      | no ¬p with tt
+isSoExprQ (def f [])                        | no ¬p | tt = ⊥
+isSoExprQ (def f (x ∷ xs))                  | no ¬p | tt = ⊥
+isSoExprQ (lam v t)                         = ⊥
+isSoExprQ (pi t₁ t₂)                        = ⊥
+isSoExprQ (sort x)                          = ⊥
+isSoExprQ unknown                           = ⊥
 
 
-withoutSo : (t : Term) → outerIsSo t → Term
-withoutSo (var x args) ()
-withoutSo (con c args) ()
-withoutSo (def f args) pf with Data.Nat._≟_ (length args) 2
-withoutSo (def f args) pf | yes p with tt
-withoutSo (def f [])   pf                      | yes () | tt
-withoutSo (def f (x ∷ [])) pf                  | yes () | tt
-withoutSo (def f (a ∷ arg v r x ∷ [])) pf      | yes p  | tt with f ≟-Name quote So
-withoutSo (def f (a ∷ arg v r x ∷ [])) pf  | yes p₁ | tt | yes p = x
-withoutSo (def f (a ∷ arg v r x ∷ [])) () | yes p | tt | no ¬p
-withoutSo (def f (x ∷ x₃ ∷ x₄ ∷ args)) pf     | yes () | tt
-withoutSo (def f args)             pf         | no ¬p with tt
-withoutSo (def f []) () | no ¬p | tt
-withoutSo (def f (x ∷ xs)) () | no ¬p | tt
-withoutSo (lam v t)    ()
-withoutSo (pi t₁ t₂)   ()
-withoutSo (sort x)     ()
-withoutSo unknown      ()
+stripSo : (t : Term) → isSoExprQ t → Term
+stripSo (var x args) ()
+stripSo (con c args) ()
+stripSo (def f args) pf with Data.Nat._≟_ (length args) 2
+stripSo (def f args) pf | yes p with tt
+stripSo (def f [])   pf                      | yes () | tt
+stripSo (def f (x ∷ [])) pf                  | yes () | tt
+stripSo (def f (a ∷ arg v r x ∷ [])) pf      | yes p  | tt with f ≟-Name quote So
+stripSo (def f (a ∷ arg v r x ∷ [])) pf  | yes p₁ | tt | yes p = x
+stripSo (def f (a ∷ arg v r x ∷ [])) () | yes p | tt | no ¬p
+stripSo (def f (x ∷ x₃ ∷ x₄ ∷ args)) pf     | yes () | tt
+stripSo (def f args)             pf         | no ¬p with tt
+stripSo (def f []) () | no ¬p | tt
+stripSo (def f (x ∷ xs)) () | no ¬p | tt
+stripSo (lam v t)    ()
+stripSo (pi t₁ t₂)   ()
+stripSo (sort x)     ()
+stripSo unknown      ()
 
 
 isBoolExprQ' : (n : ℕ) → (t : Term) → Set
@@ -199,54 +199,45 @@ isBoolExprQ' n (pi t₁ t₂) = ⊥
 isBoolExprQ' n (sort y) = ⊥
 isBoolExprQ' n unknown = ⊥
 
-isBoolExprQSo : (freeVars : ℕ) → (t : Term) → outerIsSo t → Set
-isBoolExprQSo n t pf with withoutSo t pf
-isBoolExprQSo n t pf | t' = isBoolExprQ' n t'
+isBoolExprQ : (freeVars : ℕ) → (t : Term) → isSoExprQ t → Set
+isBoolExprQ n t pf with stripSo t pf
+isBoolExprQ n t pf | t' = isBoolExprQ' n t'
 
--- the holes here should be absurds, but only Agda>=2.3.1 manages
--- the unification.
-term2b' : (n : ℕ)
+term2boolexpr : (n : ℕ)
         → (t : Term)
         → isBoolExprQ' n t
         → BoolExpr n
-term2b' n (var x args) pf with suc (unsafeMinus x 0) ≤? n
-term2b' n (var x args) pf | yes p = Atomic (fromℕ≤ {unsafeMinus x 0} p)
-term2b' n (var x args) () | no ¬p
-term2b' n (con tf []) pf with tf ≟-Name quote true
-term2b' n (con tf []) pf | yes p = Truth
-term2b' n (con tf []) pf | no ¬p with tf ≟-Name quote false
-term2b' n (con tf []) pf | no ¬p  | yes p = Falsehood
-term2b' n (con tf []) () | no ¬p₁ | no ¬p
-term2b' n (con c (a ∷ rgs)) ()
-term2b' n (def f []) ()
-term2b' n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
-term2b' n (def f (arg v r x ∷ [])) pf | yes p = Not (term2b' n x pf)
-term2b' n (def f (arg v r x ∷ [])) () | no ¬p
-term2b' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) pf with f ≟-Name quote _∧_
-term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | yes p = And
-  (term2b' n x proj₁)
-  (term2b' n x₁ proj₂)
-term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no p with f ≟-Name quote _∨_
-term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | no ¬p | yes p = Or
-  (term2b' n x proj₁)
-  (term2b' n x₁ proj₂)
-term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no ¬p | no p with f ≟-Name quote _⇒_
-term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | no ¬p₁ | no ¬p | yes p = Imp
-  (term2b' n x proj₁)
-  (term2b' n x₁ proj₂)
-term2b' n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) () | no ¬p | no p | no p₁
-term2b' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ x₂ ∷ args)) ()
-term2b' n (lam v t)  ()
-term2b' n (pi t₁ t₂) ()
-term2b' n (sort x)   ()
-term2b' n unknown    ()
-
-term2bSo : (n : ℕ)
-       → (t : Term)
-       → (pf : outerIsSo t)
-       → isBoolExprQSo n t pf
-       → BoolExpr n
-term2bSo n t pf pf2 = term2b' n (withoutSo t pf) pf2
+term2boolexpr n (var x args) pf with suc (unsafeMinus x 0) ≤? n
+term2boolexpr n (var x args) pf | yes p = Atomic (fromℕ≤ {unsafeMinus x 0} p)
+term2boolexpr n (var x args) () | no ¬p
+term2boolexpr n (con tf []) pf with tf ≟-Name quote true
+term2boolexpr n (con tf []) pf | yes p = Truth
+term2boolexpr n (con tf []) pf | no ¬p with tf ≟-Name quote false
+term2boolexpr n (con tf []) pf | no ¬p  | yes p = Falsehood
+term2boolexpr n (con tf []) () | no ¬p₁ | no ¬p
+term2boolexpr n (con c (a ∷ rgs)) ()
+term2boolexpr n (def f []) ()
+term2boolexpr n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
+term2boolexpr n (def f (arg v r x ∷ [])) pf | yes p = Not (term2boolexpr n x pf)
+term2boolexpr n (def f (arg v r x ∷ [])) () | no ¬p
+term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) pf with f ≟-Name quote _∧_
+term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | yes p = And
+  (term2boolexpr n x proj₁)
+  (term2boolexpr n x₁ proj₂)
+term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no p with f ≟-Name quote _∨_
+term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | no ¬p | yes p = Or
+  (term2boolexpr n x proj₁)
+  (term2boolexpr n x₁ proj₂)
+term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no ¬p | no p with f ≟-Name quote _⇒_
+term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | no ¬p₁ | no ¬p | yes p = Imp
+  (term2boolexpr n x proj₁)
+  (term2boolexpr n x₁ proj₂)
+term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) () | no ¬p | no p | no p₁
+term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ x₂ ∷ args)) ()
+term2boolexpr n (lam v t)  ()
+term2boolexpr n (pi t₁ t₂) ()
+term2boolexpr n (sort x)   ()
+term2boolexpr n unknown    ()
 
 -- useful for things like Env n → Env m → Env n ⊕ m
 _⊕_ : ℕ → ℕ → ℕ
@@ -258,9 +249,9 @@ data Diff : ℕ → ℕ → Set where
   Step : ∀ {n m} → Diff (suc n) m → Diff n m
 
 
-buildPiSo : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
-buildPiSo .m m (Base  ) b env = P ⟦ env ⊢ b ⟧ 
-buildPiSo n m  (Step y) b env = (a : Bool) → buildPiSo (suc n) m y b (a ∷ env)
+prependTelescope : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
+prependTelescope .m m (Base  ) b env = P ⟦ env ⊢ b ⟧ 
+prependTelescope n m  (Step y) b env = (a : Bool) → prependTelescope (suc n) m y b (a ∷ env)
 
 zeroId : (n : ℕ) → n ≡ n + 0
 zeroId zero                           = refl
@@ -279,7 +270,8 @@ zero-least k zero    = coerceDiff (zeroId k) Base
 zero-least k (suc n) = Step (coerceDiff (succLemma k n) (zero-least (suc k) n))
 
 forallBoolSo : (m : ℕ) → BoolExpr m → Set
-forallBoolSo m b = buildPiSo zero m (zero-least 0 m) b []
+forallBoolSo m b = prependTelescope zero m (zero-least 0 m) b []
+
 {-
 notice that u is automatically instantiated, since
 there is only one option, namely tt,tt. this is special and
@@ -291,75 +283,72 @@ safe in records because recursion isn't allowed. question for agda-café?
 foo' : {u : ⊤ × ⊤} → ℕ
 foo' = 5
 
-foo'' : {u : ⊤ × ⊥} → ℕ
-foo'' = 5
-
 baz : ℕ
 baz = foo'
 
--- very much like ⊥-elim, but for errors.
+-- very much like ⊥-elim, but for Errors.
 Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
 Error-elim ()
 
-
 forallsAcc : {n m : ℕ} → (b : BoolExpr m) → Env n → Diff n m → Set
-forallsAcc b' env (Base  ) = So "Expression isn't a tautology" ⟦ env ⊢ b' ⟧
+forallsAcc b' env (Base  ) = P ⟦ env ⊢ b' ⟧
 forallsAcc b' env (Step y) = forallsAcc b' (true ∷ env) y × forallsAcc b' (false ∷ env) y
 
 foralls : {n : ℕ} → (b : BoolExpr n) → Set
 foralls {n} b = forallsAcc b [] (zero-least 0 n)
 
--- dependently typed If
-dif : {P : Bool → Set} → (b : Bool) → P true → P false → P b
-dif true  t f = t
-dif false t f = f
+-- dependently typed if-statement
+if : (P : Bool → Set) → (b : Bool) → P true → P false → P b
+if p true  t f = t
+if p false t f = f
 
-soundnessAccSo : {m : ℕ} → (b : BoolExpr m) →
-               {n : ℕ} → (env : Env n) → (d : Diff n m) →
-               forallsAcc b env d →
-               buildPiSo n m d b env
-soundnessAccSo     bexp     env Base     H with ⟦ env ⊢ bexp ⟧
-soundnessAccSo     bexp     env Base     H | true  = H
-soundnessAccSo     bexp     env Base     H | false = Error-elim H
-soundnessAccSo {m} bexp {n} env (Step y) H =
-  λ a → dif {λ b → buildPiSo (suc n) m y bexp (b ∷ env)} a
-    (soundnessAccSo bexp (true  ∷ env) y (proj₁ H))
-    (soundnessAccSo bexp (false ∷ env) y (proj₂ H))
+soundnessAcc : {m : ℕ} →
+                 (b : BoolExpr m) →
+                 {n : ℕ} →
+                 (env : Env n) →
+                 (d : Diff n m) →
+                 forallsAcc b env d →
+                 prependTelescope n m d b env
+soundnessAcc     bexp     env Base     H with ⟦ env ⊢ bexp ⟧
+soundnessAcc     bexp     env Base     H | true  = H
+soundnessAcc     bexp     env Base     H | false = Error-elim H
+soundnessAcc {m} bexp {n} env (Step y) H =
+  λ a → if (λ b → prependTelescope (suc n) m y bexp (b ∷ env)) a
+    (soundnessAcc bexp (true  ∷ env) y (proj₁ H))
+    (soundnessAcc bexp (false ∷ env) y (proj₂ H))
 
-soundnessSo : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBoolSo n b
-soundnessSo {n} b {i} = soundnessAccSo b [] (zero-least 0 n) i
+soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBoolSo n b
+soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 
---goalbla2 : (b : Bool) → P(b ∨ true)
---goalbla2 = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) {!!} {!!})
---
---not : (b : Bool) → P(b ∨ ¬ b)
---not = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) ? {!!})
---
---peirce : (p q  : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
---peirce = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) ? {!!})
---
---mft : myfavouritetheorem
---mft = quoteGoal e in soundnessSo (term2bSo (argsNo e) (stripPi e) ? {!!})
---
+concrete2abstract :   (t : Term)
+       → {pf : isSoExprQ (stripPi t)}
+       → {pf2 : isBoolExprQ (freeVars t) (stripPi t) pf}
+       → BoolExpr (freeVars t)
+concrete2abstract t {pf} {pf2} = term2boolexpr (freeVars t) (stripSo (stripPi t) pf) pf2
 
-wrap :   (t : Term)
-       → {pf : outerIsSo (stripPi t)}
-       → {pf2 : isBoolExprQSo (argsNo t) (stripPi t) pf}
-       → BoolExpr (argsNo t)
-wrap t {pf} {pf2} = term2b' (argsNo t) (withoutSo (stripPi t) pf) pf2
-
-
-
-wrap2 : (t : Term) →
-        {pf : outerIsSo (stripPi t)} →
-        {pf2 : isBoolExprQSo (argsNo t) (stripPi t) pf} →
-        let b = wrap t {pf} {pf2} in
+proveTautology : (t : Term) →
+        {pf : isSoExprQ (stripPi t)} →
+        {pf2 : isBoolExprQ (freeVars t) (stripPi t) pf} →
+        let b = concrete2abstract t {pf} {pf2} in
         {i : foralls b} →
-        forallBoolSo (argsNo t) b
-wrap2 e {pf} {pf2} {i} = soundnessSo {argsNo e} (wrap e) {i}
+        forallBoolSo (freeVars t) b
+proveTautology e {pf} {pf2} {i} = soundness {freeVars e} (concrete2abstract e) {i}
 
 anotherTheorem : (a b : Bool) → P(a ∧ b ⇒ b ∧ a)
-anotherTheorem = quoteGoal e in wrap2 e
+anotherTheorem = quoteGoal e in proveTautology e
+
+goalbla2 : (b : Bool) → P(b ∨ true)
+goalbla2 = quoteGoal e in proveTautology e
+
+not : (b : Bool) → P(b ∨ ¬ b)
+not = quoteGoal e in proveTautology e
+
+peirce : (p q  : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
+peirce = quoteGoal e in proveTautology e
+
+mft : myfavouritetheorem
+mft = quoteGoal e in proveTautology e
+
 
 -- acknowledge Ruud:
 -- thing : {err : String} {a : Bool} → So err a → a ≡ true
