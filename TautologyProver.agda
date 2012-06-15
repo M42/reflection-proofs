@@ -2,7 +2,6 @@ module TautologyProver where
 
 open import Relation.Binary.PropositionalEquality renaming ([_] to by ; subst to substpe)
 open import Data.String
-open import Lemmas
 open import Data.Maybe hiding (Eq)
 open import Data.Nat
 open import Relation.Nullary hiding (¬_)
