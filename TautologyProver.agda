@@ -36,17 +36,15 @@ So _ true  = ⊤
 So s false = Error s
 
 P : Bool → Set
-P = So "Expression isn't shizzle?"
+P = So "Expression doesn't evaluate to true in this branch."
 
--- inspiration for style of proof
--- or, another one:
 bOrNotb : (b : Bool) → b ∨ ¬ b ≡ true
 bOrNotb true  = refl
 bOrNotb false = refl
 
-bImpb : (b : Bool) → b ⇒ b ≡ true
-bImpb true  = refl
-bImpb false = refl
+bImpb : (b : Bool) → P(b ⇒ b)
+bImpb true  = tt
+bImpb false = tt
 
 -- wouldn't it be nice if we could automate this?
 
@@ -89,14 +87,14 @@ Env = Vec Bool
 -- decision procedure:
 -- return whether the given proposition is true
 -- this is like our isEvenQ
-decide : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
-decide env (Truth)      = true
-decide env (Falsehood)  = false
-decide env (And be be₁) = decide env be ∧ decide env be₁
-decide env (Or be be₁)  = decide env be ∨ decide env be₁
-decide env (Not be)     = ¬ decide env be
-decide env (Imp p q)    = decide env p ⇒ decide env q
-decide env (Atomic n)   = lookup n env
+⟦_⊢_⟧ : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
+⟦ env ⊢ (Truth)      ⟧ = true
+⟦ env ⊢ (Falsehood)  ⟧ = false
+⟦ env ⊢ (And be be₁) ⟧ = ⟦ env ⊢ be ⟧ ∧ ⟦ env ⊢ be₁ ⟧
+⟦ env ⊢ (Or be be₁)  ⟧ = ⟦ env ⊢ be ⟧ ∨ ⟦ env ⊢ be₁ ⟧
+⟦ env ⊢ (Not be)     ⟧ = ¬ ⟦ env ⊢ be ⟧
+⟦ env ⊢ (Imp be be₁) ⟧ = ⟦ env ⊢ be ⟧ ⇒ ⟦ env ⊢ be₁ ⟧
+⟦ env ⊢ (Atomic n)   ⟧ = lookup n env
 
 -- returns the number of the outermost pi quantified variables.
 
@@ -261,7 +259,7 @@ data Diff : ℕ → ℕ → Set where
 
 
 buildPiSo : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
-buildPiSo .m m (Base  ) b env = P(decide env b)
+buildPiSo .m m (Base  ) b env = P ⟦ env ⊢ b ⟧ 
 buildPiSo n m  (Step y) b env = (a : Bool) → buildPiSo (suc n) m y b (a ∷ env)
 
 zeroId : (n : ℕ) → n ≡ n + 0
@@ -305,7 +303,7 @@ Error-elim ()
 
 
 forallsAcc : {n m : ℕ} → (b : BoolExpr m) → Env n → Diff n m → Set
-forallsAcc b' env (Base  ) = So "Expression isn't a tautology" (decide env b')
+forallsAcc b' env (Base  ) = So "Expression isn't a tautology" ⟦ env ⊢ b' ⟧
 forallsAcc b' env (Step y) = forallsAcc b' (true ∷ env) y × forallsAcc b' (false ∷ env) y
 
 foralls : {n : ℕ} → (b : BoolExpr n) → Set
@@ -320,7 +318,7 @@ soundnessAccSo : {m : ℕ} → (b : BoolExpr m) →
                {n : ℕ} → (env : Env n) → (d : Diff n m) →
                forallsAcc b env d →
                buildPiSo n m d b env
-soundnessAccSo     bexp     env Base     H with decide env bexp
+soundnessAccSo     bexp     env Base     H with ⟦ env ⊢ bexp ⟧
 soundnessAccSo     bexp     env Base     H | true  = H
 soundnessAccSo     bexp     env Base     H | false = Error-elim H
 soundnessAccSo {m} bexp {n} env (Step y) H =
