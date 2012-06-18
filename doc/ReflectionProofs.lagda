@@ -40,11 +40,32 @@ when necessary.
 \begin{code}
 module ReflectionProofs where
 
+-- imports for Evenness
 open import Relation.Binary.PropositionalEquality
 open import Data.Bool renaming (not to ¬_)
 open import Data.Nat
 \end{code}
 }
+
+\ignore{
+\begin{code}
+-- imports for Boolean tauto solver
+open import Data.String
+open import Relation.Nullary hiding (¬_)
+open import Data.Product hiding (map)
+open import Relation.Binary hiding (_⇒_)
+open import Reflection
+
+open import Data.Fin hiding (_+_; pred)
+open import Data.Vec renaming (reverse to vreverse ; map to vmap; foldr to vfoldr; _++_ to _v++_)
+open import Data.Unit hiding (_≤?_)
+open import Data.Empty
+open import Data.Sum hiding (map)
+open import Data.Product hiding (map)
+open import Data.List hiding (_∷ʳ_)
+\end{code}
+}
+
 
 
 \subsection{Simple example}
@@ -164,29 +185,6 @@ and it's two arguments in turn are recursively interpreted.
 Note that the interpretation function also requires an environment to be
 provided, which gives maps the free variables to actual boolean values.
 
-
-
-\ignore{
-\begin{code}
-open import Relation.Binary.PropositionalEquality renaming ([_] to by ; subst to substpe)
-open import Data.String
-open import Data.Maybe hiding (Eq)
-open import Relation.Nullary hiding (¬_)
-open import Data.Product hiding (map)
-open import Data.Vec.Properties
-open import Relation.Binary hiding (_⇒_)
-open import Reflection
-
-open import Data.Vec.N-ary
-open import Data.Fin hiding (_+_; pred)
-open import Data.Vec renaming (reverse to vreverse ; map to vmap; foldr to vfoldr; _++_ to _v++_)
-open import Data.Unit hiding (_≤?_)
-open import Data.Empty
-open import Data.Sum hiding (map)
-open import Data.Product hiding (map)
-open import Data.List hiding (_∷ʳ_)
-\end{code}
-}
 
 
 \begin{code}
