@@ -1,59 +1,24 @@
 \documentclass[a4paper]{llncs}
 
 %include polycode.fmt
-%include codecolour.fmt
+%if style == newcode
+%else
 %include agda.fmt
-
-\usepackage{amsmath}
-\usepackage{semantic}
-% things for the semantic package
-\reservestyle{\command}{\textbf}
-\command{let,in,:,case,of,if,then,else,letrec,nil,cons,false,true,[]}
-\mathlig{ -->}{\longrightarrow}
-
+%include codecolour.fmt
+%endif
 
 \newcommand{\ignore}[1]{}
 
-\author{Paul van der Walt \and Wouter Swierstra}
-\date{\today}
-\title{Proof by reflection by reflection}
-
-\begin{document}
-
-\maketitle
-
-
-\begin{abstract}
-Hi, this is a test.
-\end{abstract}
-
-
-\section{Introduction}
-
-
-The idea behind proof by reflection is that one needn't produce a large proof tree
-for each proof instance one wants to have, but rather proves the soundness of
-a decision function, in effect giving a ``proof recipe'' which can be instantiated
-when necessary.
-
-One has to translate the problem into an abstract (equivalent) representation, invoke
-the soundness of the decision function which was defined (assuming it returns |true| for
-the AST instance), giving the proof of the given proposition.
-
-Reflection is an overloaded word in this context, since in programming language technology
-reflection is the capability of converting some piece of concrete program syntax into a syntax tree
-object which can be manipulated in the same system. These values (in terms of inductive types representing
-the concrete syntax) can then be translated back into concrete terms, a process which is called reflection.
-
-
-Here we will present two case studies illustrating proof by reflection and how reflection
-(in the programming language sense) can make the technique more usable and accessible.
-
-
-
 \ignore{
+%if style == newcode
+\begin{spec}
+module ReflectionProofsExtracted where
+\end{spec}
+%else
 \begin{code}
 module ReflectionProofs where
+\end{code}
+%endif
 
 -- imports for Evenness
 open import Relation.Binary.PropositionalEquality
@@ -81,9 +46,64 @@ open import Data.List hiding (_∷ʳ_)
 \end{code}
 }
 
+\usepackage{amsmath}
+\usepackage{semantic}
+% things for the semantic package
+\reservestyle{\command}{\textbf}
+\command{let,in,:,case,of,if,then,else,letrec,nil,cons,false,true,[]}
+\mathlig{ -->}{\longrightarrow}
 
 
-\subsection{Simple example}
+
+\author{Paul van der Walt \and Wouter Swierstra}
+\date{\today}
+\title{Proof by reflection by reflection}
+\institute{
+\email{W.S.Swierstra@@uu.nl}, \email{paul@@denknerd.org}\\
+Department of Computer Science, Utrecht University
+}
+
+\begin{document}
+
+\maketitle
+
+
+\begin{abstract}
+Hi, this is an abstract.
+\end{abstract}
+
+
+\section{Introduction}
+
+This is an intro.
+
+\section{Proof by Reflection}
+
+
+The idea behind proof by reflection is that one needn't produce a large proof tree
+for each proof instance one wants to have, but rather proves the soundness of
+a decision function, in effect giving a ``proof recipe'' which can be instantiated
+when necessary.
+
+One has to translate the problem into an abstract (equivalent) representation, invoke
+the soundness of the decision function which was defined (assuming it returns |true| for
+the AST instance), giving the proof of the given proposition.
+
+Reflection is an overloaded word in this context, since in programming language technology
+reflection is the capability of converting some piece of concrete program syntax into a syntax tree
+object which can be manipulated in the same system. These values (in terms of inductive types representing
+the concrete syntax) can then be translated back into concrete terms, a process which is called reflection.
+
+
+Here we will present two case studies illustrating proof by reflection and how reflection
+(in the programming language sense) can make the technique more usable and accessible.
+
+
+
+
+
+
+\subsection{Simple Example: Evenness}
 
 Take as an example the property of evenness on natural numbers. One has two
 rules, namely the rule that says that zero is even, and the
@@ -168,12 +188,9 @@ number, since the parameter |even? n ≡ true| cannot be instantiated, thus
 |refl| won't be accepted where it is in the |Even 28| example. This will
 produce a |true !≡ false| type error at compile-time.
 
-\subsection{Abstract proof by reflection}
-
-Talk about S and D and interpretation function \&c. here. 
 
 
-\subsection{Boolean tautologies example}
+\subsection{Second Example: Boolean Tautologies}
 
 Another example of an application of the proof by reflection technique is
 boolean expressions which are a tautology. We will follow the same recipe
@@ -193,7 +210,8 @@ since this will give $2^n$ cases, where $n$ is the number of variables.
 To try to automate this process, we'll follow a similar approach to the one given
 above for proving evenness of arbitrary (even) naturals.
 
-We start off by defining boolean expressions with $n$ free variables,
+We start off by defining an inductive data type to represent
+boolean expressions with $n$ free variables,
 using de Bruijn indices.  There isn't anything surprising about this
 definition; we use the type |Fin n| to ensure that variables
 (represented by |Atomic|) are always in scope.
@@ -201,10 +219,53 @@ definition; we use the type |Fin n| to ensure that variables
 Our language supports boolean and, or, not, implication and arbitrary unknown
 boolean formulae represented by the constructor |Atomic|. 
 
+\begin{code}
+data BoolExpr : ℕ → Set where
+  Truth         : {n : ℕ}                                → BoolExpr n
+  Falsehood     : {n : ℕ}                                → BoolExpr n
+  And           : {n : ℕ} → BoolExpr n → BoolExpr n      → BoolExpr n
+  Or            : {n : ℕ} → BoolExpr n → BoolExpr n      → BoolExpr n
+  Not           : {n : ℕ} → BoolExpr n                   → BoolExpr n
+  Imp           : {n : ℕ} → BoolExpr n → BoolExpr n      → BoolExpr n
+  Atomic        : {n : ℕ} → Fin n                        → BoolExpr n
+\end{code}
+
+We also need a mapping from variables to boolean assignments, which we'll call |Env|.
+It has fixed size $n$ since a |BoolExpr n| has $n$ free variables.
+
+\begin{code}
+Env   : ℕ → Set
+Env   = Vec Bool
+\end{code}
+
 Now we can define our decision function, which decides if a given
 boolean expression is a tautology. It does this by evaluating (interpreting)
 the formula's AST. For example, |And| is converted to the boolean function |_∧_|,
-and it's two arguments in turn are recursively interpreted.
+and it's two arguments in turn are recursively interpreted. Here |_∧_|, |_∨_|, |_⇒_| are
+all defined with type |Bool → Bool → Bool|, and |¬_| is of type |Bool → Bool|.
+
+\ignore{
+\begin{code}
+infixr 4 _⇒_
+_⇒_ : Bool → Bool → Bool
+true  ⇒ true  = true
+true  ⇒ false = false
+false ⇒ true  = true
+false ⇒ false = true
+\end{code}
+}
+
+\begin{code}
+⟦_⊢_⟧ : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
+⟦ env     ⊢ Truth       ⟧ = true
+⟦ env     ⊢ Falsehood   ⟧ = false
+⟦ env     ⊢ And be be₁  ⟧ =     ⟦ env ⊢ be ⟧     ∧      ⟦ env ⊢ be₁ ⟧
+⟦ env     ⊢ Or be be₁   ⟧ =     ⟦ env ⊢ be ⟧     ∨      ⟦ env ⊢ be₁ ⟧
+⟦ env     ⊢ Not be      ⟧ = ¬   ⟦ env ⊢ be ⟧
+⟦ env     ⊢ Imp be be₁  ⟧ =     ⟦ env ⊢ be ⟧     ⇒      ⟦ env ⊢ be₁ ⟧
+⟦ env     ⊢ Atomic n    ⟧ = lookup n env
+\end{code}
+
 
 Note that the interpretation function also requires an environment to be
 provided, which gives maps the free variables to actual boolean values.
@@ -213,12 +274,6 @@ provided, which gives maps the free variables to actual boolean values.
 
 \begin{code}
 
-infixr 4 _⇒_
-_⇒_ : Bool → Bool → Bool
-true  ⇒ true  = true
-true  ⇒ false = false
-false ⇒ true  = true
-false ⇒ false = true
 
 data Error (a : String) : Set where
 
@@ -241,31 +296,19 @@ bImpb false = tt
 
 -- eventually we'd like to prove these kinds of tautologies:
 myfavouritetheorem : Set
-myfavouritetheorem = (p1 q1 p2 q2 : Bool) → P(  (p1 ∨ q1) ∧ (p2 ∨ q2)
-                                              ⇒ (q1 ∨ p1) ∧ (q2 ∨ p2)
-                                              )
+myfavouritetheorem = (p1 q1 p2 q2 : Bool)   →   P  (      (p1 ∨ q1) ∧ (p2 ∨ q2)
+                                                      ⇒   (q1 ∨ p1) ∧ (q2 ∨ p2)
+                                                   )
 
 -- we'll make some DSL into which we're going to translate theorems
 -- (which are actually types of functions), and then use reflection
 -- in some unmagical way... see below.
 
-data BoolExpr : ℕ → Set where
-  Truth         : {n : ℕ}                                → BoolExpr n
-  Falsehood     : {n : ℕ}                                → BoolExpr n
-  And           : {n : ℕ} → BoolExpr n → BoolExpr n      → BoolExpr n
-  Or            : {n : ℕ} → BoolExpr n → BoolExpr n      → BoolExpr n
-  Not           : {n : ℕ} → BoolExpr n                   → BoolExpr n
-  Imp           : {n : ℕ} → BoolExpr n → BoolExpr n      → BoolExpr n
-  Atomic        : {n : ℕ} → Fin n                        → BoolExpr n
 
 -- ...and some way to interpret our representation
 -- of the formula at hand:
 -- this is compile : S → D
 
--- the environment
-Env   : ℕ → Set
-Env   = Vec Bool
--- lijst van lengte n met daarin een Set / Bool
 
 -- S = BoolExpr (the syntactic realm)
 -- D = the domain of our Props
@@ -273,14 +316,6 @@ Env   = Vec Bool
 -- decision procedure:
 -- return whether the given proposition is true
 -- this is like our isEvenQ
-⟦_⊢_⟧ : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
-⟦ env     ⊢ Truth       ⟧ = true
-⟦ env     ⊢ Falsehood   ⟧ = false
-⟦ env     ⊢ And be be₁  ⟧ =     ⟦ env ⊢ be ⟧     ∧      ⟦ env ⊢ be₁ ⟧
-⟦ env     ⊢ Or be be₁   ⟧ =     ⟦ env ⊢ be ⟧     ∨      ⟦ env ⊢ be₁ ⟧
-⟦ env     ⊢ Not be      ⟧ = ¬   ⟦ env ⊢ be ⟧
-⟦ env     ⊢ Imp be be₁  ⟧ =     ⟦ env ⊢ be ⟧     ⇒      ⟦ env ⊢ be₁ ⟧
-⟦ env     ⊢ Atomic n    ⟧ = lookup n env
 
 -- returns the number of the outermost pi quantified variables.
 
