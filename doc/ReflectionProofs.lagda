@@ -10,16 +10,12 @@
 \newcommand{\ignore}[1]{}
 
 \ignore{
-%if style == newcode
-\begin{spec}
-module ReflectionProofsExtracted where
-\end{spec}
-%else
 \begin{code}
 module ReflectionProofs where
 \end{code}
-%endif
 
+
+\begin{code}
 -- imports for Evenness
 open import Relation.Binary.PropositionalEquality
 open import Data.Bool renaming (not to ¬_)
