@@ -5,6 +5,12 @@
 %include agda.fmt
 
 \usepackage{amsmath}
+\usepackage{semantic}
+% things for the semantic package
+\reservestyle{\command}{\textbf}
+\command{let,in,:,case,of,if,then,else,letrec,nil,cons,false,true,[]}
+\mathlig{ -->}{\longrightarrow}
+
 
 \newcommand{\ignore}[1]{}
 
@@ -24,15 +30,24 @@ Hi, this is a test.
 
 \section{Introduction}
 
-Proof by reflection is a technique bla.
-
-\section{Proof by reflection}
 
 The idea behind proof by reflection is that one needn't produce a large proof tree
 for each proof instance one wants to have, but rather proves the soundness of
 a decision function, in effect giving a ``proof recipe'' which can be instantiated
 when necessary.
 
+One has to translate the problem into an abstract (equivalent) representation, invoke
+the soundness of the decision function which was defined (assuming it returns |true| for
+the AST instance), giving the proof of the given proposition.
+
+Reflection is an overloaded word in this context, since in programming language technology
+reflection is the capability of converting some piece of concrete program syntax into a syntax tree
+object which can be manipulated in the same system. These values (in terms of inductive types representing
+the concrete syntax) can then be translated back into concrete terms, a process which is called reflection.
+
+
+Here we will present two case studies illustrating proof by reflection and how reflection
+(in the programming language sense) can make the technique more usable and accessible.
 
 
 
@@ -70,11 +85,19 @@ open import Data.List hiding (_∷ʳ_)
 
 \subsection{Simple example}
 
-Take for example the property of evenness on natural numbers. One has two
-rules (TODO insert rules), namely the rule that says that zero is even, and the
+Take as an example the property of evenness on natural numbers. One has two
+rules, namely the rule that says that zero is even, and the
 rule that says that if $n$ is even, then $n+2$ is also even.
 
-When translated into an Agda data type, the property of evenness can be expressed
+
+\begin{center}
+\begin{tabular}{ccc}
+\inference[zero-even]{}{|Even 0|}\label{evenzero} & ~~~ & \inference[ss-even]{|Even n|}{|Even (suc (suc n))|}\label{evenzero}
+\end{tabular}
+\end{center}
+
+
+When translated into an Agda data type, the property of evenness can be naturally expressed
 as follows.
 
 
@@ -95,12 +118,12 @@ isEven6 : Even 6
 isEven6 = isEvenSS (isEvenSS (isEvenSS isEvenZ))
 \end{code}
 
-Obviously, this proof tree grows as the natural one would like to show evenness
-for becomes larger.
+Obviously, this proof tree grows as the natural for which one would
+like to show evenness for becomes larger.
 
 A solution here is to use proof by reflection. The basic technique is as follows.
 Define a decision function, called |even?| here, which produces some binary
-value (in our case a |Bool|) depending on if the input is true or not.
+value (in our case a |Bool|) depending on if the input is even or not.
 This function is rather simple in our case.
 
 \begin{code}
@@ -127,7 +150,8 @@ Now that this has been done, if we need a proof that some arbitrary $n$ is even,
 we only need to instantiate |soundnessEven|. Note that the value of $n$ is a hidden
 and automatically inferred argument to |soundnessEven|, and that we also pass
 a proof that |even? n| returns |true| for that particular $n$. Since in a
-dependently typed setting $\beta$-reduction (evaluation) happens in the type system, |refl| is a valid proof. 
+dependently typed setting $\beta$-reduction (evaluation) happens in
+the type system, |refl| is a valid proof.
 
 \begin{code}
 isEven28        : Even 28
