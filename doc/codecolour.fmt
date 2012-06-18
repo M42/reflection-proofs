@@ -12,6 +12,7 @@
 \newcommand{\consymop}[1]{{\color{PineGreen}\mathsf{#1}}}
 \newcommand{\consym}[1]{{\color{PineGreen}\mathsf{#1}}}
 \newcommand{\id}[1]{{\color{blue}\mathsf{#1}}}
+\newcommand{\textlambda}{\ensuremath{\lambda}}
 
 
 %%% colouring by names:
