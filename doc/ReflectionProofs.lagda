@@ -639,7 +639,7 @@ for doing precisely that.
 |proveTautology| calls the |soundness| function, after converting the raw AST (abstract syntax tree)
 Agda gives us representing the goal into our own |BoolExpr n| format. To be able to do this is also
 needs some auxiliary functions such as |freeVars|, which counts the number of variables (needed to
-be able to instantiate the $n$ in |BoolExpr n|), and |stripSo| & |stripPi|, which peel off the telescope
+be able to instantiate the $n$ in |BoolExpr n|), and |stripSo| \& |stripPi|, which peel off the telescope
 type and the function |P| with which we wrap our tautologies. We also need the |concrete2abstract| function,
 which does the actual |Term → BoolExpr n| conversion, when given proofs that the input |Term| adheres to
 certain restrictions (such as only containing the functions |_∧_|, |_∨_| and friends, and only containing
@@ -672,14 +672,14 @@ arguments for the reasons outlined in the previous section.
 
 \begin{code}
 
-not : (b : Bool) → P(b ∨ ¬ b)
-not = quoteGoal e in proveTautology e
+exclMid    : (b : Bool) → P(b ∨ ¬ b)
+exclMid    = quoteGoal e in proveTautology e
 
-peirce : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
-peirce = quoteGoal e in proveTautology e
+peirce     : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
+peirce     = quoteGoal e in proveTautology e
 
-mft : myfavouritetheorem
-mft = quoteGoal e in proveTautology e
+mft        : myfavouritetheorem
+mft        = quoteGoal e in proveTautology e
 \end{code}
 
 
