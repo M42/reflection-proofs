@@ -213,7 +213,8 @@ definition; we use the type |Fin n| to ensure that variables
 (represented by |Atomic|) are always in scope.
 
 Our language supports boolean and, or, not, implication and arbitrary unknown
-boolean formulae represented by the constructor |Atomic|. 
+boolean formulae represented by the constructor |Atomic|. The natural number in
+|Atomic| contains the de Bruijn index of a variable in the environment.
 
 \begin{code}
 data BoolExpr : ℕ → Set where
@@ -239,6 +240,7 @@ boolean expression is a tautology. It does this by evaluating (interpreting)
 the formula's AST. For example, |And| is converted to the boolean function |_∧_|,
 and it's two arguments in turn are recursively interpreted. Here |_∧_|, |_∨_|, |_⇒_| are
 all defined with type |Bool → Bool → Bool|, and |¬_| is of type |Bool → Bool|.
+The interpretation function |⟦_⊢_⟧| is unsurprising.
 
 \ignore{
 \begin{code}
@@ -250,6 +252,9 @@ false ⇒ true  = true
 false ⇒ false = true
 \end{code}
 }
+
+
+
 
 \begin{code}
 ⟦_⊢_⟧ : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
@@ -264,13 +269,21 @@ false ⇒ false = true
 
 
 Note that the interpretation function also requires an environment to be
-provided, which gives maps the free variables to actual boolean values.
+provided, which maps the free variables to actual boolean values. The type of
+the interpretation function ensures that the mapping always contains an entry
+for each free variable.
+
+Now that this has been done, we can move on to defining what it means for a given
+formula to be a tautology. Here we introduce the |So| function, which gives |⊤| if
+its argument is |true|, and |⊥| otherwise. We've actually defined a type isomorphic to |⊥|
+which is parameterised by an error message string, to make it more obvious to the user
+what went wrong, if anything.
+
+
 
 
 
 \begin{code}
-
-
 data Error (a : String) : Set where
 
 So : String → Bool → Set
@@ -279,42 +292,44 @@ So s false = Error s
 
 P : Bool → Set
 P = So "Expression doesn't evaluate to true in this branch."
+\end{code}
 
-bOrNotb : (b : Bool) → b ∨ ¬ b ≡ true
-bOrNotb true  = refl
-bOrNotb false = refl
+Now that we have these helper functions, it's easy to express a tautology. We quantify over
+a few boolean variables, and wrap the formula in our |P| function. If this function can be defined,
+we have proven that the argument to |P| is a tautology, i.e. for each assignment of the free variables
+the entire equation still evaluates to |true|.
 
-bImpb : (b : Bool) → P(b ⇒ b)
-bImpb true  = tt
-bImpb false = tt
+\begin{code}
+b⇒b : (b : Bool) → P(b ⇒ b)
+b⇒b true  = tt
+b⇒b false = tt
+\end{code}
 
--- wouldn't it be nice if we could automate this?
+This seems fine, but as soon as more variables come into play, the proofs we need to construct become
+rather tedious. Take the following formula as an example; it would need 16 cases. Note that this is
+the same formula as in Eqn. \ref{eqn:tauto-example}.
 
--- eventually we'd like to prove these kinds of tautologies:
+\begin{code}
 myfavouritetheorem : Set
 myfavouritetheorem = (p1 q1 p2 q2 : Bool)   →   P  (      (p1 ∨ q1) ∧ (p2 ∨ q2)
                                                       ⇒   (q1 ∨ p1) ∧ (q2 ∨ p2)
                                                    )
+\end{code}
 
--- we'll make some DSL into which we're going to translate theorems
--- (which are actually types of functions), and then use reflection
--- in some unmagical way... see below.
-
-
--- ...and some way to interpret our representation
--- of the formula at hand:
--- this is compile : S → D
+What we would actually like to do, however, is prove the soundness of our decision function |⟦_⊢_⟧|, which would
+do away with the need to manually construct each proof. First we need to give a relation between a term
+of type |BoolExpr n| and |Set|, since theorems in Agda have type |Set|. 
 
 
--- S = BoolExpr (the syntactic realm)
--- D = the domain of our Props
 
--- decision procedure:
--- return whether the given proposition is true
--- this is like our isEvenQ
+\ignore{
+\begin{code}
+data Diff : ℕ → ℕ → Set where
+  Base : ∀ {n}   → Diff n n
+  Step : ∀ {n m} → Diff (suc n) m → Diff n m
+\end{code}
 
--- returns the number of the outermost pi quantified variables.
-
+\begin{code}
 freeVars : Term → ℕ
 freeVars (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = suc (freeVars t)
 freeVars (pi a b)     = 0
@@ -456,20 +471,6 @@ term2boolexpr n (pi t₁ t₂) ()
 term2boolexpr n (sort x)   ()
 term2boolexpr n unknown    ()
 
--- useful for things like Env n → Env m → Env n ⊕ m
-_⊕_ : ℕ → ℕ → ℕ
-zero  ⊕ m = m
-suc n ⊕ m = n ⊕ suc m
-
-data Diff : ℕ → ℕ → Set where
-  Base : ∀ {n}   → Diff n n
-  Step : ∀ {n m} → Diff (suc n) m → Diff n m
-
-
-prependTelescope : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
-prependTelescope .m m (Base  ) b env = P ⟦ env ⊢ b ⟧ 
-prependTelescope n m  (Step y) b env = (a : Bool) → prependTelescope (suc n) m y b (a ∷ env)
-
 zeroId : (n : ℕ) → n ≡ n + 0
 zeroId zero                           = refl
 zeroId (suc  n) with n + 0 | zeroId n
@@ -486,27 +487,38 @@ zero-least : (k n : ℕ) → Diff k (k + n)
 zero-least k zero    = coerceDiff (zeroId k) Base
 zero-least k (suc n) = Step (coerceDiff (succLemma k n) (zero-least (suc k) n))
 
-forallBoolSo : (m : ℕ) → BoolExpr m → Set
-forallBoolSo m b = prependTelescope zero m (zero-least 0 m) b []
+\end{code}
+}
 
-{-
-notice that u is automatically instantiated, since
-there is only one option, namely tt,tt. this is special and
-cool, the type system is doing work for us. Note that this is
-because eta-reduction only is done in the type system for records
-and not for general data types. possibly the reason is because this is
-safe in records because recursion isn't allowed. question for agda-café?
--}
-foo' : {u : ⊤ × ⊤} → ℕ
-foo' = 5
+The function |forallBool| turns a |BoolExpr n| back into something Agda recognises as a theorem.
+First it prepends $n$ binding sites for boolean variables (representing the free variables in the
+formula), after which it calls the decision function, passing the new free variables as the environment.
 
-baz : ℕ
-baz = foo'
+
+\begin{code}
+prependTelescope   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
+prependTelescope   .m m (Base  ) b env = P ⟦ env ⊢ b ⟧ 
+prependTelescope    n m (Step y) b env = (a : Bool) → prependTelescope (suc n) m y b (a ∷ env)
+
+forallBool : (m : ℕ) → BoolExpr m → Set
+forallBool m b = prependTelescope zero m (zero-least 0 m) b []
+\end{code}
+
+\ignore{
+\begin{code}
+-- dependently typed if-statement
+if : {P : Bool → Set} → (b : Bool) → P true → P false → P b
+if true  t f = t
+if false t f = f
 
 -- very much like ⊥-elim, but for Errors.
 Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
 Error-elim ()
 
+\end{code}
+}
+
+\begin{code}
 forallsAcc : {n m : ℕ} → (b : BoolExpr m) → Env n → Diff n m → Set
 forallsAcc b' env (Base  ) = P ⟦ env ⊢ b' ⟧
 forallsAcc b' env (Step y) = forallsAcc b' (true ∷ env) y × forallsAcc b' (false ∷ env) y
@@ -514,12 +526,7 @@ forallsAcc b' env (Step y) = forallsAcc b' (true ∷ env) y × forallsAcc b' (fa
 foralls : {n : ℕ} → (b : BoolExpr n) → Set
 foralls {n} b = forallsAcc b [] (zero-least 0 n)
 
--- dependently typed if-statement
-if : {P : Bool → Set} → (b : Bool) → P true → P false → P b
-if true  t f = t
-if false t f = f
-
-soundnessAcc : {m : ℕ} →
+soundnessAcc :   {m : ℕ} →
                  (b : BoolExpr m) →
                  {n : ℕ} →
                  (env : Env n) →
@@ -534,43 +541,63 @@ soundnessAcc {m} bexp {n} env (Step y) H =
     (soundnessAcc bexp (true  ∷ env) y (proj₁ H))
     (soundnessAcc bexp (false ∷ env) y (proj₂ H))
 
-soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBoolSo n b
+soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBool n b
 soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
+\end{code}
 
+\begin{code}
 concrete2abstract :
-         (t : Term)
-       → {pf : isSoExprQ (stripPi t)}
-       → {pf2 : isBoolExprQ (freeVars t) (stripPi t) pf}
-       → BoolExpr (freeVars t)
+             (t : Term)
+       →     {pf : isSoExprQ (stripPi t)}
+       →     {pf2 : isBoolExprQ (freeVars t) (stripPi t) pf}
+       →     BoolExpr (freeVars t)
 concrete2abstract t {pf} {pf2} = term2boolexpr (freeVars t) (stripSo (stripPi t) pf) pf2
 
-proveTautology : (t : Term) →
-        {pf : isSoExprQ (stripPi t)} →
-        {pf2 : isBoolExprQ (freeVars t) (stripPi t) pf} →
-        let b = concrete2abstract t {pf} {pf2} in
-            {i : foralls b} →
-            forallBoolSo (freeVars t) b
+proveTautology :    (t     : Term) →
+                    {pf    : isSoExprQ (stripPi t)} →
+                    {pf2   : isBoolExprQ (freeVars t) (stripPi t) pf} →
+                    let b = concrete2abstract t {pf} {pf2} in
+                        {i : foralls b} →
+                        forallBool (freeVars t) b
 proveTautology e {pf} {pf2} {i} = soundness {freeVars e} (concrete2abstract e) {i}
-
-anotherTheorem : (a b : Bool) → P(a ∧ b ⇒ b ∧ a)
-anotherTheorem = quoteGoal e in proveTautology e
-
-goalbla2 : (b : Bool) → P(b ∨ true)
-goalbla2 = quoteGoal e in proveTautology e
 
 not : (b : Bool) → P(b ∨ ¬ b)
 not = quoteGoal e in proveTautology e
 
-peirce : (p q  : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
+peirce : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
 peirce = quoteGoal e in proveTautology e
 
 mft : myfavouritetheorem
 mft = quoteGoal e in proveTautology e
-
-
 \end{code}
 
 
+\begin{code}
+{-
+notice that u is automatically instantiated, since
+there is only one option, namely tt,tt. this is special and
+cool, the type system is doing work for us. Note that this is
+because eta-reduction only is done in the type system for records
+and not for general data types. possibly the reason is because this is
+safe in records because recursion isn't allowed. question for agda-café?
+-}
+foo' : {u : ⊤ × ⊤} → ℕ
+foo' = 5
+
+baz : ℕ
+baz = foo'
+\end{code}
+
+
+
+\section{Related Work}
+
+Mention AChlipala and wjzz here.
+
+
+\section{Further Work}
+
+We should continue.
 
 \section{Conclusion}
 
