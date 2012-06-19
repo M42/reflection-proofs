@@ -608,32 +608,51 @@ as in the following example.
 
 
 \begin{code}
+rep          : BoolExpr 2
 
-rep : BoolExpr 2
-rep = Imp (And (Atomic (suc zero)) (Atomic zero)) (Atomic zero)
+someTauto    : (p q : Bool)
+             → P( p ∧ q ⇒ q )
+rep          = Imp (And (Atomic (suc zero)) (Atomic zero)) (Atomic zero)
 
-someTauto : (p q : Bool) → P( p ∧ q ⇒ q )
-someTauto = soundness rep
+someTauto    = soundness rep
 \end{code}
 
 The only thing which is still a pain is that for every formula we'd like a tautology-proof of,
 we have to manually convert the concrete Agda representation (|p ∧ q ⇒ q|, in this case) into our
-abstract syntax (|Imp (And (Atomic (suc zero)) (Atomic zero)) (Atomic zero)| here). This is silly,
+abstract syntax
+(|rep| here). This is silly,
 since we end up typing out the formula twice. We also have to count the number of free variables ourselves,
 and keep track of the de Bruijn indices. This is error-prone given how cluttered the abstract representation
 can get for formulae containing many
 variables. It would be desirable for this process to be automated. In Sec. \ref{sec:addrefl} an approach is
 presented using Agda's recent reflection API.
 
-\section{Adding Reflection}
+\section{Adding Reflection}\label{sec:addrefl}
 
-So far we have 
+In Agda version 2.2.8 a reflection API was added \cite{agda-relnotes-228}. This system introduces some extra
+language constructs, such as |quoteGoal e in t|, which allows the term |t| to refer to |e|, which is instantiated
+to an abstract representation of the type of the term expected wherever |quoteGoal| was placed. Since
+one needs to encode the desired proposition to be proved in the type of the proof object, quoting
+this goal gives us enough information to call the |soundness| function. Here we see 2 helper functions
+for doing precisely that.
+
+|proveTautology| calls the |soundness| function, after converting the raw AST (abstract syntax tree)
+Agda gives us representing the goal into our own |BoolExpr n| format. To be able to do this is also
+needs some auxiliary functions such as |freeVars|, which counts the number of variables (needed to
+be able to instantiate the $n$ in |BoolExpr n|), and |stripSo| & |stripPi|, which peel off the telescope
+type and the function |P| with which we wrap our tautologies. We also need the |concrete2abstract| function,
+which does the actual |Term → BoolExpr n| conversion, when given proofs that the input |Term| adheres to
+certain restrictions (such as only containing the functions |_∧_|, |_∨_| and friends, and only containing
+boolean variables.
+
+The helper functions have been ommitted for brevity, since they are rather verbose and don't add anything
+to the understanding of the subject at hand.
 
 \begin{code}
 concrete2abstract :
-             (t : Term)
-       →     {pf : isSoExprQ (stripPi t)}
-       →     {pf2 : isBoolExprQ (freeVars t) (stripPi t) pf}
+             (t     : Term)
+       →     {pf    : isSoExprQ (stripPi t)}
+       →     {pf2   : isBoolExprQ (freeVars t) (stripPi t) pf}
        →     BoolExpr (freeVars t)
 concrete2abstract t {pf} {pf2} = term2boolexpr (freeVars t) (stripSo (stripPi t) pf) pf2
 
@@ -644,6 +663,14 @@ proveTautology :    (t     : Term) →
                         {i : foralls b} →
                         forallBool (freeVars t) b
 proveTautology e {pf} {pf2} {i} = soundness {freeVars e} (concrete2abstract e) {i}
+
+\end{code}
+
+These are all the ingredients required to automatically prove that formulae are tautologies.
+The following code illustrates the use of the |proveTautology| functions; we can omit the implicit
+arguments for the reasons outlined in the previous section.
+
+\begin{code}
 
 not : (b : Bool) → P(b ∨ ¬ b)
 not = quoteGoal e in proveTautology e
@@ -656,8 +683,10 @@ mft = quoteGoal e in proveTautology e
 \end{code}
 
 
-\begin{code}
-\end{code}
+This shows that the reflection capabilities recently added to Agda are certainly useful for
+automating certain tedious tasks, since the programmer now needn't encode the boolean expression
+twice in a slightly different format, but just lets the conversion happen automatically, without loss
+of expressive power or general applicability of the proofs resulting from |soundness|.
 
 
 
@@ -674,6 +703,9 @@ We should continue.
 
 
 Lorem ipsum dolor sit amet.
+
+\bibliography{refs}{}
+\bibliographystyle{splncs}
 
 
 
