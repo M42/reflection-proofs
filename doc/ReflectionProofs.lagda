@@ -514,9 +514,21 @@ if false t f = f
 -- very much like ⊥-elim, but for Errors.
 Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
 Error-elim ()
-
 \end{code}
 }
+
+Now that we can translate a |BoolExpr n| into a concrete Agda theorem, and we have a way to decide if something
+is true for a given environment, we need to show the soundness of our decision function, and define a notion
+of what it means to be a tautology. That is, we need to be able to show that a formula is true for every
+possible assignment of its variables to |true| or |false|.
+
+The first step in this process is to formalise the idea of a formula being true for all variable assignments.
+This is captured in the functions |foralls| and |forallsAcc|, where |foralls| is the function which bootstraps
+the construction of a tree, where the leaves represent the truth of a proposition given a certain assignment
+of variables. Each time there's a branch in the (fully binary) tree, the left branch at depth $d$ corresponds to
+setting variable with de Bruijn index $d$ to |true|, and the right branch corresponds to setting that variable
+to |false|. |Diff n m| is an auxiliary proof that the process terminates, and that in the end the environments
+will all have $n$ entries, corresponding to the $n$ free variables in a |BoolExpr n|.
 
 \begin{code}
 forallsAcc : {n m : ℕ} → (b : BoolExpr m) → Env n → Diff n m → Set
@@ -525,7 +537,22 @@ forallsAcc b' env (Step y) = forallsAcc b' (true ∷ env) y × forallsAcc b' (fa
 
 foralls : {n : ℕ} → (b : BoolExpr n) → Set
 foralls {n} b = forallsAcc b [] (zero-least 0 n)
+\end{code}
 
+We now have a concept of all environments leading to truth of a proposition. If we require this
+fact as input to a soundness function, we are able to use it to show that the current boolean
+expression is in fact a tautology. We do this in the |soundness| function, where the output should
+have the type given by the previously-defined |prependTelescope| function. This enables us to put a
+call to |soundness| where a proof of something like Eqn. \ref{eqn:tauto-example} is required.
+
+If we look closely at the definition of |soundnessAcc| (which is actually where the work is done; |soundness|
+merely calls |soundnessAcc| with some initial input, namely the |BoolExpr n|, an empty environment, and
+the proof that the environment is the size of the number of free variables), we see that we build up a
+function that, when called with the values assigned to the free variables, builds up the corresponding
+environment and eventually returns the leaf from |foralls| which is the proof that the formula
+is a tautology in that specific case.
+
+\begin{code}
 soundnessAcc :   {m : ℕ} →
                  (b : BoolExpr m) →
                  {n : ℕ} →
@@ -544,6 +571,65 @@ soundnessAcc {m} bexp {n} env (Step y) H =
 soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBool n b
 soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 \end{code}
+
+Notice that |foralls b| is an implicit argument to |soundness|, which might be surprising, since
+it is actually the proof tree representing that the expression is a tautology. The reason this is how it's
+done is because Agda can automatically infer implicit arguments when they are simple record types, such as
+|⊤| and pair in this case. This is illustrated in the following code snippet.
+
+\begin{code}
+{-
+notice that u is automatically instantiated, since
+there is only one option, namely tt,tt. this is special and
+cool, the type system is doing work for us. Note that this is
+because eta-reduction only is done in the type system for records
+and not for general data types. possibly the reason is because this is
+safe in records because recursion isn't allowed. question for agda-café?
+-}
+foo : {u : ⊤ × ⊤} → ℕ
+foo = 5
+
+baz : ℕ
+baz = foo
+\end{code}
+
+Here we see that there is an implicit argument |u| required to |foo|, but in |baz| it's not given.
+This is possible because Agda can infer that |(tt , tt)| is the only term which fits, and therefore
+instantiates it when required. The same principle is used in |soundness|; eventually all that's required
+is a deeply nested pair containing elements of type |⊤|, of which |tt| is the only constructor. If the
+formula isn't a tautology, there's no way to instantiate the proof, since it will have type |⊥|, as a
+result of the use of |So|. In other words, the fact that the proof tree can be constructed corresponds exactly
+to those cases when the expression is a tautology. Therefore, we needn't instantiate |soundness| with a
+manually-crafted tree of |⊤|s, we can just let Agda do the work.
+
+Now, we can prove theorems by calling |soundness b|, where |b| is the representation of the formula
+under consideration. Agda is convinced that the representation does in fact correspond to the concrete formula,
+and also that |soundness| gives a valid proof. If the module passes the type-check, we know our formula
+is both a tautology, and that we have the corresponding proof object at our disposal afterwards,
+as in the following example.
+
+
+\begin{code}
+
+rep : BoolExpr 2
+rep = Imp (And (Atomic (suc zero)) (Atomic zero)) (Atomic zero)
+
+someTauto : (p q : Bool) → P( p ∧ q ⇒ q )
+someTauto = soundness rep
+\end{code}
+
+The only thing which is still a pain is that for every formula we'd like a tautology-proof of,
+we have to manually convert the concrete Agda representation (|p ∧ q ⇒ q|, in this case) into our
+abstract syntax (|Imp (And (Atomic (suc zero)) (Atomic zero)) (Atomic zero)| here). This is silly,
+since we end up typing out the formula twice. We also have to count the number of free variables ourselves,
+and keep track of the de Bruijn indices. This is error-prone given how cluttered the abstract representation
+can get for formulae containing many
+variables. It would be desirable for this process to be automated. In Sec. \ref{sec:addrefl} an approach is
+presented using Agda's recent reflection API.
+
+\section{Adding Reflection}
+
+So far we have 
 
 \begin{code}
 concrete2abstract :
@@ -573,19 +659,6 @@ mft = quoteGoal e in proveTautology e
 
 
 \begin{code}
-{-
-notice that u is automatically instantiated, since
-there is only one option, namely tt,tt. this is special and
-cool, the type system is doing work for us. Note that this is
-because eta-reduction only is done in the type system for records
-and not for general data types. possibly the reason is because this is
-safe in records because recursion isn't allowed. question for agda-café?
--}
-foo' : {u : ⊤ × ⊤} → ℕ
-foo' = 5
-
-baz : ℕ
-baz = foo'
 \end{code}
 
 
