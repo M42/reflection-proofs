@@ -497,8 +497,10 @@ formula), after which it calls the decision function, passing the new free varia
 
 \begin{code}
 prependTelescope   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
-prependTelescope   .m m (Base  ) b env = P ⟦ env ⊢ b ⟧ 
-prependTelescope    n m (Step y) b env = (a : Bool) → prependTelescope (suc n) m y b (a ∷ env)
+prependTelescope   .m m    (Base    ) b env = P ⟦ env ⊢ b ⟧ 
+prependTelescope    n m    (Step y  ) b env =
+  (a : Bool) → prependTelescope (suc n) m y b (a ∷ env)
+  
 
 forallBool : (m : ℕ) → BoolExpr m → Set
 forallBool m b = prependTelescope zero m (zero-least 0 m) b []
@@ -532,8 +534,9 @@ will all have $n$ entries, corresponding to the $n$ free variables in a |BoolExp
 
 \begin{code}
 forallsAcc : {n m : ℕ} → (b : BoolExpr m) → Env n → Diff n m → Set
-forallsAcc b' env (Base  ) = P ⟦ env ⊢ b' ⟧
-forallsAcc b' env (Step y) = forallsAcc b' (true ∷ env) y × forallsAcc b' (false ∷ env) y
+forallsAcc b' env    (Base     ) = P ⟦ env ⊢ b' ⟧
+forallsAcc b' env    (Step y   ) =
+  forallsAcc b' (true ∷ env) y × forallsAcc b' (false ∷ env) y
 
 foralls : {n : ℕ} → (b : BoolExpr n) → Set
 foralls {n} b = forallsAcc b [] (zero-least 0 n)
@@ -578,14 +581,6 @@ done is because Agda can automatically infer implicit arguments when they are si
 |⊤| and pair in this case. This is illustrated in the following code snippet.
 
 \begin{code}
-{-
-notice that u is automatically instantiated, since
-there is only one option, namely tt,tt. this is special and
-cool, the type system is doing work for us. Note that this is
-because eta-reduction only is done in the type system for records
-and not for general data types. possibly the reason is because this is
-safe in records because recursion isn't allowed. question for agda-café?
--}
 foo : {u : ⊤ × ⊤} → ℕ
 foo = 5
 
@@ -595,7 +590,10 @@ baz = foo
 
 Here we see that there is an implicit argument |u| required to |foo|, but in |baz| it's not given.
 This is possible because Agda can infer that |(tt , tt)| is the only term which fits, and therefore
-instantiates it when required. The same principle is used in |soundness|; eventually all that's required
+instantiates it when required. This can be done by the type system for records, since they are not allowed
+to be inductively defined, which would cause possible non-termination.
+
+The same principle is used in |soundness|; eventually all that's required
 is a deeply nested pair containing elements of type |⊤|, of which |tt| is the only constructor. If the
 formula isn't a tautology, there's no way to instantiate the proof, since it will have type |⊥|, as a
 result of the use of |So|. In other words, the fact that the proof tree can be constructed corresponds exactly
