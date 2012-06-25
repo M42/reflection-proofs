@@ -316,10 +316,10 @@ data BoolExpr : ℕ → Set where
         \item Call this |Env n|
     \end{itemize}
 
-    \begin{code}
-        Env   : ℕ → Set
-        Env   = Vec Bool
-    \end{code}
+\begin{code}
+Env   : ℕ  → Set
+Env   = Vec Bool
+\end{code}
 \end{frame}
 
 
@@ -342,16 +342,16 @@ false ⇒ false = true
         \item Needs environment for free variables
     \end{itemize}
 
-    \begin{code}
-        ⟦_⊢_⟧ : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
-        ⟦ env     ⊢ Truth       ⟧ = true
-        ⟦ env     ⊢ Falsehood   ⟧ = false
-        ⟦ env     ⊢ And be be₁  ⟧ =     ⟦ env ⊢ be ⟧     ∧      ⟦ env ⊢ be₁ ⟧
-        ⟦ env     ⊢ Or be be₁   ⟧ =     ⟦ env ⊢ be ⟧     ∨      ⟦ env ⊢ be₁ ⟧
-        ⟦ env     ⊢ Not be      ⟧ = ¬   ⟦ env ⊢ be ⟧
-        ⟦ env     ⊢ Imp be be₁  ⟧ =     ⟦ env ⊢ be ⟧     ⇒      ⟦ env ⊢ be₁ ⟧
-        ⟦ env     ⊢ Atomic n    ⟧ = lookup n env
-    \end{code}
+\begin{code}
+⟦_⊢_⟧ : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
+⟦ env     ⊢ Truth       ⟧ = true
+⟦ env     ⊢ Falsehood   ⟧ = false
+⟦ env     ⊢ And be be₁  ⟧ =     ⟦ env ⊢ be ⟧     ∧      ⟦ env ⊢ be₁ ⟧
+⟦ env     ⊢ Or be be₁   ⟧ =     ⟦ env ⊢ be ⟧     ∨      ⟦ env ⊢ be₁ ⟧
+⟦ env     ⊢ Not be      ⟧ = ¬   ⟦ env ⊢ be ⟧
+⟦ env     ⊢ Imp be be₁  ⟧ =     ⟦ env ⊢ be ⟧     ⇒      ⟦ env ⊢ be₁ ⟧
+⟦ env     ⊢ Atomic n    ⟧ = lookup n env
+\end{code}
 
 \end{frame}
 
@@ -683,22 +683,22 @@ foralls {n} b = forallsAcc b [] (zero-least 0 n)
         \item \ldots thus proving a given formula is a tautology.
         \item Note: |foralls b| is an implicit argument
     \end{itemize}
-    \begin{code}
-        soundnessAcc :   {m : ℕ} → (b : BoolExpr m) →
-                         {n : ℕ} → (env : Env n) →
-                         (d : Diff n m) → forallsAcc b env d →
-                         prependTelescope n m d b env
-        soundnessAcc     bexp     env Base     H with ⟦ env ⊢ bexp ⟧
-        soundnessAcc     bexp     env Base     H | true  = H
-        soundnessAcc     bexp     env Base     H | false = Error-elim H
-        soundnessAcc {m} bexp {n} env (Step y) H =
-            λ a → if {λ b → prependTelescope (suc n) m y bexp (b ∷ env)} a
-                (soundnessAcc bexp (true  ∷ env) y (proj₁ H))
-                (soundnessAcc bexp (false ∷ env) y (proj₂ H))
+\begin{code}
+soundnessAcc :   {m : ℕ} → (b : BoolExpr m) →
+     {n : ℕ} → (env : Env n) →
+     (d : Diff n m) → forallsAcc b env d →
+     prependTelescope n m d b env
+soundnessAcc     bexp     env Base     H with ⟦ env ⊢ bexp ⟧
+soundnessAcc     bexp     env Base     H | true  = H
+soundnessAcc     bexp     env Base     H | false = Error-elim H
+soundnessAcc {m} bexp {n} env (Step y) H =
+    λ a → if {λ b → prependTelescope (suc n) m y bexp (b ∷ env)} a
+        (soundnessAcc bexp (true  ∷ env) y (proj₁ H))
+        (soundnessAcc bexp (false ∷ env) y (proj₂ H))
 
-        soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBool n b
-        soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
-    \end{code}
+soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBool n b
+soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
+\end{code}
 \end{frame}
 
 %Notice that |foralls b| is an implicit argument to |soundness|, which might be surprising, since
@@ -713,13 +713,13 @@ foralls {n} b = forallsAcc b [] (zero-least 0 n)
         \item Unless the formula isn't a tauto, in which case no value can be constructed
     \end{itemize}
 
-    \begin{code}
-        foo : {u : ⊤ × ⊤} → ℕ
-        foo = 5
+\begin{code}
+foo : {u : ⊤ × ⊤} → ℕ
+foo = 5
 
-        baz : ℕ
-        baz = foo
-    \end{code}
+baz : ℕ
+baz = foo
+\end{code}
 \end{frame}
 
 %Here we see that there is an implicit argument |u| required to |foo|, but in |baz| it's not given.
@@ -812,7 +812,7 @@ exclMid    = quoteGoal e in proveTautology e
 peirce     : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
 peirce     = quoteGoal e in proveTautology e
 
-mft        : myfavouritetheorem
+mft        : t1
 mft        = quoteGoal e in proveTautology e
 \end{code}
 
