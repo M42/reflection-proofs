@@ -232,7 +232,7 @@ isEven8772      = soundnessEven refl
     \begin{itemize}
         \item Often it's useful 
     \end{itemize}
-\end{frame}<++>
+\end{frame}
 
 
 % Now we can easily get a proof that arbitrarily large numbers are even,
@@ -734,61 +734,84 @@ baz = foo
 %to those cases when the expression is a tautology. Therefore, we needn't instantiate |soundness| with a
 %manually-crafted tree of |⊤|s, we can just let Agda do the work.
 
-Now, we can prove theorems by calling |soundness b|, where |b| is the representation of the formula
-under consideration. Agda is convinced that the representation does in fact correspond to the concrete formula,
-and also that |soundness| gives a valid proof. If the module passes the type-check, we know our formula
-is both a tautology, and that we have the corresponding proof object at our disposal afterwards,
-as in the following example.
+%Now, we can prove theorems by calling |soundness b|, where |b| is the representation of the formula
+%under consideration. Agda is convinced that the representation does in fact correspond to the concrete formula,
+%and also that |soundness| gives a valid proof. If the module passes the type-check, we know our formula
+%is both a tautology, and that we have the corresponding proof object at our disposal afterwards,
+%as in the following example.
 
 
+\begin{frame}
+    \begin{itemize}
+        \item Now we can prove tautologies using just |soundness boolexp|
+        \item Still not ideal though, we need to represent the formula manually\ldots
+        \item Cluttered, error-prone
+        \item Reflection API to the rescue!
+    \end{itemize}
 \begin{code}
 rep          : BoolExpr 2
 
 someTauto    : (p q : Bool)
              → P( p ∧ q ⇒ q )
-rep          = Imp (And (Atomic (suc zero)) (Atomic zero)) (Atomic zero)
+rep          = Imp  (And    (Atomic (suc zero))
+                            (Atomic zero))
+                    (Atomic zero)
 
 someTauto    = soundness rep
 \end{code}
+\end{frame}
 
-The only thing which is still a pain is that for every formula we'd like a tautology-proof of,
-we have to manually convert the concrete Agda representation (|p ∧ q ⇒ q|, in this case) into our
-abstract syntax
-(|rep| here). This is silly,
-since we end up typing out the formula twice. We also have to count the number of free variables ourselves,
-and keep track of the de Bruijn indices. This is error-prone given how cluttered the abstract representation
-can get for formulae containing many
-variables. It would be desirable for this process to be automated. In Sec. \ref{sec:addrefl} an approach is
-presented using Agda's recent reflection API.
+%The only thing which is still a pain is that for every formula we'd like a tautology-proof of,
+%we have to manually convert the concrete Agda representation (|p ∧ q ⇒ q|, in this case) into our
+%abstract syntax
+%(|rep| here). This is silly,
+%since we end up typing out the formula twice. We also have to count the number of free variables ourselves,
+%and keep track of the de Bruijn indices. This is error-prone given how cluttered the abstract representation
+%can get for formulae containing many
+%variables. It would be desirable for this process to be automated. In Sec. \ref{sec:addrefl} an approach is
+%presented using Agda's recent reflection API.
 
 \section{Adding Reflection}\label{sec:addrefl}
 
-In Agda version 2.2.8 a reflection API was added \cite{agda-relnotes-228}. This system introduces some extra
-language constructs, such as |quoteGoal e in t|, which allows the term |t| to refer to |e|, which is instantiated
-to an abstract representation of the type of the term expected wherever |quoteGoal| was placed. Since
-one needs to encode the desired proposition to be proved in the type of the proof object, quoting
-this goal gives us enough information to call the |soundness| function. Here we see 2 helper functions
-for doing precisely that.
+%In Agda version 2.2.8 a reflection API was added \cite{agda-relnotes-228}. This system introduces some extra
+%language constructs, such as |quoteGoal e in t|, which allows the term |t| to refer to |e|, which is instantiated
+%to an abstract representation of the type of the term expected wherever |quoteGoal| was placed. Since
+%one needs to encode the desired proposition to be proved in the type of the proof object, quoting
+%this goal gives us enough information to call the |soundness| function. Here we see 2 helper functions
+%for doing precisely that.
 
-|proveTautology| calls the |soundness| function, after converting the raw AST (abstract syntax tree)
-Agda gives us representing the goal into our own |BoolExpr n| format. To be able to do this is also
-needs some auxiliary functions such as |freeVars|, which counts the number of variables (needed to
-be able to instantiate the $n$ in |BoolExpr n|), and |stripSo| \& |stripPi|, which peel off the telescope
-type and the function |P| with which we wrap our tautologies. We also need the |concrete2abstract| function,
-which does the actual |Term → BoolExpr n| conversion, when given proofs that the input |Term| adheres to
-certain restrictions (such as only containing the functions |_∧_|, |_∨_| and friends, and only containing
-boolean variables.
+%|proveTautology| calls the |soundness| function, after converting the raw AST (abstract syntax tree)
+%Agda gives us representing the goal into our own |BoolExpr n| format. To be able to do this is also
+%needs some auxiliary functions such as |freeVars|, which counts the number of variables (needed to
+%be able to instantiate the $n$ in |BoolExpr n|), and |stripSo| \& |stripPi|, which peel off the telescope
+%type and the function |P| with which we wrap our tautologies. We also need the |concrete2abstract| function,
+%which does the actual |Term → BoolExpr n| conversion, when given proofs that the input |Term| adheres to
+%certain restrictions (such as only containing the functions |_∧_|, |_∨_| and friends, and only containing
+%boolean variables.
 
-The helper functions have been ommitted for brevity, since they are rather verbose and don't add anything
-to the understanding of the subject at hand.
+%The helper functions have been ommitted for brevity, since they are rather verbose and don't add anything
+%to the understanding of the subject at hand.
 
+\begin{frame}
+    \begin{itemize}
+        \item Agda now includes the |quoteGoal| keyword\cite{agda-relnotes-228}
+        \item Produces an expression of type |Term|
+        \item We can convert this to our |BoolExpr| type, using a few helpers
+        \item Note all the implicit arguments
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+\scriptsize{
 \begin{code}
 concrete2abstract :
              (t     : Term)
        →     {pf    : isSoExprQ (stripPi t)}
        →     {pf2   : isBoolExprQ (freeVars t) (stripPi t) pf}
        →     BoolExpr (freeVars t)
-concrete2abstract t {pf} {pf2} = term2boolexpr (freeVars t) (stripSo (stripPi t) pf) pf2
+concrete2abstract t {pf} {pf2} = term2boolexpr  (freeVars t)
+                                                (stripSo (stripPi t) pf)
+                                                pf2
 
 proveTautology :    (t     : Term) →
                     {pf    : isSoExprQ (stripPi t)} →
@@ -796,16 +819,22 @@ proveTautology :    (t     : Term) →
                     let b = concrete2abstract t {pf} {pf2} in
                         {i : foralls b} →
                         forallBool (freeVars t) b
-proveTautology e {pf} {pf2} {i} = soundness {freeVars e} (concrete2abstract e) {i}
+proveTautology e {pf} {pf2} {i} = soundness     {freeVars e}
+                                                (concrete2abstract e) {i}
 
 \end{code}
+}
+\end{frame}
 
-These are all the ingredients required to automatically prove that formulae are tautologies.
-The following code illustrates the use of the |proveTautology| functions; we can omit the implicit
-arguments for the reasons outlined in the previous section.
+%These are all the ingredients required to automatically prove that formulae are tautologies.
+%The following code illustrates the use of the |proveTautology| functions; we can omit the implicit
+%arguments for the reasons outlined in the previous section.
 
+\begin{frame}
+    \begin{itemize}
+        \item This allows generating proofs as follows
+    \end{itemize}
 \begin{code}
-
 exclMid    : (b : Bool) → P(b ∨ ¬ b)
 exclMid    = quoteGoal e in proveTautology e
 
@@ -815,28 +844,37 @@ peirce     = quoteGoal e in proveTautology e
 mft        : t1
 mft        = quoteGoal e in proveTautology e
 \end{code}
+\end{frame}
 
 
-This shows that the reflection capabilities recently added to Agda are certainly useful for
-automating certain tedious tasks, since the programmer now needn't encode the boolean expression
-twice in a slightly different format, but just lets the conversion happen automatically, without loss
-of expressive power or general applicability of the proofs resulting from |soundness|.
+%This shows that the reflection capabilities recently added to Agda are certainly useful for
+%automating certain tedious tasks, since the programmer now needn't encode the boolean expression
+%twice in a slightly different format, but just lets the conversion happen automatically, without loss
+%of expressive power or general applicability of the proofs resulting from |soundness|.
 
 
 
 \section{Related Work}
 
-Mention AChlipala and wjzz here.
+\begin{frame}
+    \begin{itemize}
+        \item Adam Chlipala's proof-by-reflection tutorial for Coq\cite{chlipala2011certified}
+        \item Wojciech Jedynak's ring solver in Agda\cite{ringsolver}
+    \end{itemize}
+\end{frame}
 
 
 \section{Further Work}
 
-We should continue.
+\begin{frame}
+    Some ideas for using reflection:
+    \begin{itemize}
+        \item Converting well-typed lambda terms into SKI or CPS
+        \item Generating embedding-projection pairs for generic programming, given some datatype definition
+        \item \dots % TODO
+    \end{itemize}
+\end{frame}
 
-\section{Conclusion}
-
-
-Lorem ipsum dolor sit amet.
 
 \bibliography{refs}{}
 \bibliographystyle{splncs}
