@@ -14,4 +14,4 @@
 \newcommand{\defin}[1]{{\color{blue}\mathsf{#1}}}
 \newcommand{\textlambda}{\ensuremath{\lambda}}
 
-
+\newcommand{\fld}[1]{{\color{purple}\mathsf{#1}}}
