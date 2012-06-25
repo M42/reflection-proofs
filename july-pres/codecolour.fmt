@@ -1,0 +1,17 @@
+%%% needed packages.
+
+\usepackage{color}
+
+
+
+%%% the colouring configuration.
+
+\newcommand{\ty}[1]{{\color{red}\mathsf{#1}}}
+\newcommand{\con}[1]{{\color{green}\mathsf{#1}}}
+\newcommand{\consymop}[1]{{\color{green}\mathsf{#1}}}
+\newcommand{\consym}[1]{{\color{green}\mathsf{#1}}}
+\newcommand{\id}[1]{{\color{blue}\mathsf{#1}}}
+\newcommand{\defin}[1]{{\color{blue}\mathsf{#1}}}
+\newcommand{\textlambda}{\ensuremath{\lambda}}
+
+
