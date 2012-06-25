@@ -1,5 +1,7 @@
 \documentclass{beamer}
 
+\usetheme{Warsaw}
+
 %include polycode.fmt
 %if style == newcode
 %else
@@ -51,12 +53,12 @@ open import Data.List hiding (_∷ʳ_)
 \mathlig{ -->}{\longrightarrow}
 
 
+\usepackage{url}
 
 \author{Paul van der Walt \and Wouter Swierstra}
 \date{\today}
 \title{Proof by reflection by reflection}
-\institute{
-\email{W.S.Swierstra@@uu.nl}, \email{paul@@denknerd.org}\\
+\institute{\url{paul@@denknerd.org}, \url{W.S.Swierstra@@uu.nl}\\
 Department of Computer Science, Utrecht University
 }
 
@@ -69,34 +71,43 @@ Department of Computer Science, Utrecht University
 
 \section{Introduction}
 
-This is an intro.
+\begin{frame}
+
+
+\tableofcontents
+
+\end{frame}
 
 \section{Proof by Reflection}
 
 \begin{frame}
 
-Test
-
+    \begin{itemize}
+        \item Idea behind proof by reflection
+        \item Don't construct direct proof (derivation tree) for each instance
+        \item Define a ``proof recipe'' to generate proofs for instances
+        \item 2 case studies follow
+    \end{itemize}
 
 \end{frame}
 
-The idea behind proof by reflection is that one needn't produce a large proof tree
-for each proof instance one wants to have, but rather proves the soundness of
-a decision function, in effect giving a ``proof recipe'' which can be instantiated
-when necessary.
-
-One has to translate the problem into an abstract (equivalent) representation, invoke
-the soundness of the decision function which was defined (assuming it returns |true| for
-the AST instance), giving the proof of the given proposition.
-
-Reflection is an overloaded word in this context, since in programming language technology
-reflection is the capability of converting some piece of concrete program syntax into a syntax tree
-object which can be manipulated in the same system. These values (in terms of inductive types representing
-the concrete syntax) can then be translated back into concrete terms, a process which is called reflection.
-
-
-Here we will present two case studies illustrating proof by reflection and how reflection
-(in the programming language sense) can make the technique more usable and accessible.
+% The idea behind proof by reflection is that one needn't produce a large proof tree
+% for each proof instance one wants to have, but rather proves the soundness of
+% a decision function, in effect giving a ``proof recipe'' which can be instantiated
+% when necessary.
+% 
+% One has to translate the problem into an abstract (equivalent) representation, invoke
+% the soundness of the decision function which was defined (assuming it returns |true| for
+% the AST instance), giving the proof of the given proposition.
+% 
+% Reflection is an overloaded word in this context, since in programming language technology
+% reflection is the capability of converting some piece of concrete program syntax into a syntax tree
+% object which can be manipulated in the same system. These values (in terms of inductive types representing
+% the concrete syntax) can then be translated back into concrete terms, a process which is called reflection.
+% 
+% 
+% Here we will present two case studies illustrating proof by reflection and how reflection
+% (in the programming language sense) can make the technique more usable and accessible.
 
 
 
@@ -105,73 +116,101 @@ Here we will present two case studies illustrating proof by reflection and how r
 
 \subsection{Simple Example: Evenness}
 
-Take as an example the property of evenness on natural numbers. One has two
-rules, namely the rule that says that zero is even, and the
-rule that says that if $n$ is even, then $n+2$ is also even.
+\begin{frame}
+    \begin{itemize}
+        \item Example: property of evenness on naturals ($[0 .. n]$)
+        \item Property is defined using two rules
+        \item Proofs can become cumbersome
+    \end{itemize}
 
 
-\begin{center}
-\begin{tabular}{ccc}
-\inference[zero-even]{}{|Even 0|}\label{evenzero} & ~~~ & \inference[ss-even]{|Even n|}{|Even (suc (suc n))|}\label{evenzero}
-\end{tabular}
-\end{center}
+    \begin{center}
+        \begin{tabular}{ccc}
+            \inference[zero-even]{}{|Even 0|}\label{evenzero} & ~~~ & \inference[ss-even]{|Even n|}{|Even (suc (suc n))|}\label{evenzero}
+        \end{tabular}
+    \end{center}
+\end{frame}
 
 
-When translated into an Agda data type, the property of evenness can be naturally expressed
-as follows.
-
-
+\begin{frame}[fragile]
+    \begin{itemize}
+        \item Translation into Agda type
+    \end{itemize}
 \begin{code}
 data Even      : ℕ → Set where
   isEvenZ      :                          Even 0
   isEvenSS     : {n : ℕ} → Even n     →   Even (2 + n)
 \end{code}
+\end{frame}
 
-If one has to use these rules to produce the proof tree each time a
-proof of evenness is required for some $N$, this would be tedious.
-One would need to unfold the number using |isEvenSS| half the size
-of the number. For example, to prove that 6 is even, one would require
-the following proof.
-
+\begin{frame}[fragile]
+    \begin{itemize}
+        \item Producing derivation tree each time is painful
+    \end{itemize}
 \begin{code}
 isEven6 : Even 6
 isEven6 = isEvenSS (isEvenSS (isEvenSS isEvenZ))
 \end{code}
+\begin{itemize}
+    \item Solution: proof by reflection
+\end{itemize}
+\end{frame}
 
-Obviously, this proof tree grows as the natural for which one would
-like to show evenness for becomes larger.
 
-A solution here is to use proof by reflection. The basic technique is as follows.
-Define a decision function, called |even?| here, which produces some binary
-value (in our case a |Bool|) depending on if the input is even or not.
-This function is rather simple in our case.
+%If one has to use these rules to produce the proof tree each time a
+%proof of evenness is required for some $N$, this would be tedious.
+%One would need to unfold the number using |isEvenSS| half the size
+%of the number. For example, to prove that 6 is even, one would require
+%the following proof.
+
+
+% Obviously, this proof tree grows as the natural for which one would
+% like to show evenness for becomes larger.
+% 
+% A solution here is to use proof by reflection. The basic technique is as follows.
+% Define a decision function, called |even?| here, which produces some binary
+% value (in our case a |Bool|) depending on if the input is even or not.
+% This function is rather simple in our case.
+
+\begin{frame}
+    \begin{itemize}
+        \item Proof by reflection: a proof recipe
+        \item Step 1: define a decision function
+        \item Direct translation of rules
+    \end{itemize}
 
 \begin{code}
 even? : ℕ → Bool
-even? zero              = true
-even? (suc zero)        = false
-even? (suc (suc n))     = even? n
+even? 0              = true
+even? 1              = false
+even? (2 + n)        = even? n
 \end{code}
+\end{frame}
 
-Now one can ask whether some value is even or not. Next we need to show that
-our decision function actually tells the truth. We need to prove that
-|even?| returns |true| iff a proof |Even n| can be produced. This is done in
-the function |soundnessEven|. What is actually happening here is that we are
-giving a recipe for proof trees such as the one we manually defined for |isEven6|.
-
+\begin{frame}
+    \begin{itemize}
+        \item Step 2: prove the soundness of decision function
+        \item i.e. if decision function returns |true| for some $n$, show that
+            |Even n| holds
+    \end{itemize}
 \begin{code}
 soundnessEven : {n : ℕ} → even? n ≡ true → Even n
 soundnessEven {0}              refl        = isEvenZ
 soundnessEven {1}              ()
 soundnessEven {suc (suc n)}    s           = isEvenSS (soundnessEven s)
 \end{code}
+\begin{itemize}
+    \item Looking closely, this is the ``recipe'' for a direct proof like |isEven6|
+\end{itemize}
+\end{frame}
 
-Now that this has been done, if we need a proof that some arbitrary $n$ is even,
-we only need to instantiate |soundnessEven|. Note that the value of $n$ is a hidden
-and automatically inferred argument to |soundnessEven|, and that we also pass
-a proof that |even? n| returns |true| for that particular $n$. Since in a
-dependently typed setting $\beta$-reduction (evaluation) happens in
-the type system, |refl| is a valid proof.
+
+\begin{frame}
+    \begin{itemize}
+        \item Now any proof that some $n$ is |Even| is easy
+        \item All that's needed is |even? n ≡ true|, then it's proven
+        \item Agda trick (thanks to $\beta$-reduction in type system:
+    \end{itemize}
 
 \begin{code}
 isEven28        : Even 28
@@ -180,13 +219,20 @@ isEven28        = soundnessEven refl
 isEven8772      : Even 8772
 isEven8772      = soundnessEven refl
 \end{code}
+\begin{itemize}
+    \item Note that for some $n$ which is uneven, we cannot prove |Even n|.
+        The proof obligation reduces to |true ≡ false| in this case.
+\end{itemize}
+\end{frame}
 
-Now we can easily get a proof that arbitrarily large numbers are even,
-without having to explicitly write down a large proof tree. Note that
-it's not possible to write something with type |Even 27|, or any other uneven
-number, since the parameter |even? n ≡ true| cannot be instantiated, thus
-|refl| won't be accepted where it is in the |Even 28| example. This will
-produce a |true !≡ false| type error at compile-time.
+
+
+% Now we can easily get a proof that arbitrarily large numbers are even,
+% without having to explicitly write down a large proof tree. Note that
+% it's not possible to write something with type |Even 27|, or any other uneven
+% number, since the parameter |even? n ≡ true| cannot be instantiated, thus
+% |refl| won't be accepted where it is in the |Even 28| example. This will
+% produce a |true !≡ false| type error at compile-time.
 
 
 
