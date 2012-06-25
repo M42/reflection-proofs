@@ -15,7 +15,7 @@ $(TEXFILE): $(LHSFILE) $(FMTS) refs.bib
 	lhs2TeX --agda -o $@ $<
 
 extracted/ReflectionProofs.agda: $(LHSFILE)
-	lhs2TeX  --newcode ReflectionProofs.lagda --agda  --no-pragmas > $@
+	lhs2TeX  --newcode $(LHSFILE) --agda  --no-pragmas > $@
 
 check: extracted/ReflectionProofs.agda
 	agda $< --include-path=$(AGDA_SRC) --include-path=extracted
