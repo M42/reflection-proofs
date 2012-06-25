@@ -82,8 +82,8 @@ Department of Computer Science, Utrecht University
 
 \begin{frame}
 
+    Idea behind proof by reflection:
     \begin{itemize}
-        \item Idea behind proof by reflection
         \item Don't construct direct proof (derivation tree) for each instance
         \item Define a ``proof recipe'' to generate proofs for instances
         \item 2 case studies follow
@@ -116,7 +116,7 @@ Department of Computer Science, Utrecht University
 
 \subsection{Simple Example: Evenness}
 
-\begin{frame}
+\begin{frame}{Case study: even naturals}
     \begin{itemize}
         \item Example: property of evenness on naturals ($[0 .. n]$)
         \item Property is defined using two rules
@@ -134,7 +134,7 @@ Department of Computer Science, Utrecht University
 
 \begin{frame}[fragile]
     \begin{itemize}
-        \item Translation into Agda type
+        \item Translation of rules into Agda datatype
     \end{itemize}
 \begin{code}
 data Even      : ℕ → Set where
@@ -200,7 +200,7 @@ soundnessEven {1}              ()
 soundnessEven {suc (suc n)}    s           = isEvenSS (soundnessEven s)
 \end{code}
 \begin{itemize}
-    \item Looking closely, this is the ``recipe'' for a direct proof like |isEven6|
+    \item Looking closely, this is the (structural) ``recipe'' for a direct proof like |isEven6|
 \end{itemize}
 \end{frame}
 
@@ -209,7 +209,7 @@ soundnessEven {suc (suc n)}    s           = isEvenSS (soundnessEven s)
     \begin{itemize}
         \item Now any proof that some $n$ is |Even| is easy
         \item All that's needed is |even? n ≡ true|, then it's proven
-        \item Agda trick (thanks to $\beta$-reduction in type system:
+        \item Agda trick (thanks to $\beta$-reduction in type system):
     \end{itemize}
 
 \begin{code}
@@ -219,20 +219,30 @@ isEven28        = soundnessEven refl
 isEven8772      : Even 8772
 isEven8772      = soundnessEven refl
 \end{code}
+\vskip -5mm
 \begin{itemize}
     \item Note that for some $n$ which is uneven, we cannot prove |Even n|.
         The proof obligation reduces to |true ≡ false| in this case.
+    \item We can even hide the |refl|
 \end{itemize}
 \end{frame}
 
-\subsection{Summarising proof by reflection}
-
 \begin{frame}
-    In summary:
-    \begin{itemize}
-        \item Often it's useful 
-    \end{itemize}
+\begin{code}
+Oh : Bool → Set
+Oh true    = ⊤
+Oh false   = ⊥
+
+soundEven : {n : ℕ} → {oh : Oh (even? n)} → Even n
+soundEven {zero}              {tt}   = isEvenZ
+soundEven {suc zero}          {()}   -- absurd
+soundEven {suc (suc n)}       {oh}   = isEvenSS (soundEven {n} {oh})
+
+isEven12     : Even 12
+isEven12     = soundEven
+\end{code}
 \end{frame}
+
 
 
 % Now we can easily get a proof that arbitrarily large numbers are even,
@@ -846,6 +856,23 @@ mft        = quoteGoal e in proveTautology e
 \end{code}
 \end{frame}
 
+\subsection{Summarising proof by reflection}
+
+\begin{frame}
+    In summary:
+    \begin{itemize}
+        \item Define abstract representation of proposition
+        \item Decide if a particular instance holds
+        \item Show soundness of decision
+        \item ``Reflect'' abstract representation back to concrete proposition
+    \end{itemize}
+    Our contribution in this process:
+    \begin{itemize}
+        \item Automatically generate abstract representation
+        \item Saves tedium, frustration and redundancy
+    \end{itemize}
+    
+\end{frame}
 
 %This shows that the reflection capabilities recently added to Agda are certainly useful for
 %automating certain tedious tasks, since the programmer now needn't encode the boolean expression
