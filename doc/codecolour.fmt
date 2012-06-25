@@ -12,32 +12,7 @@
 \newcommand{\consymop}[1]{{\color{PineGreen}\mathsf{#1}}}
 \newcommand{\consym}[1]{{\color{PineGreen}\mathsf{#1}}}
 \newcommand{\id}[1]{{\color{blue}\mathsf{#1}}}
+\newcommand{\defin}[1]{{\color{blue}\mathsf{#1}}}
 \newcommand{\textlambda}{\ensuremath{\lambda}}
 
-
-%%% colouring by names:
-
-%format Even = "\ty{Even}"
-%format even? = "\id{even?}"
-%format soundnessEven = "\id{soundnessEven}"
-%format isEven6 = "\id{isEven6}"
-%format isEven28 = "\id{isEven28}"
-%format isEven8772 = "\id{isEven8772}"
-%format zero = "\con{zero}"
-%format suc = "\con{suc}"
-%format refl = "\con{refl}"
-%format true = "\con{true}"
-%format false = "\con{false}"
-%format isEvenSS = "\con{isEvenSS}"
-%format isEvenZ = "\con{isEvenZ}"
-%format ℕ = "\ty{ℕ}"
-%format Bool = "\ty{Bool}"
-
-
-
-
-%%%% some aliases.
-
-%format or = "\ensuremath{\vee}"
-%format neg = "\ensuremath{\neg}"
 

@@ -5,6 +5,7 @@
 %else
 %include agda.fmt
 %include codecolour.fmt
+%include generated-colour.fmt
 %endif
 
 \newcommand{\ignore}[1]{}

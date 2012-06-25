@@ -7,9 +7,11 @@ PDF=$(TEXFILE:.tex=.pdf)
 FMTS=$(wildcard *.fmt)
 
 $(PDF): $(TEXFILE)
-	rubber --pdf $<
+	-rubber --pdf $<
 
 $(TEXFILE): $(LHSFILE) $(FMTS) refs.bib
+	-rm *.agdai -fv # this is a terrible hack. module loading is broken :(
+	agda --lagda $(LHSFILE) --include-path=. --include-path=/home/paul/lib-0.6-agda/src > generated-colour.fmt
 	lhs2TeX --agda -o $@ $<
 
 extracted/ReflectionProofs.agda: $(LHSFILE)
