@@ -2,3 +2,5 @@ generated-colour.fmt
 ReflectionProofs.pdf
 ReflectionProofs.tex
 *~
+*.vrb
+splncs.bst
