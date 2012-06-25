@@ -15,3 +15,9 @@
 \newcommand{\textlambda}{\ensuremath{\lambda}}
 
 \newcommand{\fld}[1]{{\color{purple}\mathsf{#1}}}
+
+
+\newcommand{\goal}[1]{\ensuremath{#1}}
+
+%format (HOLE x)      = "\goal{?_{" x "}}"
+
