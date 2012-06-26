@@ -9,7 +9,7 @@ FMTS=$(wildcard *.fmt)
 $(PDF): $(TEXFILE)
 	rubber --pdf $<
 
-$(TEXFILE): $(LHSFILE) $(FMTS) refs.bib
+$(TEXFILE): $(LHSFILE) $(FMTS) refs.bib beamercolorthemebordeaux.sty
 	lhs2TeX --agda -o $@ $<
 
 extracted/ReflectionProofs.agda: $(LHSFILE)

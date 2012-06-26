@@ -1,6 +1,10 @@
 \documentclass{beamer}
 
 \usetheme{Warsaw}
+\setbeamertemplate{itemize items}[default]
+\setbeamertemplate{enumerate items}[default]
+\usecolortheme{bordeaux}
+
 
 %include polycode.fmt
 %if style == newcode
@@ -91,23 +95,6 @@ Department of Computer Science, Utrecht University
 
 \end{frame}
 
-% The idea behind proof by reflection is that one needn't produce a large proof tree
-% for each proof instance one wants to have, but rather proves the soundness of
-% a decision function, in effect giving a ``proof recipe'' which can be instantiated
-% when necessary.
-% 
-% One has to translate the problem into an abstract (equivalent) representation, invoke
-% the soundness of the decision function which was defined (assuming it returns |true| for
-% the AST instance), giving the proof of the given proposition.
-% 
-% Reflection is an overloaded word in this context, since in programming language technology
-% reflection is the capability of converting some piece of concrete program syntax into a syntax tree
-% object which can be manipulated in the same system. These values (in terms of inductive types representing
-% the concrete syntax) can then be translated back into concrete terms, a process which is called reflection.
-% 
-% 
-% Here we will present two case studies illustrating proof by reflection and how reflection
-% (in the programming language sense) can make the technique more usable and accessible.
 
 
 
@@ -157,20 +144,6 @@ isEven6 = isEvenSS (isEvenSS (isEvenSS isEvenZ))
 \end{frame}
 
 
-%If one has to use these rules to produce the proof tree each time a
-%proof of evenness is required for some $N$, this would be tedious.
-%One would need to unfold the number using |isEvenSS| half the size
-%of the number. For example, to prove that 6 is even, one would require
-%the following proof.
-
-
-% Obviously, this proof tree grows as the natural for which one would
-% like to show evenness for becomes larger.
-% 
-% A solution here is to use proof by reflection. The basic technique is as follows.
-% Define a decision function, called |even?| here, which produces some binary
-% value (in our case a |Bool|) depending on if the input is even or not.
-% This function is rather simple in our case.
 
 \begin{frame}
     \begin{itemize}
@@ -211,7 +184,6 @@ soundnessEven {suc (suc n)}    s           = isEvenSS (soundnessEven s)
         \item All that's needed is |even? n ≡ true|, then it's proven
         \item Agda trick (thanks to $\beta$-reduction in type system):
     \end{itemize}
-
 \begin{code}
 isEven28        : Even 28
 isEven28        = soundnessEven refl
@@ -219,7 +191,6 @@ isEven28        = soundnessEven refl
 isEven8772      : Even 8772
 isEven8772      = soundnessEven refl
 \end{code}
-\vskip -5mm
 \begin{itemize}
     \item Note that for some $n$ which is uneven, we cannot prove |Even n|.
         The proof obligation reduces to |true ≡ false| in this case.
@@ -245,14 +216,6 @@ isEven12     = soundEven
 
 
 
-% Now we can easily get a proof that arbitrarily large numbers are even,
-% without having to explicitly write down a large proof tree. Note that
-% it's not possible to write something with type |Even 27|, or any other uneven
-% number, since the parameter |even? n ≡ true| cannot be instantiated, thus
-% |refl| won't be accepted where it is in the |Even 28| example. This will
-% produce a |true !≡ false| type error at compile-time.
-
-
 
 \subsection{Second Example: Boolean Tautologies}
 
@@ -276,30 +239,6 @@ isEven12     = soundEven
 \end{align}
 \end{frame}
 
-% Another example of an application of the proof by reflection technique is
-% boolean expressions which are a tautology. We will follow the same recipe
-% as for even naturals.
-
-%Take as an example the boolean formula in equation \ref{eqn:tauto-example}.
-
-
-%It is trivial to see that this is a tautology, but proving this fact using basic
-%equivalence rules for booleans would be rather tedious. It's even worse if we want
-%to check if the formula always holds by trying all possible variable assignments,
-%since this will give $2^n$ cases, where $n$ is the number of variables.
-
-%To try to automate this process, we'll follow a similar approach to the one given
-%above for proving evenness of arbitrary (even) naturals.
-
-%We start off by defining an inductive data type to represent
-%boolean expressions with $n$ free variables,
-%using de Bruijn indices.  There isn't anything surprising about this
-%definition; we use the type |Fin n| to ensure that variables
-%(represented by |Atomic|) are always in scope.
-
-%Our language supports boolean and, or, not, implication and arbitrary unknown
-%boolean formulae represented by the constructor |Atomic|. The natural number in
-%|Atomic| contains the de Bruijn index of a variable in the environment.
 
 \begin{frame}
     \begin{itemize}
@@ -365,17 +304,6 @@ false ⇒ false = true
 
 \end{frame}
 
-%Note that the interpretation function also requires an environment to be
-%provided, which maps the free variables to actual boolean values. The type of
-%the interpretation function ensures that the mapping always contains an entry
-%for each free variable.
-
-%Now that this has been done, we can move on to defining what it means for a given
-%formula to be a tautology. Here we introduce the |So| function, which gives |⊤| if
-%its argument is |true|, and |⊥| otherwise. We've actually defined a type isomorphic to |⊥|
-%which is parameterised by an error message string, to make it more obvious to the user
-%what went wrong, if anything.
-
 
 \begin{frame}
     \begin{itemize}
@@ -418,20 +346,6 @@ pf = (HOLE 0)
 \end{spec}
 \end{frame}
 
-%Now that we have these helper functions, it's easy to express a tautology. We quantify over
-%a few boolean variables, and wrap the formula in our |P| function. If this function can be defined,
-%we have proven that the argument to |P| is a tautology, i.e. for each assignment of the free variables
-%the entire equation still evaluates to |true|.
-
-
-%This seems fine, but as soon as more variables come into play, the proofs we need to construct become
-%rather tedious. Take the following formula as an example; it would need 16 cases. Note that this is
-%the same formula as in Eqn. \ref{eqn:tauto-example}.
-
-
-%What we would actually like to do, however, is prove the soundness of our decision function |⟦_⊢_⟧|, which would
-%do away with the need to manually construct each proof. First we need to give a relation between a term
-%of type |BoolExpr n| and |Set|, since theorems in Agda have type |Set|. 
 
 
 
@@ -621,9 +535,6 @@ forallBool : (m : ℕ) → BoolExpr m → Set
 forallBool m b = prependTelescope zero m (zero-least 0 m) b []
 \end{code}
 \end{frame}
-%The function |forallBool| turns a |BoolExpr n| back into something Agda recognises as a theorem.
-%First it prepends $n$ binding sites for boolean variables (representing the free variables in the
-%formula), after which it calls the decision function, passing the new free variables as the environment.
 
 
 
@@ -640,18 +551,6 @@ Error-elim ()
 \end{code}
 }
 
-%Now that we can translate a |BoolExpr n| into a concrete Agda theorem, and we have a way to decide if something
-%is true for a given environment, we need to show the soundness of our decision function, and define a notion
-%of what it means to be a tautology. That is, we need to be able to show that a formula is true for every
-%possible assignment of its variables to |true| or |false|.
-
-%The first step in this process is to formalise the idea of a formula being true for all variable assignments.
-%This is captured in the functions |foralls| and |forallsAcc|, where |foralls| is the function which bootstraps
-%the construction of a tree, where the leaves represent the truth of a proposition given a certain assignment
-%of variables. Each time there's a branch in the (fully binary) tree, the left branch at depth $d$ corresponds to
-%setting variable with de Bruijn index $d$ to |true|, and the right branch corresponds to setting that variable
-%to |false|. |Diff n m| is an auxiliary proof that the process terminates, and that in the end the environments
-%will all have $n$ entries, corresponding to the $n$ free variables in a |BoolExpr n|.
 
 \begin{frame}
     \begin{itemize}
@@ -673,19 +572,6 @@ foralls {n} b = forallsAcc b [] (zero-least 0 n)
 \end{code}
 \end{frame}
 
-
-%We now have a concept of all environments leading to truth of a proposition. If we require this
-%fact as input to a soundness function, we are able to use it to show that the current boolean
-%expression is in fact a tautology. We do this in the |soundness| function, where the output should
-%have the type given by the previously-defined |prependTelescope| function. This enables us to put a
-%call to |soundness| where a proof of something like Eqn. \ref{eqn:tauto-example} is required.
-
-%If we look closely at the definition of |soundnessAcc| (which is actually where the work is done; |soundness|
-%merely calls |soundnessAcc| with some initial input, namely the |BoolExpr n|, an empty environment, and
-%the proof that the environment is the size of the number of free variables), we see that we build up a
-%function that, when called with the values assigned to the free variables, builds up the corresponding
-%environment and eventually returns the leaf from |foralls| which is the proof that the formula
-%is a tautology in that specific case.
 
 \begin{frame}
     \begin{itemize}
@@ -711,11 +597,6 @@ soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 \end{code}
 \end{frame}
 
-%Notice that |foralls b| is an implicit argument to |soundness|, which might be surprising, since
-%it is actually the proof tree representing that the expression is a tautology. The reason this is how it's
-%done is because Agda can automatically infer implicit arguments when they are simple record types, such as
-%|⊤| and pair in this case. This is illustrated in the following code snippet.
-
 \begin{frame}{Why implicit arguments work}
     \begin{itemize}
         \item Agda can instantiate simple record types
@@ -731,24 +612,6 @@ baz : ℕ
 baz = foo
 \end{code}
 \end{frame}
-
-%Here we see that there is an implicit argument |u| required to |foo|, but in |baz| it's not given.
-%This is possible because Agda can infer that |(tt , tt)| is the only term which fits, and therefore
-%instantiates it when required. This can be done by the type system for records, since they are not allowed
-%to be inductively defined, which would cause possible non-termination.
-
-%The same principle is used in |soundness|; eventually all that's required
-%is a deeply nested pair containing elements of type |⊤|, of which |tt| is the only constructor. If the
-%formula isn't a tautology, there's no way to instantiate the proof, since it will have type |⊥|, as a
-%result of the use of |So|. In other words, the fact that the proof tree can be constructed corresponds exactly
-%to those cases when the expression is a tautology. Therefore, we needn't instantiate |soundness| with a
-%manually-crafted tree of |⊤|s, we can just let Agda do the work.
-
-%Now, we can prove theorems by calling |soundness b|, where |b| is the representation of the formula
-%under consideration. Agda is convinced that the representation does in fact correspond to the concrete formula,
-%and also that |soundness| gives a valid proof. If the module passes the type-check, we know our formula
-%is both a tautology, and that we have the corresponding proof object at our disposal afterwards,
-%as in the following example.
 
 
 \begin{frame}
@@ -771,36 +634,9 @@ someTauto    = soundness rep
 \end{code}
 \end{frame}
 
-%The only thing which is still a pain is that for every formula we'd like a tautology-proof of,
-%we have to manually convert the concrete Agda representation (|p ∧ q ⇒ q|, in this case) into our
-%abstract syntax
-%(|rep| here). This is silly,
-%since we end up typing out the formula twice. We also have to count the number of free variables ourselves,
-%and keep track of the de Bruijn indices. This is error-prone given how cluttered the abstract representation
-%can get for formulae containing many
-%variables. It would be desirable for this process to be automated. In Sec. \ref{sec:addrefl} an approach is
-%presented using Agda's recent reflection API.
 
 \section{Adding Reflection}\label{sec:addrefl}
 
-%In Agda version 2.2.8 a reflection API was added \cite{agda-relnotes-228}. This system introduces some extra
-%language constructs, such as |quoteGoal e in t|, which allows the term |t| to refer to |e|, which is instantiated
-%to an abstract representation of the type of the term expected wherever |quoteGoal| was placed. Since
-%one needs to encode the desired proposition to be proved in the type of the proof object, quoting
-%this goal gives us enough information to call the |soundness| function. Here we see 2 helper functions
-%for doing precisely that.
-
-%|proveTautology| calls the |soundness| function, after converting the raw AST (abstract syntax tree)
-%Agda gives us representing the goal into our own |BoolExpr n| format. To be able to do this is also
-%needs some auxiliary functions such as |freeVars|, which counts the number of variables (needed to
-%be able to instantiate the $n$ in |BoolExpr n|), and |stripSo| \& |stripPi|, which peel off the telescope
-%type and the function |P| with which we wrap our tautologies. We also need the |concrete2abstract| function,
-%which does the actual |Term → BoolExpr n| conversion, when given proofs that the input |Term| adheres to
-%certain restrictions (such as only containing the functions |_∧_|, |_∨_| and friends, and only containing
-%boolean variables.
-
-%The helper functions have been ommitted for brevity, since they are rather verbose and don't add anything
-%to the understanding of the subject at hand.
 
 \begin{frame}
     \begin{itemize}
@@ -836,9 +672,6 @@ proveTautology e {pf} {pf2} {i} = soundness     {freeVars e}
 }
 \end{frame}
 
-%These are all the ingredients required to automatically prove that formulae are tautologies.
-%The following code illustrates the use of the |proveTautology| functions; we can omit the implicit
-%arguments for the reasons outlined in the previous section.
 
 \begin{frame}
     \begin{itemize}
@@ -873,12 +706,6 @@ mft        = quoteGoal e in proveTautology e
     \end{itemize}
     
 \end{frame}
-
-%This shows that the reflection capabilities recently added to Agda are certainly useful for
-%automating certain tedious tasks, since the programmer now needn't encode the boolean expression
-%twice in a slightly different format, but just lets the conversion happen automatically, without loss
-%of expressive power or general applicability of the proofs resulting from |soundness|.
-
 
 
 \section{Related Work}
