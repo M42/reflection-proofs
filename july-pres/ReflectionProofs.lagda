@@ -747,6 +747,17 @@ mft        = quoteGoal e in proveTautology e
         \item \dots % TODO
     \end{itemize}
 \end{frame}
+\section{Other Work}
+
+\begin{frame}
+    Some other things, in the meantime:
+    
+    \begin{itemize}
+    \item Implemented \texttt{intro-with} in emacs mode
+    \item Auto-generate syntax-highlighting rules for Literate Agda files
+    \item DotFS
+    \end{itemize}
+\end{frame}
 
 
 \bibliography{refs}{}
