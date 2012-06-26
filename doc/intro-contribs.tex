@@ -84,7 +84,26 @@ using the reflection API, along with a few simple, practical examples, and a few
 converting between the Agda Term type and your own (restrictive, property-ensuring) AST.
 
 There are also a number of examples showing how the reflection API can be put to good use, for example the 
-technique of proof by reflection
+technique of proof by reflection, automatic generation of embedding-projection functions for generic programming,
+and the automatic conversion of well-typed lambda terms into an expression using SKI combinators.
+
+The Bove-Capretta method now can also be invoked on a function which doesn't pass the termination check,
+internally rewriting the function and requiring only the extra proof obligation that the Bove-Capretta method
+would otherwise also require. This is in fact edging towards a framework for defining tactics, such as is commonplace
+in other proof assistants such as Coq, since in fact the compiler is rewriting the function at compile-time
+and one doesn't need to manually rewrite functions or have large derivation trees explicitly written
+out in your code base. The same goes for the even-naturals or boolean-tautology provers; these can be
+seen as tactics for Agda. In fact, we think this is an interesting avenue to pursue, since one of the larger
+obstacles to using Agda for life-sized projects is the often cumbersome and tedious proofs that need to be
+done manually or by combining properties from the standard library instead of just discharging them by calling a
+tactic.
+
+
+Finally, a few minor modifications to the Agda code base were introduced during this project which make an
+Agda programmer's life slightly less painful, such as the automatic expansion of a with-clause, and the
+generation of an in-scope-symbols list which is useful for automatic formatting and colouring of Literate
+Agda using the LHS2\TeX\ system developed by Andres L\"oh, and widely used by the Haskell and Agda community for
+laying out and formatting Haskell and Agda code in articles and presentations.
 
 
 
