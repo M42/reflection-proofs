@@ -1,5 +1,12 @@
 \documentclass[a4paper]{article}
 
+\usepackage{a4wide}
+
+
+\usepackage{hyperref}
+\usepackage{url}
+
+
 \author{Paul van der Walt\footnote{\url{paul@denknerd.org}}}
 \date{\today}
 \title{Exploring Agda's New Reflection API}
@@ -45,11 +52,39 @@ proof derivation tree for each specific instance (some true statement which can 
 defines a ``proof recipe'' which can be invoked for any specific instance. This is easily illustrated with properties
 such as the evenness of natural numbers, or the fact that certain boolean expressions are tautologies.
 
-Another 
+Another example is allowing conversion of well-typed STLC (simply typed lambda calculus) terms to be quoted and
+then automatically converted to SKI-combinators or CPS (continuation passing style). This is both an illustration of
+the powers of dependently typed programming (since one can define a datatype such that only well-typed lambda
+functions can be expressed) as a nice example of what can be done with a powerful reflection mechanism.
+
+Generic programming is another technique which stands to benefit from good reflective capabilities, since even
+though using an intermediate generic representation type for datatypes allows the definition of generic functions
+which aid reuse of code, often embedding-projection functions still need to be defined between this representation type
+and all the instances of datatypes one wants to be able to use with the generic functions. If one only needs to
+pass the (quoted) datatype definition to a function which generates an EP-pair of functions which can be unquoted,
+this process could be completely automated. Often defining such EP-pairs is a rather mechanical and tedious process
+anyway.
+
+Finally certain design patterns could possibly be abstracted away using reflection. Take the Bove-Capretta method
+as an example, where non-terminating functions (at least, those that doterminate but that don't pass the
+termination checker because of a complex recursion structure) can be rewritten to include an ``auxiliary'' argument
+which does decrease structurally on each recursive call; this could possibly be generated at compile-time, so
+the programmer needn't do the rewriting manually, only the proof obligation that would otherwise be the result of the
+BC method would need to be given.
 
 
 \section{Contributions}
 
+
+This project has contributed a number of tangible results to the Agda ecosystem. The first of which, which is possibly
+the most useful but least academically interesting, is a user-friendly manual to using the Reflection API. The Agda
+release notes do include a short summary of the datatypes and functions involved, but in practise it takes quite some
+frustrating hours to familiarise oneself with the way the AST is put together. This thesis contains a section on
+using the reflection API, along with a few simple, practical examples, and a few tips and tricks for effectively
+converting between the Agda Term type and your own (restrictive, property-ensuring) AST.
+
+There are also a number of examples showing how the reflection API can be put to good use, for example the 
+technique of proof by reflection
 
 
 
