@@ -16,3 +16,4 @@
 \newcommand{\textlambda}{\ensuremath{\lambda}}
 
 
+\newcommand{\fld}[1]{{\color{red}\mathsf{#1}}}
