@@ -6,12 +6,19 @@
 
 %%% the colouring configuration.
 
+
+\definecolor{bordeaux}{rgb}{0.8,0.02,0.27}
+\definecolor{darkbordeaux}{rgb}{0.4,0.01,0.135}
+\definecolor{darkpurple}{rgb}{0.6,0,0.6}
+
 \newcommand{\ty}[1]{{\color{red}\mathsf{#1}}}
-\newcommand{\con}[1]{{\color{green}\mathsf{#1}}}
-\newcommand{\consymop}[1]{{\color{green}\mathsf{#1}}}
-\newcommand{\consym}[1]{{\color{green}\mathsf{#1}}}
-\newcommand{\id}[1]{{\color{blue}\mathsf{#1}}}
-\newcommand{\defin}[1]{{\color{blue}\mathsf{#1}}}
+\newcommand{\con}[1]{{\color{darkpurple}\mathsf{#1}}}
+% \newcommand{\consymop}[1]{{\color{green}\mathsf{#1}}}
+% \newcommand{\consym}[1]{{\color{green}\mathsf{#1}}}
+% \newcommand{\id}[1]{{\color{bordeuax}\mathsf{#1}}}
+\newcommand{\defin}[1]{{\color{darkbordeaux}\mathsf{#1}}}
+
+
 \newcommand{\textlambda}{\ensuremath{\lambda}}
 
 \newcommand{\fld}[1]{{\color{purple}\mathsf{#1}}}
