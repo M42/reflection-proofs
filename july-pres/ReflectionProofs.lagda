@@ -82,6 +82,18 @@ Department of Computer Science, Utrecht University
 
 \end{frame}
 
+\begin{frame}
+
+\begin{itemize}
+\item My project: explore reflection API (new since Agda 2.2.8)
+\item Document it properly
+\item Give neat examples of how it can be used
+
+\end{itemize}
+
+
+\end{frame}
+
 \section{Proof by Reflection}
 
 \begin{frame}
@@ -215,6 +227,21 @@ isEven12     = soundEven
 \end{frame}
 
 
+\begin{frame}{Why the implicit arguments work}
+    \begin{itemize}
+        \item Agda can automatically instantiate simple record types (this is safe)
+        \item Decision tree is a nested pair of |⊤|-values
+        \item Unless the natural isn't even, in which case no value can be constructed
+    \end{itemize}
+
+\begin{code}
+foo : {u : ⊤ × ⊤} → ℕ
+foo = 5
+
+baz : ℕ
+baz = foo
+\end{code}
+\end{frame}
 
 
 \subsection{Second Example: Boolean Tautologies}
@@ -597,21 +624,6 @@ soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 \end{code}
 \end{frame}
 
-\begin{frame}{Why implicit arguments work}
-    \begin{itemize}
-        \item Agda can instantiate simple record types
-        \item Decision tree is a nested pair of |\top|-values
-        \item Unless the formula isn't a tauto, in which case no value can be constructed
-    \end{itemize}
-
-\begin{code}
-foo : {u : ⊤ × ⊤} → ℕ
-foo = 5
-
-baz : ℕ
-baz = foo
-\end{code}
-\end{frame}
 
 
 \begin{frame}
@@ -724,7 +736,14 @@ mft        = quoteGoal e in proveTautology e
     Some ideas for using reflection:
     \begin{itemize}
         \item Converting well-typed lambda terms into SKI or CPS
+        \begin{itemize}
+\item Nice illustration of DTP and reflection (one can express constraints in datatype)
+        \end{itemize}
         \item Generating embedding-projection pairs for generic programming, given some datatype definition
+        \begin{itemize}
+\item Might need a little embellishment to the compiler
+        \end{itemize}
+        \item Bove-Capretta method, automatically
         \item \dots % TODO
     \end{itemize}
 \end{frame}
