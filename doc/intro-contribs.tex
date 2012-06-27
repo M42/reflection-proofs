@@ -28,28 +28,27 @@ the tangible contributions made, including planned and future (as yet unimplemen
 \section{Introduction}
 
 The aim of this project is to explore the new (since version 2.2.8) reflection API included in the Agda
-compiler, and come up with a number of neat examples of its applications. Reflection in programming language
+compiler, and come up with a number of novel examples of its applications. Reflection in programming language
 terms means that one can convert concrete syntax of the language (terms and expressions, etc.) into an abstract
-representation (usually some parsed tree; this process is often referred to as ``quoting'')
+representation (usually some abstract syntax tree; this process is often referred to as ``quoting'')
 which can be traversed, inspected and modified using the same programming
 language. Usually (but not always) languages supporting reflection have the possibility to
 ``unquote'' again, effectively
-converting the abstract representation of the expression back into something the compiler
-can turn into runnable code. Using this technique is often referred to as metaprogramming,
-since one can inspect (``reflect'' on) the code of the program at run-time, and alter behaviour
+converting the abstract representation of the expression back into concrete syntax. Using this technique is often referred to as meta programming,
+since one is programming with programs: one can alter behaviour
 or instantiate specific functionality (possibly from a more general template) at run- or compile-time.
 
 This technique provides many interesting possibilities for easing a programmer's life, and in
-this project a number of such options will be explored and implemented as illustrations. A number of illustrative
+this project a number of illustrative
 examples are presented on how one can effectively use reflection. 
 This immediately brings us to the contributions of this work:
 
 \begin{itemize}
-  \item First, possibly the most useful but least academically
-interesting contribution, is a user-friendly manual to using the
+  \item First, possibly the most useful contribution -- but least 
+interesting academically -- is a user-friendly manual to using the
 Reflection API. The Agda release notes\cite{agda-relnotes-228} do
-include a short summary of the datatypes and functions involved, but
-in practise it takes quite some frustrating hours to familiarise
+include a short summary of the data types and functions involved, but
+in practice it takes quite some frustrating hours to familiarise
 oneself with the way the AST is put together. This thesis contains a
 section on using the reflection API, along with a few simple,
 practical examples, and a few tips and tricks for effectively
@@ -59,8 +58,7 @@ restrictive, property-ensuring) AST.
 can benefit from using reflection in the programming language
 sense. The idea here is that instead of producing a specific proof
 derivation tree for each specific instance (some true statement which
-can be produced using the rules), one defines a ``proof recipe'' which
-can be invoked for any specific instance. This is easily illustrated
+can be produced using the rules), one defines an algorithm that computes a proof object for every given problem instance. This is easily illustrated
 with properties such as the evenness of natural numbers, or the fact
 that certain boolean expressions are tautologies. Proof by reflection,
 plus the advantages of using reflection, are laid out here, including
@@ -68,18 +66,20 @@ an example implementation.
   \item Another example is allowing untyped STLC (simply typed lambda
 calculus) terms to be quoted, type- and scope-checked, and then
 automatically converted to SKI-combinators or CPS (continuation
-passing style). This is both an illustration of the powers of
-dependently typed programming (since one can define a datatype such
-that only well-typed, well-scoped lambda terms can be expressed) as a
+passing style) transformed. This is both an illustration of the powers of
+dependently typed programming -- one can define a data type such
+that only well-typed, well-scoped lambda terms can be expressed, and the 
+powerful type system allows calculation of the quoted term's type, so the transformation
+is type-safe -- as a
 nice example of what can be done with a powerful reflection mechanism.
   \item Generic programming is another technique which stands to
-benefit from good reflective capabilities, since even though using an
-intermediate generic representation type for datatypes allows the
+benefit from good reflective capabilities. Even though using an
+intermediate generic representation type for data types allows the
 definition of generic functions that aid reuse of code, often
 embedding-projection functions still need to be defined between this
-representation type and all the instances of datatypes one wants to be
-able to use with the generic functions. If one only needs to pass the
-(quoted) datatype definition to a function which generates an EP-pair
+representation type and all the instances of data types one wants to be
+able to support. If one only needs to pass the
+(quoted) data type definition to a function which generates an EP-pair
 of functions which can be unquoted, this process could be completely
 automated. Often defining such EP-pairs is a rather mechanical and
 tedious process anyway.
@@ -88,8 +88,7 @@ reflection. Take the Bove-Capretta method as an example, where
 non-terminating functions (at least, those that do terminate but that
 don't pass the termination checker because of a complex recursion
 structure) can be rewritten to include an auxiliary argument which
-decreases structurally on each recursive call; this can
-be modification can be done at compile-time, so the programmer doesn't
+decreases structurally on each recursive call; this modification can be done at compile-time, so the programmer doesn't
 need to do the rewriting manually, only the proof obligation that
 would otherwise be
 the result of the BC method would need to be given.  This is in fact
