@@ -6,7 +6,7 @@ PDF=$(TEXFILE:.tex=.pdf)
 FMTS=$(wildcard *.fmt)
 
 $(PDF): $(TEXFILE)
-	rubber --pdf $<
+	rubber -v --pdf $<
 
 $(TEXFILE): $(LHSFILE) $(FMTS) refs.bib beamercolorthemebordeaux.sty
 	lhs2TeX --agda -o $@ $<
