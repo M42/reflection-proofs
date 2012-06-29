@@ -1,5 +1,4 @@
-AGDA_SRC=/home/paul/lib-0.6-agda/src
-
+include agda_src.mk
 
 LHSFILE=$(wildcard *.lagda)
 TEXFILE=$(LHSFILE:.lagda=.tex)
@@ -28,6 +27,6 @@ pdfshow: $(PDF)
 
 symbols:
 	-rm *.agdai -fv # this is a terrible hack. module loading is broken :(
-	agda --lagda $(LHSFILE) --include-path=. --include-path=/home/paul/lib-0.6-agda/src > generated-colour.fmt
+	agda --lagda $(LHSFILE) --include-path=. --include-path=$(AGDA_SRC) > generated-colour.fmt
 
 .PHONY: clean pdfshow symbols
