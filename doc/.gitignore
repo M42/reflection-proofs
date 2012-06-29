@@ -1,3 +1,4 @@
 *.pdf
 ReflectionProofs.tex
 generated-colour.fmt
+agda_src.mk

@@ -3,3 +3,4 @@ ReflectionProofs.pdf
 ReflectionProofs.tex
 *~
 *.vrb
+agda_src.mk
