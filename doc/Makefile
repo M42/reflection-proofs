@@ -26,7 +26,7 @@ pdfshow: $(PDF)
 	if [ -x /usr/bin/xpdf ] ; then xpdf $<; fi &
 
 symbols:
-	-rm *.agdai -fv # this is a terrible hack. module loading is broken :(
+	-rm -fv *.agdai # this is a terrible hack. module loading is broken :(
 	agda --lagda $(LHSFILE) --include-path=. --include-path=$(AGDA_SRC) > generated-colour.fmt
 
 .PHONY: clean pdfshow symbols
