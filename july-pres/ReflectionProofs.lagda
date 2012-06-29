@@ -101,7 +101,7 @@ Department of Computer Science, Utrecht University
     Idea behind proof by reflection:
     \begin{itemize}
         \item Don't construct direct proof (derivation tree) for each instance
-        \item Define a ``proof recipe'' to generate proofs for instances
+        \item Define an algorithm to generate proofs for instances
         \item 2 case studies follow
     \end{itemize}
 
@@ -159,7 +159,7 @@ isEven6 = isEvenSS (isEvenSS (isEvenSS isEvenZ))
 
 \begin{frame}
     \begin{itemize}
-        \item Proof by reflection: a proof recipe
+        \item Proof by reflection: a proof algorithm
         \item Step 1: define a decision function
         \item Direct translation of rules
     \end{itemize}
@@ -185,7 +185,7 @@ soundnessEven {1}              ()
 soundnessEven {suc (suc n)}    s           = isEvenSS (soundnessEven s)
 \end{code}
 \begin{itemize}
-    \item Looking closely, this is the (structural) ``recipe'' for a direct proof like |isEven6|
+    \item Looking closely, this is the (structural) algorithm for a direct proof like |isEven6|
 \end{itemize}
 \end{frame}
 
