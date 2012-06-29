@@ -125,7 +125,7 @@ Department of Computer Science, Utrecht University
 
     \begin{center}
         \begin{tabular}{ccc}
-            \inference[zero-even]{}{|Even 0|}\label{evenzero} & ~~~ & \inference[ss-even]{|Even n|}{|Even (suc (suc n))|}\label{evenzero}
+            \inference[zero-even]{}{|Even 0|}\label{evenzero} & ~~~ & \inference[ss-even]{|Even n|}{|Even (suc (suc n))|}\label{evenss}
         \end{tabular}
     \end{center}
 \end{frame}
