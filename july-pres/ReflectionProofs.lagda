@@ -82,11 +82,6 @@ Department of Computer Science, Utrecht University
 
 \end{frame}
 
-\begin{frame}
-
-
-
-\end{frame}
 \section{Crash-course on Dependently Typed Programming}
 
 \begin{frame}
@@ -430,8 +425,9 @@ false ⇒ false = true
 \begin{frame}
     \begin{itemize}
         \item Before actually proving soundness of this function, some helpers are needed
-        \item |So| maps |true| to |⊤| and |false| to |⊥|
+        \item |P| maps |true| to |⊤| and |false| to |⊥|
     \end{itemize}
+    \ignore{
 \begin{code}
 
 data Error (a : String) : Set where
@@ -443,6 +439,7 @@ So s false = Error s
 P : Bool → Set
 P = So "expression isn't true"
 \end{code}
+}
 \end{frame}
 
 
@@ -456,13 +453,16 @@ P = So "expression isn't true"
 b⇒b : (b : Bool) → P(b ⇒ b)
 b⇒b true  = tt
 b⇒b false = tt
-
+\end{code}
+\pause
+\vskip -10mm
+\begin{code}
 t1 : Set
 t1 = (p1 q1 p2 q2 : Bool)   →   P  (      (p1 ∨ q1) ∧ (p2 ∨ q2)
                                       ⇒   (q1 ∨ p1) ∧ (q2 ∨ p2)
                                    )
 \end{code}
-\vskip -5mm
+\vskip -10mm
 \begin{spec}
 pf : t1
 pf = (HOLE 0)
@@ -728,17 +728,16 @@ soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 
 \begin{frame}
     \begin{itemize}
-        \item Next, skipped: proving soundness of interpretation function
+        \item Skipped: proving soundness of interpretation function
         \item Now we can prove tautologies using just |soundness b| with $b$ an expression
         \item Still not ideal though, we need to represent the formula manually\ldots
 \begin{code}
 rep          : BoolExpr 2
 
-someTauto    :      (p q : Bool)
-             →      P ( p ∧ q ⇒ q )
-rep          = Imp  (And    (Atomic (suc zero))
-                            (Atomic zero))
-                    (Atomic zero)
+someTauto    : (p q : Bool)       →      P ( p ∧ q ⇒ q )
+rep          =                           Imp  (And    (Atomic (suc zero))
+                                                      (Atomic zero))
+                                              (Atomic zero)
 
 someTauto    = soundness rep
 \end{code}
@@ -827,11 +826,12 @@ mft        = quoteGoal e in proveTautology e
 \section{Further Work}
 
 \begin{frame}
-    Some ideas for using reflection:
+    Some future ideas for using reflection:
     \begin{itemize}
         \item Well-typed lambda term rewriting % : eg. into SKI or CPS (continuation passing style)
         \begin{itemize}
             \item Nice illustration of DTP and reflection (one can express constraints in datatype of lambda terms)
+            \item Contrast with Template Haskell, for example
         \end{itemize}
         \item Generating embedding-projection pairs for generic programming, given some datatype definition
         \begin{itemize}
@@ -847,13 +847,16 @@ mft        = quoteGoal e in proveTautology e
     \begin{itemize}
         \item Adam Chlipala's proof-by-reflection tutorial for Coq\cite{chlipala2011certified}
         \item Wojciech Jedynak's ring solver in Agda\cite{ringsolver}
+        \item \url{http://github.com/toothbrush/reflection-proofs}
     \end{itemize}
+    \end{frame}
+    \begin{frame}{Bibliography}
+\bibliography{refs}{}
+\bibliographystyle{splncs}
 \end{frame}
 
 
 
-\bibliography{refs}{}
-\bibliographystyle{splncs}
 
 
 
