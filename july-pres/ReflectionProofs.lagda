@@ -60,7 +60,7 @@ open import Data.List hiding (_∷ʳ_)
 \usepackage{url}
 
 \author{Paul van der Walt \and Wouter Swierstra}
-\date{\today}
+\date{July 4, 2012}
 \title{Proof by reflection by reflection}
 \institute{\url{paul@@denknerd.org}, \url{W.S.Swierstra@@uu.nl}\\
 Department of Computer Science, Utrecht University
@@ -84,20 +84,102 @@ Department of Computer Science, Utrecht University
 
 \begin{frame}
 
+
+
+\end{frame}
+\section{Crash-course on Dependently Typed Programming}
+
+\begin{frame}
 \begin{itemize}
-\item My project: explore reflection API (new since Agda 2.2.8)
-\item Document it properly
-\item Give neat examples of how it can be used
-
+    \item In Haskell/ML: clear separation types vs. values
+    \item Example:
 \end{itemize}
+\begin{code}
+fac : 
+\end{code}
+\end{frame}
+
+\begin{frame}
+    \begin{itemize}
+        \item In DTP, types may depend on values
+        \item Profound implications
+        \item Usual example: | Vec A n |
+        \item |n| may be arbitrary value, unkown at compile-time
+            \pause
+        \item We can encode proofs as values; use them as type arguments
+        \item Eg: |isEven 6 == true|
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \begin{itemize}
+        \item Therefore, DTP can be used as a logic
+        \item Interlude: what is intuitionistic logic?
+            \pause
+        \item We must require \alert{total}, \alert{terminating} functions
+        \item Why? Total: implies no crashes, functions are defined on all inputs
+        \item Terminating: we may not prove |false|
+    \end{itemize}
+\begin{code}
+nonsense : \bot
+nonsense = nonsense
+\end{code}
+\begin{spec}
+falsity : \bot -> Anything
+\end{spec}
+\end{frame}
+
+\begin{frame}
+    \begin{itemize}
+        \item Simple example of dependent type
+    \end{itemize}
+\begin{code}
+data Vec (A : Set) \dots
+\end{code}
+\begin{itemize}
+    \item A number of interesting things here
+    \item |Vec A| is a family of types, indexed by naturals
+    \item For each $n$, |Vec A n| is a type
+    \item $\Rightarrow$ lists with differing lengths have different types
+\end{itemize}
+\end{frame}
 
 
+\begin{frame}
+    \begin{itemize}
+        \item This makes pattern-matching more interesting
+        \item Head of non-empty list (note: crashes in Haskell)
+    \end{itemize}
+\begin{code}
+head. .. 
+\end{code}
+\begin{itemize}
+    \item Now, if we try |head []| we get a type-error at compile-time
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+    \begin{itemize}
+        \item Coq (INRIA et al) and Agda (Chalmers) are implementations of constructive logic using dependent types
+            \pause
+        \item My project: explore reflection API (new since Agda 2.2.8)
+        \item Document it properly
+        \item Give neat examples of how it can be used
+            \pause
+        \item Question: what can we automate? Is the reflection system powerful enough?
+        \item Intro definitions by unquoting not yet possible
+        \item Inspect functions and their cases also not yet possible
+    \end{itemize}
 \end{frame}
 
 \section{Proof by Reflection}
 
 \begin{frame}
 
+    \begin{block}{Note}
+        Has nothing to do with programming language reflection (quote / unquote and friends).
+    \end{block}
+\pause
     Idea behind proof by reflection:
     \begin{itemize}
         \item Don't construct direct proof (derivation tree) for each instance
@@ -144,6 +226,7 @@ data Even      : ℕ → Set where
 
 \begin{frame}[fragile]
     \begin{itemize}
+        \item This is an example of a proof in Agda
         \item Producing derivation tree each time is painful
     \end{itemize}
 \begin{code}
@@ -198,7 +281,7 @@ soundnessEven {suc (suc n)}    s           = isEvenSS (soundnessEven s)
     \end{itemize}
 \begin{code}
 isEven28        : Even 28
-isEven28        = soundnessEven refl
+isEven28        = soundnessEven {28} refl
 
 isEven8772      : Even 8772
 isEven8772      = soundnessEven refl
@@ -206,42 +289,42 @@ isEven8772      = soundnessEven refl
 \begin{itemize}
     \item Note that for some $n$ which is uneven, we cannot prove |Even n|.
         The proof obligation reduces to |true ≡ false| in this case.
-    \item We can even hide the |refl|
+    \item We can even hide the |refl| (skipped)
 \end{itemize}
 \end{frame}
 
-\begin{frame}
-\begin{code}
-Oh : Bool → Set
-Oh true    = ⊤
-Oh false   = ⊥
-
-soundEven : {n : ℕ} → {oh : Oh (even? n)} → Even n
-soundEven {zero}              {tt}   = isEvenZ
-soundEven {suc zero}          {()}   -- absurd
-soundEven {suc (suc n)}       {oh}   = isEvenSS (soundEven {n} {oh})
-
-isEven12     : Even 12
-isEven12     = soundEven
-\end{code}
-\end{frame}
-
-
-\begin{frame}{Why the implicit arguments work}
-    \begin{itemize}
-        \item Agda can automatically instantiate simple record types (this is safe)
-        \item Decision tree is a nested pair of |⊤|-values
-        \item Unless the natural isn't even, in which case no value can be constructed
-    \end{itemize}
-
-\begin{code}
-foo : {u : ⊤ × ⊤} → ℕ
-foo = 5
-
-baz : ℕ
-baz = foo
-\end{code}
-\end{frame}
+% \begin{frame}
+% \begin{code}
+% Oh : Bool → Set
+% Oh true    = ⊤
+% Oh false   = ⊥
+% 
+% soundEven : {n : ℕ} → {oh : Oh (even? n)} → Even n
+% soundEven {zero}              {tt}   = isEvenZ
+% soundEven {suc zero}          {()}   -- absurd
+% soundEven {suc (suc n)}       {oh}   = isEvenSS (soundEven {n} {oh})
+% 
+% isEven12     : Even 12
+% isEven12     = soundEven
+% \end{code}
+% \end{frame}
+% 
+% 
+% \begin{frame}{Why the implicit arguments work}
+%     \begin{itemize}
+%         \item Agda can automatically instantiate simple record types (this is safe)
+%         \item Decision tree is a nested pair of |⊤|-values
+%         \item Unless the natural isn't even, in which case no value can be constructed
+%     \end{itemize}
+% 
+% \begin{code}
+% foo : {u : ⊤ × ⊤} → ℕ
+% foo = 5
+% 
+% baz : ℕ
+% baz = foo
+% \end{code}
+% \end{frame}
 
 
 \subsection{Second Example: Boolean Tautologies}
@@ -249,21 +332,26 @@ baz = foo
 \begin{frame}
     \begin{itemize}
         \item Second example: boolean tautologies
-        \item Outline:
-            \begin{itemize}
-                \item Express actual formula in some abstract way
-                \item Decide properties on the abstract representation
-                \item Prove soundness of decision
-                \item ``Reflect'' abstract representation back to (concrete) proof obligation
-                \item Call soundness for each term
-            \end{itemize}
         \item An example: Eqn. \ref{eqn:tauto-example}
-        \item Tedious to prove by hand
-        \item Trying all assignments requires $2^n$ cases
-    \end{itemize}
 \begin{align}\label{eqn:tauto-example}
 (p_1 \vee q_1) \wedge (p_2 \vee q_2) \Rightarrow (q_1 \vee p_1) \wedge (q_2 \vee p_2)
 \end{align}
+        \item Tedious to prove by hand
+        \item Trying all variable assignments requires $2^n$ cases
+            \pause
+        \item Outline:
+            \begin{itemize}
+                \item Express actual formula in some abstract way
+                    \pause
+                \item Decide properties on the abstract representation
+                    \pause
+                \item Prove soundness of decision
+                    \pause
+                \item ``Reflect''\footnote{In proof-by-reflection sense.} abstract representation back to (concrete) proof obligation
+                    \pause
+                \item Call |soundness| for each term
+            \end{itemize}
+    \end{itemize}
 \end{frame}
 
 
@@ -271,7 +359,7 @@ baz = foo
     \begin{itemize}
         \item First step: define abstract representation
         \item |Atomic| stands for an arbitrary unknown formula
-        \item |Atomic|'s argument is a de Bruijn index (|Fin| ensures variables are bound)
+        \item |Atomic|'s argument is a de Bruijn index \textcolor{gray}{(|Fin| ensures variables are bound)}
     \end{itemize}
 \begin{code}
 data BoolExpr : ℕ → Set where
@@ -286,17 +374,17 @@ data BoolExpr : ℕ → Set where
 \end{frame}
 
 
-\begin{frame}
-    \begin{itemize}
-        \item Also needed: mapping from variables to assignments
-        \item Call this |Env n|
-    \end{itemize}
-
-\begin{code}
-Env   : ℕ  → Set
-Env   = Vec Bool
-\end{code}
-\end{frame}
+% \begin{frame}
+%     \begin{itemize}
+%         \item Also needed: mapping from variables to assignments
+%         \item Call this |Env n|
+%     \end{itemize}
+% 
+% \begin{code}
+% Env   : ℕ  → Set
+% Env   = Vec Bool
+% \end{code}
+% \end{frame}
 
 
 \ignore{
@@ -338,14 +426,9 @@ false ⇒ false = true
         \item |So| maps |true| to |\top| and |false| to |\bot|
     \end{itemize}
 \begin{code}
-data Error (a : String) : Set where
-
-So : String → Bool → Set
-So _ true  = ⊤
-So s false = Error s
-
-P : Bool → Set
-P = So "Expression doesn't evaluate to true in this branch."
+So : Bool → Set
+So true  = ⊤
+So false = \bot
 \end{code}
 \end{frame}
 
@@ -354,10 +437,10 @@ P = So "Expression doesn't evaluate to true in this branch."
     \begin{itemize}
         \item To express a tautology we now write
         \item Note proof: case for each possible assignment
-        \item This structure can be abstracted away
+        \item This repetition must be abstracted away
     \end{itemize}
 \begin{code}
-b⇒b : (b : Bool) → P(b ⇒ b)
+b⇒b : (b : Bool) → So(b ⇒ b)
 b⇒b true  = tt
 b⇒b false = tt
 
@@ -542,7 +625,6 @@ zero-least k zero    = coerceDiff (zeroId k) Base
 zero-least k (suc n) = Step (coerceDiff (succLemma k n) (zero-least (suc k) n))
 
 \end{code}
-}
 
 \begin{frame}
     \begin{itemize}
@@ -562,6 +644,7 @@ forallBool : (m : ℕ) → BoolExpr m → Set
 forallBool m b = prependTelescope zero m (zero-least 0 m) b []
 \end{code}
 \end{frame}
+}
 
 
 
@@ -576,9 +659,10 @@ if false t f = f
 Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
 Error-elim ()
 \end{code}
-}
+} % endignore
 
 
+\ignore{
 \begin{frame}
     \begin{itemize}
         \item Finally we can consolidate things about the decision function
@@ -599,7 +683,9 @@ foralls {n} b = forallsAcc b [] (zero-least 0 n)
 \end{code}
 \end{frame}
 
+} % endignore
 
+\ignore{
 \begin{frame}
     \begin{itemize}
         \item Given this fact, we can find the right proof for any given environment
@@ -625,40 +711,45 @@ soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 \end{frame}
 
 
+}   % end ignore
 
 \begin{frame}
     \begin{itemize}
-        \item Now we can prove tautologies using just |soundness boolexp|
+        \item Next, skipped: proving soundness of interpretation function
+        \item Now we can prove tautologies using just |soundness b| with $b$ an expression
         \item Still not ideal though, we need to represent the formula manually\ldots
-        \item Cluttered, error-prone
-        \item Reflection API to the rescue!
-    \end{itemize}
 \begin{code}
 rep          : BoolExpr 2
 
-someTauto    : (p q : Bool)
-             → P( p ∧ q ⇒ q )
+someTauto    :      (p q : Bool)
+             →      P( p ∧ q ⇒ q )
 rep          = Imp  (And    (Atomic (suc zero))
                             (Atomic zero))
                     (Atomic zero)
 
 someTauto    = soundness rep
 \end{code}
+            \vskip -10mm
+            \pause
+        \item Cluttered, error-prone
+        \item Reflection API to the rescue!
+    \end{itemize}
 \end{frame}
 
 
 \section{Adding Reflection}\label{sec:addrefl}
 
 
-\begin{frame}
+\begin{frame}{Adding Reflection (in the programming language sense)}
     \begin{itemize}
         \item Agda now includes the |quoteGoal| keyword\cite{agda-relnotes-228}
         \item Produces an expression of type |Term|
         \item We can convert this to our |BoolExpr| type, using a few helpers
-        \item Note all the implicit arguments
+        %\item Note all the implicit arguments
     \end{itemize}
 \end{frame}
 
+\ignore{
 \begin{frame}
 \scriptsize{
 \begin{code}
@@ -684,6 +775,7 @@ proveTautology e {pf} {pf2} {i} = soundness     {freeVars e}
 }
 \end{frame}
 
+} % end ignore
 
 \begin{frame}
     \begin{itemize}
@@ -716,7 +808,23 @@ mft        = quoteGoal e in proveTautology e
         \item Automatically generate abstract representation
         \item Saves tedium, frustration and redundancy
     \end{itemize}
-    
+\end{frame}
+
+
+\section{Further Work}
+
+\begin{frame}
+    Some ideas for using reflection:
+    \begin{itemize}
+        \item Well-typed lambda term rewriting % : eg. into SKI or CPS (continuation passing style)
+        \begin{itemize}
+            \item Nice illustration of DTP and reflection (one can express constraints in datatype of lambda terms)
+        \end{itemize}
+        \item Generating embedding-projection pairs for generic programming, given some datatype definition
+        \begin{itemize}
+            \item Will need a little embellishment to the compiler
+        \end{itemize}
+    \end{itemize}
 \end{frame}
 
 
@@ -729,35 +837,6 @@ mft        = quoteGoal e in proveTautology e
     \end{itemize}
 \end{frame}
 
-
-\section{Further Work}
-
-\begin{frame}
-    Some ideas for using reflection:
-    \begin{itemize}
-        \item Converting well-typed lambda terms into SKI or CPS
-        \begin{itemize}
-\item Nice illustration of DTP and reflection (one can express constraints in datatype)
-        \end{itemize}
-        \item Generating embedding-projection pairs for generic programming, given some datatype definition
-        \begin{itemize}
-\item Might need a little embellishment to the compiler
-        \end{itemize}
-        \item Bove-Capretta method, automatically
-        \item \dots % TODO
-    \end{itemize}
-\end{frame}
-\section{Other Work}
-
-\begin{frame}
-    Some other things, in the meantime:
-    
-    \begin{itemize}
-    \item Implemented \texttt{intro-with} in emacs mode
-    \item Auto-generate syntax-highlighting rules for Literate Agda files
-    \item DotFS
-    \end{itemize}
-\end{frame}
 
 
 \bibliography{refs}{}
