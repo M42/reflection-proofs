@@ -110,7 +110,7 @@ fac (suc n)    = (suc n) * fac n
 
 \begin{frame}
     \begin{itemize}
-        \item Therefore, DTP can be used as a logic
+        \item Therefore, DTP can be used as a logic (\alert{Curry-Howard isomorphism})
         \item Interlude: what is intuitionistic logic?
             \pause
         \item We must require \alert{total}, \alert{terminating} functions
@@ -137,8 +137,8 @@ data Vec' (A : Set) : ℕ → Set  where
 \end{code}
 \begin{itemize}
     \item A number of interesting things here
-    \item |Vec A| is a family of types, indexed by naturals
-    \item For each $n$, |Vec A n| is a type
+    \item |Vec' A| is a family of types, indexed by naturals
+    \item For each $n$, |Vec' A n| is a type
     \item $\Rightarrow$ lists with differing lengths have different types
 \end{itemize}
 \end{frame}
