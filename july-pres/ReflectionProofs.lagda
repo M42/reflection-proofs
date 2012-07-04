@@ -95,7 +95,9 @@ Department of Computer Science, Utrecht University
     \item Example:
 \end{itemize}
 \begin{code}
-fac : 
+fac : ℕ → ℕ
+fac 0          = 1
+fac (suc n)    = (suc n) * fac n
 \end{code}
 \end{frame}
 
@@ -121,11 +123,11 @@ fac :
         \item Terminating: we may not prove |false|
     \end{itemize}
 \begin{code}
-nonsense : \bot
+nonsense : ⊥
 nonsense = nonsense
 \end{code}
 \begin{spec}
-falsity : \bot -> Anything
+falsity : ⊥ -> Anything
 \end{spec}
 \end{frame}
 
@@ -134,7 +136,9 @@ falsity : \bot -> Anything
         \item Simple example of dependent type
     \end{itemize}
 \begin{code}
-data Vec (A : Set) \dots
+data Vec' (A : Set) : ℕ → Set  where
+  []       : Vec' A zero
+  _∷_      : {n : ℕ} → A → Vec' A n → Vec' A (suc n)
 \end{code}
 \begin{itemize}
     \item A number of interesting things here
@@ -151,7 +155,8 @@ data Vec (A : Set) \dots
         \item Head of non-empty list (note: crashes in Haskell)
     \end{itemize}
 \begin{code}
-head. .. 
+head' : {n : ℕ} {A : Set} → Vec' A (suc n) → A
+head' (x ∷ xs) = x
 \end{code}
 \begin{itemize}
     \item Now, if we try |head []| we get a type-error at compile-time
@@ -374,18 +379,20 @@ data BoolExpr : ℕ → Set where
 \end{frame}
 
 
-% \begin{frame}
-%     \begin{itemize}
-%         \item Also needed: mapping from variables to assignments
-%         \item Call this |Env n|
-%     \end{itemize}
-% 
-% \begin{code}
-% Env   : ℕ  → Set
-% Env   = Vec Bool
-% \end{code}
-% \end{frame}
+\ignore{
+\begin{frame}
+    \begin{itemize}
+        \item Also needed: mapping from variables to assignments
+        \item Call this |Env n|
+    \end{itemize}
 
+\begin{code}
+Env   : ℕ  → Set
+Env   = Vec Bool
+\end{code}
+\end{frame}
+
+}
 
 \ignore{
 \begin{code}
@@ -423,12 +430,18 @@ false ⇒ false = true
 \begin{frame}
     \begin{itemize}
         \item Before actually proving soundness of this function, some helpers are needed
-        \item |So| maps |true| to |\top| and |false| to |\bot|
+        \item |So| maps |true| to |⊤| and |false| to |⊥|
     \end{itemize}
 \begin{code}
-So : Bool → Set
-So true  = ⊤
-So false = \bot
+
+data Error (a : String) : Set where
+
+So : String → Bool → Set
+So _ true  = ⊤
+So s false = Error s
+
+P : Bool → Set
+P = So "expression isn't true"
 \end{code}
 \end{frame}
 
@@ -440,7 +453,7 @@ So false = \bot
         \item This repetition must be abstracted away
     \end{itemize}
 \begin{code}
-b⇒b : (b : Bool) → So(b ⇒ b)
+b⇒b : (b : Bool) → P(b ⇒ b)
 b⇒b true  = tt
 b⇒b false = tt
 
@@ -668,7 +681,7 @@ Error-elim ()
         \item Finally we can consolidate things about the decision function
         \item This represents a tree with decisions in the leaves
         \item Each leaf represents a different environment (left = |true|, right  = |false|)
-        \item Remember, |P| evaluates to |\bot| if the expression holds
+        \item Remember, |P| evaluates to |⊥| if the expression holds
         \item The entire object |foralls expression| represents the proof obligation for a tautology
         \item i.e. with this fact, we can show some $b$ is a tautology
     \end{itemize}
@@ -722,7 +735,7 @@ soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 rep          : BoolExpr 2
 
 someTauto    :      (p q : Bool)
-             →      P( p ∧ q ⇒ q )
+             →      P ( p ∧ q ⇒ q )
 rep          = Imp  (And    (Atomic (suc zero))
                             (Atomic zero))
                     (Atomic zero)
@@ -782,10 +795,10 @@ proveTautology e {pf} {pf2} {i} = soundness     {freeVars e}
         \item This allows generating proofs as follows
     \end{itemize}
 \begin{code}
-exclMid    : (b : Bool) → P(b ∨ ¬ b)
+exclMid    : (b : Bool) → P (b ∨ ¬ b)
 exclMid    = quoteGoal e in proveTautology e
 
-peirce     : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
+peirce     : (p q : Bool) → P (((p ⇒ q) ⇒ p) ⇒ p)
 peirce     = quoteGoal e in proveTautology e
 
 mft        : t1
