@@ -37,3 +37,24 @@ isEven28 = soundnessEven refl
 -- or something which would otherwise have a rather large proof tree
 isEven8772 : Even 8772
 isEven8772 = soundnessEven refl
+
+
+open import Data.Unit
+open import Data.Empty
+
+-- it's unfortunate that we have to include explicit proofs each time,
+-- especially since they're always refl or impossible. We can use a trick
+-- here to hide them (using implicit arguments).
+
+even?' : ℕ → Set
+even?' 0  = ⊤
+even?' 1  = ⊥
+even?' (suc (suc n)) = even?' n
+
+sound : {n : ℕ} → {pf : even?' n} → Even n
+sound {0} {tt} = isEvenZ
+sound {1} {()}
+sound {suc (suc n)} {s} = isEvenSS (sound {n}{s})
+
+isEven58 : Even 58
+isEven58 = sound
