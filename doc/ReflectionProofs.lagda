@@ -693,7 +693,48 @@ of expressive power or general applicability of the proofs resulting from |sound
 
 \section{Type-safe metaprogramming}\label{sec:type-safe-metaprogramming}
 
+Another area in which an application for the new reflection API was found is that
+of metaprogramming.
 
+Metaprogramming is a technique which is widely used in the LISP community, and involves
+converting terms in the concrete syntax of a programming language into an abstract syntax
+tree which can be inspected and/or manipulated, and possibly (as in the case of LISP) be ``reflected''
+again, i.e. the (possibly new or modified) AST is made concrete again, and thus can be evaluated
+as if it were code the programmer had directly entered into a source file.
+
+This technique is well-supported and widely used in LISP and more recently in Haskell, using the Template Haskell
+compiler extension\cite{sheard2002template}. It has enabled many time-saving automations of tasks otherwise requiring
+\emph{boilerplate}\footnote{According to the Oxford English Dictionary, boilerplate is defined as \emph{``standardized pieces of text for use as clauses in contracts or as part of a computer program''}.} code, such as automatically generating embedding-projection
+function pairs for generic programming (for example in \cite{norell2004prototyping}) or % TODO insert example of metaprogramming applications here.
+\dots.
+
+Clearly, the technique is a very useful one, but it does have one limitation (or should we say, possible pitfall), namely
+that when one is developing, for example, a piece of Template Haskell code which should generate some function, it
+often happens that one ends up debugging type errors in the produced (machine-generated) code. This is a tedious
+and painful process, since typically generated code is much less intuitive and readable than human-written code.
+
+Here we propose a new way of looking at metaprogramming, namely type-safe metaprogramming. It would be great if
+one could define some data structure for, say, lambda calculus, and have the guarantee that any term constructed
+in this AST is type-correct. The obvious advantage is then that the compiler will show up errors in whichever method
+tries to build an invalid piece of abstract syntax, as opposed to giving an obscure error pointing at some generated
+code, leaving the programmer to figure out how to solve the problem.
+
+Of course one could achieve a similar framework in, for example, Haskell, but having a reflection system in a programming
+language with as powerful a type system as Agda has, is something very new. In this section we will explore how one can
+leverage the power of dependent types when metaprogramming.
+
+\subsection{Example Using $\lambda$-Calculus}
+
+For the running example in this section, we will look at a simply-typed lambda calculus (STLC) defined by the following
+AST. Notice that type-incorrect terms cannot be instantiated, since the dependent type signatures of the constructors allow
+us to express constraints such as that a de Bruijn-indexed variable must be at most $n$, with $n$ the depth of the current
+sub-expression, with depth defined as the number of $\lambda$'s before one is at top-level scope. Another constraint expressed
+is that an application can only be introduced if both sub-expressions have reasonable types. Reasonable in this context means that
+the function being applied must take an argument of the type of the to-be-applied sub-expression.
+
+The type-checker (type unifier, actually) is a nice place to introduce general recursion and Bove-Capretta.
+
+A transformation will be made into SKI combinators.
 
 
 \section{Documenting the Reflection API}\label{sec:refl-docu}
