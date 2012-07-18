@@ -56,5 +56,6 @@ sound {0} {tt} = isEvenZ
 sound {1} {()}
 sound {suc (suc n)} {s} = isEvenSS (sound {n}{s})
 
+-- now all we need to do is call `sound` -- the rest is inferred!
 isEven58 : Even 58
 isEven58 = sound
