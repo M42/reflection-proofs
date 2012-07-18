@@ -72,7 +72,7 @@ Hi, this is an abstract.
 
 \input{introduction.tex}
 
-\section{Proof by Reflection}
+\section{Proof by Reflection}\label{sec:proof-by-reflection}
 
 
 The idea behind proof by reflection is that one needn't produce a large proof tree
@@ -626,7 +626,7 @@ can get for formulae containing many
 variables. It would be desirable for this process to be automated. In Sec. \ref{sec:addrefl} an approach is
 presented using Agda's recent reflection API.
 
-\section{Adding Reflection}\label{sec:addrefl}
+\subsection{Adding Reflection}\label{sec:addrefl}
 
 In Agda version 2.2.8 a reflection API was added \cite{agda-relnotes-228}. This system introduces some extra
 language constructs, such as |quoteGoal e in t|, which allows the term |t| to refer to |e|, which is instantiated
@@ -686,6 +686,19 @@ This shows that the reflection capabilities recently added to Agda are certainly
 automating certain tedious tasks, since the programmer now needn't encode the boolean expression
 twice in a slightly different format, but just lets the conversion happen automatically, without loss
 of expressive power or general applicability of the proofs resulting from |soundness|.
+
+
+
+
+
+\section{Type-safe metaprogramming}\label{sec:type-safe-metaprogramming}
+
+
+
+
+\section{Documenting the Reflection API}\label{sec:refl-docu}
+
+
 
 
 

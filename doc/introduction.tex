@@ -33,7 +33,7 @@ oneself with the way the AST is put together. This thesis contains a
 section on using the reflection API, along with a few simple,
 practical examples, and a few tips and tricks for effectively
 converting between the Agda Term type and your own (possibly
-restrictive, property-ensuring) AST.
+restrictive, property-ensuring) AST. See Sec. \ref{sec:refl-docu}.
   \item The proof technique suggestively called proof by reflection
 can benefit from using reflection in the programming language
 sense. The idea here is that instead of producing a specific proof
@@ -42,7 +42,7 @@ can be produced using the rules), one defines an algorithm that computes a proof
 with properties such as the evenness of natural numbers, or the fact
 that certain boolean expressions are tautologies. Proof by reflection,
 plus the advantages of using reflection, are laid out here, including
-an example implementation.
+an example implementation. See Sec. \ref{sec:proof-by-reflection}.
   \item Another example is allowing untyped STLC (simply typed lambda
 calculus) terms to be quoted, type- and scope-checked, and then
 automatically converted to SKI-combinators or CPS (continuation
@@ -56,7 +56,7 @@ readers will be familiar with a similar idea using Template Haskell, except that
 the problem there is that the entire reflection system is untyped, which often
 means debugging type errors in the generated code. The type-safe approach presented
 here, which is only possible using dependent types, largely relegates these problems
-to the past tense.
+to the past tense. See Sec. \ref{sec:type-safe-metaprogramming}.
   \item Generic programming is another technique which stands to
 benefit from good reflective capabilities. Even though using an
 intermediate generic representation type for data types allows the
@@ -87,14 +87,14 @@ using Agda for life-sized projects is the often cumbersome and tedious
 proofs that need to be done manually or by combining properties from
 the standard library instead of just discharging them by calling a
 tactic.
-  \item Finally, a few minor modifications to the Agda code base were
-introduced during this project which make an Agda programmer's life
-slightly less painful, such as the automatic expansion of a
-with-clause, and the generation of an in-scope-symbols list which is
-useful for automatic formatting and colouring of Literate Agda using
-the LHS2\TeX\ system developed by Andres L\"oh, and widely used by the
-Haskell and Agda community for laying out and formatting Haskell and
-Agda code in articles and presentations.
+%  \item Finally, a few minor modifications to the Agda code base were
+%introduced during this project which make an Agda programmer's life
+%slightly less painful, such as the automatic expansion of a
+%with-clause, and the generation of an in-scope-symbols list which is
+%useful for automatic formatting and colouring of Literate Agda using
+%the LHS2\TeX\ system developed by Andres L\"oh, and widely used by the
+%Haskell and Agda community for laying out and formatting Haskell and
+%Agda code in articles and presentations.
 \end{itemize}
 
 
