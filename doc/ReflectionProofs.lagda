@@ -16,16 +16,16 @@ module ReflectionProofs where
 \end{code}
 
 
-\begin{code}
+\begin{spec}
 -- imports for Evenness
 open import Relation.Binary.PropositionalEquality
 open import Data.Bool renaming (not to ¬_)
 open import Data.Nat
-\end{code}
+\end{spec}
 }
 
 \ignore{
-\begin{code}
+\begin{spec}
 -- imports for Boolean tauto solver
 open import Data.String
 open import Relation.Nullary hiding (¬_)
@@ -40,7 +40,7 @@ open import Data.Empty
 open import Data.Sum hiding (map)
 open import Data.Product hiding (map)
 open import Data.List hiding (_∷ʳ_)
-\end{code}
+\end{spec}
 }
 
 \usepackage{amsmath}
@@ -70,9 +70,7 @@ Hi, this is an abstract.
 \end{abstract}
 
 
-\section{Introduction}
-
-This is an intro.
+\input{introduction.tex}
 
 \section{Proof by Reflection}
 
@@ -118,11 +116,11 @@ When translated into an Agda data type, the property of evenness can be naturall
 as follows.
 
 
-\begin{code}
+\begin{spec}
 data Even      : ℕ → Set where
   isEvenZ      :                          Even 0
   isEvenSS     : {n : ℕ} → Even n     →   Even (2 + n)
-\end{code}
+\end{spec}
 
 If one has to use these rules to produce the proof tree each time a
 proof of evenness is required for some $N$, this would be tedious.
@@ -130,10 +128,10 @@ One would need to unfold the number using |isEvenSS| half the size
 of the number. For example, to prove that 6 is even, one would require
 the following proof.
 
-\begin{code}
+\begin{spec}
 isEven6 : Even 6
 isEven6 = isEvenSS (isEvenSS (isEvenSS isEvenZ))
-\end{code}
+\end{spec}
 
 Obviously, this proof tree grows as the natural for which one would
 like to show evenness for becomes larger.
@@ -143,12 +141,12 @@ Define a decision function, called |even?| here, which produces some binary
 value (in our case a |Bool|) depending on if the input is even or not.
 This function is rather simple in our case.
 
-\begin{code}
+\begin{spec}
 even? : ℕ → Bool
 even? zero              = true
 even? (suc zero)        = false
 even? (suc (suc n))     = even? n
-\end{code}
+\end{spec}
 
 Now one can ask whether some value is even or not. Next we need to show that
 our decision function actually tells the truth. We need to prove that
@@ -156,12 +154,12 @@ our decision function actually tells the truth. We need to prove that
 the function |soundnessEven|. What is actually happening here is that we are
 giving a recipe for proof trees such as the one we manually defined for |isEven6|.
 
-\begin{code}
+\begin{spec}
 soundnessEven : {n : ℕ} → even? n ≡ true → Even n
 soundnessEven {0}              refl        = isEvenZ
 soundnessEven {1}              ()
 soundnessEven {suc (suc n)}    s           = isEvenSS (soundnessEven s)
-\end{code}
+\end{spec}
 
 Now that this has been done, if we need a proof that some arbitrary $n$ is even,
 we only need to instantiate |soundnessEven|. Note that the value of $n$ is a hidden
@@ -170,13 +168,13 @@ a proof that |even? n| returns |true| for that particular $n$. Since in a
 dependently typed setting $\beta$-reduction (evaluation) happens in
 the type system, |refl| is a valid proof.
 
-\begin{code}
+\begin{spec}
 isEven28        : Even 28
 isEven28        = soundnessEven refl
 
 isEven8772      : Even 8772
 isEven8772      = soundnessEven refl
-\end{code}
+\end{spec}
 
 Now we can easily get a proof that arbitrarily large numbers are even,
 without having to explicitly write down a large proof tree. Note that
@@ -217,7 +215,7 @@ Our language supports boolean and, or, not, implication and arbitrary unknown
 boolean formulae represented by the constructor |Atomic|. The natural number in
 |Atomic| contains the de Bruijn index of a variable in the environment.
 
-\begin{code}
+\begin{spec}
 data BoolExpr : ℕ → Set where
   Truth         : {n : ℕ}                                → BoolExpr n
   Falsehood     : {n : ℕ}                                → BoolExpr n
@@ -226,15 +224,15 @@ data BoolExpr : ℕ → Set where
   Not           : {n : ℕ} → BoolExpr n                   → BoolExpr n
   Imp           : {n : ℕ} → BoolExpr n → BoolExpr n      → BoolExpr n
   Atomic        : {n : ℕ} → Fin n                        → BoolExpr n
-\end{code}
+\end{spec}
 
 We also need a mapping from variables to boolean assignments, which we'll call |Env|.
 It has fixed size $n$ since a |BoolExpr n| has $n$ free variables.
 
-\begin{code}
+\begin{spec}
 Env   : ℕ → Set
 Env   = Vec Bool
-\end{code}
+\end{spec}
 
 Now we can define our decision function, which decides if a given
 boolean expression is a tautology. It does this by evaluating (interpreting)
@@ -244,20 +242,20 @@ all defined with type |Bool → Bool → Bool|, and |¬_| is of type |Bool → B
 The interpretation function |⟦_⊢_⟧| is unsurprising.
 
 \ignore{
-\begin{code}
+\begin{spec}
 infixr 4 _⇒_
 _⇒_ : Bool → Bool → Bool
 true  ⇒ true  = true
 true  ⇒ false = false
 false ⇒ true  = true
 false ⇒ false = true
-\end{code}
+\end{spec}
 }
 
 
 
 
-\begin{code}
+\begin{spec}
 ⟦_⊢_⟧ : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
 ⟦ env     ⊢ Truth       ⟧ = true
 ⟦ env     ⊢ Falsehood   ⟧ = false
@@ -266,7 +264,7 @@ false ⇒ false = true
 ⟦ env     ⊢ Not be      ⟧ = ¬   ⟦ env ⊢ be ⟧
 ⟦ env     ⊢ Imp be be₁  ⟧ =     ⟦ env ⊢ be ⟧     ⇒      ⟦ env ⊢ be₁ ⟧
 ⟦ env     ⊢ Atomic n    ⟧ = lookup n env
-\end{code}
+\end{spec}
 
 
 Note that the interpretation function also requires an environment to be
@@ -284,7 +282,7 @@ what went wrong, if anything.
 
 
 
-\begin{code}
+\begin{spec}
 data Error (a : String) : Set where
 
 So : String → Bool → Set
@@ -293,29 +291,29 @@ So s false = Error s
 
 P : Bool → Set
 P = So "Expression doesn't evaluate to true in this branch."
-\end{code}
+\end{spec}
 
 Now that we have these helper functions, it's easy to express a tautology. We quantify over
 a few boolean variables, and wrap the formula in our |P| function. If this function can be defined,
 we have proven that the argument to |P| is a tautology, i.e. for each assignment of the free variables
 the entire equation still evaluates to |true|.
 
-\begin{code}
+\begin{spec}
 b⇒b : (b : Bool) → P(b ⇒ b)
 b⇒b true  = tt
 b⇒b false = tt
-\end{code}
+\end{spec}
 
 This seems fine, but as soon as more variables come into play, the proofs we need to construct become
 rather tedious. Take the following formula as an example; it would need 16 cases. Note that this is
 the same formula as in Eqn. \ref{eqn:tauto-example}.
 
-\begin{code}
+\begin{spec}
 myfavouritetheorem : Set
 myfavouritetheorem = (p1 q1 p2 q2 : Bool)   →   P  (      (p1 ∨ q1) ∧ (p2 ∨ q2)
                                                       ⇒   (q1 ∨ p1) ∧ (q2 ∨ p2)
                                                    )
-\end{code}
+\end{spec}
 
 What we would actually like to do, however, is prove the soundness of our decision function |⟦_⊢_⟧|, which would
 do away with the need to manually construct each proof. First we need to give a relation between a term
@@ -324,13 +322,13 @@ of type |BoolExpr n| and |Set|, since theorems in Agda have type |Set|.
 
 
 \ignore{
-\begin{code}
+\begin{spec}
 data Diff : ℕ → ℕ → Set where
   Base : ∀ {n}   → Diff n n
   Step : ∀ {n m} → Diff (suc n) m → Diff n m
-\end{code}
+\end{spec}
 
-\begin{code}
+\begin{spec}
 freeVars : Term → ℕ
 freeVars (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = suc (freeVars t)
 freeVars (pi a b)     = 0
@@ -488,7 +486,7 @@ zero-least : (k n : ℕ) → Diff k (k + n)
 zero-least k zero    = coerceDiff (zeroId k) Base
 zero-least k (suc n) = Step (coerceDiff (succLemma k n) (zero-least (suc k) n))
 
-\end{code}
+\end{spec}
 }
 
 The function |forallBool| turns a |BoolExpr n| back into something Agda recognises as a theorem.
@@ -496,7 +494,7 @@ First it prepends $n$ binding sites for boolean variables (representing the free
 formula), after which it calls the decision function, passing the new free variables as the environment.
 
 
-\begin{code}
+\begin{spec}
 prependTelescope   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
 prependTelescope   .m m    (Base    ) b env = P ⟦ env ⊢ b ⟧ 
 prependTelescope    n m    (Step y  ) b env =
@@ -505,10 +503,10 @@ prependTelescope    n m    (Step y  ) b env =
 
 forallBool : (m : ℕ) → BoolExpr m → Set
 forallBool m b = prependTelescope zero m (zero-least 0 m) b []
-\end{code}
+\end{spec}
 
 \ignore{
-\begin{code}
+\begin{spec}
 -- dependently typed if-statement
 if : {P : Bool → Set} → (b : Bool) → P true → P false → P b
 if true  t f = t
@@ -517,7 +515,7 @@ if false t f = f
 -- very much like ⊥-elim, but for Errors.
 Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
 Error-elim ()
-\end{code}
+\end{spec}
 }
 
 Now that we can translate a |BoolExpr n| into a concrete Agda theorem, and we have a way to decide if something
@@ -533,7 +531,7 @@ setting variable with de Bruijn index $d$ to |true|, and the right branch corres
 to |false|. |Diff n m| is an auxiliary proof that the process terminates, and that in the end the environments
 will all have $n$ entries, corresponding to the $n$ free variables in a |BoolExpr n|.
 
-\begin{code}
+\begin{spec}
 forallsAcc : {n m : ℕ} → (b : BoolExpr m) → Env n → Diff n m → Set
 forallsAcc b' env    (Base     ) = P ⟦ env ⊢ b' ⟧
 forallsAcc b' env    (Step y   ) =
@@ -541,7 +539,7 @@ forallsAcc b' env    (Step y   ) =
 
 foralls : {n : ℕ} → (b : BoolExpr n) → Set
 foralls {n} b = forallsAcc b [] (zero-least 0 n)
-\end{code}
+\end{spec}
 
 We now have a concept of all environments leading to truth of a proposition. If we require this
 fact as input to a soundness function, we are able to use it to show that the current boolean
@@ -556,7 +554,7 @@ function that, when called with the values assigned to the free variables, build
 environment and eventually returns the leaf from |foralls| which is the proof that the formula
 is a tautology in that specific case.
 
-\begin{code}
+\begin{spec}
 soundnessAcc :   {m : ℕ} →
                  (b : BoolExpr m) →
                  {n : ℕ} →
@@ -574,20 +572,20 @@ soundnessAcc {m} bexp {n} env (Step y) H =
 
 soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBool n b
 soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
-\end{code}
+\end{spec}
 
 Notice that |foralls b| is an implicit argument to |soundness|, which might be surprising, since
 it is actually the proof tree representing that the expression is a tautology. The reason this is how it's
 done is because Agda can automatically infer implicit arguments when they are simple record types, such as
 |⊤| and pair in this case. This is illustrated in the following code snippet.
 
-\begin{code}
+\begin{spec}
 foo : {u : ⊤ × ⊤} → ℕ
 foo = 5
 
 baz : ℕ
 baz = foo
-\end{code}
+\end{spec}
 
 Here we see that there is an implicit argument |u| required to |foo|, but in |baz| it's not given.
 This is possible because Agda can infer that |(tt , tt)| is the only term which fits, and therefore
@@ -608,7 +606,7 @@ is both a tautology, and that we have the corresponding proof object at our disp
 as in the following example.
 
 
-\begin{code}
+\begin{spec}
 rep          : BoolExpr 2
 
 someTauto    : (p q : Bool)
@@ -616,7 +614,7 @@ someTauto    : (p q : Bool)
 rep          = Imp (And (Atomic (suc zero)) (Atomic zero)) (Atomic zero)
 
 someTauto    = soundness rep
-\end{code}
+\end{spec}
 
 The only thing which is still a pain is that for every formula we'd like a tautology-proof of,
 we have to manually convert the concrete Agda representation (|p ∧ q ⇒ q|, in this case) into our
@@ -649,7 +647,7 @@ boolean variables.
 The helper functions have been ommitted for brevity, since they are rather verbose and don't add anything
 to the understanding of the subject at hand.
 
-\begin{code}
+\begin{spec}
 concrete2abstract :
              (t     : Term)
        →     {pf    : isSoExprQ (stripPi t)}
@@ -665,13 +663,13 @@ proveTautology :    (t     : Term) →
                         forallBool (freeVars t) b
 proveTautology e {pf} {pf2} {i} = soundness {freeVars e} (concrete2abstract e) {i}
 
-\end{code}
+\end{spec}
 
 These are all the ingredients required to automatically prove that formulae are tautologies.
 The following code illustrates the use of the |proveTautology| functions; we can omit the implicit
 arguments for the reasons outlined in the previous section.
 
-\begin{code}
+\begin{spec}
 
 exclMid    : (b : Bool) → P(b ∨ ¬ b)
 exclMid    = quoteGoal e in proveTautology e
@@ -681,7 +679,7 @@ peirce     = quoteGoal e in proveTautology e
 
 mft        : myfavouritetheorem
 mft        = quoteGoal e in proveTautology e
-\end{code}
+\end{spec}
 
 
 This shows that the reflection capabilities recently added to Agda are certainly useful for
