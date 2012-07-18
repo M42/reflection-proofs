@@ -13,10 +13,14 @@ or instantiate specific functionality (possibly from a more general template) at
 
 The main question which we aim to answer during this project is:
 
+
+\begin{quote}
 ``Given the new reflection API in Agda, what interesting applications can we give
 examples of? Which tedious and mundane tasks can we automate? What advantages does
-Agda's implementation of reflection have over other languages which already have reflection?
-\footnote{Notably LISP and Template Haskell already have mature and fully featured reflective systems.}''
+Agda's implementation of reflection have over other languages
+\footnote{Notably LISP and Template Haskell already have mature and fully featured reflective systems.} which already have reflection?''
+\end{quote}
+
 
 This technique provides many interesting possibilities for easing a programmer's life, and in
 this project a number of illustrative
@@ -95,6 +99,10 @@ tactic.
 %the LHS2\TeX\ system developed by Andres L\"oh, and widely used by the
 %Haskell and Agda community for laying out and formatting Haskell and
 %Agda code in articles and presentations.
+\item Finally, a few minor extra tools were developed, such as a function
+    which automatically converts a raw quoted Agda |Term| into a data type
+    of the programmer's choice. This saves some of the tedium involved in using
+    the reflection API.
 \end{itemize}
 
 
