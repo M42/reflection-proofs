@@ -29,4 +29,4 @@ symbols:
 	-rm -fv *.agdai # this is a terrible hack. module loading is broken :(
 	agda --lagda $(LHSFILE) --include-path=. --include-path=$(AGDA_SRC) > generated-colour.fmt
 
-.PHONY: clean pdfshow symbols
+.PHONY: clean pdfshow symbols $(PDF)
