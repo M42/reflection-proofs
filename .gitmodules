@@ -1,0 +1,3 @@
+[submodule "type-safe-metaprogramming"]
+	path = type-safe-metaprogramming
+	url = ssh://git@github.com/toothbrush/type-safe-metaprogramming.git
