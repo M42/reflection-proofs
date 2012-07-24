@@ -112,7 +112,7 @@ reflection. More specifically it makes the following contributions:
 \end{itemize}
 
 The code and examples presented in this paper all compile using the
-latest version of Agda 2.3.0.1.
+latest version of Agda 2.3.0.1 and is available on github. \todo{add url}
 
 \section{Reflection in Agda}
 \label{sec:reflection}
@@ -345,11 +345,12 @@ myfavouritetheorem = (p1 q1 p2 q2 : Bool)   →   P  (      (p1 ∨ q1) ∧ (p2 
                                                    )
 \end{spec}
 
-What we would actually like to do, however, is prove the soundness of our decision function |⟦_⊢_⟧|, which would
-do away with the need to manually construct each proof. First we need to give a relation between a term
-of type |BoolExpr n| and |Set|, since theorems in Agda have type |Set|. 
-
-
+What we would actually like to do, however, is prove the soundness of
+our decision function |⟦_⊢_⟧|, which would do away with the need to
+manually construct a trivial proof for each possible choice of
+|p1|,|p2|,|q1|, and |q2|. First we need to give a relation between a
+term of type |BoolExpr n| and |Set|, since theorems in Agda have type
+|Set|.
 
 \ignore{
 \begin{spec}
@@ -662,23 +663,23 @@ afterwards, as in the following example.
 
 \begin{spec}
 rep          : BoolExpr 2
+rep          = Imp (And (Atomic (suc zero)) (Atomic zero)) (Atomic zero)
 
 someTauto    : (p q : Bool)
              → P( p ∧ q ⇒ q )
-rep          = Imp (And (Atomic (suc zero)) (Atomic zero)) (Atomic zero)
-
 someTauto    = soundness rep
 \end{spec}
 
-The only thing which is still a pain is that for every formula we'd like a tautology-proof of,
-we have to manually convert the concrete Agda representation (|p ∧ q ⇒ q|, in this case) into our
-abstract syntax
-(|rep| here). This is silly,
-since we end up typing out the formula twice. We also have to count the number of free variables ourselves,
-and keep track of the de Bruijn indices. This is error-prone given how cluttered the abstract representation
-can get for formulae containing many
-variables. It would be desirable for this process to be automated. In Sec. \ref{sec:addrefl} an approach is
-presented using Agda's recent reflection API.
+The only thing which is still a pain is that for every formula we
+would like to prove, we still have to manually convert the concrete Agda
+representation (|p ∧ q ⇒ q|, in this case) into our abstract syntax
+(|rep| here). This is silly, since we end up typing out the formula
+twice. We also have to count the number of free variables ourselves,
+and keep track of the de Bruijn indices. This is error-prone given how
+cluttered the abstract representation can get for formulae containing
+many variables. It would be desirable for this process to be
+automated. In Sec. \ref{sec:addrefl} an approach is presented using
+Agda's recent reflection API.
 
 \subsection{Adding Reflection}\label{sec:addrefl}
 
@@ -689,17 +690,22 @@ one needs to encode the desired proposition to be proved in the type of the proo
 this goal gives us enough information to call the |soundness| function. Here we see 2 helper functions
 for doing precisely that.
 
-|proveTautology| calls the |soundness| function, after converting the raw AST (abstract syntax tree)
-Agda gives us representing the goal into our own |BoolExpr n| format. To be able to do this is also
-needs some auxiliary functions such as |freeVars|, which counts the number of variables (needed to
-be able to instantiate the $n$ in |BoolExpr n|), and |stripSo| \& |stripPi|, which peel off the telescope
-type and the function |P| with which we wrap our tautologies. We also need the |concrete2abstract| function,
-which does the actual |Term → BoolExpr n| conversion, when given proofs that the input |Term| adheres to
-certain restrictions (such as only containing the functions |_∧_|, |_∨_| and friends, and only containing
-boolean variables.
+The |proveTautology| function calls the |soundness| function, after
+converting the raw AST (abstract syntax tree) Agda gives us
+representing the goal into our own |BoolExpr n| format. To be able to
+do this is also needs some auxiliary functions such as |freeVars|,
+which counts the number of variables (needed to be able to instantiate
+the $n$ in |BoolExpr n|), and |stripSo| \& |stripPi|, which peel off
+the telescope type and the function |P| with which we wrap our
+tautologies. We also need the |concrete2abstract| function, which does
+the actual |Term → BoolExpr n| conversion, when given proofs that the
+input |Term| adheres to certain restrictions (such as only containing
+the functions |_∧_|, |_∨_| and friends, and only containing boolean
+variables.
 
-The helper functions have been ommitted for brevity, since they are rather verbose and don't add anything
-to the understanding of the subject at hand.
+The helper functions have been ommitted for brevity, since they are
+rather verbose and don't add anything to the understanding of the
+subject at hand.
 
 \begin{spec}
 concrete2abstract :
@@ -822,6 +828,11 @@ of expressive power or general applicability of the proofs resulting from |sound
 
 \section{Discussion}
 \label{sec:discussion}
+
+This paper has presented two simple applications of proof by
+reflection. In the final version of this paper, we will show how
+Agda's reflection API has other exciting applications.
+
 
 \bibliography{refs}{}
 \bibliographystyle{splncs}
