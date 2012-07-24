@@ -9,6 +9,8 @@
 %endif
 
 \newcommand{\ignore}[1]{}
+\newcommand{\todo}[1]{\textbf{TODO:}#1}
+\def\CC{{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\tiny\bf ++}}}
 
 \ignore{
 \begin{code}
@@ -54,9 +56,9 @@ open import Data.List hiding (_∷ʳ_)
 
 \author{Paul van der Walt \and Wouter Swierstra}
 \date{\today}
-\title{Proof by reflection by reflection}
+\title{Applications of Reflection in Agda}
 \institute{
-\email{W.S.Swierstra@@uu.nl}, \email{paul@@denknerd.org}\\
+\email{paul@@denknerd.org}, \email{W.S.Swierstra@@uu.nl}\\
 Department of Computer Science, Utrecht University
 }
 
@@ -66,55 +68,92 @@ Department of Computer Science, Utrecht University
 
 
 \begin{abstract}
-Hi, this is an abstract.
+  This paper explores the recent addition to Agda enabling
+  \emph{reflection}, in the style of Lisp, MetaML, and Template
+  Haskell. It illustrates several applications of reflection that
+  arise in dependently typed programming.
 \end{abstract}
 
+\section{Introduction}
 
-\input{introduction.tex}
+The dependently typed programming language
+Agda\cite{norell:thesis,norell2009dependently} has recently been
+extended a \emph{reflection mechanism} for compile time meta
+programming in the style of Lisp, MetaML, Template Haskell, and \CC\
+templates. Agda's reflection mechanisms makes it possible to convert a
+program fragment into its corresponding abstract syntax tree and vice
+versa. In tandem with Agda's dependent types, this provides promising
+new programming potential. \todo{add citations}
 
-\section{Proof by Reflection}\label{sec:proof-by-reflection}
+This paper starts exploring the possibilities and limitations of this
+new reflection mechanism. It describes several case studies,
+indicative of the kind of problems that can be solved by
+reflection. More specifically it makes the following contributions:
+
+\begin{itemize}
+\item This paper documents the current status of the reflection
+  mechanism. The existing documentation is limited to a paragraph in
+  the release notes~\cite{agda-relnotes-228} and comments in the
+  compiler's source code. In Section~\ref{sec:reflection} we give
+  several short examples of the reflection API in action.
+\item This paper illustrates how to use Agda's reflection mechanism to
+  automate certain categories of proofs
+  (Section~\ref{sec:proof-by-reflection}). The idea of \emph{proof by
+    reflection} is certainly not new, but still worth examining in the
+  context of this new technology.
+\item In the final version of this paper, we will also show how to
+  guarantee \emph{type safety of meta-programs}. To illustrate this
+  point, we develop a type safe translation from the simply typed
+  lambda calculus to combinatory logic.
+\item Finally, the final version will also discuss some of the
+  limitations of the current implematation of reflection. In the
+  future we hope to extend the current implementation to address some
+  of these issues.
+\end{itemize}
+
+The code and examples presented in this paper all compile using the
+latest version of Agda 2.3.0.1.
+
+\section{Reflection in Agda}
+\label{sec:reflection}
+
+\todo{Describe reflection mechanism and give examples}
+
+\section{Proof by Reflection}
+\label{sec:proof-by-reflection}
+
+The idea behind proof by reflection is simple: given that type theory
+is both a programming language and a proof system, we can write
+functions that compute proofs. Reflection is an overloaded word in
+this context, since in programming language technology reflection is
+the capability of converting some piece of concrete program syntax
+into a syntax tree object which can be manipulated in the same
+system.
+
+% These values (in terms of inductive
+% types representing the concrete syntax) can then be translated back
+% into concrete terms, a process which is called reflection.
+
+% One has to translate the problem into an abstract (equivalent)
+% representation, invoke the soundness of the decision function which
+% was defined (assuming it returns |true| for the AST instance), giving
+% the proof of the given proposition.
 
 
-The idea behind proof by reflection is that one needn't produce a large proof tree
-for each proof instance one wants to have, but rather proves the soundness of
-a decision function, in effect giving a ``proof recipe'' which can be instantiated
-when necessary.
-
-One has to translate the problem into an abstract (equivalent) representation, invoke
-the soundness of the decision function which was defined (assuming it returns |true| for
-the AST instance), giving the proof of the given proposition.
-
-Reflection is an overloaded word in this context, since in programming language technology
-reflection is the capability of converting some piece of concrete program syntax into a syntax tree
-object which can be manipulated in the same system. These values (in terms of inductive types representing
-the concrete syntax) can then be translated back into concrete terms, a process which is called reflection.
-
-
-Here we will present two case studies illustrating proof by reflection and how reflection
-(in the programming language sense) can make the technique more usable and accessible.
-
-
-
-
+Here we will present two case studies illustrating proof by reflection
+and how Agda's reflection mechanism can make the technique more usable
+and accessible.
 
 
 \subsection{Simple Example: Evenness}
 
-Take as an example the property of evenness on natural numbers. One has two
-rules, namely the rule that says that zero is even, and the
-rule that says that if $n$ is even, then $n+2$ is also even.
+As a first example, we will cover an example taken from
+Chlipala\todo{add citation}, where we develop a procedure to prove
+that a number is even automatically. 
 
-
-\begin{center}
-\begin{tabular}{ccc}
-\inference[zero-even]{}{|Even 0|}\label{evenzero} & ~~~ & \inference[ss-even]{|Even n|}{|Even (suc (suc n))|}\label{evenzero}
-\end{tabular}
-\end{center}
-
-
-When translated into an Agda data type, the property of evenness can be naturally expressed
-as follows.
-
+We start by defining the property |Even| below. There are two
+constructors: the first constructor says that zero is even; the second
+constructor states that if $n$ is even, then so is $2 + n$.
 
 \begin{spec}
 data Even      : ℕ → Set where
@@ -122,24 +161,19 @@ data Even      : ℕ → Set where
   isEvenSS     : {n : ℕ} → Even n     →   Even (2 + n)
 \end{spec}
 
-If one has to use these rules to produce the proof tree each time a
-proof of evenness is required for some $N$, this would be tedious.
-One would need to unfold the number using |isEvenSS| half the size
-of the number. For example, to prove that 6 is even, one would require
-the following proof.
+Using these rules to produce the proof that some large number |n| is
+even can be very tedious: the proof that |2 * n| is even requires |n|
+applications of the |isEvenSS| constructor. For example, here is the
+proof that 6 is even:
 
 \begin{spec}
 isEven6 : Even 6
 isEven6 = isEvenSS (isEvenSS (isEvenSS isEvenZ))
 \end{spec}
 
-Obviously, this proof tree grows as the natural for which one would
-like to show evenness for becomes larger.
-
-A solution here is to use proof by reflection. The basic technique is as follows.
-Define a decision function, called |even?| here, which produces some binary
-value (in our case a |Bool|) depending on if the input is even or not.
-This function is rather simple in our case.
+To automate this, we will show how to \emph{compute} the proof
+required. We start by defining a boolean predicate |even?| that
+returns |true| when its input is even and false otherwise:
 
 \begin{spec}
 even? : ℕ → Bool
@@ -148,11 +182,11 @@ even? (suc zero)        = false
 even? (suc (suc n))     = even? n
 \end{spec}
 
-Now one can ask whether some value is even or not. Next we need to show that
-our decision function actually tells the truth. We need to prove that
-|even?| returns |true| iff a proof |Even n| can be produced. This is done in
-the function |soundnessEven|. What is actually happening here is that we are
-giving a recipe for proof trees such as the one we manually defined for |isEven6|.
+Next we need to show that the |even?| function is \emph{sound}. To do
+so, we prove that when |even? n| returns |true|, the type |Even n| is
+inhabited. This is done in the function |soundnessEven|. What is
+actually happening here is that we are giving a recipe for proof trees
+such as the one we manually defined for |isEven6|.
 
 \begin{spec}
 soundnessEven : {n : ℕ} → even? n ≡ true → Even n
@@ -160,6 +194,11 @@ soundnessEven {0}              refl        = isEvenZ
 soundnessEven {1}              ()
 soundnessEven {suc (suc n)}    s           = isEvenSS (soundnessEven s)
 \end{spec}
+
+Note that in the case branch for 1, we do not need to provide a
+right-hand side of the function definition. The assumption that |even?
+1 ≡ true| is uninhabited, and we discharge this branch using Agda's
+absurd pattern ().
 
 Now that this has been done, if we need a proof that some arbitrary $n$ is even,
 we only need to instantiate |soundnessEven|. Note that the value of $n$ is a hidden
@@ -183,13 +222,14 @@ number, since the parameter |even? n ≡ true| cannot be instantiated, thus
 |refl| won't be accepted where it is in the |Even 28| example. This will
 produce a |true !≡ false| type error at compile-time.
 
-
-
 \subsection{Second Example: Boolean Tautologies}
 
-Another example of an application of the proof by reflection technique is
-boolean expressions which are a tautology. We will follow the same recipe
-as for even naturals.
+Another example of an application of the proof by reflection technique
+is boolean expressions which are a tautology. We will follow the same
+recipe as for even naturals, with one further addition. In the
+previous example, the input of our decision procedure |even?| and the
+problem domain were both natural numbers. As we shall see, this need
+not always be the case.
 
 Take as an example the boolean formula in equation \ref{eqn:tauto-example}.
 
@@ -197,23 +237,19 @@ Take as an example the boolean formula in equation \ref{eqn:tauto-example}.
 (p_1 \vee q_1) \wedge (p_2 \vee q_2) \Rightarrow (q_1 \vee p_1) \wedge (q_2 \vee p_2)
 \end{align}
 
-It is trivial to see that this is a tautology, but proving this fact using basic
-equivalence rules for booleans would be rather tedious. It's even worse if we want
-to check if the formula always holds by trying all possible variable assignments,
-since this will give $2^n$ cases, where $n$ is the number of variables.
+It is trivial to see that this is a tautology, but proving this fact
+using basic equivalence rules for booleans would be rather tedious. It
+is even worse if we want to check if the formula always holds by
+trying all possible variable assignments, since this will give $2^n$
+cases, where $n$ is the number of variables.
 
 To try to automate this process, we'll follow a similar approach to the one given
 above for proving evenness of arbitrary (even) naturals.
 
-We start off by defining an inductive data type to represent
-boolean expressions with $n$ free variables,
-using de Bruijn indices.  There isn't anything surprising about this
-definition; we use the type |Fin n| to ensure that variables
-(represented by |Atomic|) are always in scope.
-
-Our language supports boolean and, or, not, implication and arbitrary unknown
-boolean formulae represented by the constructor |Atomic|. The natural number in
-|Atomic| contains the de Bruijn index of a variable in the environment.
+We start off by defining an inductive data type to represent boolean
+expressions with $n$ free variables.  There isn't anything surprising
+about this definition; we use the type |Fin n| to ensure that
+variables (represented by |Atomic|) are always in scope.
 
 \begin{spec}
 data BoolExpr : ℕ → Set where
@@ -235,11 +271,12 @@ Env   = Vec Bool
 \end{spec}
 
 Now we can define our decision function, which decides if a given
-boolean expression is a tautology. It does this by evaluating (interpreting)
-the formula's AST. For example, |And| is converted to the boolean function |_∧_|,
-and it's two arguments in turn are recursively interpreted. Here |_∧_|, |_∨_|, |_⇒_| are
-all defined with type |Bool → Bool → Bool|, and |¬_| is of type |Bool → Bool|.
-The interpretation function |⟦_⊢_⟧| is unsurprising.
+boolean expression is a tautology. It does this by evaluating
+(interpreting) the formula's AST. For example, |And| is converted to
+the boolean function |_∧_|, and it's two arguments in turn are
+recursively interpreted. Here |_∧_|, |_∨_|, |_⇒_| are all defined with
+type |Bool → Bool → Bool|, and |¬_| is of type |Bool → Bool|.  The
+definition of the interpretation function |⟦_⊢_⟧| is unsurprising.
 
 \ignore{
 \begin{spec}
@@ -276,37 +313,30 @@ Now that this has been done, we can move on to defining what it means for a give
 formula to be a tautology. Here we introduce the |So| function, which gives |⊤| if
 its argument is |true|, and |⊥| otherwise. We've actually defined a type isomorphic to |⊥|
 which is parameterised by an error message string, to make it more obvious to the user
-what went wrong, if anything.
-
-
-
-
+what, if anything, went wrong.
 
 \begin{spec}
-data Error (a : String) : Set where
+data Error (e : String) : Set where
 
 So : String → Bool → Set
 So _ true  = ⊤
-So s false = Error s
+So err false = Error err
 
 P : Bool → Set
-P = So "Expression doesn't evaluate to true in this branch."
+P = So "Argumunt expression does not evaluate to true."
 \end{spec}
 
-Now that we have these helper functions, it's easy to express a tautology. We quantify over
-a few boolean variables, and wrap the formula in our |P| function. If this function can be defined,
-we have proven that the argument to |P| is a tautology, i.e. for each assignment of the free variables
-the entire equation still evaluates to |true|.
+Now that we have these helper functions, it's easy to express a
+tautology. We quantify over a few boolean variables, and wrap the
+formula in our |P| function. If this function can be defined, we have
+proven that the argument to |P| is a tautology, i.e., for each
+assignment of the free variables the entire equation still evaluates
+to |true|.
 
-\begin{spec}
-b⇒b : (b : Bool) → P(b ⇒ b)
-b⇒b true  = tt
-b⇒b false = tt
-\end{spec}
-
-This seems fine, but as soon as more variables come into play, the proofs we need to construct become
-rather tedious. Take the following formula as an example; it would need 16 cases. Note that this is
-the same formula as in Eqn. \ref{eqn:tauto-example}.
+This seems fine, but as soon as more variables come into play, the
+proofs we need to construct become rather tedious. Take the following
+formula as an example; it would need 16 cases. Note that this is the
+same formula as in Eqn.~\ref{eqn:tauto-example}.
 
 \begin{spec}
 myfavouritetheorem : Set
@@ -489,9 +519,11 @@ zero-least k (suc n) = Step (coerceDiff (succLemma k n) (zero-least (suc k) n))
 \end{spec}
 }
 
-The function |forallBool| turns a |BoolExpr n| back into something Agda recognises as a theorem.
-First it prepends $n$ binding sites for boolean variables (representing the free variables in the
-formula), after which it calls the decision function, passing the new free variables as the environment.
+The function |forallBool| turns a |BoolExpr n| back into something
+Agda recognises as a theorem.  First it prepends $n$ binding sites for
+boolean variables (representing the free variables in the formula),
+after which it calls the decision function, passing the new free
+variables as the environment.
 
 
 \begin{spec}
@@ -518,18 +550,25 @@ Error-elim ()
 \end{spec}
 }
 
-Now that we can translate a |BoolExpr n| into a concrete Agda theorem, and we have a way to decide if something
-is true for a given environment, we need to show the soundness of our decision function, and define a notion
-of what it means to be a tautology. That is, we need to be able to show that a formula is true for every
-possible assignment of its variables to |true| or |false|.
+Now that we can translate a |BoolExpr n| into a concrete Agda theorem,
+and we have a way to decide if something is true for a given
+environment, we need to show the soundness of our decision function,
+and define a notion of what it means to be a tautology. That is, we
+need to be able to show that a formula is true for every possible
+assignment of its variables to |true| or |false|.
 
-The first step in this process is to formalise the idea of a formula being true for all variable assignments.
-This is captured in the functions |foralls| and |forallsAcc|, where |foralls| is the function which bootstraps
-the construction of a tree, where the leaves represent the truth of a proposition given a certain assignment
-of variables. Each time there's a branch in the (fully binary) tree, the left branch at depth $d$ corresponds to
-setting variable with de Bruijn index $d$ to |true|, and the right branch corresponds to setting that variable
-to |false|. |Diff n m| is an auxiliary proof that the process terminates, and that in the end the environments
-will all have $n$ entries, corresponding to the $n$ free variables in a |BoolExpr n|.
+The first step in this process is to formalise the idea of a formula
+being true for all variable assignments.  This is captured in the
+functions |foralls| and |forallsAcc|, where |foralls| is the function
+which bootstraps the construction of a tree, where the leaves
+represent the truth of a proposition given a certain assignment of
+variables. Each time there's a branch in the (fully binary) tree, the
+left branch at depth $d$ corresponds to setting variable with de
+Bruijn index $d$ to |true|, and the right branch corresponds to
+setting that variable to |false|. |Diff n m| is an auxiliary proof
+that the process terminates, and that in the end the environments will
+all have $n$ entries, corresponding to the $n$ free variables in a
+|BoolExpr n|.
 
 \begin{spec}
 forallsAcc : {n m : ℕ} → (b : BoolExpr m) → Env n → Diff n m → Set
@@ -541,18 +580,24 @@ foralls : {n : ℕ} → (b : BoolExpr n) → Set
 foralls {n} b = forallsAcc b [] (zero-least 0 n)
 \end{spec}
 
-We now have a concept of all environments leading to truth of a proposition. If we require this
-fact as input to a soundness function, we are able to use it to show that the current boolean
-expression is in fact a tautology. We do this in the |soundness| function, where the output should
-have the type given by the previously-defined |prependTelescope| function. This enables us to put a
-call to |soundness| where a proof of something like Eqn. \ref{eqn:tauto-example} is required.
+We now have a concept of all environments leading to truth of a
+proposition. If we require this fact as input to a soundness function,
+we are able to use it to show that the current boolean expression is
+in fact a tautology. We do this in the |soundness| function, where the
+output should have the type given by the previously-defined
+|prependTelescope| function. This enables us to put a call to
+|soundness| where a proof of something like
+Eqn. \ref{eqn:tauto-example} is required.
 
-If we look closely at the definition of |soundnessAcc| (which is actually where the work is done; |soundness|
-merely calls |soundnessAcc| with some initial input, namely the |BoolExpr n|, an empty environment, and
-the proof that the environment is the size of the number of free variables), we see that we build up a
-function that, when called with the values assigned to the free variables, builds up the corresponding
-environment and eventually returns the leaf from |foralls| which is the proof that the formula
-is a tautology in that specific case.
+If we look closely at the definition of |soundnessAcc| (which is
+actually where the work is done; |soundness| merely calls
+|soundnessAcc| with some initial input, namely the |BoolExpr n|, an
+empty environment, and the proof that the environment is the size of
+the number of free variables), we see that we build up a function
+that, when called with the values assigned to the free variables,
+builds up the corresponding environment and eventually returns the
+leaf from |foralls| which is the proof that the formula is a tautology
+in that specific case.
 
 \begin{spec}
 soundnessAcc :   {m : ℕ} →
@@ -574,10 +619,12 @@ soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBool n 
 soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 \end{spec}
 
-Notice that |foralls b| is an implicit argument to |soundness|, which might be surprising, since
-it is actually the proof tree representing that the expression is a tautology. The reason this is how it's
-done is because Agda can automatically infer implicit arguments when they are simple record types, such as
-|⊤| and pair in this case. This is illustrated in the following code snippet.
+Notice that |foralls b| is an implicit argument to |soundness|, which
+might be surprising, since it is actually the proof tree representing
+that the expression is a tautology. The reason this is how it's done
+is because Agda can automatically infer implicit arguments when they
+are simple record types, such as |⊤| and pair in this case. This is
+illustrated in the following code snippet.
 
 \begin{spec}
 foo : {u : ⊤ × ⊤} → ℕ
@@ -587,23 +634,30 @@ baz : ℕ
 baz = foo
 \end{spec}
 
-Here we see that there is an implicit argument |u| required to |foo|, but in |baz| it's not given.
-This is possible because Agda can infer that |(tt , tt)| is the only term which fits, and therefore
-instantiates it when required. This can be done by the type system for records, since they are not allowed
-to be inductively defined, which would cause possible non-termination.
+Here we see that there is an implicit argument |u| required to |foo|,
+but in |baz| it's not given.  This is possible because Agda can infer
+that |(tt , tt)| is the only term which fits, and therefore
+instantiates it when required. This can be done by the type system for
+records, since they are not allowed to be inductively defined, which
+would cause possible non-termination.
 
-The same principle is used in |soundness|; eventually all that's required
-is a deeply nested pair containing elements of type |⊤|, of which |tt| is the only constructor. If the
-formula isn't a tautology, there's no way to instantiate the proof, since it will have type |⊥|, as a
-result of the use of |So|. In other words, the fact that the proof tree can be constructed corresponds exactly
-to those cases when the expression is a tautology. Therefore, we needn't instantiate |soundness| with a
-manually-crafted tree of |⊤|s, we can just let Agda do the work.
+The same principle is used in |soundness|; eventually all that's
+required is a deeply nested pair containing elements of type |⊤|, of
+which |tt| is the only constructor. If the formula isn't a tautology,
+there's no way to instantiate the proof, since it will have type |⊥|,
+as a result of the use of |So|. In other words, the fact that the
+proof tree can be constructed corresponds exactly to those cases when
+the expression is a tautology. Therefore, we needn't instantiate
+|soundness| with a manually-crafted tree of |⊤|s, we can just let Agda
+do the work.
 
-Now, we can prove theorems by calling |soundness b|, where |b| is the representation of the formula
-under consideration. Agda is convinced that the representation does in fact correspond to the concrete formula,
-and also that |soundness| gives a valid proof. If the module passes the type-check, we know our formula
-is both a tautology, and that we have the corresponding proof object at our disposal afterwards,
-as in the following example.
+Now, we can prove theorems by calling |soundness b|, where |b| is the
+representation of the formula under consideration. Agda is convinced
+that the representation does in fact correspond to the concrete
+formula, and also that |soundness| gives a valid proof. If the module
+passes the type-check, we know our formula is both a tautology, and
+that we have the corresponding proof object at our disposal
+afterwards, as in the following example.
 
 
 \begin{spec}
@@ -691,71 +745,83 @@ of expressive power or general applicability of the proofs resulting from |sound
 
 
 
-\section{Type-safe metaprogramming}\label{sec:type-safe-metaprogramming}
+% \section{Type-safe metaprogramming}\label{sec:type-safe-metaprogramming}
 
-Another area in which an application for the new reflection API was found is that
-of metaprogramming.
+% Another area in which an application for the new reflection API was found is that
+% of metaprogramming.
 
-Metaprogramming is a technique which is widely used in the LISP community, and involves
-converting terms in the concrete syntax of a programming language into an abstract syntax
-tree which can be inspected and/or manipulated, and possibly (as in the case of LISP) be ``reflected''
-again, i.e. the (possibly new or modified) AST is made concrete again, and thus can be evaluated
-as if it were code the programmer had directly entered into a source file.
+% Metaprogramming is a technique which is widely used in the LISP
+% community, and involves converting terms in the concrete syntax of a
+% programming language into an abstract syntax tree which can be
+% inspected and/or manipulated, and possibly (as in the case of LISP) be
+% ``reflected'' again, i.e. the (possibly new or modified) AST is made
+% concrete again, and thus can be evaluated as if it were code the
+% programmer had directly entered into a source file.
 
-This technique is well-supported and widely used in LISP and more recently in Haskell, using the Template Haskell
-compiler extension\cite{sheard2002template}. It has enabled many time-saving automations of tasks otherwise requiring
-\emph{boilerplate}\footnote{According to the Oxford English Dictionary, boilerplate is defined as \emph{``standardized pieces of text for use as clauses in contracts or as part of a computer program''}.} code, such as automatically generating embedding-projection
-function pairs for generic programming (for example in \cite{norell2004prototyping}) or % TODO insert example of metaprogramming applications here.
-\dots.
+% This technique is well-supported and widely used in LISP and more
+% recently in Haskell, using the Template Haskell compiler
+% extension\cite{sheard2002template}. It has enabled many time-saving
+% automations of tasks otherwise requiring
+% \emph{boilerplate}\footnote{According to the Oxford English
+%   Dictionary, boilerplate is defined as \emph{``standardized pieces of
+%     text for use as clauses in contracts or as part of a computer
+%     program''}.} code, such as automatically generating
+% embedding-projection function pairs for generic programming (for
+% example in \cite{norell2004prototyping})
+% or % TODO insert example of metaprogramming applications here.
+% \dots.
 
-Clearly, the technique is a very useful one, but it does have one limitation (or should we say, possible pitfall), namely
-that when one is developing, for example, a piece of Template Haskell code which should generate some function, it
-often happens that one ends up debugging type errors in the produced (machine-generated) code. This is a tedious
-and painful process, since typically generated code is much less intuitive and readable than human-written code.
+% Clearly, the technique is a very useful one, but it does have one
+% limitation (or should we say, possible pitfall), namely that when one
+% is developing, for example, a piece of Template Haskell code which
+% should generate some function, it often happens that one ends up
+% debugging type errors in the produced (machine-generated) code. This
+% is a tedious and painful process, since typically generated code is
+% much less intuitive and readable than human-written code.
 
-Here we propose a new way of looking at metaprogramming, namely type-safe metaprogramming. It would be great if
-one could define some data structure for, say, lambda calculus, and have the guarantee that any term constructed
-in this AST is type-correct. The obvious advantage is then that the compiler will show up errors in whichever method
-tries to build an invalid piece of abstract syntax, as opposed to giving an obscure error pointing at some generated
-code, leaving the programmer to figure out how to solve the problem.
+% Here we propose a new way of looking at metaprogramming, namely
+% type-safe metaprogramming. It would be great if one could define some
+% data structure for, say, lambda calculus, and have the guarantee that
+% any term constructed in this AST is type-correct. The obvious
+% advantage is then that the compiler will show up errors in whichever
+% method tries to build an invalid piece of abstract syntax, as opposed
+% to giving an obscure error pointing at some generated code, leaving
+% the programmer to figure out how to solve the problem.
 
-Of course one could achieve a similar framework in, for example, Haskell, but having a reflection system in a programming
-language with as powerful a type system as Agda has, is something very new. In this section we will explore how one can
-leverage the power of dependent types when metaprogramming.
+% Of course one could achieve a similar framework in, for example,
+% Haskell, but having a reflection system in a programming language with
+% as powerful a type system as Agda has, is something very new. In this
+% section we will explore how one can leverage the power of dependent
+% types when metaprogramming.
 
-\subsection{Example Using $\lambda$-Calculus}
+% \subsection{Example Using $\lambda$-Calculus}
 
-For the running example in this section, we will look at a simply-typed lambda calculus (STLC) defined by the following
-AST. Notice that type-incorrect terms cannot be instantiated, since the dependent type signatures of the constructors allow
-us to express constraints such as that a de Bruijn-indexed variable must be at most $n$, with $n$ the depth of the current
-sub-expression, with depth defined as the number of $\lambda$'s before one is at top-level scope. Another constraint expressed
-is that an application can only be introduced if both sub-expressions have reasonable types. Reasonable in this context means that
-the function being applied must take an argument of the type of the to-be-applied sub-expression.
+% For the running example in this section, we will look at a
+% simply-typed lambda calculus (STLC) defined by the following
+% AST. Notice that type-incorrect terms cannot be instantiated, since
+% the dependent type signatures of the constructors allow us to express
+% constraints such as that a de Bruijn-indexed variable must be at most
+% $n$, with $n$ the depth of the current sub-expression, with depth
+% defined as the number of $\lambda$'s before one is at top-level
+% scope. Another constraint expressed is that an application can only be
+% introduced if both sub-expressions have reasonable types. Reasonable
+% in this context means that the function being applied must take an
+% argument of the type of the to-be-applied sub-expression.
 
-The type-checker (type unifier, actually) is a nice place to introduce general recursion and Bove-Capretta.
+% The type-checker (type unifier, actually) is a nice place to introduce
+% general recursion and Bove-Capretta.
 
-A transformation will be made into SKI combinators.
-
-
-\section{Documenting the Reflection API}\label{sec:refl-docu}
-
-
-
-
-
-\section{Related Work}
-
-Mention AChlipala and wjzz here.
-
-
-\section{Further Work}
-
-We should continue.
-
-\section{Conclusion}
+% A transformation will be made into SKI combinators.
 
 
-Lorem ipsum dolor sit amet.
+
+% \section{Related Work}
+
+% Mention AChlipala and wjzz here.
+
+
+\section{Discussion}
+\label{sec:discussion}
 
 \bibliography{refs}{}
 \bibliographystyle{splncs}
@@ -763,3 +829,8 @@ Lorem ipsum dolor sit amet.
 
 
 \end{document}
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% TeX-command-default: "lagda2pdf"
+%%% End: 
