@@ -104,7 +104,7 @@ freeVars (pi a b)     = 0
 freeVars (var x args) = 0
 freeVars (con c args) = 0
 freeVars (def f args) = 0
-freeVars (lam v t)    = 0
+freeVars (lam v σ t)  = 0
 freeVars (sort x)     = 0
 freeVars unknown      = 0
 
@@ -118,7 +118,7 @@ stripPi (pi args t)  = pi   args t
 stripPi (var x args) = var  x    args
 stripPi (con c args) = con  c    args
 stripPi (def f args) = def  f    args
-stripPi (lam v t)    = lam  v    t
+stripPi (lam v σ t)    = lam  v  σ  t
 stripPi (sort x)     = sort x
 stripPi unknown      = unknown
 
@@ -143,7 +143,7 @@ isSoExprQ (def f (x ∷ x₃ ∷ x₄ ∷ args))      | yes () | tt
 isSoExprQ (def f args)                      | no ¬p with tt
 isSoExprQ (def f [])                        | no ¬p | tt = ⊥
 isSoExprQ (def f (x ∷ xs))                  | no ¬p | tt = ⊥
-isSoExprQ (lam v t)                         = ⊥
+isSoExprQ (lam v σ t)                         = ⊥
 isSoExprQ (pi t₁ t₂)                        = ⊥
 isSoExprQ (sort x)                          = ⊥
 isSoExprQ unknown                           = ⊥
@@ -163,7 +163,7 @@ stripSo (def f (x ∷ x₃ ∷ x₄ ∷ args)) pf     | yes () | tt
 stripSo (def f args)             pf         | no ¬p with tt
 stripSo (def f []) () | no ¬p | tt
 stripSo (def f (x ∷ xs)) () | no ¬p | tt
-stripSo (lam v t)    ()
+stripSo (lam v σ t)    ()
 stripSo (pi t₁ t₂)   ()
 stripSo (sort x)     ()
 stripSo unknown      ()
@@ -194,7 +194,7 @@ isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | n
 isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | no ¬p | yes p = (isBoolExprQ' n x) × (isBoolExprQ' n x₁)
 isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₂ | no ¬p₁ | no ¬p = ⊥
 isBoolExprQ' n (def f (x ∷ x₁ ∷ x₂ ∷ args)) = ⊥
-isBoolExprQ' n (lam v t) = ⊥
+isBoolExprQ' n (lam v σ t) = ⊥
 isBoolExprQ' n (pi t₁ t₂) = ⊥
 isBoolExprQ' n (sort y) = ⊥
 isBoolExprQ' n unknown = ⊥
@@ -234,7 +234,7 @@ term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , pro
   (term2boolexpr n x₁ proj₂)
 term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) () | no ¬p | no p | no p₁
 term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ x₂ ∷ args)) ()
-term2boolexpr n (lam v t)  ()
+term2boolexpr n (lam v σ t)  ()
 term2boolexpr n (pi t₁ t₂) ()
 term2boolexpr n (sort x)   ()
 term2boolexpr n unknown    ()
