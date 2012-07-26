@@ -10,7 +10,7 @@
 
 \newcommand{\ignore}[1]{}
 \newcommand{\todo}[1]{\textbf{TODO:}#1}
-\def\CC{{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\tiny\bf ++}}}
+\def\CC{{C\nolinebreak[4]\hspace{ -.05em}\raisebox{.4ex}{\tiny\bf ++}}}
 
 \ignore{
 \begin{code}
@@ -118,6 +118,105 @@ latest version of Agda 2.3.0.1 and is available on github. \todo{add url}
 \label{sec:reflection}
 
 \todo{Describe reflection mechanism and give examples}
+
+
+
+The documentation of the reflection mechanism which was recently added
+to Agda is thin to say the least. This section aims to  introduce the types
+and functions involved and give a few examples which will hopefully reduce
+the steepness of the learning curve involved in getting started with your
+own reflective programs and proofs.
+
+To use the reflection API, one has to include a module.
+
+
+\begin{code}
+open import Reflection
+\end{code}
+
+The reflection API is characterised by two data types, |Type| and |Term|, where
+a |Type| contains a sort and a |Term| describing the type. The |Term| structure
+closely follows Agda's internal representation of syntax, and although not 
+very easy on the eyes, isn't very surprising.
+
+
+\begin{spec}
+data Visibility : Set where
+  visible hidden instance : Visibility
+
+data Relevance : Set where
+  relevant irrelevant : Relevance
+
+data Arg A : Set where
+  arg : (v : Visibility) (r : Relevance) (x : A) → Arg A
+
+-- Terms.
+
+mutual
+  data Term : Set where
+    -- Variable applied to arguments.
+    var     : (x : ℕ) (args : List (Arg Term)) → Term
+    -- Constructor applied to arguments.
+    con     : (c : Name) (args : List (Arg Term)) → Term
+    -- Identifier applied to arguments.
+    def     : (f : Name) (args : List (Arg Term)) → Term
+    -- Different kinds of λ-abstraction.
+    lam     : (v : Visibility) (ty : Type) (t : Term) → Term
+    -- Pi-type.
+    pi      : (t₁ : Arg Type) (t₂ : Type) → Term
+    -- A sort.
+    sort    : Sort → Term
+    -- Anything else.
+    unknown : Term
+
+  data Type : Set where
+    el : (s : Sort) (t : Term) → Type
+
+  data Sort : Set where
+    -- A Set of a given (possibly neutral) level.
+    set     : (t : Term) → Sort
+    -- A Set of a given concrete level.
+    lit     : (n : ℕ) → Sort
+    -- Anything else.
+    unknown : Sort
+\end{spec}
+
+The |Visibility| and |Relevance| types are used for annotating
+arguments to functions, for example, invisible arguments are
+implicit. |Relevance| is an annotation to arguments specifying whether
+they are depended upon by the function they're being passed to. For a
+more complete discussion of relevance, see
+http://wiki.portal.chalmers.se/agda/agda.php?n=ReferenceManual.Irrelevance
+. The |Arg A| type is just used to pair some argument with type |A| with
+relevance and visibility annotations.
+
+
+|Term|s and |Type|s are more interesting: the representation is de Bruijn-style,
+and lambda abstractions are modeled as binding one variable. A variable has a de Bruijn index,
+and may be applied to arguments. Note the |Type| argument in the |lam| constructor:
+this holds the type of the argument expected.
+
+|con| and |def| are introduced when constructors and definitions, respectively,
+are applied to a (possibly empty) list of arguments. Finally the constructor |unknown| is
+used for things which aren't or can't be represented in this AST (such as function definitions).
+
+The reflection API also includes a few keywords, such as |quote|, |quoteTerm| and |quoteGoal e in ?|.
+The |quote| keyword returns the |Name| of its argument, which can be useful for comparing to
+the first argument of a |con| constructor, for example, or for looking up more information about
+a given data type. |quoteTerm| returns its argument as a |Term|, in other words it gives the AST
+after parsing, type-checking and normalising. For example, |quoteTerm (λ x → x)| returns 
+|lam visible (el unknown unknown) (var 0 .Data.List.List.[])|. Dissecting this, we
+introduced a lambda abstraction, so we expect the |lam| constructor. It's one argument is visible,
+but since we didn't annotate the term with types, it's type and sort is unknown. Finally, the body
+of the lambda abstraction is just a reference to the nearest-bound variable, thus |var 0|, applied
+to no arguments, hence the empty list.
+
+A common task will be casting the raw |Term| we get into some AST of our own, possibly one which
+enforces some invariants, such as a simply-typed lambda calculus representation, ensuring well-typedness.
+A library has been developed which might serve as both an instructive example in how to pull
+apart |Term|s, as well as a helper function, since it provides the feature of automatically converting
+a |Term| into some AST type, if a mapping is provided from concrete Agda |Name|s to constructors of
+this AST.
 
 \section{Proof by Reflection}
 \label{sec:proof-by-reflection}
