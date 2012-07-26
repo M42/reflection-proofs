@@ -18,12 +18,12 @@ module ReflectionProofs where
 \end{code}
 
 
-\begin{spec}
+\begin{code}
 -- imports for Evenness
 open import Relation.Binary.PropositionalEquality
 open import Data.Bool renaming (not to ¬_)
 open import Data.Nat
-\end{spec}
+\end{code}
 }
 
 \ignore{
@@ -209,7 +209,21 @@ after parsing, type-checking and normalising. For example, |quoteTerm (λ x → 
 introduced a lambda abstraction, so we expect the |lam| constructor. It's one argument is visible,
 but since we didn't annotate the term with types, it's type and sort is unknown. Finally, the body
 of the lambda abstraction is just a reference to the nearest-bound variable, thus |var 0|, applied
-to no arguments, hence the empty list.
+to no arguments, hence the empty list. The |quoteGoal| keyword binds the variable introduced as its first
+argument to the type expected at whatever site the keyword was introduced. For example, in the following snippet:
+
+\begin{code}
+testqg : ∀ {a : Set} → a → ℕ
+testqg = quoteGoal e in {!!}
+\end{code}
+
+\ldots the value of $e$ in the hole will be:
+
+\begin{spec}
+pi (arg visible relevant (el (lit 0) (var 0 []))) (el (lit 0) (def ℕ []))
+\end{spec}
+
+\todo{explain the resulting AST, or is it obvious?}
 
 A common task will be casting the raw |Term| we get into some AST of our own, possibly one which
 enforces some invariants, such as a simply-typed lambda calculus representation, ensuring well-typedness.
