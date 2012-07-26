@@ -205,7 +205,7 @@ The |quote| keyword returns the |Name| of its argument, which can be useful for 
 the first argument of a |con| constructor, for example, or for looking up more information about
 a given data type. |quoteTerm| returns its argument as a |Term|, in other words it gives the AST
 after parsing, type-checking and normalising. For example, |quoteTerm (λ x → x)| returns 
-|lam visible (el unknown unknown) (var 0 .Data.List.List.[])|. Dissecting this, we
+|lam visible (el unknown unknown) (var 0 [])|. Dissecting this, we
 introduced a lambda abstraction, so we expect the |lam| constructor. It's one argument is visible,
 but since we didn't annotate the term with types, it's type and sort is unknown. Finally, the body
 of the lambda abstraction is just a reference to the nearest-bound variable, thus |var 0|, applied
