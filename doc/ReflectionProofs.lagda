@@ -232,6 +232,39 @@ apart |Term|s, as well as a helper function, since it provides the feature of au
 a |Term| into some AST type, if a mapping is provided from concrete Agda |Name|s to constructors of
 this AST.
 
+\subsection{List of constructors}
+
+If one wants to get a list of the constructors in a given data type, the functions
+|quote|, |definition : Name → Definition| and |constructors : Data-type → List Name| will be useful. 
+One of the possible constructors of the |Definition| data type is |data-type|, which has one argument,
+of type |Data-type|.
+
+As an illustration, the following snippet (and specifically the function |CombCons| returns
+the list of constructor names in the hypothetical |Combinatory| data type.
+
+\begin{spec}
+CombDef : Definition
+CombDef = definition (quote Combinatory)
+
+conList : Definition → List Name
+conList (data-type x) = constructors x
+conList _             = []
+
+CombCons : List Name
+CombCons = conList CombDef
+\end{spec}
+
+Finally, you could even get the |Type| of the $n^{\textnormal{th}}$ constructor of some data type
+as in the function |TypeNthCons|.
+
+\begin{spec}
+TypeNthCons : ℕ → Type
+TypeNthCons n with CombCons ! n
+TypeNthCons .(index p) | inside x p = type x
+TypeNthCons .(5 + m)   | outside m  = el unknown unknown
+\end{spec}
+
+
 \section{Proof by Reflection}
 \label{sec:proof-by-reflection}
 
