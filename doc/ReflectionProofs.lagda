@@ -586,7 +586,8 @@ in Eqn.~\ref{eqn:tauto-example}.
 \begin{spec}
 myfavouritetheorem : Set
 myfavouritetheorem = (p1 q1 p2 q2 : Bool)   →   P  ((p1 ∨ q1) ∧ (p2 ∨ q2)
-                                                   ⇒ (q1 ∨ p1) ∧ (q2 ∨ p2))
+                                                   ⇒ (q1 ∨ p1) ∧ (q2 ∨ p2)
+                                                   )
 \end{spec}
 
 What we would actually like to do, however, is prove the soundness of
