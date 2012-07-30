@@ -350,6 +350,8 @@ peirce = quoteGoal e in proveTautology e
 mft : myfavouritetheorem
 mft = quoteGoal e in proveTautology e
 
+foo : quoteTerm (\(x : Bool) -> x) ≡ lam visible (var 0 [])
+foo = refl
 
 -- acknowledge Ruud:
 -- thing : {err : String} {a : Bool} → So err a → a ≡ true

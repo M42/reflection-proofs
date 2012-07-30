@@ -8,8 +8,10 @@
 %include generated-colour.fmt
 %endif
 
+\usepackage{url}
+\usepackage{todonotes}
 \newcommand{\ignore}[1]{}
-\newcommand{\todo}[1]{\textbf{TODO:}#1}
+%\newcommand{\todo}[1]{\textbf{TODO:}#1}
 \def\CC{{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\tiny\bf ++}}}
 
 \ignore{
@@ -77,17 +79,18 @@ Department of Computer Science, Utrecht University
 \section{Introduction}
 
 The dependently typed programming language
-Agda\cite{norell:thesis,norell2009dependently} has recently been
+Agda~\cite{norell:thesis,norell2009dependently} has recently been
 extended a \emph{reflection mechanism} for compile time meta
-programming in the style of Lisp, MetaML, Template Haskell, and \CC\
-templates. Agda's reflection mechanisms makes it possible to convert a
-program fragment into its corresponding abstract syntax tree and vice
-versa. In tandem with Agda's dependent types, this provides promising
-new programming potential. \todo{add citations}
+programming in the style of Lisp~\cite{lisp-macros},
+MetaML~\cite{metaml}, Template Haskell~\cite{template-haskell}, and
+\CC\ templates~\cite{cplusplus}. Agda's reflection mechanisms makes it
+possible to convert a program fragment into its corresponding abstract
+syntax tree and vice versa. In tandem with Agda's dependent types,
+this provides promising new programming potential. 
 
 This paper starts exploring the possibilities and limitations of this
 new reflection mechanism. It describes several case studies,
-indicative of the kind of problems that can be solved by
+exemplifying of the kind of problems that can be solved by
 reflection. More specifically it makes the following contributions:
 
 \begin{itemize}
@@ -106,29 +109,118 @@ reflection. More specifically it makes the following contributions:
   point, we develop a type safe translation from the simply typed
   lambda calculus to combinatory logic.
 \item Finally, the final version will also discuss some of the
-  limitations of the current implematation of reflection. In the
-  future we hope to extend the current implementation to address some
-  of these issues.
+  limitations of the current implematation of reflection.
 \end{itemize}
 
 The code and examples presented in this paper all compile using the
-latest version of Agda 2.3.0.1 and is available on github. \todo{add url}
+latest version of Agda 2.3.0.1 and is available on
+github.\footnote{\url{http://www.github.com/toothbrush}}
 
 \section{Reflection in Agda}
 \label{sec:reflection}
 
+Agda's reflection API defines several data types to represent terms,
+types, and sorts. These definitions take into account various
+features, including hidden arguments and computationally irrelevant
+definitions. An overview of the core data types involved has been
+included in Figure~\ref{fig:reflection}. In addition to these data
+types that represent \emph{terms}, there is some support for
+reflecting \emph{definitions} as opposed to terms.
+
+There are several new keywords that can be used to quote and unquote
+|Term| values: |quote|, |quoteTerm|, |quoteGoal|, and |unquote|. The
+|quote| keyword allows you to access the internal representation of
+any identifier; we will not use it in the examples discussed in this
+paper.\todo{really?} The other quotation forms, |quoteTerm| and
+|quoteGoal|, are more useful. 
+
+The easiest example of quotation uses the |quoteTerm| keyword to turn
+a fragment of concrete syntax into a |Term| data type. Note that the
+|quoteTerm| keyword reduces like any other function in Agda. As an
+example, the following unit test type checks:
+
+\begin{code}
+example : quoteTerm (\ x -> x) ≡ lam visible (var 0 [])
+example = refl
+\end{code}
+For the type checker to see that both sides of the equation are equal,
+it needs to evaluate |quoteTerm (\ x -> x)|, which does indeed reduce
+to the |Term| on the right-hand side of the equation.
+
+
+
+The |unquote| keyword has the opposite effect, converting a |Term|
+data type back to concrete syntax.
+
+
+
 \todo{Describe reflection mechanism and give examples}
+
+\begin{figure}[p]
+%if style == poly
+  \begin{code}
+      postulate Name : Set
+
+    -- Arguments may be implicit, explicit, or inferred
+      data Visibility : Set where
+        visible hidden instance : Visibility
+
+    -- Arguments can be relevant or irrelevant.
+      data Relevance : Set where
+        relevant irrelevant : Relevance
+
+    -- Arguments.
+      data Arg A : Set where
+        arg : (v : Visibility) (r : Relevance) (x : A) → Arg A
+
+    -- Terms.
+      mutual
+        data Term : Set where
+        -- A bound variable applied to a list of arguments
+          var     : (x : ℕ) (args : List (Arg Term)) → Term
+        -- Constructor applied to a list of arguments
+          con     : (c : Name) (args : List (Arg Term)) → Term
+        -- Identifier applied to a list of arguments
+          def     : (f : Name) (args : List (Arg Term)) → Term
+        -- Lambda abstraction
+          lam     : (v : Visibility) (t : Term) → Term
+        -- Dependent function types
+          pi      : (t₁ : Arg Type) (t₂ : Type) → Term
+        -- Sorts
+          sort    : Sort → Term
+        -- Anything else
+          unknown : Term
+
+        data Type : Set where
+          el : (s : Sort) (t : Term) → Type
+
+        data Sort : Set where
+        -- A Set of a given (possibly neutral) level.
+          set     : (t : Term) → Sort
+        -- A Set of a given concrete level.
+          lit     : (n : ℕ) → Sort
+        -- Anything else.
+          unknown : Sort
+  \end{code}
+%endif
+  \caption{The data types for reflecting terms}
+  \label{fig:reflection}
+\end{figure}
 
 \section{Proof by Reflection}
 \label{sec:proof-by-reflection}
 
 The idea behind proof by reflection is simple: given that type theory
-is both a programming language and a proof system, we can write
-functions that compute proofs. Reflection is an overloaded word in
-this context, since in programming language technology reflection is
-the capability of converting some piece of concrete program syntax
+is both a programming language and a proof system, it is possible to
+define functions that compute proofs. Reflection is an overloaded word
+in this context, since in programming language technology reflection
+is the capability of converting some piece of concrete program syntax
 into a syntax tree object which can be manipulated in the same
-system.
+system. Here we will present two case studies illustrating proof by
+reflection and how Agda's reflection mechanism can make the technique
+more usable and accessible.
+
+
 
 % These values (in terms of inductive
 % types representing the concrete syntax) can then be translated back
@@ -140,20 +232,15 @@ system.
 % the proof of the given proposition.
 
 
-Here we will present two case studies illustrating proof by reflection
-and how Agda's reflection mechanism can make the technique more usable
-and accessible.
-
 
 \subsection{Simple Example: Evenness}
 
 As a first example, we will cover an example taken from
-Chlipala\todo{add citation}, where we develop a procedure to prove
-that a number is even automatically. 
-
-We start by defining the property |Even| below. There are two
-constructors: the first constructor says that zero is even; the second
-constructor states that if $n$ is even, then so is $2 + n$.
+Chlipala~\cite{chlipala2011certified}, where we develop a procedure to
+prove that a number is even automatically. We start by defining the
+property |Even| below. There are two constructors: the first
+constructor says that zero is even; the second constructor states that
+if $n$ is even, then so is $2 + n$.
 
 \begin{spec}
 data Even      : ℕ → Set where
@@ -162,7 +249,7 @@ data Even      : ℕ → Set where
 \end{spec}
 
 Using these rules to produce the proof that some large number |n| is
-even can be very tedious: the proof that |2 * n| is even requires |n|
+even can be very tedious: the proof that $2 \times n$ is even requires |n|
 applications of the |isEvenSS| constructor. For example, here is the
 proof that 6 is even:
 
@@ -182,11 +269,14 @@ even? (suc zero)        = false
 even? (suc (suc n))     = even? n
 \end{spec}
 
+\todo{Here we should use unit/empty arguments instead of returning a boolean}
+
 Next we need to show that the |even?| function is \emph{sound}. To do
 so, we prove that when |even? n| returns |true|, the type |Even n| is
 inhabited. This is done in the function |soundnessEven|. What is
-actually happening here is that we are giving a recipe for proof trees
-such as the one we manually defined for |isEven6|.
+actually happening here is that we are giving a recipe for
+constructing proof trees, such as the one we manually defined for
+|isEven6|.
 
 \begin{spec}
 soundnessEven : {n : ℕ} → even? n ≡ true → Even n
@@ -200,12 +290,14 @@ right-hand side of the function definition. The assumption that |even?
 1 ≡ true| is uninhabited, and we discharge this branch using Agda's
 absurd pattern ().
 
-Now that this has been done, if we need a proof that some arbitrary $n$ is even,
-we only need to instantiate |soundnessEven|. Note that the value of $n$ is a hidden
-and automatically inferred argument to |soundnessEven|, and that we also pass
-a proof that |even? n| returns |true| for that particular $n$. Since in a
-dependently typed setting $\beta$-reduction (evaluation) happens in
-the type system, |refl| is a valid proof.
+Now that this has been done, if we need a proof that some arbitrary
+$n$ is even, we only need to instantiate |soundnessEven|. Note that
+the value of $n$ is an implicit argument to |soundnessEven|. The only
+argument we need to provide to our |soundnessEven| lemma is a proof
+that |even? n ≡ true|. For any closed term, such as the numbers |28|
+or |8772|, this proof obligation can be reduced to proving |true ≡
+true|, which is proven by the single constructor for the equality
+type, |refl|.
 
 \begin{spec}
 isEven28        : Even 28
@@ -243,8 +335,8 @@ is even worse if we want to check if the formula always holds by
 trying all possible variable assignments, since this will give $2^n$
 cases, where $n$ is the number of variables.
 
-To try to automate this process, we'll follow a similar approach to the one given
-above for proving evenness of arbitrary (even) naturals.
+To try to automate this process, we'll follow a similar approach to
+the one given above for proving evenness of arbitrary (even) naturals.
 
 We start off by defining an inductive data type to represent boolean
 expressions with $n$ free variables.  There isn't anything surprising
@@ -305,7 +397,7 @@ false ⇒ false = true
 
 
 Note that the interpretation function also requires an environment to be
-provided, which maps the free variables to actual boolean values. The type of
+provided, which maps the free variables to boolean values. The type of
 the interpretation function ensures that the mapping always contains an entry
 for each free variable.
 
@@ -326,12 +418,15 @@ P : Bool → Set
 P = So "Argumunt expression does not evaluate to true."
 \end{spec}
 
-Now that we have these helper functions, it's easy to express a
-tautology. We quantify over a few boolean variables, and wrap the
-formula in our |P| function. If this function can be defined, we have
-proven that the argument to |P| is a tautology, i.e., for each
+Now that we have these helper functions, it's easy to define what it
+means to be a tautology. We quantify over a few boolean variables, and
+wrap the formula in our |P| function. If the resulting type is
+inhabited, the argument to |P| is a tautology, i.e., for each
 assignment of the free variables the entire equation still evaluates
 to |true|.
+
+\todo{Leg hier het probleem uit tussen conversie van forall b1 b2 b3
+  en environments}
 
 This seems fine, but as soon as more variables come into play, the
 proofs we need to construct become rather tedious. Take the following
@@ -566,10 +661,8 @@ represent the truth of a proposition given a certain assignment of
 variables. Each time there's a branch in the (fully binary) tree, the
 left branch at depth $d$ corresponds to setting variable with de
 Bruijn index $d$ to |true|, and the right branch corresponds to
-setting that variable to |false|. |Diff n m| is an auxiliary proof
-that the process terminates, and that in the end the environments will
-all have $n$ entries, corresponding to the $n$ free variables in a
-|BoolExpr n|.
+setting that variable to |false|. The argument of type |Diff n m| is
+necessary to prove the process terminates.
 
 \begin{spec}
 forallsAcc : {n m : ℕ} → (b : BoolExpr m) → Env n → Diff n m → Set
@@ -656,7 +749,7 @@ Now, we can prove theorems by calling |soundness b|, where |b| is the
 representation of the formula under consideration. Agda is convinced
 that the representation does in fact correspond to the concrete
 formula, and also that |soundness| gives a valid proof. If the module
-passes the type-check, we know our formula is both a tautology, and
+passes the type checker, we know our formula is both a tautology, and
 that we have the corresponding proof object at our disposal
 afterwards, as in the following example.
 
@@ -831,13 +924,16 @@ of expressive power or general applicability of the proofs resulting from |sound
 
 This paper has presented two simple applications of proof by
 reflection. In the final version of this paper, we will show how
-Agda's reflection API has other exciting applications.
+Agda's reflection API has several other applications.
 
 
 \bibliography{refs}{}
 \bibliographystyle{splncs}
 
 
+% Gebruik geen contractions isn't, didn't etc.
+% Beperk je tot de essentie
+% Geef voorbeelden
 
 \end{document}
 %%% Local Variables:
