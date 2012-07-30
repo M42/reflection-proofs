@@ -9,10 +9,9 @@
 %endif
 
 \usepackage{url}
-\usepackage{todonotes}
+\usepackage[disable]{todonotes}
 \newcommand{\ignore}[1]{}
-%\newcommand{\todo}[1]{\textbf{TODO:}#1}
-\def\CC{{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\tiny\bf ++}}}
+\def\CC{{C\nolinebreak[4]\hspace{ -.05em}\raisebox{.4ex}{\tiny\bf ++}}}
 
 \ignore{
 \begin{code}
@@ -20,12 +19,12 @@ module ReflectionProofs where
 \end{code}
 
 
-\begin{spec}
+\begin{code}
 -- imports for Evenness
 open import Relation.Binary.PropositionalEquality
 open import Data.Bool renaming (not to ¬_)
 open import Data.Nat
-\end{spec}
+\end{code}
 }
 
 \ignore{
@@ -130,28 +129,53 @@ reflecting \emph{definitions} as opposed to terms.
 There are several new keywords that can be used to quote and unquote
 |Term| values: |quote|, |quoteTerm|, |quoteGoal|, and |unquote|. The
 |quote| keyword allows you to access the internal representation of
-any identifier; we will not use it in the examples discussed in this
-paper.\todo{really?} The other quotation forms, |quoteTerm| and
-|quoteGoal|, are more useful. 
+any identifier. This internal representation can be used to query the
+type or definition of the identifier. We will not use it in the
+examples discussed in this paper. The other quotation forms,
+|quoteTerm| and |quoteGoal|, will be used.
 
 The easiest example of quotation uses the |quoteTerm| keyword to turn
 a fragment of concrete syntax into a |Term| data type. Note that the
 |quoteTerm| keyword reduces like any other function in Agda. As an
 example, the following unit test type checks:
-
 \begin{code}
 example : quoteTerm (\ x -> x) ≡ lam visible (var 0 [])
 example = refl
 \end{code}
-For the type checker to see that both sides of the equation are equal,
-it needs to evaluate |quoteTerm (\ x -> x)|, which does indeed reduce
-to the |Term| on the right-hand side of the equation.
+Furthermore, |quoteTerm| type checks and normalizes its term before
+returning the required |Term|, as the following example demonstrates:
+\begin{code}
+example' : quoteTerm ((\ x -> x) 0) ≡ con Data.Nat.ℕ.zero []
+example' = refl
+\end{code}
+
+The |quoteGoal| is slightly different. It is best explained using an
+example:
+
+\begin{code}
+exampleQuoteGoal : ℕ
+exampleQuoteGoal = quoteGoal e in {!!}
+\end{code}
+The |quoteGoal| keyword binds the variable |e| to the |Term|
+representing the type of current the goal. In this example, the value
+of $e$ in the hole will be |def ℕ []|, i.e., the |Term| representing
+the type |ℕ|.
+
+The |unquote| keyword has converts a |Term| data type back to concrete
+syntax. Just as |quoteGoal| and |quoteGoal|, it type checks and
+normalizes the |Term| before it is spliced into the program text.
 
 
 
-The |unquote| keyword has the opposite effect, converting a |Term|
-data type back to concrete syntax.
+% =======
+% The documentation of the reflection mechanism which was recently added
+% to Agda is thin to say the least. This section aims to  introduce the types
+% and functions involved and give a few examples which will hopefully reduce
+% the steepness of the learning curve involved in getting started with your
+% own reflective programs and proofs.
+% >>>>>>> other
 
+% <<<<<<< local
 
 
 \todo{Describe reflection mechanism and give examples}
@@ -165,6 +189,7 @@ data type back to concrete syntax.
       data Visibility : Set where
         visible hidden instance : Visibility
 
+
     -- Arguments can be relevant or irrelevant.
       data Relevance : Set where
         relevant irrelevant : Relevance
@@ -172,7 +197,6 @@ data type back to concrete syntax.
     -- Arguments.
       data Arg A : Set where
         arg : (v : Visibility) (r : Relevance) (x : A) → Arg A
-
     -- Terms.
       mutual
         data Term : Set where
@@ -206,6 +230,134 @@ data type back to concrete syntax.
   \caption{The data types for reflecting terms}
   \label{fig:reflection}
 \end{figure}
+% =======
+% The reflection API is characterised by two data types, |Type| and |Term|, where
+% a |Type| contains a sort and a |Term| describing the type. The |Term| structure
+% closely follows Agda's internal representation of syntax, and although not 
+% very easy on the eyes, isn't very surprising.
+% >>>>>>> other
+
+% <<<<<<< local
+% =======
+
+% \begin{spec}
+% data Visibility : Set where
+%   visible hidden instance : Visibility
+
+% data Relevance : Set where
+%   relevant irrelevant : Relevance
+
+% data Arg A : Set where
+%   arg : (v : Visibility) (r : Relevance) (x : A) → Arg A
+
+% -- Terms.
+
+% mutual
+%   data Term : Set where
+%     -- Variable applied to arguments.
+%     var     : (x : ℕ) (args : List (Arg Term)) → Term
+%     -- Constructor applied to arguments.
+%     con     : (c : Name) (args : List (Arg Term)) → Term
+%     -- Identifier applied to arguments.
+%     def     : (f : Name) (args : List (Arg Term)) → Term
+%     -- Different kinds of λ-abstraction.
+%     lam     : (v : Visibility) (ty : Type) (t : Term) → Term
+%     -- Pi-type.
+%     pi      : (t₁ : Arg Type) (t₂ : Type) → Term
+%     -- A sort.
+%     sort    : Sort → Term
+%     -- Anything else.
+%     unknown : Term
+
+%   data Type : Set where
+%     el : (s : Sort) (t : Term) → Type
+
+%   data Sort : Set where
+%     -- A Set of a given (possibly neutral) level.
+%     set     : (t : Term) → Sort
+%     -- A Set of a given concrete level.
+%     lit     : (n : ℕ) → Sort
+%     -- Anything else.
+%     unknown : Sort
+% \end{spec}
+
+% The |Visibility| and |Relevance| types are used for annotating
+% arguments to functions, for example, invisible arguments are
+% implicit. |Relevance| is an annotation to arguments specifying whether
+% they are depended upon by the function they're being passed to. For a
+% more complete discussion of relevance, see
+% http://wiki.portal.chalmers.se/agda/agda.php?n=ReferenceManual.Irrelevance
+% . The |Arg A| type is just used to pair some argument with type |A| with
+% relevance and visibility annotations.
+
+
+% |Term|s and |Type|s are more interesting: the representation is de Bruijn-style,
+% and lambda abstractions are modeled as binding one variable. A variable has a de Bruijn index,
+% and may be applied to arguments. Note the |Type| argument in the |lam| constructor:
+% this holds the type of the argument expected.
+
+% |con| and |def| are introduced when constructors and definitions, respectively,
+% are applied to a (possibly empty) list of arguments. Finally the constructor |unknown| is
+% used for things which aren't or can't be represented in this AST (such as function definitions).
+
+% The reflection API also includes a few keywords, such as |quote|,
+% |quoteTerm| and |quoteGoal e in ?|.  The |quote| keyword returns the
+% |Name| of its argument, which can be useful for comparing to the first
+% argument of a |con| constructor, for example, or for looking up more
+% information about a given data type. |quoteTerm| returns its argument
+% as a |Term|, in other words it gives the AST after parsing,
+% type-checking and normalising. For example, |quoteTerm (λ x → x)|
+% returns |lam visible (el unknown unknown) (var 0 [])|. Dissecting
+% this, we introduced a lambda abstraction, so we expect the |lam|
+% constructor. It's one argument is visible, but since we didn't
+% annotate the term with types, it's type and sort is unknown. Finally,
+% the body of the lambda abstraction is just a reference to the
+% nearest-bound variable, thus |var 0|, applied to no arguments, hence
+% the empty list.
+
+\todo{explain the resulting AST, or is it obvious?}
+
+% A common task will be casting the raw |Term| we get into some AST of
+% our own, possibly one which enforces some invariants, such as a
+% simply-typed lambda calculus representation, ensuring well-typedness.
+% A library has been developed which might serve as both an instructive
+% example in how to pull apart |Term|s, as well as a helper function,
+% since it provides the feature of automatically converting a |Term|
+% into some AST type, if a mapping is provided from concrete Agda
+% |Name|s to constructors of this AST.
+
+% \subsection{List of constructors}
+
+% If one wants to get a list of the constructors in a given data type, the functions
+% |quote|, |definition : Name → Definition| and |constructors : Data-type → List Name| will be useful. 
+% One of the possible constructors of the |Definition| data type is |data-type|, which has one argument,
+% of type |Data-type|.
+
+% As an illustration, the following snippet (and specifically the function |CombCons| returns
+% the list of constructor names in the hypothetical |Combinatory| data type.
+
+% \begin{spec}
+% CombDef : Definition
+% CombDef = definition (quote Combinatory)
+
+% conList : Definition → List Name
+% conList (data-type x) = constructors x
+% conList _             = []
+
+% CombCons : List Name
+% CombCons = conList CombDef
+% \end{spec}
+
+% Finally, you could even get the |Type| of the $n^{\textnormal{th}}$ constructor of some data type
+% as in the function |TypeNthCons|.
+
+% \begin{spec}
+% TypeNthCons : ℕ → Type
+% TypeNthCons n with CombCons ! n
+% TypeNthCons .(index p) | inside x p = type x
+% TypeNthCons .(5 + m)   | outside m  = el unknown unknown
+% \end{spec}
+
 
 \section{Proof by Reflection}
 \label{sec:proof-by-reflection}
@@ -324,7 +476,6 @@ problem domain were both natural numbers. As we shall see, this need
 not always be the case.
 
 Take as an example the boolean formula in equation \ref{eqn:tauto-example}.
-
 \begin{align}\label{eqn:tauto-example}
 (p_1 \vee q_1) \wedge (p_2 \vee q_2) \Rightarrow (q_1 \vee p_1) \wedge (q_2 \vee p_2)
 \end{align}
@@ -336,13 +487,9 @@ trying all possible variable assignments, since this will give $2^n$
 cases, where $n$ is the number of variables.
 
 To try to automate this process, we'll follow a similar approach to
-the one given above for proving evenness of arbitrary (even) naturals.
-
-We start off by defining an inductive data type to represent boolean
-expressions with $n$ free variables.  There isn't anything surprising
-about this definition; we use the type |Fin n| to ensure that
-variables (represented by |Atomic|) are always in scope.
-
+the one given above for proving evenness of arbitrary (even)
+naturals. We start off by defining an inductive data type to represent
+boolean expressions with $n$ free variables.  
 \begin{spec}
 data BoolExpr : ℕ → Set where
   Truth         : {n : ℕ}                                → BoolExpr n
@@ -353,6 +500,9 @@ data BoolExpr : ℕ → Set where
   Imp           : {n : ℕ} → BoolExpr n → BoolExpr n      → BoolExpr n
   Atomic        : {n : ℕ} → Fin n                        → BoolExpr n
 \end{spec}
+There isn't anything
+surprising about this definition; we use the type |Fin n| to ensure
+that variables (represented by |Atomic|) are always in scope.
 
 We also need a mapping from variables to boolean assignments, which we'll call |Env|.
 It has fixed size $n$ since a |BoolExpr n| has $n$ free variables.
@@ -428,10 +578,10 @@ to |true|.
 \todo{Leg hier het probleem uit tussen conversie van forall b1 b2 b3
   en environments}
 
-This seems fine, but as soon as more variables come into play, the
-proofs we need to construct become rather tedious. Take the following
-formula as an example; it would need 16 cases. Note that this is the
-same formula as in Eqn.~\ref{eqn:tauto-example}.
+As soon as more variables come into play, the proofs we need to
+construct become rather tedious. Take the following formula as an
+example; it would need 16 cases. Note that this is the same formula as
+in Eqn.~\ref{eqn:tauto-example}.
 
 \begin{spec}
 myfavouritetheorem : Set
@@ -646,23 +796,24 @@ Error-elim ()
 \end{spec}
 }
 
-Now that we can translate a |BoolExpr n| into a concrete Agda theorem,
-and we have a way to decide if something is true for a given
-environment, we need to show the soundness of our decision function,
-and define a notion of what it means to be a tautology. That is, we
-need to be able to show that a formula is true for every possible
-assignment of its variables to |true| or |false|.
+Now that we can interpret a |BoolExpr n| as a theorem, and we have a
+way to decide if something is true for a given environment, we still
+need to show the soundness of our decision function. That is, we need
+to be able to show that a formula is true if it holds for every
+possible assignment of its variables to |true| or |false|.
 
 The first step in this process is to formalise the idea of a formula
 being true for all variable assignments.  This is captured in the
-functions |foralls| and |forallsAcc|, where |foralls| is the function
-which bootstraps the construction of a tree, where the leaves
-represent the truth of a proposition given a certain assignment of
-variables. Each time there's a branch in the (fully binary) tree, the
-left branch at depth $d$ corresponds to setting variable with de
-Bruijn index $d$ to |true|, and the right branch corresponds to
-setting that variable to |false|. The argument of type |Diff n m| is
-necessary to prove the process terminates.
+function |foralls|. 
+
+%  function
+% which bootstraps the construction of a tree, where the leaves
+% represent the truth of a proposition given a certain assignment of
+% variables. Each time there's a branch in the (fully binary) tree, the
+% left branch at depth $d$ corresponds to setting variable with de
+% Bruijn index $d$ to |true|, and the right branch corresponds to
+% setting that variable to |false|. The argument of type |Diff n m| is
+% necessary to prove the process terminates.
 
 \begin{spec}
 forallsAcc : {n m : ℕ} → (b : BoolExpr m) → Env n → Diff n m → Set
@@ -673,25 +824,23 @@ forallsAcc b' env    (Step y   ) =
 foralls : {n : ℕ} → (b : BoolExpr n) → Set
 foralls {n} b = forallsAcc b [] (zero-least 0 n)
 \end{spec}
+The |foralls| function calls the |forallsAcc| function with a suitable
+choice of initial arguments. The real work is done by the |forallsAcc|
+function that builds up a type, storing interpretations of a
+|BoolExpr| under all possible environments. If we can construct a
+value of type |foralls b|, we should also be able to prove that |b| is
+a tautology. This proof is given by the |soundness| lemma below.
 
-We now have a concept of all environments leading to truth of a
-proposition. If we require this fact as input to a soundness function,
-we are able to use it to show that the current boolean expression is
-in fact a tautology. We do this in the |soundness| function, where the
-output should have the type given by the previously-defined
-|prependTelescope| function. This enables us to put a call to
-|soundness| where a proof of something like
-Eqn. \ref{eqn:tauto-example} is required.
 
-If we look closely at the definition of |soundnessAcc| (which is
-actually where the work is done; |soundness| merely calls
-|soundnessAcc| with some initial input, namely the |BoolExpr n|, an
-empty environment, and the proof that the environment is the size of
-the number of free variables), we see that we build up a function
-that, when called with the values assigned to the free variables,
-builds up the corresponding environment and eventually returns the
-leaf from |foralls| which is the proof that the formula is a tautology
-in that specific case.
+
+% We now have a concept of all environments leading to truth of a
+% proposition. If we require this fact as input to a soundness function,
+% we are able to use it to show that the current boolean expression is
+% in fact a tautology. We do this in the |soundness| function, where the
+% output should have the type given by the previously-defined
+% |prependTelescope| function. This enables us to put a call to
+% |soundness| where a proof of something like
+% Eqn. \ref{eqn:tauto-example} is required.
 
 \begin{spec}
 soundnessAcc :   {m : ℕ} →
@@ -712,12 +861,21 @@ soundnessAcc {m} bexp {n} env (Step y) H =
 soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBool n b
 soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 \end{spec}
+If we look closely at the definition of |soundnessAcc| (which is
+actually where the work is done; |soundness| merely calls
+|soundnessAcc| with some initial input, namely the |BoolExpr n|, an
+empty environment, and the proof that the environment is the size of
+the number of free variables), we see that we build up a function
+that, when called with the values assigned to the free variables,
+builds up the environment and eventually returns the
+leaf from |foralls| which is the proof that the formula is a tautology
+in that specific case.
 
 Notice that |foralls b| is an implicit argument to |soundness|, which
 might be surprising, since it is actually the proof tree representing
 that the expression is a tautology. The reason this is how it's done
 is because Agda can automatically infer implicit arguments when they
-are simple record types, such as |⊤| and pair in this case. This is
+are simple record types, such as the unit type |⊤| and pairs. This is
 illustrated in the following code snippet.
 
 \begin{spec}
@@ -731,9 +889,7 @@ baz = foo
 Here we see that there is an implicit argument |u| required to |foo|,
 but in |baz| it's not given.  This is possible because Agda can infer
 that |(tt , tt)| is the only term which fits, and therefore
-instantiates it when required. This can be done by the type system for
-records, since they are not allowed to be inductively defined, which
-would cause possible non-termination.
+instantiates it when required. 
 
 The same principle is used in |soundness|; eventually all that's
 required is a deeply nested pair containing elements of type |⊤|, of
@@ -763,50 +919,50 @@ someTauto    : (p q : Bool)
 someTauto    = soundness rep
 \end{spec}
 
-The only thing which is still a pain is that for every formula we
-would like to prove, we still have to manually convert the concrete Agda
-representation (|p ∧ q ⇒ q|, in this case) into our abstract syntax
-(|rep| here). This is silly, since we end up typing out the formula
-twice. We also have to count the number of free variables ourselves,
-and keep track of the de Bruijn indices. This is error-prone given how
-cluttered the abstract representation can get for formulae containing
-many variables. It would be desirable for this process to be
-automated. In Sec. \ref{sec:addrefl} an approach is presented using
-Agda's recent reflection API.
+The only step we still have to do manually is to convert the concrete
+Agda representation (|p ∧ q ⇒ q|, in this case) into our abstract
+syntax (|rep| here). This is unfortunate, as we end up typing out the
+formula twice. We also have to count the number of variables
+ourselves and convert them the to De Bruijn indices. This is
+error-prone given how cluttered the abstract representation can get
+for formulae containing many variables. It would be desirable for this
+process to be automated. In Sec. \ref{sec:addrefl} an approach is
+presented using Agda's recent reflection API.
 
 \subsection{Adding Reflection}\label{sec:addrefl}
 
-In Agda version 2.2.8 a reflection API was added \cite{agda-relnotes-228}. This system introduces some extra
-language constructs, such as |quoteGoal e in t|, which allows the term |t| to refer to |e|, which is instantiated
-to an abstract representation of the type of the term expected wherever |quoteGoal| was placed. Since
-one needs to encode the desired proposition to be proved in the type of the proof object, quoting
-this goal gives us enough information to call the |soundness| function. Here we see 2 helper functions
-for doing precisely that.
+We can get rid of this duplication using Agda's reflection API. More
+specifically, we will use the |quoteGoal| keyword to inspect the
+current goal. Given the |Term| representation of the goal, we can
+convert it to its corresponding |BoolExpr|.
 
-The |proveTautology| function calls the |soundness| function, after
-converting the raw AST (abstract syntax tree) Agda gives us
-representing the goal into our own |BoolExpr n| format. To be able to
-do this is also needs some auxiliary functions such as |freeVars|,
-which counts the number of variables (needed to be able to instantiate
-the $n$ in |BoolExpr n|), and |stripSo| \& |stripPi|, which peel off
-the telescope type and the function |P| with which we wrap our
-tautologies. We also need the |concrete2abstract| function, which does
-the actual |Term → BoolExpr n| conversion, when given proofs that the
-input |Term| adheres to certain restrictions (such as only containing
-the functions |_∧_|, |_∨_| and friends, and only containing boolean
-variables.
+% In Agda version 2.2.8 a reflection API was added
+% \cite{agda-relnotes-228}. This system introduces some extra language
+% constructs, such as |quoteGoal e in t|, which allows the term |t| to
+% refer to |e|, which is instantiated to an abstract representation of
+% the type of the term expected wherever |quoteGoal| was placed.
+% Since
+% one needs to encode the desired proposition to be proved in the type
+% of the proof object, quoting this goal gives us enough information to
+% call the |soundness| function. Here we see 2 helper functions for
+% doing precisely that.
 
-The helper functions have been ommitted for brevity, since they are
-rather verbose and don't add anything to the understanding of the
-subject at hand.
-
+The conversion between a |Term| and |BoolExpr| is done by the
+|concrete2abstract| function:
 \begin{spec}
 concrete2abstract :
              (t     : Term)
        →     {pf    : isSoExprQ (stripPi t)}
        →     {pf2   : isBoolExprQ (freeVars t) (stripPi t) pf}
        →     BoolExpr (freeVars t)
-concrete2abstract t {pf} {pf2} = term2boolexpr (freeVars t) (stripSo (stripPi t) pf) pf2
+\end{spec}
+Note that not every |Term| can be converted to a |BoolExpr|. The
+|concrete2abstract| function requires additional assumptions about the
+|Term|. It should only contain functions such as |_∧_| or |_∨_|, and
+it should only containing boolean variables. 
+
+All these pieces are assembled in the |proveTautology| function.
+\begin{spec}
 
 proveTautology :    (t     : Term) →
                     {pf    : isSoExprQ (stripPi t)} →
@@ -814,13 +970,24 @@ proveTautology :    (t     : Term) →
                     let b = concrete2abstract t {pf} {pf2} in
                         {i : foralls b} →
                         forallBool (freeVars t) b
-proveTautology e {pf} {pf2} {i} = soundness {freeVars e} (concrete2abstract e) {i}
-
+proveTautology e {pf} {pf2} {i} = 
+  soundness {freeVars e} (concrete2abstract e) {i}
 \end{spec}
+The |proveTautology| function converts a raw |Term| to a |BoolExpr n|
+format and calls the |soundness| lemma. It uses a few auxiliary
+functions such as |freeVars|, which counts the number of variables
+(needed to be able to instantiate the $n$ in |BoolExpr n|), and
+|stripSo| \& |stripPi|, which peel off the telescope type and the
+function |P| with which we wrap our tautologies. These helper
+functions have been ommitted for brevity, since they are rather
+verbose and don't add anything to the understanding of the subject at
+hand.
 
-These are all the ingredients required to automatically prove that formulae are tautologies.
-The following code illustrates the use of the |proveTautology| functions; we can omit the implicit
-arguments for the reasons outlined in the previous section.
+
+These are all the ingredients required to automatically prove that
+formulae are tautologies.  The following code illustrates the use of
+the |proveTautology| functions; we can omit the implicit arguments for
+the reasons outlined in the previous section.
 
 \begin{spec}
 
