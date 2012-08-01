@@ -517,8 +517,8 @@ boolean expression is a tautology. It does this by evaluating
 (interpreting) the formula's AST. For example, |And| is converted to
 the boolean function |_∧_|, and it's two arguments in turn are
 recursively interpreted. Here |_∧_|, |_∨_|, |_⇒_| are all defined with
-type |Bool → Bool → Bool|, and |¬_| is of type |Bool → Bool|.  The
-definition of the interpretation function |⟦_⊢_⟧| is unsurprising.
+type |Bool → Bool → Bool|, and |¬_| is of type |Bool → Bool|, making the
+definition of the interpretation function |⟦_⊢_⟧| unsurprising.
 
 \ignore{
 \begin{spec}
@@ -553,8 +553,8 @@ for each free variable.
 
 Now that this has been done, we can move on to defining what it means for a given
 formula to be a tautology. Here we introduce the |So| function, which gives |⊤| if
-its argument is |true|, and |⊥| otherwise. We've actually defined a type isomorphic to |⊥|
-which is parameterised by an error message string, to make it more obvious to the user
+its argument is |true|, and |⊥| otherwise. The |Error| type is actually isomorphic to |⊥|, but
+parameterised by an error message string, to make it more obvious to the user
 what, if anything, went wrong.
 
 \begin{spec}
