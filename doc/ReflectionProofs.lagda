@@ -28,7 +28,7 @@ open import Data.Nat
 }
 
 \ignore{
-\begin{spec}
+\begin{code}
 -- imports for Boolean tauto solver
 open import Data.String
 open import Relation.Nullary hiding (¬_)
@@ -43,7 +43,7 @@ open import Data.Empty
 open import Data.Sum hiding (map)
 open import Data.Product hiding (map)
 open import Data.List hiding (_∷ʳ_)
-\end{spec}
+\end{code}
 }
 
 \usepackage{amsmath}
@@ -138,14 +138,14 @@ The easiest example of quotation uses the |quoteTerm| keyword to turn
 a fragment of concrete syntax into a |Term| data type. Note that the
 |quoteTerm| keyword reduces like any other function in Agda. As an
 example, the following unit test type checks:
-\begin{code}
+\begin{spec}
 example : quoteTerm (\ x -> x) ≡ lam visible (var 0 [])
 example = refl
-\end{code}
+\end{spec}
 Furthermore, |quoteTerm| type checks and normalizes its term before
 returning the required |Term|, as the following example demonstrates:
 \begin{code}
-example' : quoteTerm ((\ x -> x) 0) ≡ con Data.Nat.ℕ.zero []
+example' : quoteTerm ((\ x -> x) 0) ≡ con (quote Data.Nat.ℕ.zero) []
 example' = refl
 \end{code}
 
@@ -182,7 +182,7 @@ normalizes the |Term| before it is spliced into the program text.
 
 \begin{figure}[p]
 %if style == poly
-  \begin{code}
+  \begin{spec}
       postulate Name : Set
 
     -- Arguments may be implicit, explicit, or inferred
@@ -225,70 +225,12 @@ normalizes the |Term| before it is spliced into the program text.
           lit     : (n : ℕ) → Sort
         -- Anything else.
           unknown : Sort
-  \end{code}
+  \end{spec}
 %endif
   \caption{The data types for reflecting terms}
   \label{fig:reflection}
 \end{figure}
-% =======
-% The reflection API is characterised by two data types, |Type| and |Term|, where
-% a |Type| contains a sort and a |Term| describing the type. The |Term| structure
-% closely follows Agda's internal representation of syntax, and although not 
-% very easy on the eyes, isn't very surprising.
-% >>>>>>> other
 
-% <<<<<<< local
-% =======
-
-% \begin{spec}
-% data Visibility : Set where
-%   visible hidden instance : Visibility
-
-% data Relevance : Set where
-%   relevant irrelevant : Relevance
-
-% data Arg A : Set where
-%   arg : (v : Visibility) (r : Relevance) (x : A) → Arg A
-
-% -- Terms.
-
-% mutual
-%   data Term : Set where
-%     -- Variable applied to arguments.
-%     var     : (x : ℕ) (args : List (Arg Term)) → Term
-%     -- Constructor applied to arguments.
-%     con     : (c : Name) (args : List (Arg Term)) → Term
-%     -- Identifier applied to arguments.
-%     def     : (f : Name) (args : List (Arg Term)) → Term
-%     -- Different kinds of λ-abstraction.
-%     lam     : (v : Visibility) (ty : Type) (t : Term) → Term
-%     -- Pi-type.
-%     pi      : (t₁ : Arg Type) (t₂ : Type) → Term
-%     -- A sort.
-%     sort    : Sort → Term
-%     -- Anything else.
-%     unknown : Term
-
-%   data Type : Set where
-%     el : (s : Sort) (t : Term) → Type
-
-%   data Sort : Set where
-%     -- A Set of a given (possibly neutral) level.
-%     set     : (t : Term) → Sort
-%     -- A Set of a given concrete level.
-%     lit     : (n : ℕ) → Sort
-%     -- Anything else.
-%     unknown : Sort
-% \end{spec}
-
-% The |Visibility| and |Relevance| types are used for annotating
-% arguments to functions, for example, invisible arguments are
-% implicit. |Relevance| is an annotation to arguments specifying whether
-% they are depended upon by the function they're being passed to. For a
-% more complete discussion of relevance, see
-% http://wiki.portal.chalmers.se/agda/agda.php?n=ReferenceManual.Irrelevance
-% . The |Arg A| type is just used to pair some argument with type |A| with
-% relevance and visibility annotations.
 
 
 % |Term|s and |Type|s are more interesting: the representation is de Bruijn-style,
@@ -298,7 +240,7 @@ normalizes the |Term| before it is spliced into the program text.
 
 % |con| and |def| are introduced when constructors and definitions, respectively,
 % are applied to a (possibly empty) list of arguments. Finally the constructor |unknown| is
-% used for things which aren't or can't be represented in this AST (such as function definitions).
+% used for things which are not or cannot be represented in this AST (such as function definitions).
 
 % The reflection API also includes a few keywords, such as |quote|,
 % |quoteTerm| and |quoteGoal e in ?|.  The |quote| keyword returns the
@@ -309,7 +251,7 @@ normalizes the |Term| before it is spliced into the program text.
 % type-checking and normalising. For example, |quoteTerm (λ x → x)|
 % returns |lam visible (el unknown unknown) (var 0 [])|. Dissecting
 % this, we introduced a lambda abstraction, so we expect the |lam|
-% constructor. It's one argument is visible, but since we didn't
+% constructor. It's one argument is visible, but since we did not
 % annotate the term with types, it's type and sort is unknown. Finally,
 % the body of the lambda abstraction is just a reference to the
 % nearest-bound variable, thus |var 0|, applied to no arguments, hence
@@ -325,38 +267,6 @@ normalizes the |Term| before it is spliced into the program text.
 % since it provides the feature of automatically converting a |Term|
 % into some AST type, if a mapping is provided from concrete Agda
 % |Name|s to constructors of this AST.
-
-% \subsection{List of constructors}
-
-% If one wants to get a list of the constructors in a given data type, the functions
-% |quote|, |definition : Name → Definition| and |constructors : Data-type → List Name| will be useful. 
-% One of the possible constructors of the |Definition| data type is |data-type|, which has one argument,
-% of type |Data-type|.
-
-% As an illustration, the following snippet (and specifically the function |CombCons| returns
-% the list of constructor names in the hypothetical |Combinatory| data type.
-
-% \begin{spec}
-% CombDef : Definition
-% CombDef = definition (quote Combinatory)
-
-% conList : Definition → List Name
-% conList (data-type x) = constructors x
-% conList _             = []
-
-% CombCons : List Name
-% CombCons = conList CombDef
-% \end{spec}
-
-% Finally, you could even get the |Type| of the $n^{\textnormal{th}}$ constructor of some data type
-% as in the function |TypeNthCons|.
-
-% \begin{spec}
-% TypeNthCons : ℕ → Type
-% TypeNthCons n with CombCons ! n
-% TypeNthCons .(index p) | inside x p = type x
-% TypeNthCons .(5 + m)   | outside m  = el unknown unknown
-% \end{spec}
 
 
 \section{Proof by Reflection}
@@ -394,77 +304,80 @@ property |Even| below. There are two constructors: the first
 constructor says that zero is even; the second constructor states that
 if $n$ is even, then so is $2 + n$.
 
-\begin{spec}
+\begin{code}
 data Even      : ℕ → Set where
   isEvenZ      :                          Even 0
   isEvenSS     : {n : ℕ} → Even n     →   Even (2 + n)
-\end{spec}
+\end{code}
 
 Using these rules to produce the proof that some large number |n| is
 even can be very tedious: the proof that $2 \times n$ is even requires |n|
 applications of the |isEvenSS| constructor. For example, here is the
 proof that 6 is even:
 
-\begin{spec}
+\begin{code}
 isEven6 : Even 6
 isEven6 = isEvenSS (isEvenSS (isEvenSS isEvenZ))
-\end{spec}
+\end{code}
 
 To automate this, we will show how to \emph{compute} the proof
-required. We start by defining a boolean predicate |even?| that
-returns |true| when its input is even and false otherwise:
+required. We start by defining a predicate |even?| that
+returns the unit type when its input is even and bottom otherwise:
 
-\begin{spec}
-even? : ℕ → Bool
-even? zero              = true
-even? (suc zero)        = false
+\begin{code}
+even? : ℕ → Set
+even? zero              = ⊤
+even? (suc zero)        = ⊥
 even? (suc (suc n))     = even? n
-\end{spec}
+\end{code}
 
-\todo{Here we should use unit/empty arguments instead of returning a boolean}
 
 Next we need to show that the |even?| function is \emph{sound}. To do
-so, we prove that when |even? n| returns |true|, the type |Even n| is
+so, we prove that when |even? n| returns |⊤|, the type |Even n| is
 inhabited. This is done in the function |soundnessEven|. What is
 actually happening here is that we are giving a recipe for
 constructing proof trees, such as the one we manually defined for
 |isEven6|.
 
-\begin{spec}
-soundnessEven : {n : ℕ} → even? n ≡ true → Even n
-soundnessEven {0}              refl        = isEvenZ
+\begin{code}
+soundnessEven : {n : ℕ} → even? n → Even n
+soundnessEven {0}              tt        = isEvenZ
 soundnessEven {1}              ()
-soundnessEven {suc (suc n)}    s           = isEvenSS (soundnessEven s)
-\end{spec}
+soundnessEven {suc (suc n)}    s         = isEvenSS (soundnessEven s)
+\end{code}
 
 Note that in the case branch for 1, we do not need to provide a
-right-hand side of the function definition. The assumption that |even?
-1 ≡ true| is uninhabited, and we discharge this branch using Agda's
+right-hand side of the function definition. The assumption, |even?
+1|, is uninhabited, and we discharge this branch using Agda's
 absurd pattern ().
 
 Now that this has been done, if we need a proof that some arbitrary
 $n$ is even, we only need to instantiate |soundnessEven|. Note that
 the value of $n$ is an implicit argument to |soundnessEven|. The only
 argument we need to provide to our |soundnessEven| lemma is a proof
-that |even? n ≡ true|. For any closed term, such as the numbers |28|
-or |8772|, this proof obligation can be reduced to proving |true ≡
-true|, which is proven by the single constructor for the equality
-type, |refl|.
+that |even? n| is inhabited. For any closed term, such as the numbers |28|
+or |8772|, this proof obligation can be reduced to proving 
+|⊤|, which is proven by the single constructor it has, |tt|.
 
-\begin{spec}
+\begin{code}
 isEven28        : Even 28
-isEven28        = soundnessEven refl
+isEven28        = soundnessEven tt
 
 isEven8772      : Even 8772
-isEven8772      = soundnessEven refl
-\end{spec}
+isEven8772      = soundnessEven tt
+\end{code}
 
 Now we can easily get a proof that arbitrarily large numbers are even,
 without having to explicitly write down a large proof tree. Note that
 it's not possible to write something with type |Even 27|, or any other uneven
-number, since the parameter |even? n ≡ true| cannot be instantiated, thus
-|refl| won't be accepted where it is in the |Even 28| example. This will
-produce a |true !≡ false| type error at compile-time.
+number, since the parameter |even? n| cannot be instantiated, thus
+|tt| would not be accepted where it is in the |Even 28| example. This will
+produce a |⊤ !=< ⊥| type error at compile-time.
+
+Since the type |⊤| is a simple record type, Agda can actually infer the
+|tt| argument, which means we can turn the assumption |even? n| into
+an implicit argument. For clarity this is not done here, but in the code
+on GitHub it is.
 
 \subsection{Second Example: Boolean Tautologies}
 
@@ -490,7 +403,7 @@ To try to automate this process, we'll follow a similar approach to
 the one given above for proving evenness of arbitrary (even)
 naturals. We start off by defining an inductive data type to represent
 boolean expressions with $n$ free variables.  
-\begin{spec}
+\begin{code}
 data BoolExpr : ℕ → Set where
   Truth         : {n : ℕ}                                → BoolExpr n
   Falsehood     : {n : ℕ}                                → BoolExpr n
@@ -499,18 +412,18 @@ data BoolExpr : ℕ → Set where
   Not           : {n : ℕ} → BoolExpr n                   → BoolExpr n
   Imp           : {n : ℕ} → BoolExpr n → BoolExpr n      → BoolExpr n
   Atomic        : {n : ℕ} → Fin n                        → BoolExpr n
-\end{spec}
-There isn't anything
+\end{code}
+There is nothing
 surprising about this definition; we use the type |Fin n| to ensure
 that variables (represented by |Atomic|) are always in scope.
 
 We also need a mapping from variables to boolean assignments, which we'll call |Env|.
 It has fixed size $n$ since a |BoolExpr n| has $n$ free variables.
 
-\begin{spec}
+\begin{code}
 Env   : ℕ → Set
 Env   = Vec Bool
-\end{spec}
+\end{code}
 
 Now we can define our decision function, which decides if a given
 boolean expression is a tautology. It does this by evaluating
@@ -521,20 +434,20 @@ type |Bool → Bool → Bool|, and |¬_| is of type |Bool → Bool|, making the
 definition of the interpretation function |⟦_⊢_⟧| unsurprising.
 
 \ignore{
-\begin{spec}
+\begin{code}
 infixr 4 _⇒_
 _⇒_ : Bool → Bool → Bool
 true  ⇒ true  = true
 true  ⇒ false = false
 false ⇒ true  = true
 false ⇒ false = true
-\end{spec}
+\end{code}
 }
 
 
 
 
-\begin{spec}
+\begin{code}
 ⟦_⊢_⟧ : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
 ⟦ env     ⊢ Truth       ⟧ = true
 ⟦ env     ⊢ Falsehood   ⟧ = false
@@ -543,7 +456,7 @@ false ⇒ false = true
 ⟦ env     ⊢ Not be      ⟧ = ¬   ⟦ env ⊢ be ⟧
 ⟦ env     ⊢ Imp be be₁  ⟧ =     ⟦ env ⊢ be ⟧     ⇒      ⟦ env ⊢ be₁ ⟧
 ⟦ env     ⊢ Atomic n    ⟧ = lookup n env
-\end{spec}
+\end{code}
 
 
 Note that the interpretation function also requires an environment to be
@@ -557,7 +470,7 @@ its argument is |true|, and |⊥| otherwise. The |Error| type is actually isomor
 parameterised by an error message string, to make it more obvious to the user
 what, if anything, went wrong.
 
-\begin{spec}
+\begin{code}
 data Error (e : String) : Set where
 
 So : String → Bool → Set
@@ -566,7 +479,7 @@ So err false = Error err
 
 P : Bool → Set
 P = So "Argumunt expression does not evaluate to true."
-\end{spec}
+\end{code}
 
 Now that we have these helper functions, it's easy to define what it
 means to be a tautology. We quantify over a few boolean variables, and
@@ -583,12 +496,12 @@ construct become rather tedious. Take the following formula as an
 example; it would need 16 cases. Note that this is the same formula as
 in Eqn.~\ref{eqn:tauto-example}.
 
-\begin{spec}
+\begin{code}
 myfavouritetheorem : Set
 myfavouritetheorem = (p1 q1 p2 q2 : Bool)   →   P  ((p1 ∨ q1) ∧ (p2 ∨ q2)
                                                    ⇒ (q1 ∨ p1) ∧ (q2 ∨ p2)
                                                    )
-\end{spec}
+\end{code}
 
 What we would actually like to do, however, is prove the soundness of
 our decision function |⟦_⊢_⟧|, which would do away with the need to
@@ -598,22 +511,16 @@ term of type |BoolExpr n| and |Set|, since theorems in Agda have type
 |Set|.
 
 \ignore{
-\begin{spec}
+\begin{code}
 data Diff : ℕ → ℕ → Set where
   Base : ∀ {n}   → Diff n n
   Step : ∀ {n m} → Diff (suc n) m → Diff n m
-\end{spec}
+\end{code}
 
-\begin{spec}
+\begin{code}
 freeVars : Term → ℕ
 freeVars (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = suc (freeVars t)
-freeVars (pi a b)     = 0
-freeVars (var x args) = 0
-freeVars (con c args) = 0
-freeVars (def f args) = 0
-freeVars (lam v t)    = 0
-freeVars (sort x)     = 0
-freeVars unknown      = 0
+freeVars     _        = 0
 
 -- peels off all the outermost Pi constructors,
 -- returning a term with freeVars free variables.
@@ -625,7 +532,7 @@ stripPi (pi args t)  = pi   args t
 stripPi (var x args) = var  x    args
 stripPi (con c args) = con  c    args
 stripPi (def f args) = def  f    args
-stripPi (lam v t)    = lam  v    t
+stripPi (lam v σ t)    = lam  v σ  t
 stripPi (sort x)     = sort x
 stripPi unknown      = unknown
 
@@ -650,7 +557,7 @@ isSoExprQ (def f (x ∷ x₃ ∷ x₄ ∷ args))      | yes () | tt
 isSoExprQ (def f args)                      | no ¬p with tt
 isSoExprQ (def f [])                        | no ¬p | tt = ⊥
 isSoExprQ (def f (x ∷ xs))                  | no ¬p | tt = ⊥
-isSoExprQ (lam v t)                         = ⊥
+isSoExprQ (lam v σ t)                         = ⊥
 isSoExprQ (pi t₁ t₂)                        = ⊥
 isSoExprQ (sort x)                          = ⊥
 isSoExprQ unknown                           = ⊥
@@ -670,7 +577,7 @@ stripSo (def f (x ∷ x₃ ∷ x₄ ∷ args)) pf     | yes () | tt
 stripSo (def f args)             pf         | no ¬p with tt
 stripSo (def f []) () | no ¬p | tt
 stripSo (def f (x ∷ xs)) () | no ¬p | tt
-stripSo (lam v t)    ()
+stripSo (lam v σ t)    ()
 stripSo (pi t₁ t₂)   ()
 stripSo (sort x)     ()
 stripSo unknown      ()
@@ -701,7 +608,7 @@ isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | n
 isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | no ¬p | yes p = (isBoolExprQ' n x) × (isBoolExprQ' n x₁)
 isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₂ | no ¬p₁ | no ¬p = ⊥
 isBoolExprQ' n (def f (x ∷ x₁ ∷ x₂ ∷ args)) = ⊥
-isBoolExprQ' n (lam v t) = ⊥
+isBoolExprQ' n (lam v σ t) = ⊥
 isBoolExprQ' n (pi t₁ t₂) = ⊥
 isBoolExprQ' n (sort y) = ⊥
 isBoolExprQ' n unknown = ⊥
@@ -741,7 +648,7 @@ term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , pro
   (term2boolexpr n x₁ proj₂)
 term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) () | no ¬p | no p | no p₁
 term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ x₂ ∷ args)) ()
-term2boolexpr n (lam v t)  ()
+term2boolexpr n (lam v σ t)  ()
 term2boolexpr n (pi t₁ t₂) ()
 term2boolexpr n (sort x)   ()
 term2boolexpr n unknown    ()
@@ -762,7 +669,7 @@ zero-least : (k n : ℕ) → Diff k (k + n)
 zero-least k zero    = coerceDiff (zeroId k) Base
 zero-least k (suc n) = Step (coerceDiff (succLemma k n) (zero-least (suc k) n))
 
-\end{spec}
+\end{code}
 }
 
 The function |forallBool| turns a |BoolExpr n| back into something
@@ -772,7 +679,7 @@ after which it calls the decision function, passing the new free
 variables as the environment.
 
 
-\begin{spec}
+\begin{code}
 prependTelescope   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
 prependTelescope   .m m    (Base    ) b env = P ⟦ env ⊢ b ⟧ 
 prependTelescope    n m    (Step y  ) b env =
@@ -781,10 +688,10 @@ prependTelescope    n m    (Step y  ) b env =
 
 forallBool : (m : ℕ) → BoolExpr m → Set
 forallBool m b = prependTelescope zero m (zero-least 0 m) b []
-\end{spec}
+\end{code}
 
 \ignore{
-\begin{spec}
+\begin{code}
 -- dependently typed if-statement
 if : {P : Bool → Set} → (b : Bool) → P true → P false → P b
 if true  t f = t
@@ -793,7 +700,7 @@ if false t f = f
 -- very much like ⊥-elim, but for Errors.
 Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
 Error-elim ()
-\end{spec}
+\end{code}
 }
 
 Now that we can interpret a |BoolExpr n| as a theorem, and we have a
@@ -815,7 +722,7 @@ function |foralls|.
 % setting that variable to |false|. The argument of type |Diff n m| is
 % necessary to prove the process terminates.
 
-\begin{spec}
+\begin{code}
 forallsAcc : {n m : ℕ} → (b : BoolExpr m) → Env n → Diff n m → Set
 forallsAcc b' env    (Base     ) = P ⟦ env ⊢ b' ⟧
 forallsAcc b' env    (Step y   ) =
@@ -823,7 +730,7 @@ forallsAcc b' env    (Step y   ) =
 
 foralls : {n : ℕ} → (b : BoolExpr n) → Set
 foralls {n} b = forallsAcc b [] (zero-least 0 n)
-\end{spec}
+\end{code}
 The |foralls| function calls the |forallsAcc| function with a suitable
 choice of initial arguments. The real work is done by the |forallsAcc|
 function that builds up a type, storing interpretations of a
@@ -842,7 +749,7 @@ a tautology. This proof is given by the |soundness| lemma below.
 % |soundness| where a proof of something like
 % Eqn. \ref{eqn:tauto-example} is required.
 
-\begin{spec}
+\begin{code}
 soundnessAcc :   {m : ℕ} →
                  (b : BoolExpr m) →
                  {n : ℕ} →
@@ -860,7 +767,7 @@ soundnessAcc {m} bexp {n} env (Step y) H =
 
 soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBool n b
 soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
-\end{spec}
+\end{code}
 If we look closely at the definition of |soundnessAcc| (which is
 actually where the work is done; |soundness| merely calls
 |soundnessAcc| with some initial input, namely the |BoolExpr n|, an
@@ -878,13 +785,13 @@ is because Agda can automatically infer implicit arguments when they
 are simple record types, such as the unit type |⊤| and pairs. This is
 illustrated in the following code snippet.
 
-\begin{spec}
+\begin{code}
 foo : {u : ⊤ × ⊤} → ℕ
 foo = 5
 
 baz : ℕ
 baz = foo
-\end{spec}
+\end{code}
 
 Here we see that there is an implicit argument |u| required to |foo|,
 but in |baz| it's not given.  This is possible because Agda can infer
@@ -893,11 +800,11 @@ instantiates it when required.
 
 The same principle is used in |soundness|; eventually all that's
 required is a deeply nested pair containing elements of type |⊤|, of
-which |tt| is the only constructor. If the formula isn't a tautology,
+which |tt| is the only constructor. If the formula is not a tautology,
 there's no way to instantiate the proof, since it will have type |⊥|,
 as a result of the use of |So|. In other words, the fact that the
 proof tree can be constructed corresponds exactly to those cases when
-the expression is a tautology. Therefore, we needn't instantiate
+the expression is a tautology. Therefore, we need not instantiate
 |soundness| with a manually-crafted tree of |⊤|s, we can just let Agda
 do the work.
 
@@ -910,14 +817,14 @@ that we have the corresponding proof object at our disposal
 afterwards, as in the following example.
 
 
-\begin{spec}
+\begin{code}
 rep          : BoolExpr 2
 rep          = Imp (And (Atomic (suc zero)) (Atomic zero)) (Atomic zero)
 
 someTauto    : (p q : Bool)
              → P( p ∧ q ⇒ q )
 someTauto    = soundness rep
-\end{spec}
+\end{code}
 
 The only step we still have to do manually is to convert the concrete
 Agda representation (|p ∧ q ⇒ q|, in this case) into our abstract
@@ -936,33 +843,29 @@ specifically, we will use the |quoteGoal| keyword to inspect the
 current goal. Given the |Term| representation of the goal, we can
 convert it to its corresponding |BoolExpr|.
 
-% In Agda version 2.2.8 a reflection API was added
-% \cite{agda-relnotes-228}. This system introduces some extra language
-% constructs, such as |quoteGoal e in t|, which allows the term |t| to
-% refer to |e|, which is instantiated to an abstract representation of
-% the type of the term expected wherever |quoteGoal| was placed.
-% Since
-% one needs to encode the desired proposition to be proved in the type
-% of the proof object, quoting this goal gives us enough information to
-% call the |soundness| function. Here we see 2 helper functions for
-% doing precisely that.
-
 The conversion between a |Term| and |BoolExpr| is done by the
 |concrete2abstract| function:
-\begin{spec}
+\begin{code}
 concrete2abstract :
              (t     : Term)
        →     {pf    : isSoExprQ (stripPi t)}
        →     {pf2   : isBoolExprQ (freeVars t) (stripPi t) pf}
        →     BoolExpr (freeVars t)
-\end{spec}
+\end{code}
+\ignore{
+
+\begin{code}
+concrete2abstract t {pf} {pf2} = term2boolexpr (freeVars t) (stripSo (stripPi t) pf) pf2
+
+\end{code}
+}
 Note that not every |Term| can be converted to a |BoolExpr|. The
 |concrete2abstract| function requires additional assumptions about the
 |Term|. It should only contain functions such as |_∧_| or |_∨_|, and
 it should only containing boolean variables. 
 
 All these pieces are assembled in the |proveTautology| function.
-\begin{spec}
+\begin{code}
 
 proveTautology :    (t     : Term) →
                     {pf    : isSoExprQ (stripPi t)} →
@@ -972,7 +875,7 @@ proveTautology :    (t     : Term) →
                         forallBool (freeVars t) b
 proveTautology e {pf} {pf2} {i} = 
   soundness {freeVars e} (concrete2abstract e) {i}
-\end{spec}
+\end{code}
 The |proveTautology| function converts a raw |Term| to a |BoolExpr n|
 format and calls the |soundness| lemma. It uses a few auxiliary
 functions such as |freeVars|, which counts the number of variables
@@ -980,7 +883,7 @@ functions such as |freeVars|, which counts the number of variables
 |stripSo| \& |stripPi|, which peel off the telescope type and the
 function |P| with which we wrap our tautologies. These helper
 functions have been ommitted for brevity, since they are rather
-verbose and don't add anything to the understanding of the subject at
+verbose and add little to the understanding of the subject at
 hand.
 
 
@@ -989,7 +892,7 @@ formulae are tautologies.  The following code illustrates the use of
 the |proveTautology| functions; we can omit the implicit arguments for
 the reasons outlined in the previous section.
 
-\begin{spec}
+\begin{code}
 
 exclMid    : (b : Bool) → P(b ∨ ¬ b)
 exclMid    = quoteGoal e in proveTautology e
@@ -999,11 +902,15 @@ peirce     = quoteGoal e in proveTautology e
 
 mft        : myfavouritetheorem
 mft        = quoteGoal e in proveTautology e
-\end{spec}
+
+
+t : (e : Env 1) → P (lookup (fromℕ 0) e ∨ ¬ (lookup (fromℕ 0) e))
+t = quoteGoal e in {!!}
+\end{code}
 
 
 This shows that the reflection capabilities recently added to Agda are certainly useful for
-automating certain tedious tasks, since the programmer now needn't encode the boolean expression
+automating certain tedious tasks, since the programmer now need not encode the boolean expression
 twice in a slightly different format, but just lets the conversion happen automatically, without loss
 of expressive power or general applicability of the proofs resulting from |soundness|.
 
