@@ -479,6 +479,16 @@ So err false = Error err
 
 P : Bool → Set
 P = So "Argumunt expression does not evaluate to true."
+
+doable : {m : ℕ} → ℕ → Env m → Set
+doable {m} n env with suc n ≤? m
+doable n env | yes p = ⊤
+doable n env | no ¬p = ⊥
+
+Var : {m : ℕ} (n : ℕ) → (e : Env m) → {p : doable n e} → Bool
+Var {m} n env {pf} with suc n ≤? m
+Var n env {pf} | yes p = lookup (fromℕ≤ {n} p) env
+Var n env {()} | no ¬p
 \end{code}
 
 Now that we have these helper functions, it's easy to define what it
@@ -518,17 +528,12 @@ data Diff : ℕ → ℕ → Set where
 \end{code}
 
 \begin{code}
-freeVars : Term → ℕ
-freeVars (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = suc (freeVars t)
-freeVars     _        = 0
-
 -- peels off all the outermost Pi constructors,
 -- returning a term with freeVars free variables.
 
 stripPi : Term → Term
-stripPi (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = stripPi t
+stripPi (pi args (el s t)) = stripPi t
 -- identity otherwise
-stripPi (pi args t)  = pi   args t
 stripPi (var x args) = var  x    args
 stripPi (con c args) = con  c    args
 stripPi (def f args) = def  f    args
@@ -616,6 +621,88 @@ isBoolExprQ' n unknown = ⊥
 isBoolExprQ : (freeVars : ℕ) → (t : Term) → isSoExprQ t → Set
 isBoolExprQ n t pf with stripSo t pf
 isBoolExprQ n t pf | t' = isBoolExprQ' n t'
+
+open import Data.Maybe
+
+term2Nat' : Term → Maybe ℕ
+term2Nat' (var x args) = nothing
+term2Nat' (con c args) with c ≟-Name (quote Data.Nat.ℕ.suc)
+term2Nat' (con c []) | yes p = nothing
+term2Nat' (con c (arg v r x ∷ args)) | yes p with term2Nat' x
+term2Nat' (con c (arg v r x ∷ args)) | yes p | just x₁ = just (1 + x₁)
+term2Nat' (con c (arg v r x ∷ args)) | yes p | nothing = nothing
+term2Nat' (con c args) | no ¬p with c ≟-Name (quote Data.Nat.ℕ.zero)
+term2Nat' (con c args) | no ¬p | yes p = just zero
+term2Nat' (con c args) | no ¬p₁ | no ¬p = nothing
+term2Nat' (def f args) = nothing
+term2Nat' (lam v ty t) = nothing
+term2Nat' (pi t₁ t₂) = nothing
+term2Nat' (sort x) = nothing
+term2Nat' unknown = nothing
+
+term2Nat'' : Term → Maybe ℕ
+term2Nat'' (var x args) = {!nothing!}
+term2Nat'' (con c args) with c ≟-Name (quote Data.Fin.Fin.suc)
+term2Nat'' (con c []) | yes p = {!nothing!}
+term2Nat'' (con c (arg v r x ∷ args)) | yes p with term2Nat'' x
+term2Nat'' (con c (arg v r x ∷ args)) | yes p | just x₁ = just (1 + x₁)
+term2Nat'' (con c (arg v r x ∷ args)) | yes p | nothing = {!nothing!}
+term2Nat'' (con c args) | no ¬p with c ≟-Name (quote Data.Fin.Fin.zero)
+term2Nat'' (con c args) | no ¬p | yes p = just zero
+term2Nat'' (con c args) | no ¬p₁ | no ¬p = nothing
+term2Nat'' (def f args) = nothing
+term2Nat'' (lam v ty t) = nothing
+term2Nat'' (pi t₁ t₂) = nothing
+term2Nat'' (sort x) = nothing
+term2Nat'' unknown = nothing
+
+term2Nat : Term → Maybe ℕ
+term2Nat t with term2Nat' t
+term2Nat t | just x = just x
+term2Nat t | nothing with term2Nat'' t
+term2Nat t | nothing | nothing = nothing
+term2Nat t | nothing | just x = just x
+
+
+data Maybe' (A : Set) : Set where
+  nothing : String → Maybe' A
+  just    : A → Maybe' A
+
+maybeBoolExpr : (n : ℕ) → (t : Term) → Maybe' (BoolExpr n)
+maybeBoolExpr n (var x args) = {!!}
+maybeBoolExpr n (con c args) = {!!}
+maybeBoolExpr n (def f args) with f ≟-Name (quote lookup)
+maybeBoolExpr n (def f []) | yes p = {!!}
+maybeBoolExpr n (def f (x ∷ [])) | yes p = {!!}
+maybeBoolExpr n (def f (x ∷ x₁ ∷ [])) | yes p = {!!}
+maybeBoolExpr n (def f (x ∷ x₁ ∷ x₂ ∷ [])) | yes p = {!!}
+maybeBoolExpr n (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ [])) | yes p = {!!}
+-- here idx is the index of the variable (in Var 0 e) and env corresponds to the e
+maybeBoolExpr n (def f (x ∷ x₁ ∷ x₂ ∷ arg v r idx ∷ arg v₁ r₁ env ∷ [])) | yes p with term2Nat idx
+maybeBoolExpr n (def f (x₁ ∷ x₂ ∷ x₃ ∷ arg v r idx ∷ arg v₁ r₁ env ∷ [])) | yes p | just x with suc x ≤? n
+maybeBoolExpr n (def f (x₁ ∷ x₂ ∷ x₃ ∷ arg v r idx ∷ arg v₁ r₁ env ∷ [])) | yes p₁ | just x | yes p = just (Atomic (fromℕ≤ {x} p))
+maybeBoolExpr n (def f (x₁ ∷ x₂ ∷ x₃ ∷ arg v r idx ∷ arg v₁ r₁ env ∷ [])) | yes p | just x | no ¬p = {!!}
+maybeBoolExpr n (def f (x ∷ x₁ ∷ x₂ ∷ arg v r idx ∷ arg v₁ r₁ env ∷ [])) | yes p | nothing = {!!}
+maybeBoolExpr n (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ x₅ ∷ args)) | yes p = nothing "b"
+maybeBoolExpr n (def f args) | no ¬p with f ≟-Name (quote _∨_)
+maybeBoolExpr n (def f []) | no ¬p | yes p = {!!}
+maybeBoolExpr n (def f (x ∷ [])) | no ¬p | yes p = {!!}
+maybeBoolExpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p | yes p with maybeBoolExpr n x | maybeBoolExpr n x₁
+maybeBoolExpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p | yes p | nothing x₂ | b = nothing "h"
+maybeBoolExpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p | yes p | just x₂ | nothing x₃ = nothing "i"
+maybeBoolExpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p | yes p | just x₂ | just x₃ = just (Or x₂ x₃)
+maybeBoolExpr n (def f (x ∷ x₁ ∷ x₂ ∷ args)) | no ¬p | yes p = {!!}
+maybeBoolExpr n (def f args) | no ¬p₁ | no ¬p with f ≟-Name (quote ¬_)
+maybeBoolExpr n (def f []) | no ¬p₁ | no ¬p | yes p = {!!}
+maybeBoolExpr n (def f (arg v r x ∷ [])) | no ¬p₁ | no ¬p | yes p with maybeBoolExpr n x
+maybeBoolExpr n (def f (arg v r x ∷ [])) | no ¬p₁ | no ¬p | yes p | nothing x₁ = nothing "g"
+maybeBoolExpr n (def f (arg v r x ∷ [])) | no ¬p₁ | no ¬p | yes p | just x₁ = just (Not x₁)
+maybeBoolExpr n (def f (x ∷ x₁ ∷ args)) | no ¬p₁ | no ¬p | yes p = {!!}
+maybeBoolExpr n (def f args) | no ¬p₂ | no ¬p₁ | no ¬p = {!!}
+maybeBoolExpr n (lam v ty term) = nothing "c"
+maybeBoolExpr n (pi t₁ t₂) = nothing "d" 
+maybeBoolExpr n (sort x) = nothing "e" 
+maybeBoolExpr n unknown = nothing "f" 
 
 term2boolexpr : (n : ℕ)
         → (t : Term)
@@ -848,14 +935,15 @@ The conversion between a |Term| and |BoolExpr| is done by the
 \begin{code}
 concrete2abstract :
              (t     : Term)
+             → (n : ℕ)
        →     {pf    : isSoExprQ (stripPi t)}
-       →     {pf2   : isBoolExprQ (freeVars t) (stripPi t) pf}
-       →     BoolExpr (freeVars t)
+       →     {pf2   : isBoolExprQ n (stripPi t) pf}
+       →     BoolExpr n
 \end{code}
 \ignore{
 
 \begin{code}
-concrete2abstract t {pf} {pf2} = term2boolexpr (freeVars t) (stripSo (stripPi t) pf) pf2
+concrete2abstract t n {pf} {pf2} = term2boolexpr n (stripSo (stripPi t) pf) pf2
 
 \end{code}
 }
@@ -868,13 +956,14 @@ All these pieces are assembled in the |proveTautology| function.
 \begin{code}
 
 proveTautology :    (t     : Term) →
+                    (n     : ℕ) → 
                     {pf    : isSoExprQ (stripPi t)} →
-                    {pf2   : isBoolExprQ (freeVars t) (stripPi t) pf} →
-                    let b = concrete2abstract t {pf} {pf2} in
+                    {pf2   : isBoolExprQ n (stripPi t) pf} →
+                    let b = concrete2abstract t n {pf} {pf2} in
                         {i : foralls b} →
-                        forallBool (freeVars t) b
-proveTautology e {pf} {pf2} {i} = 
-  soundness {freeVars e} (concrete2abstract e) {i}
+                        forallBool n b
+proveTautology e n {pf} {pf2} {i} = 
+  soundness {n} (concrete2abstract e n) {i}
 \end{code}
 The |proveTautology| function converts a raw |Term| to a |BoolExpr n|
 format and calls the |soundness| lemma. It uses a few auxiliary
@@ -894,18 +983,18 @@ the reasons outlined in the previous section.
 
 \begin{code}
 
-exclMid    : (b : Bool) → P(b ∨ ¬ b)
-exclMid    = quoteGoal e in proveTautology e
+-- exclMid    : (b : Bool) → P(b ∨ ¬ b)
+-- exclMid    = quoteGoal e in proveTautology e 1
 
-peirce     : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
-peirce     = quoteGoal e in proveTautology e
+-- peirce     : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
+-- peirce     = quoteGoal e in proveTautology e 2
 
-mft        : myfavouritetheorem
-mft        = quoteGoal e in proveTautology e
+-- mft        : myfavouritetheorem
+-- mft        = quoteGoal e in proveTautology e 4
 
 
-t : (e : Env 1) → P (lookup (fromℕ 0) e ∨ ¬ (lookup (fromℕ 0) e))
-t = quoteGoal e in {!!}
+t : (e : Env 1) → P ((Var 0 e) ∨ ¬ (Var 0 e))
+t = quoteGoal e in {!proveTautology e 1!}
 \end{code}
 
 
