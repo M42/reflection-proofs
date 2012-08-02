@@ -7,13 +7,19 @@
 
 %%% the colouring configuration.
 
+% types. never used?
 \newcommand{\ty}[1]{{\color{RawSienna}\mathsf{#1}}}
+
+% constructors:
 \newcommand{\con}[1]{{\color{PineGreen}\mathsf{#1}}}
 \newcommand{\consymop}[1]{{\color{PineGreen}\mathsf{#1}}}
 \newcommand{\consym}[1]{{\color{PineGreen}\mathsf{#1}}}
-\newcommand{\id}[1]{{\color{blue}\mathsf{#1}}}
-\newcommand{\defin}[1]{{\color{blue}\mathsf{#1}}}
+
+% identifiers and definitions:
+\newcommand{\id}[1]{{\color{NavyBlue}\mathsf{#1}}}
+\newcommand{\defin}[1]{{\color{NavyBlue}\mathsf{#1}}}
+% field of a record:
+\newcommand{\fld}[1]{{\color{Maroon}\mathsf{#1}}}
+
+
 \newcommand{\textlambda}{\ensuremath{\lambda}}
-
-
-\newcommand{\fld}[1]{{\color{red}\mathsf{#1}}}
