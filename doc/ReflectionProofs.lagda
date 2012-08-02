@@ -773,8 +773,7 @@ afterwards, as in the following example.
 rep          : BoolExpr 2
 rep          = Imp (And (Atomic (suc zero)) (Atomic zero)) (Atomic zero)
 
-someTauto    : (p q : Bool)
-             → P( p ∧ q ⇒ q )
+someTauto    : (p q : Bool)         → P( p ∧ q ⇒ q )
 someTauto    = soundness rep _
 \end{code}
 
@@ -798,15 +797,12 @@ convert it to its corresponding |BoolExpr|.
 The conversion between a |Term| and |BoolExpr| is done by the
 |concrete2abstract| function:
 \begin{code}
-concrete2abstract :
-             (t     : Term)
-             → (n : ℕ)
-       →     {pf    : isSoExprQ (stripPi t)}
-       →     {pf2   : isBoolExprQ n (stripPi t) pf}
-       →     BoolExpr n
+concrete2abstract    :     (t     : Term)        → (n : ℕ)
+                     →     {pf    : isSoExprQ (stripPi t)}
+                     →     {pf2   : isBoolExprQ n (stripPi t) pf}
+                     →     BoolExpr n
 \end{code}
 \ignore{
-
 \begin{code}
 concrete2abstract t n {pf} {pf2} = term2boolexpr n (stripSo (stripPi t) pf) pf2
 \end{code}
@@ -814,27 +810,62 @@ concrete2abstract t n {pf} {pf2} = term2boolexpr n (stripSo (stripPi t) pf) pf2
 Note that not every |Term| can be converted to a |BoolExpr|. The
 |concrete2abstract| function requires additional assumptions about the
 |Term|. It should only contain functions such as |_∧_| or |_∨_|, and
-it should only contain boolean variables. 
+it should only contain boolean variables. This is ensured by the assumptions
+|isBoolExprQ| and friends.
+
+The |concrete2abstract| function is rather verbose, and is mostly omitted.
+A representative snippet is given in Fig. \ref{fig:concrete2abstract}. The functions |isBoolExprQ|
+and |isSoExprQ| simply traverse the |Term| to see if it fulfills the requirements of
+being a boolean expression preceded by a telescope.
+
+\begin{figure}\label{fig:concrete2abstract}
+\begin{spec}
+term2boolexpr n (con tf []) pf with tf ≟-Name quote true
+term2boolexpr n (con tf []) pf | yes p = Truth
+...
+term2boolexpr n (def f []) ()
+term2boolexpr n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
+term2boolexpr n (def f (arg v r x ∷ [])) pf | yes p = Not (term2boolexpr n x pf)
+...
+\end{spec}
+\caption{An illustration of converting a |Term| into a |BoolExpr|.}
+\end{figure}
+
 
 All these pieces are assembled in the |proveTautology| function.
-\begin{code}
+\ignore{
 
+\begin{code}
+freeVars : Term → ℕ
+freeVars (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = suc (freeVars t)
+-- identity otherwise
+freeVars (pi a b)     = 0
+freeVars (var x args) = 0
+freeVars (con c args) = 0
+freeVars (def f args) = 0
+freeVars (lam v σ t)  = 0
+freeVars (sort x)     = 0
+freeVars unknown      = 0
+\end{code}
+
+}
+\begin{code}
 proveTautology :    (t     : Term) →
-                    (n     : ℕ) → 
                     {pf    : isSoExprQ (stripPi t)} →
-                    {pf2   : isBoolExprQ n (stripPi t) pf} →
-                    let b = concrete2abstract t n {pf} {pf2} in
-                        foralls b →
-                        proofObligation 0 n (zeroleast 0 n) b []
-proveTautology t n i = 
-  soundness (concrete2abstract t n) i
+                    let n = freeVars t in
+                        {pf2   : isBoolExprQ n (stripPi t) pf} →
+                        let b = concrete2abstract t n {pf} {pf2} in
+                            foralls b →
+                            proofObligation 0 n (zeroleast 0 n) b []
+proveTautology t i = 
+  soundness (concrete2abstract t (freeVars t)) i
 \end{code}
 The |proveTautology| function converts a raw |Term| to a |BoolExpr n|
 format and calls the |soundness| lemma. It uses a few auxiliary
 functions such as |freeVars|, which counts the number of variables
 (needed to be able to instantiate the $n$ in |BoolExpr n|), and
 |stripSo| \& |stripPi|, which peel off the telescope type and the
-function |P| with which we wrap our tautologies. These helper
+function |So| with which we wrap our tautologies. These helper
 functions have been ommitted for brevity, since they are rather
 verbose and add little to the understanding of the subject at
 hand.
@@ -847,19 +878,19 @@ the reasons outlined in the previous section.
 
 \begin{code}
 exclMid    : (b : Bool) → P(b ∨ ¬ b)
-exclMid    = quoteGoal e in proveTautology e 1 _
+exclMid    = quoteGoal e in proveTautology e _
 
 peirce     : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
-peirce     = quoteGoal e in proveTautology e 2 _
+peirce     = quoteGoal e in proveTautology e _
 
 mft        : exampletheorem
-mft        = quoteGoal e in proveTautology e 4 _
+mft        = quoteGoal e in proveTautology e _
 \end{code}
 
 
-This shows that the reflection capabilities recently added to Agda are certainly useful for
+This shows that the reflection capabilities recently added to Agda are quite useful for
 automating certain tedious tasks, since the programmer now need not encode the boolean expression
-twice in a slightly different format, but just lets the conversion happen automatically, without loss
+twice in a slightly different format. The conversion now happens automatically, without loss
 of expressive power or general applicability of the proofs resulting from |soundness|.
 Furthermore, by using the proof by reflection technique, the proof is generated automatically.
 
