@@ -81,17 +81,17 @@ Department of Computer Science, Utrecht University
 
 The dependently typed programming language
 Agda~\cite{norell:thesis,norell2009dependently} has recently been
-extended a \emph{reflection mechanism} for compile time meta
+extended with a \emph{reflection mechanism} for compile time meta
 programming in the style of Lisp~\cite{lisp-macros},
 MetaML~\cite{metaml}, Template Haskell~\cite{template-haskell}, and
-\CC\ templates~\cite{cplusplus}. Agda's reflection mechanisms makes it
+\CC\ templates~\cite{cplusplus}. Agda's reflection mechanisms make it
 possible to convert a program fragment into its corresponding abstract
 syntax tree and vice versa. In tandem with Agda's dependent types,
 this provides promising new programming potential. 
 
 This paper starts exploring the possibilities and limitations of this
 new reflection mechanism. It describes several case studies,
-exemplifying of the kind of problems that can be solved by
+exemplative of the kind of problems that can be solved by
 reflection. More specifically it makes the following contributions:
 
 \begin{itemize}
@@ -110,7 +110,7 @@ reflection. More specifically it makes the following contributions:
   point, we develop a type safe translation from the simply typed
   lambda calculus to combinatory logic.
 \item Finally, the final version will also discuss some of the
-  limitations of the current implematation of reflection.
+  limitations of the current implementation of reflection.
 \end{itemize}
 
 The code and examples presented in this paper all compile using the
