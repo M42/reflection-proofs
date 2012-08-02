@@ -8,7 +8,6 @@
 %include generated-colour.fmt
 %endif
 
-\usepackage{url}
 \usepackage{todonotes}
 %\usepackage[disable]{todonotes}
 \newcommand{\ignore}[1]{}
@@ -55,12 +54,14 @@ open import Data.List hiding (_∷ʳ_)
 \mathlig{ -->}{\longrightarrow}
 
 
+\usepackage{hyperref}
+\usepackage{url}
 
 \author{Paul van der Walt \and Wouter Swierstra}
 \date{\today}
 \title{Applications of Reflection in Agda}
 \institute{
-\email{paul@@denknerd.org}, \email{W.S.Swierstra@@uu.nl}\\
+\href{mailto:paul@@denknerd.org}{\nolinkurl{paul@@denknerd.org}}, \href{mailto:W.S.Swierstra@@uu.nl}{\nolinkurl{W.S.Swierstra@@uu.nl}}\\
 Department of Computer Science, Utrecht University
 }
 
