@@ -114,7 +114,7 @@ reflection. More specifically it makes the following contributions:
 \end{itemize}
 
 The code and examples presented in this paper all compile using the
-latest version of Agda 2.3.0.1 and is available on
+latest version of Agda 2.3.0.1 and are available on
 github.\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}}
 
 \section{Reflection in Agda}
