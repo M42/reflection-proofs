@@ -9,7 +9,8 @@
 %endif
 
 \usepackage{url}
-\usepackage[disable]{todonotes}
+\usepackage{todonotes}
+%\usepackage[disable]{todonotes}
 \newcommand{\ignore}[1]{}
 \def\CC{{C\nolinebreak[4]\hspace{ -.05em}\raisebox{.4ex}{\tiny\bf ++}}}
 
@@ -113,7 +114,7 @@ reflection. More specifically it makes the following contributions:
 
 The code and examples presented in this paper all compile using the
 latest version of Agda 2.3.0.1 and is available on
-github.\footnote{\url{http://www.github.com/toothbrush}}
+github.\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}}
 
 \section{Reflection in Agda}
 \label{sec:reflection}
@@ -369,7 +370,7 @@ Since the type |⊤| is a simple record type, Agda can infer the
 |tt| argument, which means we can turn the assumption |even? n| into
 an implicit argument, meaning a user could get away with writing just |soundnessEven| as
 the proof, letting the inferrer do the rest. For clarity this is not
-done here, but the code on GitHub does use this trick.
+done here, but the code on github \todo{nicer wording. ``real code''? ``library code''?} does use this trick.
 
 \subsection{Second Example: Boolean Tautologies}
 
@@ -815,7 +816,7 @@ concrete2abstract t n {pf} {pf2} = term2boolexpr n (stripSo (stripPi t) pf) pf2
 Note that not every |Term| can be converted to a |BoolExpr|. The
 |concrete2abstract| function requires additional assumptions about the
 |Term|. It should only contain functions such as |_∧_| or |_∨_|, and
-it should only containing boolean variables. 
+it should only contain boolean variables. 
 
 All these pieces are assembled in the |proveTautology| function.
 \begin{code}
@@ -827,8 +828,8 @@ proveTautology :    (t     : Term) →
                     let b = concrete2abstract t n {pf} {pf2} in
                         foralls b →
                         proofObligation 0 n (zero-least 0 n) b []
-proveTautology t n {pf} {pf2} i = 
-  soundness {n} (concrete2abstract t n) i
+proveTautology t n i = 
+  soundness (concrete2abstract t n) i
 \end{code}
 The |proveTautology| function converts a raw |Term| to a |BoolExpr n|
 format and calls the |soundness| lemma. It uses a few auxiliary
