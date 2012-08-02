@@ -398,14 +398,14 @@ inductive data type to represent boolean expressions with $n$ free
 variables.
 
 \begin{code}
-data BoolExpr : ℕ → Set where
-  Truth         : {n : ℕ}                                → BoolExpr n
-  Falsehood     : {n : ℕ}                                → BoolExpr n
-  And           : {n : ℕ} → BoolExpr n → BoolExpr n      → BoolExpr n
-  Or            : {n : ℕ} → BoolExpr n → BoolExpr n      → BoolExpr n
-  Not           : {n : ℕ} → BoolExpr n                   → BoolExpr n
-  Imp           : {n : ℕ} → BoolExpr n → BoolExpr n      → BoolExpr n
-  Atomic        : {n : ℕ} → Fin n                        → BoolExpr n
+data BoolExpr (n : ℕ) : Set where
+  Truth         :                                  BoolExpr n
+  Falsehood     :                                  BoolExpr n
+  And           : BoolExpr n → BoolExpr n      →   BoolExpr n
+  Or            : BoolExpr n → BoolExpr n      →   BoolExpr n
+  Not           : BoolExpr n                   →   BoolExpr n
+  Imp           : BoolExpr n → BoolExpr n      →   BoolExpr n
+  Atomic        : Fin n                        →   BoolExpr n
 \end{code}
 
 There is nothing
