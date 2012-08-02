@@ -171,7 +171,6 @@ normalizes the |Term| before it is spliced into the program text.
 
 
 
-\todo{Describe reflection mechanism and give examples}
 
 \begin{figure}[p]
 %if style == poly
