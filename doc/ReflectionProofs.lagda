@@ -250,7 +250,6 @@ normalizes the |Term| before it is spliced into the program text.
 % nearest-bound variable, thus |var 0|, applied to no arguments, hence
 % the empty list.
 
-\todo{explain the resulting AST, or is it obvious?}
 
 % A common task will be casting the raw |Term| we get into some AST of
 % our own, possibly one which enforces some invariants, such as a
@@ -619,9 +618,9 @@ succLemma (suc n) m = cong suc (succLemma n m)
 coerceDiff : {n m k : ℕ} → n ≡ m → Diff k n → Diff k m
 coerceDiff refl d = d
 
-zero-least : (k n : ℕ) → Diff k (k + n)
-zero-least k zero    = coerceDiff (zeroId k) Base
-zero-least k (suc n) = Step (coerceDiff (succLemma k n) (zero-least (suc k) n))
+zeroleast : (k n : ℕ) → Diff k (k + n)
+zeroleast k zero    = coerceDiff (zeroId k) Base
+zeroleast k (suc n) = Step (coerceDiff (succLemma k n) (zeroleast (suc k) n))
 
 \end{code}
 }
@@ -631,20 +630,21 @@ means to be a tautology. We quantify over a few boolean variables, and
 wrap the formula in our |P| decision function. If the resulting type is
 inhabited, the argument to |P| is a tautology, i.e., for each
 assignment of the free variables the entire equation still evaluates
-to |true|. An example encoding of such a theorem is Figure \ref{fig:myfavouritetheorem}.
-\begin{figure}\label{fig:myfavouritetheorem}
+to |true|. An example encoding of such a theorem is Figure \ref{fig:exampletheorem}.
+\begin{figure}\label{fig:exampletheorem}
 \begin{code}
-myfavouritetheorem : Set
-myfavouritetheorem = (p1 q1 p2 q2 : Bool)   →   P  ((p1 ∨ q1) ∧ (p2 ∨ q2)
+exampletheorem : Set
+exampletheorem = (p1 q1 p2 q2 : Bool)   →   P  ((p1 ∨ q1) ∧ (p2 ∨ q2)
                                                    ⇒ (q1 ∨ p1) ∧ (q2 ∨ p2)
                                                    )
 \end{code}
+\caption{Example encoding of a tautology.}
 \end{figure}
 
 Here a complication arises, though. We are quantifying over a list of boolean values \emph{outside}
-of the decision function |P|, so proving |P| to be sound will not suffice. We just defined an interpretation\todo{or call it evaluation?} function
-to take an environment, an expression, and return a boolean. In Figure \ref{fig:myfavouritetheorem}, though,
-we quantified over booleans, effectively quantifying over all possible environments. We are going to need a way
+of the decision function |P|, so proving |P| to be sound will not suffice. We just defined a decision function (|⟦_⊢_⟧|)
+to take an environment, an expression, and return a boolean. In Figure \ref{fig:exampletheorem}, though,
+we effectively quantified over all possible environments. We are going to need a way
 to lift our decision function to arbitrary environments.
 
 
@@ -665,7 +665,7 @@ forallsAcc b acc    (Step y   ) =
   forallsAcc b (true ∷ acc) y × forallsAcc b (false ∷ acc) y
 
 foralls : {n : ℕ} → BoolExpr n → Set
-foralls {n} b = forallsAcc b [] (zero-least 0 n)
+foralls {n} b = forallsAcc b [] (zeroleast 0 n)
 \end{code}
 
 Now we finally know our real decision function, we can set about proving its
@@ -677,11 +677,11 @@ sound = HOLE 1
 \end{spec}
 
 In hole 0 we should provide the proof obligation given the input expression |b|,
-which is something of the form of |myfavouritetheorem|.
+which is something of the form of |exampletheorem|.
 
 The function |proofObligation|, given a |BoolExpr n|, generates the corresponding proof
 obligation. That is, it gives back the type which should be equal to 
-the theorem one wants to prove
+the theorem one wants to prove.
 
 
 It does this by first building up a telescope, instantiating $m$ new boolean variables
@@ -724,12 +724,9 @@ possible assignment of its variables to |true| or |false|.
 
 
 \begin{code}
-soundnessAcc :   {m : ℕ} →
-                 (b : BoolExpr m) →
-                 {n : ℕ} →
-                 (env : Env n) →
-                 (d : Diff n m) →
-                 forallsAcc b env d →
+soundnessAcc :   {m : ℕ} →          (b : BoolExpr m) →
+                 {n : ℕ} →          (env : Env n) →
+                 (d : Diff n m) →   forallsAcc b env d →
                  proofObligation n m d b env
 soundnessAcc     bexp     env Base     H with ⟦ env ⊢ bexp ⟧
 soundnessAcc     bexp     env Base     H | true  = H
@@ -741,16 +738,17 @@ soundnessAcc {m} bexp {n} env (Step y) H =
 \end{code}
 
 \begin{code}
-soundness : {n : ℕ} → (b : BoolExpr n) → foralls b → proofObligation 0 n (zero-least 0 n) b []
-soundness {n} b i = soundnessAcc b [] (zero-least 0 n) i
+soundness       : {n : ℕ} → (b : BoolExpr n) → foralls b
+                → proofObligation 0 n (zeroleast 0 n) b []
+soundness {n} b i = soundnessAcc b [] (zeroleast 0 n) i
 \end{code}
 If we look closely at the definition of |soundnessAcc| (which is
-where the work is done; |soundness| merely calls
+where the work is done -- |soundness| merely calls
 |soundnessAcc| with some initial input, namely the |BoolExpr n|, an
 empty environment, and the proof
 %%%
 that the environment is the size of
-the number of free variables),
+the number of free variables) -- 
 %%%
 we see that we build up a function
 that, when called with the values assigned to the free variables,
@@ -788,7 +786,7 @@ formula twice. We also have to count the number of variables
 ourselves and convert them the to De Bruijn indices. This is
 error-prone given how cluttered the abstract representation can get
 for formulae containing many variables. It would be desirable for this
-process to be automated. In Sec. \ref{sec:addrefl} an approach is
+process to be automated. In Sec. \ref{sec:addrefl} a solution is
 presented using Agda's recent reflection API.
 
 \subsection{Adding Reflection}\label{sec:addrefl}
@@ -828,7 +826,7 @@ proveTautology :    (t     : Term) →
                     {pf2   : isBoolExprQ n (stripPi t) pf} →
                     let b = concrete2abstract t n {pf} {pf2} in
                         foralls b →
-                        proofObligation 0 n (zero-least 0 n) b []
+                        proofObligation 0 n (zeroleast 0 n) b []
 proveTautology t n i = 
   soundness (concrete2abstract t n) i
 \end{code}
@@ -855,7 +853,7 @@ exclMid    = quoteGoal e in proveTautology e 1 _
 peirce     : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
 peirce     = quoteGoal e in proveTautology e 2 _
 
-mft        : myfavouritetheorem
+mft        : exampletheorem
 mft        = quoteGoal e in proveTautology e 4 _
 \end{code}
 
