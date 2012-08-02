@@ -167,15 +167,6 @@ normalizes the |Term| before it is spliced into the program text.
 
 
 
-% =======
-% The documentation of the reflection mechanism which was recently added
-% to Agda is thin to say the least. This section aims to  introduce the types
-% and functions involved and give a few examples which will hopefully reduce
-% the steepness of the learning curve involved in getting started with your
-% own reflective programs and proofs.
-% >>>>>>> other
-
-% <<<<<<< local
 
 
 \todo{Describe reflection mechanism and give examples}
@@ -374,10 +365,11 @@ number, since the parameter |even? n| cannot be instantiated, thus
 |tt| would not be accepted where it is in the |Even 28| example. This will
 produce a |⊤ !=< ⊥| type error at compile-time.
 
-Since the type |⊤| is a simple record type, Agda can actually infer the
+Since the type |⊤| is a simple record type, Agda can infer the
 |tt| argument, which means we can turn the assumption |even? n| into
-an implicit argument. For clarity this is not done here, but in the code
-on GitHub it is.
+an implicit argument, meaning a user could get away with writing just |soundnessEven| as
+the proof, letting the inferrer do the rest. For clarity this is not
+done here, but the code on GitHub does use this trick.
 
 \subsection{Second Example: Boolean Tautologies}
 
@@ -393,16 +385,17 @@ Take as an example the boolean formula in equation \ref{eqn:tauto-example}.
 (p_1 \vee q_1) \wedge (p_2 \vee q_2) \Rightarrow (q_1 \vee p_1) \wedge (q_2 \vee p_2)
 \end{align}
 
-It is trivial to see that this is a tautology, but proving this fact
-using basic equivalence rules for booleans would be rather tedious. It
+It is trivial to see that this is a tautology, but proving this 
+using deduction rules for booleans would be rather tedious. It
 is even worse if we want to check if the formula always holds by
 trying all possible variable assignments, since this will give $2^n$
 cases, where $n$ is the number of variables.
 
-To try to automate this process, we'll follow a similar approach to
-the one given above for proving evenness of arbitrary (even)
-naturals. We start off by defining an inductive data type to represent
-boolean expressions with $n$ free variables.  
+To automate this process, we'll follow a similar approach to
+the one given in the previous section. We start by defining an
+inductive data type to represent boolean expressions with $n$ free
+variables.
+
 \begin{code}
 data BoolExpr : ℕ → Set where
   Truth         : {n : ℕ}                                → BoolExpr n
@@ -413,12 +406,12 @@ data BoolExpr : ℕ → Set where
   Imp           : {n : ℕ} → BoolExpr n → BoolExpr n      → BoolExpr n
   Atomic        : {n : ℕ} → Fin n                        → BoolExpr n
 \end{code}
+
 There is nothing
 surprising about this definition; we use the type |Fin n| to ensure
-that variables (represented by |Atomic|) are always in scope.
-
-We also need a mapping from variables to boolean assignments, which we'll call |Env|.
-It has fixed size $n$ since a |BoolExpr n| has $n$ free variables.
+that variables (represented by |Atomic|) are always in scope. If we want to
+evaluate the expression, however, we'll need some way to map variables to values.
+Enter |Env n|, it has fixed size $n$ since a |BoolExpr n| has $n$ free variables.
 
 \begin{code}
 Env   : ℕ → Set
@@ -426,12 +419,13 @@ Env   = Vec Bool
 \end{code}
 
 Now we can define our decision function, which decides if a given
-boolean expression is a tautology. It does this by evaluating
-(interpreting) the formula's AST. For example, |And| is converted to
+boolean expression is true or not, under some assignment of variables. It does this by evaluating
+the formula's AST. For example, |And| is converted to
 the boolean function |_∧_|, and it's two arguments in turn are
-recursively interpreted. Here |_∧_|, |_∨_|, |_⇒_| are all defined with
-type |Bool → Bool → Bool|, and |¬_| is of type |Bool → Bool|, making the
-definition of the interpretation function |⟦_⊢_⟧| unsurprising.
+recursively interpreted.
+%Here |_∧_|, |_∨_|, |_⇒_| are all defined with
+%type |Bool → Bool → Bool|, and |¬_| is of type |Bool → Bool|, making the
+%definition of the interpretation function |⟦_⊢_⟧| unsurprising.
 
 \ignore{
 \begin{code}
@@ -444,9 +438,6 @@ false ⇒ false = true
 \end{code}
 }
 
-
-
-
 \begin{code}
 ⟦_⊢_⟧ : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
 ⟦ env     ⊢ Truth       ⟧ = true
@@ -458,68 +449,24 @@ false ⇒ false = true
 ⟦ env     ⊢ Atomic n    ⟧ = lookup n env
 \end{code}
 
+Recall our decision function |even?| in the previous section. It returned
+|⊤| if the proposition was valid, |⊥| otherwise. Looking at |⟦_⊢_⟧|, we see that
+we should just translate |true| to the unit type and false to the empty type, to get
+the analogue of the |even?| function.
 
-Note that the interpretation function also requires an environment to be
-provided, which maps the free variables to boolean values. The type of
-the interpretation function ensures that the mapping always contains an entry
-for each free variable.
-
-Now that this has been done, we can move on to defining what it means for a given
-formula to be a tautology. Here we introduce the |So| function, which gives |⊤| if
-its argument is |true|, and |⊥| otherwise. The |Error| type is actually isomorphic to |⊥|, but
-parameterised by an error message string, to make it more obvious to the user
-what, if anything, went wrong.
+We call this function |P|, the string parameter serving to give a clearer type error
+to the user, if possible.
 
 \begin{code}
 data Error (e : String) : Set where
 
-So : String → Bool → Set
-So _ true  = ⊤
-So err false = Error err
+So   : String → Bool → Set
+So   _        true     = ⊤
+So   err      false    = Error err
 
-P : Bool → Set
-P = So "Argumunt expression does not evaluate to true."
-
-doable : {m : ℕ} → ℕ → Env m → Set
-doable {m} n env with suc n ≤? m
-doable n env | yes p = ⊤
-doable n env | no ¬p = ⊥
-
-Var : {m : ℕ} (n : ℕ) → (e : Env m) → {p : doable n e} → Bool
-Var {m} n env {pf} with suc n ≤? m
-Var n env {pf} | yes p = lookup (fromℕ≤ {n} p) env
-Var n env {()} | no ¬p
+P    : Bool → Set
+P    = So "Argumunt expression does not evaluate to true."
 \end{code}
-
-Now that we have these helper functions, it's easy to define what it
-means to be a tautology. We quantify over a few boolean variables, and
-wrap the formula in our |P| function. If the resulting type is
-inhabited, the argument to |P| is a tautology, i.e., for each
-assignment of the free variables the entire equation still evaluates
-to |true|.
-
-\todo{Leg hier het probleem uit tussen conversie van forall b1 b2 b3
-  en environments}
-
-As soon as more variables come into play, the proofs we need to
-construct become rather tedious. Take the following formula as an
-example; it would need 16 cases. Note that this is the same formula as
-in Eqn.~\ref{eqn:tauto-example}.
-
-\begin{code}
-myfavouritetheorem : Set
-myfavouritetheorem = (p1 q1 p2 q2 : Bool)   →   P  ((p1 ∨ q1) ∧ (p2 ∨ q2)
-                                                   ⇒ (q1 ∨ p1) ∧ (q2 ∨ p2)
-                                                   )
-\end{code}
-
-What we would actually like to do, however, is prove the soundness of
-our decision function |⟦_⊢_⟧|, which would do away with the need to
-manually construct a trivial proof for each possible choice of
-|p1|,|p2|,|q1|, and |q2|. First we need to give a relation between a
-term of type |BoolExpr n| and |Set|, since theorems in Agda have type
-|Set|.
-
 \ignore{
 \begin{code}
 data Diff : ℕ → ℕ → Set where
@@ -537,7 +484,7 @@ stripPi (pi args (el s t)) = stripPi t
 stripPi (var x args) = var  x    args
 stripPi (con c args) = con  c    args
 stripPi (def f args) = def  f    args
-stripPi (lam v σ t)    = lam  v σ  t
+stripPi (lam v σ t)  = lam  v σ  t
 stripPi (sort x)     = sort x
 stripPi unknown      = unknown
 
@@ -556,13 +503,13 @@ isSoExprQ (def f args) | yes p with tt
 isSoExprQ (def f [])                        | yes () | tt
 isSoExprQ (def f (x ∷ []))                  | yes () | tt
 isSoExprQ (def f (a ∷ arg v r x ∷ []))      | yes p  | tt with f ≟-Name quote So
-isSoExprQ (def f (a ∷ arg v r x ∷ [])) | yes p₁ | tt | yes p = ⊤
-isSoExprQ (def f (a ∷ arg v r x ∷ [])) | yes p | tt | no ¬p = ⊥
+isSoExprQ (def f (a ∷ arg v r x ∷ []))      | yes p₁ | tt | yes p = ⊤
+isSoExprQ (def f (a ∷ arg v r x ∷ []))      | yes p  | tt | no ¬p = ⊥
 isSoExprQ (def f (x ∷ x₃ ∷ x₄ ∷ args))      | yes () | tt
 isSoExprQ (def f args)                      | no ¬p with tt
 isSoExprQ (def f [])                        | no ¬p | tt = ⊥
 isSoExprQ (def f (x ∷ xs))                  | no ¬p | tt = ⊥
-isSoExprQ (lam v σ t)                         = ⊥
+isSoExprQ (lam v σ t)                       = ⊥
 isSoExprQ (pi t₁ t₂)                        = ⊥
 isSoExprQ (sort x)                          = ⊥
 isSoExprQ unknown                           = ⊥
@@ -622,88 +569,6 @@ isBoolExprQ : (freeVars : ℕ) → (t : Term) → isSoExprQ t → Set
 isBoolExprQ n t pf with stripSo t pf
 isBoolExprQ n t pf | t' = isBoolExprQ' n t'
 
-open import Data.Maybe
-
-term2Nat' : Term → Maybe ℕ
-term2Nat' (var x args) = nothing
-term2Nat' (con c args) with c ≟-Name (quote Data.Nat.ℕ.suc)
-term2Nat' (con c []) | yes p = nothing
-term2Nat' (con c (arg v r x ∷ args)) | yes p with term2Nat' x
-term2Nat' (con c (arg v r x ∷ args)) | yes p | just x₁ = just (1 + x₁)
-term2Nat' (con c (arg v r x ∷ args)) | yes p | nothing = nothing
-term2Nat' (con c args) | no ¬p with c ≟-Name (quote Data.Nat.ℕ.zero)
-term2Nat' (con c args) | no ¬p | yes p = just zero
-term2Nat' (con c args) | no ¬p₁ | no ¬p = nothing
-term2Nat' (def f args) = nothing
-term2Nat' (lam v ty t) = nothing
-term2Nat' (pi t₁ t₂) = nothing
-term2Nat' (sort x) = nothing
-term2Nat' unknown = nothing
-
-term2Nat'' : Term → Maybe ℕ
-term2Nat'' (var x args) = {!nothing!}
-term2Nat'' (con c args) with c ≟-Name (quote Data.Fin.Fin.suc)
-term2Nat'' (con c []) | yes p = {!nothing!}
-term2Nat'' (con c (arg v r x ∷ args)) | yes p with term2Nat'' x
-term2Nat'' (con c (arg v r x ∷ args)) | yes p | just x₁ = just (1 + x₁)
-term2Nat'' (con c (arg v r x ∷ args)) | yes p | nothing = {!nothing!}
-term2Nat'' (con c args) | no ¬p with c ≟-Name (quote Data.Fin.Fin.zero)
-term2Nat'' (con c args) | no ¬p | yes p = just zero
-term2Nat'' (con c args) | no ¬p₁ | no ¬p = nothing
-term2Nat'' (def f args) = nothing
-term2Nat'' (lam v ty t) = nothing
-term2Nat'' (pi t₁ t₂) = nothing
-term2Nat'' (sort x) = nothing
-term2Nat'' unknown = nothing
-
-term2Nat : Term → Maybe ℕ
-term2Nat t with term2Nat' t
-term2Nat t | just x = just x
-term2Nat t | nothing with term2Nat'' t
-term2Nat t | nothing | nothing = nothing
-term2Nat t | nothing | just x = just x
-
-
-data Maybe' (A : Set) : Set where
-  nothing : String → Maybe' A
-  just    : A → Maybe' A
-
-maybeBoolExpr : (n : ℕ) → (t : Term) → Maybe' (BoolExpr n)
-maybeBoolExpr n (var x args) = {!!}
-maybeBoolExpr n (con c args) = {!!}
-maybeBoolExpr n (def f args) with f ≟-Name (quote lookup)
-maybeBoolExpr n (def f []) | yes p = {!!}
-maybeBoolExpr n (def f (x ∷ [])) | yes p = {!!}
-maybeBoolExpr n (def f (x ∷ x₁ ∷ [])) | yes p = {!!}
-maybeBoolExpr n (def f (x ∷ x₁ ∷ x₂ ∷ [])) | yes p = {!!}
-maybeBoolExpr n (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ [])) | yes p = {!!}
--- here idx is the index of the variable (in Var 0 e) and env corresponds to the e
-maybeBoolExpr n (def f (x ∷ x₁ ∷ x₂ ∷ arg v r idx ∷ arg v₁ r₁ env ∷ [])) | yes p with term2Nat idx
-maybeBoolExpr n (def f (x₁ ∷ x₂ ∷ x₃ ∷ arg v r idx ∷ arg v₁ r₁ env ∷ [])) | yes p | just x with suc x ≤? n
-maybeBoolExpr n (def f (x₁ ∷ x₂ ∷ x₃ ∷ arg v r idx ∷ arg v₁ r₁ env ∷ [])) | yes p₁ | just x | yes p = just (Atomic (fromℕ≤ {x} p))
-maybeBoolExpr n (def f (x₁ ∷ x₂ ∷ x₃ ∷ arg v r idx ∷ arg v₁ r₁ env ∷ [])) | yes p | just x | no ¬p = {!!}
-maybeBoolExpr n (def f (x ∷ x₁ ∷ x₂ ∷ arg v r idx ∷ arg v₁ r₁ env ∷ [])) | yes p | nothing = {!!}
-maybeBoolExpr n (def f (x ∷ x₁ ∷ x₂ ∷ x₃ ∷ x₄ ∷ x₅ ∷ args)) | yes p = nothing "b"
-maybeBoolExpr n (def f args) | no ¬p with f ≟-Name (quote _∨_)
-maybeBoolExpr n (def f []) | no ¬p | yes p = {!!}
-maybeBoolExpr n (def f (x ∷ [])) | no ¬p | yes p = {!!}
-maybeBoolExpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p | yes p with maybeBoolExpr n x | maybeBoolExpr n x₁
-maybeBoolExpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p | yes p | nothing x₂ | b = nothing "h"
-maybeBoolExpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p | yes p | just x₂ | nothing x₃ = nothing "i"
-maybeBoolExpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p | yes p | just x₂ | just x₃ = just (Or x₂ x₃)
-maybeBoolExpr n (def f (x ∷ x₁ ∷ x₂ ∷ args)) | no ¬p | yes p = {!!}
-maybeBoolExpr n (def f args) | no ¬p₁ | no ¬p with f ≟-Name (quote ¬_)
-maybeBoolExpr n (def f []) | no ¬p₁ | no ¬p | yes p = {!!}
-maybeBoolExpr n (def f (arg v r x ∷ [])) | no ¬p₁ | no ¬p | yes p with maybeBoolExpr n x
-maybeBoolExpr n (def f (arg v r x ∷ [])) | no ¬p₁ | no ¬p | yes p | nothing x₁ = nothing "g"
-maybeBoolExpr n (def f (arg v r x ∷ [])) | no ¬p₁ | no ¬p | yes p | just x₁ = just (Not x₁)
-maybeBoolExpr n (def f (x ∷ x₁ ∷ args)) | no ¬p₁ | no ¬p | yes p = {!!}
-maybeBoolExpr n (def f args) | no ¬p₂ | no ¬p₁ | no ¬p = {!!}
-maybeBoolExpr n (lam v ty term) = nothing "c"
-maybeBoolExpr n (pi t₁ t₂) = nothing "d" 
-maybeBoolExpr n (sort x) = nothing "e" 
-maybeBoolExpr n unknown = nothing "f" 
-
 term2boolexpr : (n : ℕ)
         → (t : Term)
         → isBoolExprQ' n t
@@ -759,22 +624,77 @@ zero-least k (suc n) = Step (coerceDiff (succLemma k n) (zero-least (suc k) n))
 \end{code}
 }
 
-The function |forallBool| turns a |BoolExpr n| back into something
-Agda recognises as a theorem.  First it prepends $n$ binding sites for
-boolean variables (representing the free variables in the formula),
-after which it calls the decision function, passing the new free
-variables as the environment.
+Now that we have these helper functions, it's easy to define what it
+means to be a tautology. We quantify over a few boolean variables, and
+wrap the formula in our |P| decision function. If the resulting type is
+inhabited, the argument to |P| is a tautology, i.e., for each
+assignment of the free variables the entire equation still evaluates
+to |true|. An example encoding of such a theorem is Figure \ref{fig:myfavouritetheorem}.
+\begin{figure}\label{fig:myfavouritetheorem}
+\begin{code}
+myfavouritetheorem : Set
+myfavouritetheorem = (p1 q1 p2 q2 : Bool)   →   P  ((p1 ∨ q1) ∧ (p2 ∨ q2)
+                                                   ⇒ (q1 ∨ p1) ∧ (q2 ∨ p2)
+                                                   )
+\end{code}
+\end{figure}
+
+Here a complication arises, though. We are quantifying over a list of boolean values \emph{outside}
+of the decision function |P|, so proving |P| to be sound will not suffice. We just defined an interpretation\todo{or call it evaluation?} function
+to take an environment, an expression, and return a boolean. In Figure \ref{fig:myfavouritetheorem}, though,
+we quantified over booleans, effectively quantifying over all possible environments. We are going to need a way
+to lift our decision function to arbitrary environments.
+
+
+
+The way we do this is the function |foralls|. This function represents the real analogue
+of |even?| in this situation: it returns a type which can only be inhabited if the given
+expression is true under all variable assignments. This is done by generating a full binary tree
+of |⊤|, the single possible value of which only exists if the |⟦_⊢_⟧|s in the leaves all evaluate
+to true, which corresponds precisely with the case that $b$ is a tautology.
+
+The |Diff| argument is unfortunately needed to prove that forallsAcc will eventually produce a
+tree with depth equal to the number of free variables in an expression.
+
+\begin{code}
+forallsAcc : {n m : ℕ} → BoolExpr m → Env n → Diff n m → Set
+forallsAcc b acc    (Base     ) = P ⟦ acc ⊢ b ⟧
+forallsAcc b acc    (Step y   ) =
+  forallsAcc b (true ∷ acc) y × forallsAcc b (false ∷ acc) y
+
+foralls : {n : ℕ} → BoolExpr n → Set
+foralls {n} b = forallsAcc b [] (zero-least 0 n)
+\end{code}
+
+Now we finally know our real decision function, we can set about proving its
+soundness. Following the evens example, we want a function something like this.
+
+\begin{spec}
+sound : {n : ℕ} → (b : BoolExpr n) → foralls b → HOLE 0
+sound = HOLE 1
+\end{spec}
+
+In hole 0 we should provide the proof obligation given the input expression |b|,
+which is something of the form of |myfavouritetheorem|.
+
+The function |proofObligation|, given a |BoolExpr n|, generates the corresponding proof
+obligation. That is, it gives back the type which should be equal to 
+the theorem one wants to prove
+
+
+It does this by first building up a telescope, instantiating $m$ new boolean variables
+and adding them to the environment, which is an accumulating parameter. Finally, when
+$m$ binders have been introduced, the |BoolExpr| is evaluated under this environment.
+
+
 
 
 \begin{code}
-prependTelescope   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
-prependTelescope   .m m    (Base    ) b env = P ⟦ env ⊢ b ⟧ 
-prependTelescope    n m    (Step y  ) b env =
-  (a : Bool) → prependTelescope (suc n) m y b (a ∷ env)
-  
-
-forallBool : (m : ℕ) → BoolExpr m → Set
-forallBool m b = prependTelescope zero m (zero-least 0 m) b []
+proofObligation   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
+proofObligation   .m   m    (Base    ) b acc = P ⟦ acc ⊢ b ⟧ 
+proofObligation   n    m    (Step y  ) b acc =
+  (a : Bool) →
+      proofObligation (suc n) m y b (a ∷ acc)
 \end{code}
 
 \ignore{
@@ -790,51 +710,16 @@ Error-elim ()
 \end{code}
 }
 
-Now that we can interpret a |BoolExpr n| as a theorem, and we have a
+Now that we can interpret a |BoolExpr n| as a theorem using |proofObligation|, and we have a
 way to decide if something is true for a given environment, we still
-need to show the soundness of our decision function. That is, we need
+need to show the soundness of our decision function |foralls|. That is, we need
 to be able to show that a formula is true if it holds for every
 possible assignment of its variables to |true| or |false|.
 
-The first step in this process is to formalise the idea of a formula
-being true for all variable assignments.  This is captured in the
-function |foralls|. 
-
-%  function
-% which bootstraps the construction of a tree, where the leaves
-% represent the truth of a proposition given a certain assignment of
-% variables. Each time there's a branch in the (fully binary) tree, the
-% left branch at depth $d$ corresponds to setting variable with de
-% Bruijn index $d$ to |true|, and the right branch corresponds to
-% setting that variable to |false|. The argument of type |Diff n m| is
-% necessary to prove the process terminates.
-
-\begin{code}
-forallsAcc : {n m : ℕ} → (b : BoolExpr m) → Env n → Diff n m → Set
-forallsAcc b' env    (Base     ) = P ⟦ env ⊢ b' ⟧
-forallsAcc b' env    (Step y   ) =
-  forallsAcc b' (true ∷ env) y × forallsAcc b' (false ∷ env) y
-
-foralls : {n : ℕ} → (b : BoolExpr n) → Set
-foralls {n} b = forallsAcc b [] (zero-least 0 n)
-\end{code}
-The |foralls| function calls the |forallsAcc| function with a suitable
-choice of initial arguments. The real work is done by the |forallsAcc|
-function that builds up a type, storing interpretations of a
-|BoolExpr| under all possible environments. If we can construct a
-value of type |foralls b|, we should also be able to prove that |b| is
-a tautology. This proof is given by the |soundness| lemma below.
 
 
 
-% We now have a concept of all environments leading to truth of a
-% proposition. If we require this fact as input to a soundness function,
-% we are able to use it to show that the current boolean expression is
-% in fact a tautology. We do this in the |soundness| function, where the
-% output should have the type given by the previously-defined
-% |prependTelescope| function. This enables us to put a call to
-% |soundness| where a proof of something like
-% Eqn. \ref{eqn:tauto-example} is required.
+
 
 \begin{code}
 soundnessAcc :   {m : ℕ} →
@@ -843,62 +728,43 @@ soundnessAcc :   {m : ℕ} →
                  (env : Env n) →
                  (d : Diff n m) →
                  forallsAcc b env d →
-                 prependTelescope n m d b env
+                 proofObligation n m d b env
 soundnessAcc     bexp     env Base     H with ⟦ env ⊢ bexp ⟧
 soundnessAcc     bexp     env Base     H | true  = H
 soundnessAcc     bexp     env Base     H | false = Error-elim H
 soundnessAcc {m} bexp {n} env (Step y) H =
-  λ a → if {λ b → prependTelescope (suc n) m y bexp (b ∷ env)} a
-    (soundnessAcc bexp (true  ∷ env) y (proj₁ H))
-    (soundnessAcc bexp (false ∷ env) y (proj₂ H))
+  λ a → if {λ b → proofObligation (suc n) m y bexp (b ∷ env)} a
+    (soundnessAcc bexp (true  ∷ env)    y (proj₁ H))
+    (soundnessAcc bexp (false ∷ env)    y (proj₂ H))
+\end{code}
 
-soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBool n b
-soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
+\begin{code}
+soundness : {n : ℕ} → (b : BoolExpr n) → foralls b → proofObligation 0 n (zero-least 0 n) b []
+soundness {n} b i = soundnessAcc b [] (zero-least 0 n) i
 \end{code}
 If we look closely at the definition of |soundnessAcc| (which is
-actually where the work is done; |soundness| merely calls
+where the work is done; |soundness| merely calls
 |soundnessAcc| with some initial input, namely the |BoolExpr n|, an
-empty environment, and the proof that the environment is the size of
-the number of free variables), we see that we build up a function
+empty environment, and the proof
+%%%
+that the environment is the size of
+the number of free variables),
+%%%
+we see that we build up a function
 that, when called with the values assigned to the free variables,
 builds up the environment and eventually returns the
 leaf from |foralls| which is the proof that the formula is a tautology
 in that specific case.
 
-Notice that |foralls b| is an implicit argument to |soundness|, which
-might be surprising, since it is actually the proof tree representing
-that the expression is a tautology. The reason this is how it's done
-is because Agda can automatically infer implicit arguments when they
-are simple record types, such as the unit type |⊤| and pairs. This is
-illustrated in the following code snippet.
-
-\begin{code}
-foo : {u : ⊤ × ⊤} → ℕ
-foo = 5
-
-baz : ℕ
-baz = foo
-\end{code}
-
-Here we see that there is an implicit argument |u| required to |foo|,
-but in |baz| it's not given.  This is possible because Agda can infer
-that |(tt , tt)| is the only term which fits, and therefore
-instantiates it when required. 
-
-The same principle is used in |soundness|; eventually all that's
-required is a deeply nested pair containing elements of type |⊤|, of
-which |tt| is the only constructor. If the formula is not a tautology,
-there's no way to instantiate the proof, since it will have type |⊥|,
-as a result of the use of |So|. In other words, the fact that the
-proof tree can be constructed corresponds exactly to those cases when
-the expression is a tautology. Therefore, we need not instantiate
-|soundness| with a manually-crafted tree of |⊤|s, we can just let Agda
-do the work.
-
-Now, we can prove theorems by calling |soundness b|, where |b| is the
-representation of the formula under consideration. Agda is convinced
+Now, we can prove theorems by calling |soundness b p|, where |b| is the
+representation of the formula under consideration, and |p| is the evidence
+that all branches of the proof tree are true. Agda is convinced
 that the representation does in fact correspond to the concrete
-formula, and also that |soundness| gives a valid proof. If the module
+formula, and also that |soundness| gives a valid proof. In fact, we needn't
+even give |p| explicitly; since the only valid values of |p| are pairs of |tt|,
+the argument can be inferred automatically, if it is inhabited\footnote{about implicit |⊤| arguments...}.
+
+If the module
 passes the type checker, we know our formula is both a tautology, and
 that we have the corresponding proof object at our disposal
 afterwards, as in the following example.
@@ -910,7 +776,7 @@ rep          = Imp (And (Atomic (suc zero)) (Atomic zero)) (Atomic zero)
 
 someTauto    : (p q : Bool)
              → P( p ∧ q ⇒ q )
-someTauto    = soundness rep
+someTauto    = soundness rep _
 \end{code}
 
 The only step we still have to do manually is to convert the concrete
@@ -944,7 +810,6 @@ concrete2abstract :
 
 \begin{code}
 concrete2abstract t n {pf} {pf2} = term2boolexpr n (stripSo (stripPi t) pf) pf2
-
 \end{code}
 }
 Note that not every |Term| can be converted to a |BoolExpr|. The
@@ -960,10 +825,10 @@ proveTautology :    (t     : Term) →
                     {pf    : isSoExprQ (stripPi t)} →
                     {pf2   : isBoolExprQ n (stripPi t) pf} →
                     let b = concrete2abstract t n {pf} {pf2} in
-                        {i : foralls b} →
-                        forallBool n b
-proveTautology e n {pf} {pf2} {i} = 
-  soundness {n} (concrete2abstract e n) {i}
+                        foralls b →
+                        proofObligation 0 n (zero-least 0 n) b []
+proveTautology t n {pf} {pf2} i = 
+  soundness {n} (concrete2abstract t n) i
 \end{code}
 The |proveTautology| function converts a raw |Term| to a |BoolExpr n|
 format and calls the |soundness| lemma. It uses a few auxiliary
@@ -982,19 +847,14 @@ the |proveTautology| functions; we can omit the implicit arguments for
 the reasons outlined in the previous section.
 
 \begin{code}
+exclMid    : (b : Bool) → P(b ∨ ¬ b)
+exclMid    = quoteGoal e in proveTautology e 1 _
 
--- exclMid    : (b : Bool) → P(b ∨ ¬ b)
--- exclMid    = quoteGoal e in proveTautology e 1
+peirce     : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
+peirce     = quoteGoal e in proveTautology e 2 _
 
--- peirce     : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
--- peirce     = quoteGoal e in proveTautology e 2
-
--- mft        : myfavouritetheorem
--- mft        = quoteGoal e in proveTautology e 4
-
-
-t : (e : Env 1) → P ((Var 0 e) ∨ ¬ (Var 0 e))
-t = quoteGoal e in {!proveTautology e 1!}
+mft        : myfavouritetheorem
+mft        = quoteGoal e in proveTautology e 4 _
 \end{code}
 
 
@@ -1002,7 +862,7 @@ This shows that the reflection capabilities recently added to Agda are certainly
 automating certain tedious tasks, since the programmer now need not encode the boolean expression
 twice in a slightly different format, but just lets the conversion happen automatically, without loss
 of expressive power or general applicability of the proofs resulting from |soundness|.
-
+Furthermore, by using the proof by reflection technique, the proof is generated automatically.
 
 
 
