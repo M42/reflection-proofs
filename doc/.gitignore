@@ -1,5 +1,4 @@
 *.pdf
 ReflectionProofs.tex
-generated-colour.fmt
 agda_src.mk
 llncs2e
