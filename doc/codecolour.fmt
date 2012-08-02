@@ -20,6 +20,16 @@
 \newcommand{\defin}[1]{{\color{NavyBlue}\mathsf{#1}}}
 % field of a record:
 \newcommand{\fld}[1]{{\color{Maroon}\mathsf{#1}}}
+% keywords:
+\newcommand{\keyword}[1]{{\color{Sepia}\mathsf{#1}}}
 
 
 \newcommand{\textlambda}{\ensuremath{\lambda}}
+
+
+
+%format quote = "\keyword{quote}"
+%format unquote = "\keyword{unquote}"
+%format quoteGoal = "\keyword{quoteGoal}"
+%format quoteTerm = "\keyword{quoteTerm}"
+
