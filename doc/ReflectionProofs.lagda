@@ -8,8 +8,8 @@
 %include generated-colour.fmt
 %endif
 
-\usepackage{todonotes}
-%\usepackage[disable]{todonotes}
+%\usepackage{todonotes}
+\usepackage[disable]{todonotes}
 \newcommand{\ignore}[1]{}
 \def\CC{{C\nolinebreak[4]\hspace{ -.05em}\raisebox{.4ex}{\tiny\bf ++}}}
 
@@ -91,7 +91,7 @@ this provides promising new programming potential.
 
 This paper starts exploring the possibilities and limitations of this
 new reflection mechanism. It describes several case studies,
-exemplative of the kind of problems that can be solved by
+exemplative of the kind of problems that can be solved using
 reflection. More specifically it makes the following contributions:
 
 \begin{itemize}
@@ -107,7 +107,7 @@ reflection. More specifically it makes the following contributions:
   context of this new technology.
 \item In the final version of this paper, we will also show how to
   guarantee \emph{type safety of meta-programs}. To illustrate this
-  point, we develop a type safe translation from the simply typed
+  point, we will develop a type safe translation from the simply typed
   lambda calculus to combinatory logic.
 \item Finally, the final version will also discuss some of the
   limitations of the current implementation of reflection.
@@ -120,7 +120,7 @@ github.\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}}
 \section{Reflection in Agda}
 \label{sec:reflection}
 
-Agda's reflection API defines several data types to represent terms,
+Agda's reflection API defines several data types which represent terms,
 types, and sorts. These definitions take into account various
 features, including hidden arguments and computationally irrelevant
 definitions. An overview of the core data types involved has been
@@ -130,10 +130,11 @@ reflecting \emph{definitions} as opposed to terms.
 
 There are several new keywords that can be used to quote and unquote
 |Term| values: |quote|, |quoteTerm|, |quoteGoal|, and |unquote|. The
-|quote| keyword allows you to access the internal representation of
+|quote| keyword allows the user to access the internal representation of
 any identifier. This internal representation can be used to query the
-type or definition of the identifier. We will not use it in the
-examples discussed in this paper. The other quotation forms,
+type or definition of the identifier.
+The
+examples discussed in this paper will not illustrate |quote|. The other quotation forms,
 |quoteTerm| and |quoteGoal|, will be used.
 
 The easiest example of quotation uses the |quoteTerm| keyword to turn
@@ -159,11 +160,11 @@ exampleQuoteGoal : ℕ
 exampleQuoteGoal = quoteGoal e in {!!}
 \end{code}
 The |quoteGoal| keyword binds the variable |e| to the |Term|
-representing the type of current the goal. In this example, the value
+representing the type of the current goal. In this example, the value
 of $e$ in the hole will be |def ℕ []|, i.e., the |Term| representing
 the type |ℕ|.
 
-The |unquote| keyword has converts a |Term| data type back to concrete
+The |unquote| keyword converts a |Term| data type back to concrete
 syntax. Just as |quoteGoal| and |quoteGoal|, it type checks and
 normalizes the |Term| before it is spliced into the program text.
 
@@ -374,7 +375,7 @@ available on github does use this trick.
 
 \subsection{Second Example: Boolean Tautologies}
 
-Another example of an application of the proof by reflection technique
+Another application of the proof by reflection technique
 is boolean expressions which are a tautology. We will follow the same
 recipe as for even naturals, with one further addition. In the
 previous example, the input of our decision procedure |even?| and the
@@ -392,7 +393,7 @@ is even worse if we want to check if the formula always holds by
 trying all possible variable assignments, since this will give $2^n$
 cases, where $n$ is the number of variables.
 
-To automate this process, we'll follow a similar approach to
+To automate this process, we will follow a similar approach to
 the one given in the previous section. We start by defining an
 inductive data type to represent boolean expressions with $n$ free
 variables.
@@ -411,7 +412,7 @@ data BoolExpr (n : ℕ) : Set where
 There is nothing
 surprising about this definition; we use the type |Fin n| to ensure
 that variables (represented by |Atomic|) are always in scope. If we want to
-evaluate the expression, however, we'll need some way to map variables to values.
+evaluate the expression, however, we will need some way to map variables to values.
 Enter |Env n|, it has fixed size $n$ since a |BoolExpr n| has $n$ free variables.
 
 \begin{code}
@@ -422,7 +423,7 @@ Env   = Vec Bool
 Now we can define our decision function, which decides if a given
 boolean expression is true or not, under some assignment of variables. It does this by evaluating
 the formula's AST. For example, |And| is converted to
-the boolean function |_∧_|, and it's two arguments in turn are
+the boolean function |_∧_|, and its two arguments in turn are
 recursively interpreted.
 %Here |_∧_|, |_∨_|, |_⇒_| are all defined with
 %type |Bool → Bool → Bool|, and |¬_| is of type |Bool → Bool|, making the
@@ -466,7 +467,7 @@ So   _        true     = ⊤
 So   err      false    = Error err
 
 P    : Bool → Set
-P    = So "Argumunt expression does not evaluate to true."
+P    = So "Argument expression does not evaluate to true."
 \end{code}
 \ignore{
 \begin{code}
@@ -625,7 +626,7 @@ zeroleast k (suc n) = Step (coerceDiff (succLemma k n) (zeroleast (suc k) n))
 \end{code}
 }
 
-Now that we have these helper functions, it's easy to define what it
+Now that we have these helper functions, it is easy to define what it
 means to be a tautology. We quantify over a few boolean variables, and
 wrap the formula in our |P| decision function. If the resulting type is
 inhabited, the argument to |P| is a tautology, i.e., for each
@@ -759,7 +760,7 @@ Now, we can prove theorems by calling |soundness b p|, where |b| is the
 representation of the formula under consideration, and |p| is the evidence
 that all branches of the proof tree are true. Agda is convinced
 that the representation does in fact correspond to the concrete
-formula, and also that |soundness| gives a valid proof. In fact, we needn't
+formula, and also that |soundness| gives a valid proof. In fact, we need not
 even give |p| explicitly; since the only valid values of |p| are pairs of |tt|,
 the argument can be inferred automatically, if it is inhabited.
 
@@ -777,7 +778,7 @@ someTauto    : (p q : Bool)         → P( p ∧ q ⇒ q )
 someTauto    = soundness rep _
 \end{code}
 
-The only step we still have to do manually is to convert the concrete
+The only part we still have to do manually is to convert the concrete
 Agda representation (|p ∧ q ⇒ q|, in this case) into our abstract
 syntax (|rep| here). This is unfortunate, as we end up typing out the
 formula twice. We also have to count the number of variables
@@ -789,12 +790,12 @@ presented using Agda's recent reflection API.
 
 \subsection{Adding Reflection}\label{sec:addrefl}
 
-We can get rid of this duplication using Agda's reflection API. More
+We can get rid of the aforementioned duplication using Agda's reflection API. More
 specifically, we will use the |quoteGoal| keyword to inspect the
 current goal. Given the |Term| representation of the goal, we can
 convert it to its corresponding |BoolExpr|.
 
-The conversion between a |Term| and |BoolExpr| is done by the
+The conversion between a |Term| and |BoolExpr| is achieved using the
 |concrete2abstract| function:
 \begin{code}
 concrete2abstract    :     (t     : Term)        → (n : ℕ)
@@ -808,8 +809,8 @@ concrete2abstract t n {pf} {pf2} = term2boolexpr n (stripSo (stripPi t) pf) pf2
 \end{code}}\!\!
 Note that not every |Term| can be converted to a |BoolExpr|. The
 |concrete2abstract| function requires additional assumptions about the
-|Term|. It should only contain functions such as |_∧_| or |_∨_|, and
-it should only contain boolean variables. This is ensured by the assumptions
+|Term|: it should only contain functions such as |_∧_| or |_∨_|, and
+boolean variables. This is ensured by the assumptions
 |isBoolExprQ| and friends.
 
 The |concrete2abstract| function is rather verbose, and is mostly omitted.
@@ -866,7 +867,7 @@ functions such as |freeVars|, which counts the number of variables
 |stripSo| \& |stripPi|, which peel off the universal quantifiers and the
 function |So| with which we wrap our tautologies. These helper
 functions have been ommitted for brevity, since they are rather
-verbose and add little to the understanding of the subject at
+cumbersome and add little to the understanding of the subject at
 hand.
 
 
@@ -975,7 +976,7 @@ Furthermore, by using the proof by reflection technique, the proof is generated 
 \label{sec:discussion}
 
 This paper has presented two simple applications of proof by
-reflection. In the final version of this paper, we will show how
+reflection. In the final version, we will show how
 Agda's reflection API has several other applications.
 
 
