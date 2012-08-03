@@ -684,7 +684,7 @@ of this form.
 The function |proofObligation|, given a |BoolExpr n|, generates the
 corresponding proof obligation. That is, it gives back the type which
 should be equal to the theorem one wants to prove. It does this by
-first building introducing $m$ universally quantified boolean
+first introducing $m$ universally quantified boolean
 variables. These variables are accumulated in an environment. Finally, when $m$
 binders have been introduced, the |BoolExpr| is evaluated under this
 environment.
