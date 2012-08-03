@@ -365,11 +365,12 @@ number, since the parameter |even? n| cannot be instantiated, thus
 |tt| would not be accepted where it is in the |Even 28| example. This will
 produce a |⊤ !=< ⊥| type error at compile-time.
 
-Since the type |⊤| is a simple record type, Agda can infer the
-|tt| argument, which means we can turn the assumption |even? n| into
-an implicit argument, meaning a user could get away with writing just |soundnessEven| as
-the proof, letting the inferrer do the rest. For clarity this is not
-done here, but the code on github \todo{nicer wording. ``real code''? ``library code''?} does use this trick.
+Since the type |⊤| is a simple record type, Agda can infer the |tt|
+argument, which means we can turn the assumption |even? n| into an
+implicit argument, meaning a user could get away with writing just
+|soundnessEven| as the proof, letting the inferrer do the rest. For
+clarity this is not done here, but the complete implementation
+available on github does use this trick.
 
 \subsection{Second Example: Boolean Tautologies}
 
@@ -649,10 +650,10 @@ to lift our decision function to arbitrary environments.
 
 
 The way we do this is the function |foralls|. This function represents the real analogue
-of |even?| in this situation: it returns a type which can only be inhabited if the given
+of |even?| in this situation: it returns a type which is only inhabited if the argument boolean
 expression is true under all variable assignments. This is done by generating a full binary tree
-of |⊤|, the single possible value of which only exists if the |⟦_⊢_⟧|s in the leaves all evaluate
-to true, which corresponds precisely with the case that $b$ is a tautology.
+of unit values |⊤|, the single possible value which only exists if the interpretation function |⟦_⊢_⟧|
+evaluates to |true| in every leaf. This corresponds precisely to $b$ being a tautology.
 
 The |Diff| argument is unfortunately needed to prove that forallsAcc will eventually produce a
 tree with depth equal to the number of free variables in an expression.
@@ -671,23 +672,22 @@ Now we finally know our real decision function, we can set about proving its
 soundness. Following the evens example, we want a function something like this.
 
 \begin{spec}
-sound : {n : ℕ} → (b : BoolExpr n) → foralls b → HOLE 0
-sound = HOLE 1
+sound : {n : ℕ} → (b : BoolExpr n) → foralls b → ...
 \end{spec}
+What should the return type of the |sound| lemma be? We would like to
+prove that the argument |b| is a tautology, and hence, the |sound|
+function should return something of the form |(b1 ... bn : Bool) -> P
+B|, where |B| is an expression in the image of the interpretation
+|⟦_⊢_⟧|. For instance, the statement |exampletheorem| is a statement
+of this form.
 
-In hole 0 we should provide the proof obligation given the input expression |b|,
-which is something of the form of |exampletheorem|.
-
-The function |proofObligation|, given a |BoolExpr n|, generates the corresponding proof
-obligation. That is, it gives back the type which should be equal to 
-the theorem one wants to prove.
-
-
-It does this by first building up a telescope, instantiating $m$ new boolean variables
-and adding them to the environment, which is an accumulating parameter. Finally, when
-$m$ binders have been introduced, the |BoolExpr| is evaluated under this environment.
-
-
+The function |proofObligation|, given a |BoolExpr n|, generates the
+corresponding proof obligation. That is, it gives back the type which
+should be equal to the theorem one wants to prove. It does this by
+first building introducing $m$ universally quantified boolean
+variables. These variables are accumulated in an environment. Finally, when $m$
+binders have been introduced, the |BoolExpr| is evaluated under this
+environment.
 
 
 \begin{code}
@@ -761,7 +761,7 @@ that all branches of the proof tree are true. Agda is convinced
 that the representation does in fact correspond to the concrete
 formula, and also that |soundness| gives a valid proof. In fact, we needn't
 even give |p| explicitly; since the only valid values of |p| are pairs of |tt|,
-the argument can be inferred automatically, if it is inhabited\footnote{about implicit |⊤| arguments...}.
+the argument can be inferred automatically, if it is inhabited.
 
 If the module
 passes the type checker, we know our formula is both a tautology, and
@@ -805,8 +805,7 @@ concrete2abstract    :     (t     : Term)        → (n : ℕ)
 \ignore{
 \begin{code}
 concrete2abstract t n {pf} {pf2} = term2boolexpr n (stripSo (stripPi t) pf) pf2
-\end{code}
-}
+\end{code}}\!\!
 Note that not every |Term| can be converted to a |BoolExpr|. The
 |concrete2abstract| function requires additional assumptions about the
 |Term|. It should only contain functions such as |_∧_| or |_∨_|, and
@@ -816,7 +815,7 @@ it should only contain boolean variables. This is ensured by the assumptions
 The |concrete2abstract| function is rather verbose, and is mostly omitted.
 A representative snippet is given in Fig. \ref{fig:concrete2abstract}. The functions |isBoolExprQ|
 and |isSoExprQ| simply traverse the |Term| to see if it fulfills the requirements of
-being a boolean expression preceded by a telescope.
+being a boolean expression preceded by a series of universally quantified boolean variables.
 
 \begin{figure}\label{fig:concrete2abstract}
 \begin{spec}
@@ -864,7 +863,7 @@ The |proveTautology| function converts a raw |Term| to a |BoolExpr n|
 format and calls the |soundness| lemma. It uses a few auxiliary
 functions such as |freeVars|, which counts the number of variables
 (needed to be able to instantiate the $n$ in |BoolExpr n|), and
-|stripSo| \& |stripPi|, which peel off the telescope type and the
+|stripSo| \& |stripPi|, which peel off the universal quantifiers and the
 function |So| with which we wrap our tautologies. These helper
 functions have been ommitted for brevity, since they are rather
 verbose and add little to the understanding of the subject at
