@@ -1,4 +1,7 @@
-\documentclass[a4paper]{llncs}
+\documentclass[a4paper]{report}
+%\documentclass[a4paper]{llncs}
+
+% ``Coq is like brain surgery over the telephone''
 
 %include polycode.fmt
 %if style == newcode
@@ -60,22 +63,23 @@ open import Data.List hiding (_∷ʳ_)
 \author{Paul van der Walt \and Wouter Swierstra}
 \date{\today}
 \title{Applications of Reflection in Agda}
-\institute{
-\href{mailto:paul@@denknerd.org}{\nolinkurl{paul@@denknerd.org}}, \href{mailto:W.S.Swierstra@@uu.nl}{\nolinkurl{W.S.Swierstra@@uu.nl}}\\
-Department of Computer Science, Utrecht University
-}
+%%\institute{
+%%\href{mailto:paul@@denknerd.org}{\nolinkurl{paul@@denknerd.org}}, \href{mailto:W.S.Swierstra@@uu.nl}{\nolinkurl{W.S.Swierstra@@uu.nl}}\\
+%%Department of Computer Science, Utrecht University
+%%}
 
 \begin{document}
 
 \maketitle
 
+\tableofcontents
 
-\begin{abstract}
-  This paper explores the recent addition to Agda enabling
-  \emph{reflection}, in the style of Lisp, MetaML, and Template
-  Haskell. It illustrates several applications of reflection that
-  arise in dependently typed programming.
-\end{abstract}
+%\begin{abstract}
+%  This paper explores the recent addition to Agda enabling
+%  \emph{reflection}, in the style of Lisp, MetaML, and Template
+%  Haskell. It illustrates several applications of reflection that
+%  arise in dependently typed programming.
+%\end{abstract}
 
 \section{Introduction}
 
@@ -155,10 +159,10 @@ example' = refl
 The |quoteGoal| is slightly different. It is best explained using an
 example:
 
-\begin{code}
+\begin{spec}
 exampleQuoteGoal : ℕ
 exampleQuoteGoal = quoteGoal e in {!!}
-\end{code}
+\end{spec}
 The |quoteGoal| keyword binds the variable |e| to the |Term|
 representing the type of the current goal. In this example, the value
 of $e$ in the hole will be |def ℕ []|, i.e., the |Term| representing
@@ -371,7 +375,9 @@ argument, which means we can turn the assumption |even? n| into an
 implicit argument, meaning a user could get away with writing just
 |soundnessEven| as the proof, letting the inferrer do the rest. For
 clarity this is not done here, but the complete implementation
-available on github does use this trick.
+available on github does use this trick. A detailed explanation of this
+technique, which is used extensively in the final code, is given in
+Sec. \ref{sec:implicit-unit}.
 
 \subsection{Second Example: Boolean Tautologies}
 
@@ -425,9 +431,6 @@ boolean expression is true or not, under some assignment of variables. It does t
 the formula's AST. For example, |And| is converted to
 the boolean function |_∧_|, and its two arguments in turn are
 recursively interpreted.
-%Here |_∧_|, |_∨_|, |_⇒_| are all defined with
-%type |Bool → Bool → Bool|, and |¬_| is of type |Bool → Bool|, making the
-%definition of the interpretation function |⟦_⊢_⟧| unsurprising.
 
 \ignore{
 \begin{code}
@@ -747,8 +750,8 @@ where the work is done -- |soundness| merely calls
 |soundnessAcc| with some initial input, namely the |BoolExpr n|, an
 empty environment, and the proof
 %%%
-that the environment is the size of
-the number of free variables) -- 
+that |soundnessAcc| will be called ($n-0$) times, resulting in an environment
+of size $n$ everywhere the expression is to be evaluated --
 %%%
 we see that we build up a function
 that, when called with the values assigned to the free variables,
@@ -897,48 +900,49 @@ Furthermore, by using the proof by reflection technique, the proof is generated 
 
 
 
-% \section{Type-safe metaprogramming}\label{sec:type-safe-metaprogramming}
+\section{Type-safe metaprogramming}\label{sec:type-safe-metaprogramming}
 
-% Another area in which an application for the new reflection API was found is that
-% of metaprogramming.
+Another area in which an application for the new reflection API was found is that
+of metaprogramming. By taking advantage of Agda's very powerful type system,
+it was possible to develop type-safe metaprograms.
 
-% Metaprogramming is a technique which is widely used in the LISP
-% community, and involves converting terms in the concrete syntax of a
-% programming language into an abstract syntax tree which can be
-% inspected and/or manipulated, and possibly (as in the case of LISP) be
-% ``reflected'' again, i.e. the (possibly new or modified) AST is made
-% concrete again, and thus can be evaluated as if it were code the
-% programmer had directly entered into a source file.
+Metaprogramming is a technique which is widely used in the LISP
+community, and involves converting terms in the concrete syntax of a
+programming language into an abstract syntax tree which can be
+inspected and/or manipulated, and possibly (as in the case of LISP) be
+made
+concrete again, and thus can be evaluated as if it were code the
+programmer had directly entered into a source file.
 
-% This technique is well-supported and widely used in LISP and more
-% recently in Haskell, using the Template Haskell compiler
-% extension\cite{sheard2002template}. It has enabled many time-saving
-% automations of tasks otherwise requiring
-% \emph{boilerplate}\footnote{According to the Oxford English
-%   Dictionary, boilerplate is defined as \emph{``standardized pieces of
-%     text for use as clauses in contracts or as part of a computer
-%     program''}.} code, such as automatically generating
-% embedding-projection function pairs for generic programming (for
-% example in \cite{norell2004prototyping})
-% or % TODO insert example of metaprogramming applications here.
-% \dots.
+This technique is well-supported and widely used in LISP and more
+recently in Haskell, using the Template Haskell compiler
+extension\cite{sheard2002template}. It has enabled many time-saving
+automations of tasks otherwise requiring
+\emph{boilerplate}\footnote{According to the Oxford English
+  Dictionary, boilerplate is defined as \emph{``standardized pieces of
+    text for use as clauses in contracts or as part of a computer
+    program''}.} code, such as automatically generating
+embedding-projection function pairs for generic programming (for
+example in \cite{norell2004prototyping})
+or % TODO insert example of metaprogramming applications here.
+\dots.
 
-% Clearly, the technique is a very useful one, but it does have one
-% limitation (or should we say, possible pitfall), namely that when one
-% is developing, for example, a piece of Template Haskell code which
-% should generate some function, it often happens that one ends up
-% debugging type errors in the produced (machine-generated) code. This
-% is a tedious and painful process, since typically generated code is
-% much less intuitive and readable than human-written code.
+Clearly, the technique is a very useful one, but it does have a glaring
+limitation (or should we say, potential pitfall), namely that when one
+is developing, for example, a piece of Template Haskell code which
+should generate some function, it often happens that one ends up
+debugging type errors in the produced (machine-generated) code. This
+is often a tedious and painful process, since typically generated code is
+much less intuitive and readable than human-written code.
 
-% Here we propose a new way of looking at metaprogramming, namely
-% type-safe metaprogramming. It would be great if one could define some
-% data structure for, say, lambda calculus, and have the guarantee that
-% any term constructed in this AST is type-correct. The obvious
-% advantage is then that the compiler will show up errors in whichever
-% method tries to build an invalid piece of abstract syntax, as opposed
-% to giving an obscure error pointing at some generated code, leaving
-% the programmer to figure out how to solve the problem.
+Here we propose a new way of looking at metaprogramming, namely
+type-safe metaprogramming. It would be great if one could define some
+data structure for, say, lambda calculus, and have the guarantee that
+any term constructed in this AST is type-correct. The obvious
+advantage is then that the compiler will show up errors in whichever
+method tries to build an invalid piece of abstract syntax, as opposed
+to giving an obscure error pointing at some generated code, leaving
+the programmer to figure out how to solve the problem.
 
 % Of course one could achieve a similar framework in, for example,
 % Haskell, but having a reflection system in a programming language with
@@ -971,6 +975,51 @@ Furthermore, by using the proof by reflection technique, the proof is generated 
 
 % Mention AChlipala and wjzz here.
 
+
+\section{Implicit record-type arguments}\label{sec:implicit-unit}
+
+As has been noted before, if a particular argument is a record type,
+and it has only one possible inhabitant, the Agda type inferencer can
+automatically infer its value. Thus, it also need not be passed as an argument
+at the call-site. The following code snippet (Fig. \ref{code:implicit-example}) illustrates
+how record type arguments having only one alternative can be automatically inferred.
+
+
+
+    \begin{figure}[h]
+\begin{code}
+foo : ⊤ × ⊤ → ℕ
+foo u = 5
+
+bar : ℕ
+bar = foo _
+\end{code}
+        \caption{Illustrating the automatic inference of record arguments.}
+        \label{code:implicit-example}
+    \end{figure}
+Since this inference is possible, we omit the argument with the |_|, which tells
+Agda to automatically infer that argument. We can therefore also turn inferrable arguments
+into implicit arguments, as in Fig. \ref{fig:implicit0}.
+    
+    \begin{figure}[h]
+\begin{code}
+foo' : {u : ⊤ × ⊤} → ℕ
+foo' = 5
+
+bar' : ℕ
+bar' = foo'
+\end{code}
+        \caption{Implicit (or hidden) arguments are inferred, if possible.}
+        \label{fig:implicit0}
+    \end{figure}
+
+This is possible, since the type |⊤ × ⊤| only has one inhabitant, namely |(tt , tt)|. If
+multiple values were valid, the above code would have resulted in an unsolved meta. That brings
+us to one of the drawbacks of this solution which has been used quite often (chiefly to ``hide''
+a proof witness of for example an input term being of the right shape), which is that if such
+an argument is ambiguous, or worse, if it is a type with no inhabitants, the compiler won't fail
+with a type error, but merely with an unsolved meta warning (highlighting the piece of code yellow
+in the Emacs Agda mode).
 
 \section{Discussion}
 \label{sec:discussion}
