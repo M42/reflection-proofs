@@ -38,7 +38,7 @@ open import Data.Product hiding (map)
 open import Relation.Binary hiding (_⇒_)
 open import Reflection
 
-open import Data.Fin hiding (_+_; pred)
+open import Data.Fin hiding (_+_; pred )
 open import Data.Vec renaming (reverse to vreverse ; map to vmap; foldr to vfoldr; _++_ to _v++_)
 open import Data.Unit hiding (_≤?_)
 open import Data.Empty
@@ -61,6 +61,10 @@ open import Data.List hiding (_∷ʳ_)
 %%\href{mailto:paul@@denknerd.org}{\nolinkurl{paul@@denknerd.org}}, \href{mailto:W.S.Swierstra@@uu.nl}{\nolinkurl{W.S.Swierstra@@uu.nl}}\\
 %%Department of Computer Science, Utrecht University
 %%}
+
+%TODO make a fancy front page
+
+%TODO add citations to everything which seems like an unfounded statement.
 
 \begin{document}
 
@@ -129,13 +133,26 @@ github.\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}}
 \chapter{Reflection in Agda}
 \label{sec:reflection}
 
+Since version 2.2.8, Agda includes a reflection API, which allows converting
+parts of a program's code into abstact syntax, in other words a data structure
+in Agda itself, which can be inspected or modified like any other data structure.
+The idea of reflection is nothing new: already in the 1980's LISP included a similar
+feature, called quoting, which allowed run-time modification of a program's code, by
+the program itself. This gives rise to powerful techniques for reusing code and
+generating frequently needed but slightly different expressions automatically.
+
+%TODO give more of an intro to the idea of reflection here.
+
+\section{The basics}
+
 Agda's reflection API defines several data types which represent terms,
 types, and sorts. These definitions take into account various
 features, including hidden arguments and computationally irrelevant
-definitions. An overview of the core data types involved has been
+terms. An overview of the core data types involved has been
 included in Figure~\ref{fig:reflection}. In addition to these data
 types that represent \emph{terms}, there is some support for
-reflecting \emph{definitions} as opposed to terms.
+reflecting \emph{definitions} as opposed to terms. Inspection of definitions
+is detailed in Sec. \ref{sec:inspecting-definitions}.
 
 There are several new keywords that can be used to quote and unquote
 |Term| values: |quote|, |quoteTerm|, |quoteGoal|, and |unquote|. The
@@ -154,14 +171,22 @@ example, the following unit test type checks:
 example₀ : quoteTerm (\ x -> x) ≡ lam visible (var 0 [])
 example₀ = refl
 \end{spec}
+
+Dissecting
+this, we introduced a lambda abstraction, so we expect the |lam|
+constructor. It's one argument is visible, and
+the body of the lambda abstraction is just a reference to the
+nearest-bound variable, thus |var 0|, applied to no arguments, hence
+the empty list.
+
 Furthermore, |quoteTerm| type checks and normalizes its term before
 returning the required |Term|, as the following example demonstrates:
 \begin{code}
-example₁ : quoteTerm ((\ x -> x) 0) ≡ con (quote Data.Nat.ℕ.zero) []
+example₁ : quoteTerm ((\ x → x) 0) ≡ con (quote ℕ.zero) []
 example₁ = refl
 \end{code}
 
-The |quoteGoal| is slightly different. It is best explained using an
+The |quoteGoal| keyword is slightly different. It is best explained using an
 example:
 
 \begin{spec}
@@ -174,7 +199,7 @@ of $e$ in the hole will be |def ℕ []|, i.e., the |Term| representing
 the type |ℕ|.
 
 The |unquote| keyword converts a |Term| data type back to concrete
-syntax. Just as |quoteGoal| and |quoteGoal|, it type checks and
+syntax. Just as |quoteTerm| and |quoteGoal|, it type checks and
 normalizes the |Term| before it is spliced into the program text.
 
 
@@ -235,41 +260,120 @@ normalizes the |Term| before it is spliced into the program text.
 
 
 
-% |Term|s and |Type|s are more interesting: the representation is de Bruijn-style,
-% and lambda abstractions are modeled as binding one variable. A variable has a de Bruijn index,
-% and may be applied to arguments. Note the |Type| argument in the |lam| constructor:
-% this holds the type of the argument expected.
+The representation of |Term|s is de Bruijn-style,
+and lambda abstractions are modeled as binding one variable. A variable has a de Bruijn index,
+and may be applied to arguments.
+%Note the |Type| argument in the |lam| constructor:
+%this holds the type of the argument expected.
 
-% |con| and |def| are introduced when constructors and definitions, respectively,
-% are applied to a (possibly empty) list of arguments. Finally the constructor |unknown| is
-% used for things which are not or cannot be represented in this AST (such as function definitions).
-
-% The reflection API also includes a few keywords, such as |quote|,
-% |quoteTerm| and |quoteGoal e in ?|.  The |quote| keyword returns the
-% |Name| of its argument, which can be useful for comparing to the first
-% argument of a |con| constructor, for example, or for looking up more
-% information about a given data type. |quoteTerm| returns its argument
-% as a |Term|, in other words it gives the AST after parsing,
-% type-checking and normalising. For example, |quoteTerm (λ x → x)|
-% returns |lam visible (el unknown unknown) (var 0 [])|. Dissecting
-% this, we introduced a lambda abstraction, so we expect the |lam|
-% constructor. It's one argument is visible, but since we did not
-% annotate the term with types, it's type and sort is unknown. Finally,
-% the body of the lambda abstraction is just a reference to the
-% nearest-bound variable, thus |var 0|, applied to no arguments, hence
-% the empty list.
+|con| and |def| are introduced when constructors and definitions, respectively,
+are applied to a (possibly empty) list of arguments. Finally the constructor |unknown| is
+used for things which are not or cannot be represented in this AST (such as function definitions).
 
 
-% A common task will be casting the raw |Term| we get into some AST of
-% our own, possibly one which enforces some invariants, such as a
-% simply-typed lambda calculus representation, ensuring well-typedness.
-% A library has been developed which might serve as both an instructive
-% example in how to pull apart |Term|s, as well as a helper function,
-% since it provides the feature of automatically converting a |Term|
-% into some AST type, if a mapping is provided from concrete Agda
-% |Name|s to constructors of this AST.
 
-\section{Autoquote}
+A common task will be casting the raw |Term| we get into some AST of
+our own.
+A library has been developed which might serve as both an instructive
+example in how to pull apart |Term|s, as well as a useful function,
+since it provides the feature of automatically converting a |Term|
+into some AST type, if a mapping is provided from concrete Agda
+|Name|s to constructors of this AST. An explanation of its implementation is given
+in Sec. \ref{sec:autoquote}, and an example use-case is given in \ref{sec:autoquote-example}.
+
+
+\section{List of functions exported by |Reflection|}
+
+The |Reflection| module of the Agda standard library (version 0.6 was used here) exports a number of
+functions. Here we will provide a list of them (see Fig. \ref{fig:reflection-functions}) along with
+a description of their use.
+
+\begin{figure}[h]
+\begin{spec}
+_≟-Name_ : Decidable {A = Name} _≡_
+
+type : Name → Type
+definition : Name → Definition
+constructors : Data-type → List Name
+
+\end{spec}
+\caption{The functions exported by the |Reflection| module of the Agda standard library, as of version 0.6.}\label{fig:reflection-functions}
+\end{figure}
+
+As mentioned before, the way to get an object of type |Name| is by using the |quote| keyword, for
+example as in |quote zero|. Once we have a |Name|, we can get more information about it.
+The |type| function, unsurprisingly, tells us the type of whatever we give it, or |unknown|. For example:
+
+\begin{code}
+typeExample : type (quote ℕ.suc) ≡
+            el (lit 0) (pi
+              (arg visible relevant (el (lit 0) (def (quote ℕ) []))
+              )
+                                    (el (lit 0) (def (quote ℕ) []))
+                       )
+typeExample = refl
+\end{code}
+
+The right-hand side of the type of |typeExample| boils down to a function of type |ℕ → ℕ|, where the |el (lit 0) x| annotations
+mean that the sort of $x$ is |Set₀| (which is the same as |Set|). 
+
+The |definition| function returns the definition of a given identifier. The type is defined as follows.
+
+\begin{spec}
+data Definition : Set where
+  function     : Function  → Definition
+  data-type    : Data-type → Definition
+  record′      : Record    → Definition
+  constructor′ : Definition
+  axiom        : Definition
+  primitive′   : Definition
+\end{spec}
+
+At the time of writing the only constructor we can do anything with is |data-type|: using
+it we can get a list of constructors, by calling the suitably-named |constructors| function. See the
+illustration in Sec. \ref{sec:inspecting-definitions}.
+
+\subsection{Inspecting definitions}\label{sec:inspecting-definitions}
+
+Using the functions exported by the module |Reflection|, we are able
+to get a list of constructors for some data type. The following code snippet
+illustrates how this is done, and what the format of the answer is.
+
+\ignore{
+\begin{code}
+isDatatype : Definition → Set
+isDatatype (data-type x) = ⊤
+isDatatype _ = ⊥
+\end{code}
+}
+\begin{code}
+giveDatatype : (d : Definition) → {pf : isDatatype d} → Data-type
+giveDatatype (data-type d) = d
+giveDatatype (function x)   {()}
+giveDatatype (record′ x)    {()}
+giveDatatype constructor′   {()}
+giveDatatype axiom          {()}
+giveDatatype primitive′     {()}
+
+ℕcons : List Name
+ℕcons = constructors (giveDatatype (definition (quote ℕ)))
+
+consExample : ℕcons ≡       quote ℕ.zero   ∷
+                            quote ℕ.suc    ∷ []
+consExample = refl
+\end{code}
+
+So now we have in |ℕcons| a list of the names of the constructors of the data type |ℕ|, which we
+could use to do more interesting things which depend on the structure of a data type, such as
+giving isomorphisms to generic representations of data types, such as is often done using
+Template Haskell. % TODO:  cite example of TH doing auto-EP (regular?)
+This capability is exploited in Sec. \ref{sec:generic-programming}.
+
+
+
+
+
+\section{Autoquote}\label{sec:autoquote}
 
 
 In the course of this project, a module named Autoquote was developed. The
@@ -340,8 +444,8 @@ returns the unit type when its input is even and bottom otherwise:
 
 \begin{code}
 even? : ℕ → Set
-even? zero              = ⊤
-even? (suc zero)        = ⊥
+even? 0                 = ⊤
+even? (1       )        = ⊥
 even? (suc (suc n))     = even? n
 \end{code}
 
@@ -513,8 +617,8 @@ stripPi unknown      = unknown
 
 -- TODO get rid of this!
 unsafeMinus : (a : ℕ) → (b : ℕ) → ℕ
-unsafeMinus zero m = zero
-unsafeMinus n₁ zero = n₁
+unsafeMinus 0 m = 0
+unsafeMinus n₁ 0 = n₁
 unsafeMinus (suc n₁) (suc m) = unsafeMinus n₁ m
 
 
@@ -559,7 +663,7 @@ stripSo unknown      ()
 
 
 isBoolExprQ' : (n : ℕ) → (t : Term) → Set
-isBoolExprQ' n (var x args) with suc (unsafeMinus x 0) ≤? n
+isBoolExprQ' n (var x args) with (1 + unsafeMinus x 0) ≤? n
 isBoolExprQ' n (var x args) | yes p = ⊤
 isBoolExprQ' n (var x args) | no ¬p = ⊥
 isBoolExprQ' n (con tf as) with Data.Nat._≟_ 0 (length as)
@@ -596,7 +700,7 @@ term2boolexpr : (n : ℕ)
         → (t : Term)
         → isBoolExprQ' n t
         → BoolExpr n
-term2boolexpr n (var x args) pf with suc (unsafeMinus x 0) ≤? n
+term2boolexpr n (var x args) pf with (1 + unsafeMinus x 0) ≤? n
 term2boolexpr n (var x args) pf | yes p = Atomic (fromℕ≤ {unsafeMinus x 0} p)
 term2boolexpr n (var x args) () | no ¬p
 term2boolexpr n (con tf []) pf with tf ≟-Name quote true
@@ -642,7 +746,7 @@ coerceDiff refl d = d
 
 zeroleast : (k n : ℕ) → Diff k (k + n)
 zeroleast k zero    = coerceDiff (zeroId k) Base
-zeroleast k (suc n) = Step (coerceDiff (succLemma k n) (zeroleast (suc k) n))
+zeroleast k (suc n) = Step (coerceDiff (succLemma k n) (zeroleast (1 + k) n))
 
 \end{code}
 }
@@ -717,7 +821,7 @@ proofObligation   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
 proofObligation   .m   m    (Base    ) b acc = P ⟦ acc ⊢ b ⟧ 
 proofObligation   n    m    (Step y  ) b acc =
   (a : Bool) →
-      proofObligation (suc n) m y b (a ∷ acc)
+      proofObligation (1 + n) m y b (a ∷ acc)
 \end{code}
 
 \ignore{
@@ -753,7 +857,7 @@ soundnessAcc     bexp     env Base     H with ⟦ env ⊢ bexp ⟧
 soundnessAcc     bexp     env Base     H | true  = H
 soundnessAcc     bexp     env Base     H | false = Error-elim H
 soundnessAcc {m} bexp {n} env (Step y) H =
-  λ a → if {λ b → proofObligation (suc n) m y bexp (b ∷ env)} a
+  λ a → if {λ b → proofObligation (1 + n) m y bexp (b ∷ env)} a
     (soundnessAcc bexp (true  ∷ env)    y (proj₁ H))
     (soundnessAcc bexp (false ∷ env)    y (proj₂ H))
 \end{code}
@@ -856,7 +960,7 @@ All these pieces are assembled in the |proveTautology| function.
 
 \begin{code}
 freeVars : Term → ℕ
-freeVars (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = suc (freeVars t)
+freeVars (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = 1 + (freeVars t)
 -- identity otherwise
 freeVars (pi a b)     = 0
 freeVars (var x args) = 0
@@ -1017,7 +1121,7 @@ Could be an idea to prove correctness by normalisation and translation back into
 
 hullo
 
-\chapter{Generic programming}
+\chapter{Generic programming}\label{sec:generic-programming}
 
 Ornaments / containers?
 will we ever get here?
