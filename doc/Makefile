@@ -6,7 +6,7 @@ PDF=$(TEXFILE:.tex=.pdf)
 FMTS=$(wildcard *.fmt)
 
 $(PDF): $(TEXFILE)
-	rubber -v --pdf $<
+	TEXMFOUTPUT=`pwd` rubber -v --pdf $<
 
 $(TEXFILE): $(LHSFILE) $(FMTS) refs.bib
 	lhs2TeX --agda -o $@ $<
