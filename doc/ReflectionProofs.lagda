@@ -49,11 +49,6 @@ open import Data.List hiding (_∷ʳ_)
 }
 
 \usepackage{amsmath}
-\usepackage{semantic}
-% things for the semantic package
-\reservestyle{\command}{\textbf}
-\command{let,in,:,case,of,if,then,else,letrec,nil,cons,false,true,[]}
-\mathlig{ -->}{\longrightarrow}
 
 
 \usepackage{hyperref}
@@ -1153,7 +1148,16 @@ Talk about extension to compiler here, give example of use (as detailed as possi
 
 % TODO reference Ulf's tutorial for the STLC checker.
 
-%tODO: Dependently typed LC is difficult to type check: Outrageous but Meaningful Coincidences -- McBride.
+
+
+%TODO in introduction: list motivating examples for using reflection? include bove-capretta, so we later can conclude reflection API isn't yet powerful enough?
+
+
+%TODO compare the tauto-solver to tactics, note how this is embedded in agda and not some funny sub-language of coq
+
+% Patrick Bahr's tree automata?
+
+%TODO: Dependently typed LC is difficult to type check: Outrageous but Meaningful Coincidences -- McBride.
 
 
 
