@@ -1007,14 +1007,16 @@ modifications to the compiler are detailed in Appendix \ref{sec:annotating-lambd
 
 
 
-
+We don't use Autoquote here, because...
 
 
 \section{Example: CPS transformation}
 
 % A transformation will be made into SKI combinators.
 
-hullo
+Maybe we can give a Bove-Capretta example here, too, since |T| uses general recursion.
+
+Could be an idea to prove correctness by normalisation and translation back into lambda calculus.
 
 \section{Example: Translation to SKI combinators}
 
@@ -1022,18 +1024,11 @@ hullo
 
 \chapter{Generic programming}
 
+Ornaments / containers?
 will we ever get here?
 
-\chapter{Related Work}
-
-% Mention AChlipala and wjzz here.
-
-This project's main innovations are the novel combinations of existing
-techniques; therefore quite a number of subjects are relevant to mention
-here.
-
-
-\chapter{Implicit record-type arguments}\label{sec:implicit-unit}
+\chapter{Miscellaneous}
+\section{Implicit record-type arguments}\label{sec:implicit-unit}
 
 As has been noted before, if a particular argument is a record type,
 and it has only one possible inhabitant, the Agda type inferencer can
@@ -1078,6 +1073,28 @@ an argument is ambiguous, or worse, if it is a type with no inhabitants, the com
 with a type error, but merely with an unsolved meta warning (highlighting the piece of code yellow
 in the Emacs Agda mode).
 
+
+\section{Reflection API limitations}
+
+
+\begin{itemize}
+\item Cannot call |unquote| on non-constructor term. I.e. |unquote (lam2term t)|
+\item Impossible to introduce definitions
+\item Inspection of functions (e.g. clauses) not implemented
+\item ?? creation of pattern-matching functions not possible => bove capretta impossible (or maybe completely automatic GP impossible)
+\item untyped terms are returned. this is solved.
+\end{itemize}
+
+\chapter{Related Work}
+
+% Mention AChlipala and wjzz here.
+
+This project's main innovations are the novel combinations of existing
+techniques; therefore quite a number of subjects are relevant to mention
+here.
+
+
+
 \chapter{Discussion}
 \label{sec:discussion}
 
@@ -1085,7 +1102,13 @@ This paper has presented two simple applications of proof by
 reflection. In the final version, we will show how
 Agda's reflection API has several other applications.
 
+\chapter{Conclusion}\label{sec:conclusion}
+
+Answer the research question here.
+
 \appendix
+
+% \appendixpage
 
 \chapter{Annotating |λ| expressions with type}\label{sec:annotating-lambdas}
 
@@ -1103,10 +1126,37 @@ function along with the unification, which poses a problem to the termination ch
 
 Here the changes required to the Agda compiler's source code are presented in Fig. \ref{fig:agda-lambda-diff}, in unified diff format \cite{unified-diff}.
 
+
 \begin{figure}[h]
 insert diff here %TODO
 \caption{The changes required to the Agda compiler to enable annotation of lambda abstractions with the type of their argument.}\label{fig:agda-lambda-diff}
 \end{figure}
+
+
+
+
+
+\chapter{Automatic syntax highlighting for Literate Agda}
+
+Talk about extension to compiler here, give example of use (as detailed as possible, i.e. with Makefile, the --lagda flag, etc.
+
+
+
+
+
+% TODO: explain somewhere how the distribution works. i.e. `mk extract` for code extraction, what module contains what, etc.
+
+
+% maybe TODO: talk about first using ≡ true for bool tautologies, and why ⊤/⊥ is much better
+%TODO explain why: since eta-expansion works for records and not data's. has to do with recursion: records don't have recursion. TODO: is this statement correct?
+
+
+% TODO reference Ulf's tutorial for the STLC checker.
+
+%tODO: Dependently typed LC is difficult to type check: Outrageous but Meaningful Coincidences -- McBride.
+
+
+
 
 \bibliography{refs}{}
 \bibliographystyle{splncs}
