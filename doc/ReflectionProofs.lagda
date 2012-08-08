@@ -1,7 +1,6 @@
 \documentclass[a4paper]{report}
 %\documentclass[a4paper]{llncs}
 
-% ``Coq is like brain surgery over the telephone''
 
 %include polycode.fmt
 %if style == newcode
@@ -72,7 +71,18 @@ open import Data.List hiding (_∷ʳ_)
 
 \maketitle
 
+\clearpage
+\pagestyle{empty}
+\vspace*{\fill} 
+\begin{quote} 
+\centering 
+\emph{``Using Coq is like doing brain surgery over the telephone.''}
+\end{quote}
+\vspace*{\fill}
+\clearpage
+
 \tableofcontents
+\clearpage
 
 %\begin{abstract}
 %  This paper explores the recent addition to Agda enabling
@@ -81,7 +91,7 @@ open import Data.List hiding (_∷ʳ_)
 %  arise in dependently typed programming.
 %\end{abstract}
 
-\section{Introduction}
+\chapter{Introduction}
 
 The dependently typed programming language
 Agda~\cite{norell:thesis,norell2009dependently} has recently been
@@ -102,11 +112,11 @@ reflection. More specifically it makes the following contributions:
 \item This paper documents the current status of the reflection
   mechanism. The existing documentation is limited to a paragraph in
   the release notes~\cite{agda-relnotes-228} and comments in the
-  compiler's source code. In Section~\ref{sec:reflection} we give
+  compiler's source code. In Chapter~\ref{sec:reflection} we give
   several short examples of the reflection API in action.
 \item This paper illustrates how to use Agda's reflection mechanism to
   automate certain categories of proofs
-  (Section~\ref{sec:proof-by-reflection}). The idea of \emph{proof by
+  (Chapter~\ref{sec:proof-by-reflection}). The idea of \emph{proof by
     reflection} is certainly not new, but still worth examining in the
   context of this new technology.
 \item In the final version of this paper, we will also show how to
@@ -121,7 +131,7 @@ The code and examples presented in this paper all compile using the
 latest version of Agda 2.3.0.1 and are available on
 github.\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}}
 
-\section{Reflection in Agda}
+\chapter{Reflection in Agda}
 \label{sec:reflection}
 
 Agda's reflection API defines several data types which represent terms,
@@ -146,14 +156,14 @@ a fragment of concrete syntax into a |Term| data type. Note that the
 |quoteTerm| keyword reduces like any other function in Agda. As an
 example, the following unit test type checks:
 \begin{spec}
-example : quoteTerm (\ x -> x) ≡ lam visible (var 0 [])
-example = refl
+example₀ : quoteTerm (\ x -> x) ≡ lam visible (var 0 [])
+example₀ = refl
 \end{spec}
 Furthermore, |quoteTerm| type checks and normalizes its term before
 returning the required |Term|, as the following example demonstrates:
 \begin{code}
-example' : quoteTerm ((\ x -> x) 0) ≡ con (quote Data.Nat.ℕ.zero) []
-example' = refl
+example₁ : quoteTerm ((\ x -> x) 0) ≡ con (quote Data.Nat.ℕ.zero) []
+example₁ = refl
 \end{code}
 
 The |quoteGoal| is slightly different. It is best explained using an
@@ -264,8 +274,21 @@ normalizes the |Term| before it is spliced into the program text.
 % into some AST type, if a mapping is provided from concrete Agda
 % |Name|s to constructors of this AST.
 
+\section{Autoquote}
 
-\section{Proof by Reflection}
+
+In the course of this project, a module named Autoquote was developed. The
+motivating idea behind Autoquote is that one often ends up writing similar-looking
+functions for translating |Term|s into some AST. What Autoquote does is abstract
+over this process, and provide an interface which, when provided with a mapping
+from concrete names to constructors in this AST, automatically quotes expressions
+that fit (i.e. which only have variables, and names which are listed in this mapping).
+
+
+An example of Autoquote in use can be found in Sec. \ref{sec:autoquote-example}.
+
+
+\chapter{Proof by Reflection}
 \label{sec:proof-by-reflection}
 
 The idea behind proof by reflection is simple: given that type theory
@@ -291,11 +314,11 @@ more usable and accessible.
 
 
 
-\subsection{Simple Example: Evenness}
+\section{Simple Example: Evenness}\label{sec:evenness}
 
-As a first example, we will cover an example taken from
-Chlipala~\cite{chlipala2011certified}, where we develop a procedure to
-prove that a number is even automatically. We start by defining the
+To illustrate the concept of proof by reflection, we will cover an example taken from
+Chlipala~\cite{chlipala2011certified}, where we develop a procedure to automatically
+prove that a number is even. We start by defining the
 property |Even| below. There are two constructors: the first
 constructor says that zero is even; the second constructor states that
 if $n$ is even, then so is $2 + n$.
@@ -379,7 +402,7 @@ available on github does use this trick. A detailed explanation of this
 technique, which is used extensively in the final code, is given in
 Sec. \ref{sec:implicit-unit}.
 
-\subsection{Second Example: Boolean Tautologies}
+\section{Second Example: Boolean Tautologies}
 
 Another application of the proof by reflection technique
 is boolean expressions which are a tautology. We will follow the same
@@ -400,7 +423,7 @@ trying all possible variable assignments, since this will give $2^n$
 cases, where $n$ is the number of variables.
 
 To automate this process, we will follow a similar approach to
-the one given in the previous section. We start by defining an
+the one given in the section on even natural numbers (Sec. \ref{sec:evenness}). We start by defining an
 inductive data type to represent boolean expressions with $n$ free
 variables.
 
@@ -749,10 +772,8 @@ If we look closely at the definition of |soundnessAcc| (which is
 where the work is done -- |soundness| merely calls
 |soundnessAcc| with some initial input, namely the |BoolExpr n|, an
 empty environment, and the proof
-%%%
 that |soundnessAcc| will be called ($n-0$) times, resulting in an environment
 of size $n$ everywhere the expression is to be evaluated --
-%%%
 we see that we build up a function
 that, when called with the values assigned to the free variables,
 builds up the environment and eventually returns the
@@ -791,7 +812,7 @@ for formulae containing many variables. It would be desirable for this
 process to be automated. In Sec. \ref{sec:addrefl} a solution is
 presented using Agda's recent reflection API.
 
-\subsection{Adding Reflection}\label{sec:addrefl}
+\section{Adding Reflection}\label{sec:addrefl}
 
 We can get rid of the aforementioned duplication using Agda's reflection API. More
 specifically, we will use the |quoteGoal| keyword to inspect the
@@ -897,10 +918,17 @@ twice in a slightly different format. The conversion now happens automatically, 
 of expressive power or general applicability of the proofs resulting from |soundness|.
 Furthermore, by using the proof by reflection technique, the proof is generated automatically.
 
+\section{Real-world example of Autoquote}\label{sec:autoquote-example}
+
+The process of quoting to a |BoolExpr| outlined above can actually be
+made less ugly.  Recall the Autoquote module developed in
+Sec. \ref{sec:autoquote}; this will be used here, both as an
+illustration of the use of Autoquote, and to avoid code duplication,
+thus making the code for |term2boolexpr| more concise.
 
 
 
-\section{Type-safe metaprogramming}\label{sec:type-safe-metaprogramming}
+\chapter{Type-safe metaprogramming}\label{sec:type-safe-metaprogramming}
 
 Another area in which an application for the new reflection API was found is that
 of metaprogramming. By taking advantage of Agda's very powerful type system,
@@ -944,39 +972,68 @@ method tries to build an invalid piece of abstract syntax, as opposed
 to giving an obscure error pointing at some generated code, leaving
 the programmer to figure out how to solve the problem.
 
-% Of course one could achieve a similar framework in, for example,
-% Haskell, but having a reflection system in a programming language with
-% as powerful a type system as Agda has, is something very new. In this
-% section we will explore how one can leverage the power of dependent
-% types when metaprogramming.
+In this section we will explore how one can leverage the power of
+dependent types when metaprogramming.
 
-% \subsection{Example Using $\lambda$-Calculus}
+\section{Example: Type-checking $\lambda$-calculus}
 
-% For the running example in this section, we will look at a
-% simply-typed lambda calculus (STLC) defined by the following
-% AST. Notice that type-incorrect terms cannot be instantiated, since
-% the dependent type signatures of the constructors allow us to express
-% constraints such as that a de Bruijn-indexed variable must be at most
-% $n$, with $n$ the depth of the current sub-expression, with depth
-% defined as the number of $\lambda$'s before one is at top-level
-% scope. Another constraint expressed is that an application can only be
-% introduced if both sub-expressions have reasonable types. Reasonable
-% in this context means that the function being applied must take an
-% argument of the type of the to-be-applied sub-expression.
+For the running example in this section, we will look at a
+simply-typed lambda calculus (STLC) defined by the 
+AST in Fig. \ref{fig:stlc}. The |WT| data type represents well-typed and closed (thus well-scoped)
+simply-typed lambda calculus terms. Notice that type-incorrect terms cannot be instantiated, since
+the dependent type signatures of the constructors allow us to express
+constraints such as that a de Bruijn-indexed variable must be at most
+$n$, with $n$ the depth of the current sub-expression, with depth
+defined as the number of $\lambda$'s before one is at top-level
+scope. %TODO reference a paper about debruijn indices.
+Another constraint expressed is that an application can only be
+introduced if both sub-expressions have reasonable types. Reasonable
+in this context means that the function being applied must take an
+argument of the type of the to-be-applied sub-expression.
 
-% The type-checker (type unifier, actually) is a nice place to introduce
-% general recursion and Bove-Capretta.
+The Agda compiler had to be modified for this work to be feasible, since by default
+the lambda abstractions in the |Term| data type don't have any typing information,
+which makes type inference necessary to determine the types of sub-expressions. This
+is necessary, even if the top-level type of an expression is known (for example if the user
+is required to provide it). It is not impossible to implement a type inferencer in Agda (for example using Algorithm
+W), %TODO reference algo W + possible implementations in Agda
+but it is outside of the scope of this project. Additionally, this would require the
+implementation of a type unification algorithm, and a total, structurally recursive (so as
+to pass Agda's termination checker) unification algorithm is rather complex to implement \cite{mcbride2003first}.
+
+Therefore the Agda compiler was modified to extend the internal data structure representing
+|Term|s with a field on lambda abstractions, representing the type of their arguments. The precise
+modifications to the compiler are detailed in Appendix \ref{sec:annotating-lambdas}.
+
+
+
+
+
+
+\section{Example: CPS transformation}
 
 % A transformation will be made into SKI combinators.
 
+hullo
 
+\section{Example: Translation to SKI combinators}
 
-% \section{Related Work}
+hullo
+
+\chapter{Generic programming}
+
+will we ever get here?
+
+\chapter{Related Work}
 
 % Mention AChlipala and wjzz here.
 
+This project's main innovations are the novel combinations of existing
+techniques; therefore quite a number of subjects are relevant to mention
+here.
 
-\section{Implicit record-type arguments}\label{sec:implicit-unit}
+
+\chapter{Implicit record-type arguments}\label{sec:implicit-unit}
 
 As has been noted before, if a particular argument is a record type,
 and it has only one possible inhabitant, the Agda type inferencer can
@@ -1021,13 +1078,35 @@ an argument is ambiguous, or worse, if it is a type with no inhabitants, the com
 with a type error, but merely with an unsolved meta warning (highlighting the piece of code yellow
 in the Emacs Agda mode).
 
-\section{Discussion}
+\chapter{Discussion}
 \label{sec:discussion}
 
 This paper has presented two simple applications of proof by
 reflection. In the final version, we will show how
 Agda's reflection API has several other applications.
 
+\appendix
+
+\chapter{Annotating |λ| expressions with type}\label{sec:annotating-lambdas}
+
+As mentioned in Sec. \ref{sec:...} it was necessary to slightly modify the
+representation of |Term|s that the reflection system returns to the user. What was
+needed was to annotate lambda abstractions with the type of their argument, since without
+this, type inferencing would be necessary. However possible, this would introduce unneeded complexity
+and open the can of worms that is type unification. As it turns out, the termination of
+type unification algorithms is something rather nontrivial to prove, as pointed out by McBride \cite{mcbride2003first}.
+To avoid this, the |Term| data structure internal to the Agda compiler was augmented with an
+optional field of type |Type|, which allowed two advantages. Firstly, it became possible to
+distinguish between, for example, |ℕ| and |Bool| variables in the same expression. Secondly, it
+allowed us to suffice with only providing a type checker, as opposed to a full type inferencing
+function along with the unification, which poses a problem to the termination checker.
+
+Here the changes required to the Agda compiler's source code are presented in Fig. \ref{fig:agda-lambda-diff}, in unified diff format \cite{unified-diff}.
+
+\begin{figure}[h]
+insert diff here %TODO
+\caption{The changes required to the Agda compiler to enable annotation of lambda abstractions with the type of their argument.}\label{fig:agda-lambda-diff}
+\end{figure}
 
 \bibliography{refs}{}
 \bibliographystyle{splncs}
