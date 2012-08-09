@@ -24,15 +24,16 @@ module ReflectionProofs where
 \begin{code}
 -- imports for Evenness
 open import Relation.Binary.PropositionalEquality
+open import Data.Maybe using (Maybe ; just ; nothing)
 open import Data.Bool renaming (not to ¬_)
-open import Data.Nat
+open import Data.Nat renaming (_≟_ to _≟-Nat_)
 \end{code}
 }
 
 \ignore{
 \begin{code}
 -- imports for Boolean tauto solver
-open import Data.String
+open import Data.String hiding (fromList)
 open import Relation.Nullary hiding (¬_)
 open import Data.Product hiding (map)
 open import Relation.Binary hiding (_⇒_)
@@ -69,6 +70,7 @@ open import Data.List hiding (_∷ʳ_)
 \begin{document}
 
 \maketitle
+%todo: create own title page. hint: something about hens.
 
 \clearpage
 \pagestyle{empty}
@@ -92,6 +94,25 @@ open import Data.List hiding (_∷ʳ_)
 
 \chapter{Introduction}
 
+Since the inception of computer programming, the aim has often been to
+write as concise code as possible, while achieving the most powerful effect.
+One of the holy grails of writing programs is also being able to reuse pieces of
+code, after having written them once, as opposed to continually writing small
+variations on existing code. Reinventing the wheel is something a programmer
+should not enjoy doing.
+
+One of the many techniques invented to allow writing more effective
+code is that of \emph{metaprogramming}, which, in vague terms, refers
+to the ability of a program to inspect (or \emph{reflect}) its own code
+and modify it. This sounds rather magical, but has long been a favourite
+feature of users of such languages as LISP~\cite{lisp-macros}, in many cases allowing
+code to be a lot more concise and general, and thus reusable, than 
+usually is possible in simple imperative languages.%todo citation needed.
+
+
+
+
+
 The dependently typed programming language
 Agda~\cite{norell:thesis,norell2009dependently} has recently been
 extended with a \emph{reflection mechanism} for compile time meta
@@ -102,11 +123,28 @@ possible to convert a program fragment into its corresponding abstract
 syntax tree and vice versa. In tandem with Agda's dependent types,
 this provides promising new programming potential. 
 
+
+The main question which we aim to answer during this project is:
+
+
+\begin{quote}
+``Given the new reflection API in Agda, what interesting applications can we give
+examples of? Which tedious and mundane tasks can we automate? What advantages
+does Agda's implementation of reflection have over other languages
+ which already have reflection, and, finally, is
+it adequate as it stands to facilitate our needs or does it need extension? If
+extension is necessary, how much?''
+\end{quote}
+
+
+
 This paper starts exploring the possibilities and limitations of this
 new reflection mechanism. It describes several case studies,
 exemplative of the kind of problems that can be solved using
 reflection. More specifically it makes the following contributions:
 
+%TODO: do I want to use the more extensive itemize points from
+%introduction.tex? These here are the condensed version for the IFL paper
 \begin{itemize}
 \item This paper documents the current status of the reflection
   mechanism. The existing documentation is limited to a paragraph in
@@ -118,17 +156,23 @@ reflection. More specifically it makes the following contributions:
   (Chapter~\ref{sec:proof-by-reflection}). The idea of \emph{proof by
     reflection} is certainly not new, but still worth examining in the
   context of this new technology.
-\item In the final version of this paper, we will also show how to
+  
+\item We show how to
   guarantee \emph{type safety of meta-programs}. To illustrate this
   point, we will develop a type safe translation from the simply typed
-  lambda calculus to combinatory logic.
-\item Finally, the final version will also discuss some of the
-  limitations of the current implementation of reflection.
+  lambda calculus to combinatory logic, followed
+by a type-safe translation of closed lambda terms into SKI combinator calculus (Chapter \ref{sec:type-safe-metaprogramming}).
+ 
+\item A number of neat examples are given on how to automate certain
+  aspects of modifying a program to use generic programming techniques in Chapter~\ref{sec:generic-programming}. 
+
+\item Finally, we also discuss some of the
+  limitations of the current implementation of reflection (Sec. \ref{sec:reflection-api-limitations}).
 \end{itemize}
 
 The code and examples presented in this paper all compile using the
 latest version of Agda 2.3.0.1 and are available on
-github.\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}}
+github.\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}} %TODO this isn't true.
 
 \chapter{Reflection in Agda}
 \label{sec:reflection}
@@ -150,7 +194,7 @@ types, and sorts. These definitions take into account various
 features, including hidden arguments and computationally irrelevant
 terms. An overview of the core data types involved has been
 included in Figure~\ref{fig:reflection}. In addition to these data
-types that represent \emph{terms}, there is some support for
+types that represent \emph{terms}, there is limited support for
 reflecting \emph{definitions} as opposed to terms. Inspection of definitions
 is detailed in Sec. \ref{sec:inspecting-definitions}.
 
@@ -333,6 +377,28 @@ At the time of writing the only constructor we can do anything with is |data-typ
 it we can get a list of constructors, by calling the suitably-named |constructors| function. See the
 illustration in Sec. \ref{sec:inspecting-definitions}.
 
+Finally we have decidable equality on the following types:
+
+\begin{itemize}
+  \item |Visibility|,
+\item |Relevance|,
+\item |List Arg|s, |Arg Type|s, |Arg Term|s, 
+\item  |Name|s, 
+\item  |Term|s,
+  \item |Sort|s
+\item  and |Type|s. 
+  \end{itemize}
+
+Typically, this is useful for deciding which constructor is present in some expression, such as:
+
+\begin{spec}
+convert : Term → Something
+convert (def c args) with c ≟-Name quote foo
+...                   | yes p = do_something -- foo applied to arguments
+...                   | no ¬p = do_other_thing -- another function than foo
+\end{spec}
+
+
 \subsection{Inspecting definitions}\label{sec:inspecting-definitions}
 
 Using the functions exported by the module |Reflection|, we are able
@@ -373,18 +439,179 @@ This capability is exploited in Sec. \ref{sec:generic-programming}.
 
 
 
-\section{Autoquote}\label{sec:autoquote}
+\section{Introducing |Autoquote|}\label{sec:autoquote} % TODO move this to after boolexpr? or ??
+
+Imagine we have some AST, for example |Expr|, which is presented below.
+This is a rather simple data structure representing terms which can contain Peano style natural
+numbers, variables (indexed by an Agda natural) and additions.
+
+\begin{code}
+data Expr : Set where
+  Variable      : ℕ               → Expr
+  Plus          : Expr → Expr     → Expr
+  Succ          : Expr            → Expr
+  Zero          :                   Expr
+\end{code}
+
+We might concievably want to convert a piece of concrete syntax, such as $5 + x$, to this
+AST, using Agda's reflection system. This typically involves ugly and verbose functions such
+as the one from Sec. \ref{sec:boolean-tautologies} with many with-clauses and frankly, too
+much tedium to be anything to be proud of. What we would actually like to be able to do,
+is provide a mapping from concrete constructs such as the |_+_| function to elements of our
+AST, and get a conversion function for free.
 
 
-In the course of this project, a module named Autoquote was developed. The
-motivating idea behind Autoquote is that one often ends up writing similar-looking
-functions for translating |Term|s into some AST. What Autoquote does is abstract
-over this process, and provide an interface which, when provided with a mapping
-from concrete names to constructors in this AST, automatically quotes expressions
-that fit (i.e. which only have variables, and names which are listed in this mapping).
+
+During the course of this project, a module named |Autoquote| was developed. The
+motivating idea behind |Autoquote| is that one often ends up writing similar-looking
+functions for checking if a |Term| is of a specific shape, then if so,
+translating |Term|s into some AST. What |Autoquote| does is abstract
+over this process, and provide an interface which, when provided with
+a mapping from concrete names to constructors in this AST,
+automatically quotes expressions that fit (i.e. which only have
+variables, and names which are listed in this mapping).
+
+This is the type we use for specifying what the AST we are expecting should look like. |N-ary| provides
+a way of storing a function with a variable number of arguments in our map, and |_$ⁿ_| is how we
+apply the ``stored'' function to a |Vec n| of arguments, where $n$ is the arity of the function. Note that
+this is a copy of the standard library |Data.Vec.N-ary|, but has been instantiated here specifically
+to contain functions with types in |Set|. This was necessary, since the standard library version of
+|N-ary| can hold functions of arbitrary level (i.e. |Set n|), and therefore the level of the 
+|N-ary| argument inside |ConstructorMapping| could not be inferred, giving an unsolved constraint
+which prevented the module from being imported. % TODO be more clear about this error.
+
+Using this |N-ary| we can now define an entry in our mapping |Table| as having an arity, and mapping
+a |Name| (which is Agda's internal representation of an identifier, see Sec. \ref{sec:refl-doc}) to a
+constructor in the AST we would like to cast the |Term| to.
+
+\begin{code}
+N-ary : (n : ℕ) → Set → Set → Set
+N-ary zero    A B = B
+N-ary (suc n) A B = A → N-ary n A B
+
+_$ⁿ_ : ∀ {n} {A : Set} {B : Set} → N-ary n A B → (Vec A n → B)
+f $ⁿ []       = f
+f $ⁿ (x ∷ xs) = f x $ⁿ xs
+
+data ConstructorMapping (astType : Set) : Set₁ where
+  _\#_↦_ : (arity : ℕ) → Name → N-ary arity astType astType → ConstructorMapping astType
+
+Table : Set → Set₁
+Table a = ((ℕ → a) × List (ConstructorMapping a))
+
+lookupName : {a : Set} → List (ConstructorMapping a) → Name → Maybe (ConstructorMapping a)
+lookupName [] name = nothing
+lookupName (arity \# x ↦ x₁ ∷ tab) name with name ≟-Name x
+lookupName (arity \# x ↦ x₁ ∷ tab) name | yes p = just (arity \# x ↦ x₁)
+lookupName (arity \# x ↦ x₁ ∷ tab) name | no ¬p = lookupName tab name
+\end{code}
+
+With the above ingredients we can now define the function |convert| below, which, given a mapping of
+type |Table a|, where $a$ is the type we would like to cast to, for example |Expr|, and a
+|Term| obtained from one of Agda's reflection keywords, produces a value which might be a
+properly converted term of type $a$. We also provide the helper function |lookupName|, which, given
+a mapping and a |Name|, finds the corresponding entry in the mapping table. If nothing usable is found,
+|nothing| is returned. 
+
+An example of such a mapping would be the one required for our |Expr| example.
+
+\begin{code}
+exprTable : Table Expr
+exprTable = (Variable ,
+             2   \# (quote _+_ )     ↦ Plus ∷
+             0   \# (quote ℕ.zero)   ↦ Zero ∷
+             1   \# (quote ℕ.suc )   ↦ Succ ∷
+             [])
+\end{code}
+
+Here, we are saying that any variables encountered should be stored as |Variable| elements,
+the |_+_| operator should be a |Plus| constructor (we are required to specify that it takes 2 arguments),
+that a |zero|, from the |Data.Nat| standard library, should be treated as our |Zero| constructor, and
+finally that |suc| translates to |Succ| and expects 1 argument.
+
+The function that does this conversion for us looks like this.
+
+\ignore{
+\begin{code}
+
+data EqN : ℕ → ℕ → Set where
+  yes : {m : ℕ} → EqN m m
+  no  : {m n : ℕ} → EqN m n
 
 
-An example of Autoquote in use can be found in Sec. \ref{sec:autoquote-example}.
+≟-Nat-cong : (m : ℕ) → (n : ℕ) → EqN m n → EqN (suc m) (suc n)
+≟-Nat-cong .n n yes = yes
+≟-Nat-cong  m n no  = no
+
+
+_≟-ℕ_ : (m : ℕ) → (n : ℕ) → EqN m n
+zero ≟-ℕ zero = yes
+zero ≟-ℕ suc n = no
+suc m ≟-ℕ zero = no
+suc m ≟-ℕ suc n = ≟-Nat-cong m n (m ≟-ℕ n)
+
+\end{code}
+}
+\begin{code}
+mutual
+  convert : {a : Set} → Table a → Term → Maybe a
+  convert (vc , tab) (var x args) = just (vc x)
+  convert (vc , tab) (con c args) = handleNameArgs (vc , tab) c args
+  convert (vc , tab) (def f args) = handleNameArgs (vc , tab) f args
+  convert (vc , tab)     _        = nothing
+\end{code}
+
+
+If it encounters a variable, it just uses the constructor which stands for variables. Note that
+the parameter is the de Bruijn-index of the variable, which might or might not be in-scope.
+This is something to check for afterwards, if a |just| value is returned.
+
+\textbf{\textsc{Note}}: This is also why one might need
+an intermediary data structure to convert to, after which checks for invariants can be done. Typically,
+it will not be possible to directly |convert| to some property-preserving data structure such
+as |BoolExpr n| in one step; this will typically require post-processing.
+
+In the case of a constructor or a definition applied to arguments, the function |handleNameArgs| is called,
+which looks up a |Name| in the mapping and tries to recursively |convert| its arguments.
+
+\begin{code}
+  handleNameArgs : {a : Set} → Table a → Name → List (Arg Term) → Maybe a
+  handleNameArgs (vc , tab) name args with lookupName tab name
+  handleNameArgs (vc , tab) name args | just (arity       \# x  ↦ x₁)   with convertArgs (vc , tab) args
+  handleNameArgs (vc , tab) name args | just (arity       \# x₁ ↦ x₂)   | just x with length x ≟-ℕ arity
+  handleNameArgs (vc , tab) name args | just (.(length x) \# x₁ ↦ x₂)   | just x | yes = just (x₂ $ⁿ fromList x)
+  handleNameArgs (vc , tab) name args | just (arity       \# x₁ ↦ x₂)   | just x | no  = nothing
+  handleNameArgs (vc , tab) name args | just (arity       \# x  ↦ x₁)   | nothing = nothing
+  handleNameArgs (vc , tab) name args | nothing = nothing
+
+  convertArgs : {a : Set} → Table a → List (Arg Term) → Maybe (List a)
+  convertArgs tab [] = just []
+  convertArgs tab (arg v r x ∷ ls) with convert tab x
+  convertArgs tab (arg v r x ∷ ls) | just x₁ with convertArgs tab ls
+  convertArgs tab (arg v r x ∷ ls) | just x₂ | just x₁ = just (x₂ ∷ x₁)
+  convertArgs tab (arg v r x ∷ ls) | just x₁ | nothing = nothing
+  convertArgs tab (arg v r x ∷ ls) | nothing = nothing
+\end{code}
+
+|handleNameArgs| and |convertArgs| just check to see if the desired |Name| is present in the provided
+mapping, and if all the arguments, provided they are of the right number, also convert successfully. If
+all this is true, the converted |Term| is returned as a |just e|, where $e$ is the new, converted member
+of the AST. For example, see the unit tests in Fig. \ref{fig:test-autoquote}.
+
+
+\begin{figure}[h]
+\begin{code}
+something : {x y : ℕ}    → convert exprTable (quoteTerm ((1 + x + 2) + y))
+                         ≡ just (Succ (Plus (Plus (Variable 1) (Succ (Succ Zero))) (Variable 0)))
+something = refl
+\end{code}
+\caption{Examples of |Autoquote| in use.}\label{fig:test-autoquote}
+\end{figure}
+
+The |BoolExpr| AST used in \ref{sec:boolean-tautologies} provides a
+good motivating example for using |Autoquote|, therefore a slightly
+more real-world example of |Autoquote| in use can be found in
+Sec. \ref{sec:autoquote-example}.
 
 
 \chapter{Proof by Reflection}
@@ -501,7 +728,7 @@ available on github does use this trick. A detailed explanation of this
 technique, which is used extensively in the final code, is given in
 Sec. \ref{sec:implicit-unit}.
 
-\section{Second Example: Boolean Tautologies}
+\section{Second Example: Boolean Tautologies}\label{sec:boolean-tautologies}
 
 Another application of the proof by reflection technique
 is boolean expressions which are a tautology. We will follow the same
@@ -1017,12 +1244,12 @@ twice in a slightly different format. The conversion now happens automatically, 
 of expressive power or general applicability of the proofs resulting from |soundness|.
 Furthermore, by using the proof by reflection technique, the proof is generated automatically.
 
-\section{Real-world example of Autoquote}\label{sec:autoquote-example}
+\subsection{An aside: real-world example of |Autoquote|}\label{sec:autoquote-example}
 
 The process of quoting to a |BoolExpr| outlined above can actually be
-made less ugly.  Recall the Autoquote module developed in
+made less ugly.  Recall the |Autoquote| module developed in
 Sec. \ref{sec:autoquote}; this will be used here, both as an
-illustration of the use of Autoquote, and to avoid code duplication,
+illustration of the use of |Autoquote|, and to avoid code duplication,
 thus making the code for |term2boolexpr| more concise.
 
 
@@ -1043,7 +1270,7 @@ programmer had directly entered into a source file.
 
 This technique is well-supported and widely used in LISP and more
 recently in Haskell, using the Template Haskell compiler
-extension\cite{sheard2002template}. It has enabled many time-saving
+extension\cite{template-haskell}. It has enabled many time-saving
 automations of tasks otherwise requiring
 \emph{boilerplate}\footnote{According to the Oxford English
   Dictionary, boilerplate is defined as \emph{``standardized pieces of
@@ -1106,7 +1333,7 @@ modifications to the compiler are detailed in Appendix \ref{sec:annotating-lambd
 
 
 
-We don't use Autoquote here, because...
+We don't use |Autoquote| here, because...
 
 
 \section{Example: CPS transformation}
@@ -1173,7 +1400,7 @@ with a type error, but merely with an unsolved meta warning (highlighting the pi
 in the Emacs Agda mode).
 
 
-\section{Reflection API limitations}
+\section{Reflection API limitations}\label{sec:reflection-api-limitations}
 
 
 \begin{itemize}
@@ -1209,7 +1436,32 @@ Answer the research question here.
 
 % \appendixpage
 
-\chapter{Annotating |λ| expressions with type}\label{sec:annotating-lambdas}
+\chapter{Modifications to the Agda compiler}
+
+During the course of this project, a few modifications were made to the Agda
+code base, to facilitate various processes. Since these modifications have
+not yet been included in the main code repository, anyone interested in trying out the
+changes is invited to make a clone of the forked repository where the development was
+done.
+
+The compiler can be found at \url{https://darcs.denknerd.org/Agda}, and the modified standard library
+(modified to work with the updated data types in the compiler) can be found at \url{https://darcs.denknerd.org/agda-stdlib}.
+The instructions for installation of Agda from source, on the Agda wiki\cite{agda-wiki-installation}, can be followed
+unmodified.
+
+The modifications made are the following.
+
+\begin{itemize}
+
+\item The output of the reflection system (in other words the |Term| data type)
+was modified to include type annotations on lambda abstractions. See Sec. \ref{sec:annotating-lambdas}.
+\item For convenience of producing syntax-highlighted documents from Literate Agda,
+the compiler was extended to output a list of formatting rules based on the currently in-scope identifiers. See Sec. \ref{sec:lhs-syntax}.
+\end{itemize}
+
+
+
+\section{Annotating |λ| expressions with type}\label{sec:annotating-lambdas}
 
 As mentioned in Sec. \ref{sec:...} it was necessary to slightly modify the
 representation of |Term|s that the reflection system returns to the user. What was
@@ -1235,7 +1487,7 @@ insert diff here %TODO
 
 
 
-\chapter{Automatic syntax highlighting for Literate Agda}
+\section{Automatic syntax highlighting for Literate Agda}\label{sec:lhs-syntax}
 
 Talk about extension to compiler here, give example of use (as detailed as possible, i.e. with Makefile, the --lagda flag, etc.
 
@@ -1267,7 +1519,8 @@ Talk about extension to compiler here, give example of use (as detailed as possi
 
 
 \bibliography{refs}{}
-\bibliographystyle{splncs}
+\bibliographystyle{plain}
+% \bibliographystyle{splncs}%this one doesn't sort automatically. :(
 
 
 % Gebruik geen contractions isn't, didn't etc.
