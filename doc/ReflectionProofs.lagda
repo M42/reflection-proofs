@@ -339,7 +339,6 @@ _≟-Name_ : Decidable {A = Name} _≡_
 type : Name → Type
 definition : Name → Definition
 constructors : Data-type → List Name
-
 \end{spec}
 \caption{The functions exported by the |Reflection| module of the Agda standard library, as of version 0.6.}\label{fig:reflection-functions}
 \end{figure}
@@ -472,7 +471,7 @@ automatically quotes expressions that fit (i.e. which only have
 variables, and names which are listed in this mapping).
 
 This is the type we use for specifying what the AST we are expecting should look like. |N-ary| provides
-a way of storing a function with a variable number of arguments in our map, and |_$ⁿ_| is how we
+a way of storing a function with a variable number of arguments in our map, and |_dollarn_| is how we
 apply the ``stored'' function to a |Vec n| of arguments, where $n$ is the arity of the function. Note that
 this is a copy of the standard library |Data.Vec.N-ary|, but has been instantiated here specifically
 to contain functions with types in |Set|. This was necessary, since the standard library version of
@@ -489,12 +488,15 @@ N-ary : (n : ℕ) → Set → Set → Set
 N-ary zero    A B = B
 N-ary (suc n) A B = A → N-ary n A B
 
-_$ⁿ_ : ∀ {n} {A : Set} {B : Set} → N-ary n A B → (Vec A n → B)
-f $ⁿ []       = f
-f $ⁿ (x ∷ xs) = f x $ⁿ xs
+_dollarn_ : ∀ {n} {A : Set} {B : Set} → N-ary n A B → (Vec A n → B)
+f dollarn []       = f
+f dollarn (x ∷ xs) = f x dollarn xs
 
 data ConstructorMapping (astType : Set) : Set₁ where
-  _\#_↦_ : (arity : ℕ) → Name → N-ary arity astType astType → ConstructorMapping astType
+  _\#_↦_       : (arity : ℕ)
+               → Name
+               → N-ary arity astType astType
+               → ConstructorMapping astType
 
 Table : Set → Set₁
 Table a = ((ℕ → a) × List (ConstructorMapping a))
@@ -579,7 +581,7 @@ which looks up a |Name| in the mapping and tries to recursively |convert| its ar
   handleNameArgs (vc , tab) name args with lookupName tab name
   handleNameArgs (vc , tab) name args | just (arity       \# x  ↦ x₁)   with convertArgs (vc , tab) args
   handleNameArgs (vc , tab) name args | just (arity       \# x₁ ↦ x₂)   | just x with length x ≟-ℕ arity
-  handleNameArgs (vc , tab) name args | just (.(length x) \# x₁ ↦ x₂)   | just x | yes = just (x₂ $ⁿ fromList x)
+  handleNameArgs (vc , tab) name args | just (.(length x) \# x₁ ↦ x₂)   | just x | yes = just (x₂ dollarn fromList x)
   handleNameArgs (vc , tab) name args | just (arity       \# x₁ ↦ x₂)   | just x | no  = nothing
   handleNameArgs (vc , tab) name args | just (arity       \# x  ↦ x₁)   | nothing = nothing
   handleNameArgs (vc , tab) name args | nothing = nothing
@@ -1174,27 +1176,22 @@ term2boolexpr n (def f []) ()
 term2boolexpr n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
 term2boolexpr n (def f (arg v r x ∷ [])) pf | yes p = Not (term2boolexpr n x pf)
 ...
+term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) pf | no ¬p with f ≟-Name quote _∧_
+...
 \end{spec}
 \caption{An illustration of converting a |Term| into a |BoolExpr|.}
 \end{figure}
 
 
 All these pieces are assembled in the |proveTautology| function.
-\ignore{
 
+\ignore{
 \begin{code}
 freeVars : Term → ℕ
 freeVars (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = 1 + (freeVars t)
 -- identity otherwise
-freeVars (pi a b)     = 0
-freeVars (var x args) = 0
-freeVars (con c args) = 0
-freeVars (def f args) = 0
-freeVars (lam v σ t)  = 0
-freeVars (sort x)     = 0
-freeVars unknown      = 0
+freeVars    _         = 0
 \end{code}
-
 }
 \begin{code}
 proveTautology :    (t     : Term) →
