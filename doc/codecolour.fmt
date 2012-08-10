@@ -4,6 +4,7 @@
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
 
 
+%format \# = "\ensuremath{\#}"
 
 %%% the colouring configuration.
 
@@ -22,6 +23,8 @@
 \newcommand{\fld}[1]{{\color{Maroon}\mathsf{#1}}}
 % keywords:
 \newcommand{\keyword}[1]{{\color{Sepia}\mathsf{#1}}}
+
+\newcommand{\textsigma}{\ensuremath{\sigma}}
 
 
 \newcommand{\textlambda}{\ensuremath{\lambda}}
