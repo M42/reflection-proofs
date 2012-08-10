@@ -5,6 +5,7 @@
 
 
 %format \# = "\ensuremath{\#}"
+%format _\#_↦_ = "\ensuremath{\_\#\_\mapsto\_}"
 
 %%% the colouring configuration.
 
@@ -36,3 +37,5 @@
 %format quoteGoal = "\keyword{quoteGoal}"
 %format quoteTerm = "\keyword{quoteTerm}"
 
+%format dollarn = "\defin{\ensuremath{\$^{n}}}"
+%format _dollarn_ = "\defin{\ensuremath{\_\$^{n}\_}}"
