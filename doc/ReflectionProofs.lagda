@@ -501,7 +501,9 @@ data ConstructorMapping (astType : Set) : Set₁ where
 Table : Set → Set₁
 Table a = ((ℕ → a) × List (ConstructorMapping a))
 
-lookupName : {a : Set} → List (ConstructorMapping a) → Name → Maybe (ConstructorMapping a)
+lookupName : {a : Set}      → List     (ConstructorMapping a)
+                            → Name
+                            → Maybe    (ConstructorMapping a)
 lookupName [] name = nothing
 lookupName (arity \# x ↦ x₁ ∷ tab) name with name ≟-Name x
 lookupName (arity \# x ↦ x₁ ∷ tab) name | yes p = just (arity \# x ↦ x₁)
