@@ -1215,9 +1215,9 @@ proveTautology :    (t     : Term) →
                     let n = freeVars t in
                         {pf2   : isBoolExprQ n (stripPi t) pf} →
                         let b = concrete2abstract t n {pf} {pf2} in
-                            foralls b →
+                            {i : foralls b} →
                             proofObligation 0 n (zeroleast 0 n) b []
-proveTautology t i = 
+proveTautology t {_}{_}{i} = 
   soundness (concrete2abstract t (freeVars t)) i
 \end{code}
 The |proveTautology| function converts a raw |Term| to a |BoolExpr n|
@@ -1234,17 +1234,17 @@ hand.
 These are all the ingredients required to automatically prove that
 formulae are tautologies.  The following code illustrates the use of
 the |proveTautology| functions; we can omit the implicit arguments for
-the reasons outlined in the previous section.
+the reasons outlined in Sec. \ref{sec:implicit-unit}.
 
 \begin{code}
 exclMid    : (b : Bool) → P(b ∨ ¬ b)
-exclMid    = quoteGoal e in proveTautology e _
+exclMid    = quoteGoal e in proveTautology e
 
 peirce     : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
-peirce     = quoteGoal e in proveTautology e _
+peirce     = quoteGoal e in proveTautology e
 
 mft        : exampletheorem
-mft        = quoteGoal e in proveTautology e _
+mft        = quoteGoal e in proveTautology e
 \end{code}
 
 
@@ -1306,6 +1306,75 @@ boolTable = (Atomic ,
 term2boolexpr' : (t : Term) → {pf : convertManages boolTable t} → BoolInter
 term2boolexpr' t {pf} = doConvert boolTable t {pf}
 \end{code}
+
+Once we have a |BoolInter| expression, we just need to check that its
+variables are all in-scope (this means that $\forall Atomic x : x < n$, if we
+want to convert to a |BoolExpr n|. This is done in |bool2fin|, assuming that |bool2finCheck|
+holds (the latter simple expresses the aforementioned property).
+
+\ignore{
+\begin{code}
+bool2finCheck : (n : ℕ) → (t : BoolInter) → Set
+bool2finCheck n Truth        = ⊤
+bool2finCheck n Falsehood    = ⊤
+bool2finCheck n (And t t₁)   = bool2finCheck n t × bool2finCheck n t₁
+bool2finCheck n (Or t t₁)    = bool2finCheck n t × bool2finCheck n t₁
+bool2finCheck n (Not t)      = bool2finCheck n t
+bool2finCheck n (Imp t t₁)   = bool2finCheck n t × bool2finCheck n t₁
+bool2finCheck n (Atomic x)   with suc x ≤? n
+bool2finCheck n (Atomic x)   | yes p = ⊤
+bool2finCheck n (Atomic x)   | no ¬p = ⊥
+
+bool2fin : (n : ℕ) → (t : BoolInter) → (bool2finCheck n t) → BoolExpr n
+bool2fin n Truth       pf = Truth
+bool2fin n Falsehood   pf = Falsehood
+bool2fin n (And t t₁) (p₁ , p₂) = And (bool2fin n t p₁) (bool2fin n t₁ p₂)
+bool2fin n (Or t t₁)  (p₁ , p₂) = Or (bool2fin n t p₁) (bool2fin n t₁ p₂)
+bool2fin n (Not t)     p₁ = Not (bool2fin n t p₁)
+bool2fin n (Imp t t₁) (p₁ , p₂) =  Imp (bool2fin n t p₁) (bool2fin n t₁ p₂)
+bool2fin n (Atomic x)  p₁ with suc x ≤? n
+bool2fin n (Atomic x)  p₁ | yes p = Atomic (fromℕ≤ {x} p)
+bool2fin n (Atomic x)  () | no ¬p
+\end{code}
+}
+\begin{spec}
+bool2finCheck : (n : ℕ) → (t : BoolInter) → Set
+bool2finCheck n Truth        = ⊤
+bool2finCheck n (And t t₁)   = bool2finCheck n t × bool2finCheck n t₁
+...
+bool2finCheck n (Atomic x)   with suc x ≤? n
+bool2finCheck n (Atomic x)   | yes p = ⊤
+bool2finCheck n (Atomic x)   | no ¬p = ⊥
+
+bool2fin : (n : ℕ) → (t : BoolInter) → (bool2finCheck n t) → BoolExpr n
+bool2fin n Truth       pf = Truth
+bool2fin n (And t t₁) (p₁ , p₂) = And (bool2fin n t p₁) (bool2fin n t₁ p₂)
+...
+bool2fin n (Atomic x)  p₁ with suc x ≤? n
+bool2fin n (Atomic x)  p₁ | yes p = Atomic (fromℕ≤ {x} p)
+bool2fin n (Atomic x)  () | no ¬p
+\end{spec}
+
+With these ingredients, our |concrete2abstract| function presented in Sec. \ref{sec:boolexpr}
+can be rewritten to the following  drop-in replacement, illustrating how useful such an
+abstraction can be. 
+
+\begin{spec}
+concrete2abstract :
+         (t : Term)
+       → {pf : isSoExprQ (stripPi t)}
+       → let t' = stripSo (stripPi t) pf in
+            {pf2 : convertManages boolTable t'}
+          → (bool2finCheck (freeVars t) (term2boolexpr' t' {pf2}))
+          → BoolExpr (freeVars t)
+concrete2abstract t {pf} {pf2} fin = bool2fin     (freeVars t)
+                                                  (term2boolexpr'
+                                                    (stripSo (stripPi t) pf)
+                                                    {pf2})
+                                                  fin
+\end{spec}
+
+
 
 
 \chapter{Type-safe metaprogramming}\label{sec:type-safe-metaprogramming}
