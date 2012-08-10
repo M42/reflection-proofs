@@ -185,7 +185,7 @@ feature, called quoting, which allowed run-time modification of a program's code
 the program itself. This gives rise to powerful techniques for reusing code and
 generating frequently needed but slightly different expressions automatically.
 
-%TODO give more of an intro to the idea of reflection here.
+%TODO give more of an intro to the idea of reflection here. idea: wikipedia has short article on reflection.
 
 \section{The basics}
 
@@ -211,17 +211,17 @@ The easiest example of quotation uses the |quoteTerm| keyword to turn
 a fragment of concrete syntax into a |Term| data type. Note that the
 |quoteTerm| keyword reduces like any other function in Agda. As an
 example, the following unit test type checks:
-\begin{spec}
-example₀ : quoteTerm (\ x -> x) ≡ lam visible (var 0 [])
+\begin{code}
+example₀ : quoteTerm (\ (x : Bool) -> x) ≡ lam visible (el _ (def (quote Bool) [])) (var 0 [])
 example₀ = refl
-\end{spec}
+\end{code}
 
 Dissecting
 this, we introduced a lambda abstraction, so we expect the |lam|
 constructor. It's one argument is visible, and
 the body of the lambda abstraction is just a reference to the
 nearest-bound variable, thus |var 0|, applied to no arguments, hence
-the empty list.
+the empty list. %todo: talk about type. 
 
 Furthermore, |quoteTerm| type checks and normalizes its term before
 returning the required |Term|, as the following example demonstrates:
@@ -277,8 +277,8 @@ normalizes the |Term| before it is spliced into the program text.
           con     : (c : Name) (args : List (Arg Term)) → Term
         -- Identifier applied to a list of arguments
           def     : (f : Name) (args : List (Arg Term)) → Term
-        -- Lambda abstraction
-          lam     : (v : Visibility) (t : Term) → Term
+        -- Lambda abstraction (including type annotation)
+          lam     : (v : Visibility) (σ : Type) (t : Term) → Term
         -- Dependent function types
           pi      : (t₁ : Arg Type) (t₂ : Type) → Term
         -- Sorts
@@ -623,20 +623,16 @@ define functions that compute proofs. Reflection is an overloaded word
 in this context, since in programming language technology reflection
 is the capability of converting some piece of concrete program syntax
 into a syntax tree object which can be manipulated in the same
-system. Here we will present two case studies illustrating proof by
+system. Reflection in the proof technical sense is the method of
+mechanically constructing a proof of a theorem by inspecting its
+shape. %todo cite some mathematical reference.
+Here we will present two case studies illustrating proof by
 reflection and how Agda's reflection mechanism can make the technique
 more usable and accessible.
 
 
 
-% These values (in terms of inductive
-% types representing the concrete syntax) can then be translated back
-% into concrete terms, a process which is called reflection.
 
-% One has to translate the problem into an abstract (equivalent)
-% representation, invoke the soundness of the decision function which
-% was defined (assuming it returns |true| for the AST instance), giving
-% the proof of the given proposition.
 
 
 
@@ -667,7 +663,13 @@ isEven6 = isEvenSS (isEvenSS (isEvenSS isEvenZ))
 
 To automate this, we will show how to \emph{compute} the proof
 required. We start by defining a predicate |even?| that
-returns the unit type when its input is even and bottom otherwise:
+returns the unit type when its input is even and bottom otherwise.
+In this context |⊤| and |⊥| can be seen as the analogues of |true|
+and |false|. The meaning of such a decision function is that there exists
+a proof that some number is even, if it is |0| or |2 + n|. That is our
+claim, at least. The idea
+of ``there exists'' is perfectly modeled by the unit and empty types,
+since the unit type has one inhabitant, the empty type none.
 
 \begin{code}
 even? : ℕ → Set
@@ -677,9 +679,11 @@ even? (suc (suc n))     = even? n
 \end{code}
 
 
-Next we need to show that the |even?| function is \emph{sound}. To do
-so, we prove that when |even? n| returns |⊤|, the type |Even n| is
-inhabited. This is done in the function |soundnessEven|. What is
+Next we need to show that the |even?| function is \emph{sound}, that
+our claim holds. To do so, we prove that when |even? n| returns |⊤|,
+the type |Even n| is
+inhabited, and since we are working in a constructive logic, the only
+way to show this is to give some witness. This is done in the function |soundnessEven|. What is
 actually happening here is that we are giving a recipe for
 constructing proof trees, such as the one we manually defined for
 |isEven6|.
@@ -842,13 +846,6 @@ stripPi (lam v σ t)  = lam  v σ  t
 stripPi (sort x)     = sort x
 stripPi unknown      = unknown
 
--- TODO get rid of this!
-unsafeMinus : (a : ℕ) → (b : ℕ) → ℕ
-unsafeMinus 0 m = 0
-unsafeMinus n₁ 0 = n₁
-unsafeMinus (suc n₁) (suc m) = unsafeMinus n₁ m
-
-
 isSoExprQ : (t : Term) → Set
 isSoExprQ (var x args) = ⊥
 isSoExprQ (con c args) = ⊥
@@ -890,7 +887,7 @@ stripSo unknown      ()
 
 
 isBoolExprQ' : (n : ℕ) → (t : Term) → Set
-isBoolExprQ' n (var x args) with (1 + unsafeMinus x 0) ≤? n
+isBoolExprQ' n (var x args) with (1 + x) ≤? n
 isBoolExprQ' n (var x args) | yes p = ⊤
 isBoolExprQ' n (var x args) | no ¬p = ⊥
 isBoolExprQ' n (con tf as) with Data.Nat._≟_ 0 (length as)
@@ -927,8 +924,8 @@ term2boolexpr : (n : ℕ)
         → (t : Term)
         → isBoolExprQ' n t
         → BoolExpr n
-term2boolexpr n (var x args) pf with (1 + unsafeMinus x 0) ≤? n
-term2boolexpr n (var x args) pf | yes p = Atomic (fromℕ≤ {unsafeMinus x 0} p)
+term2boolexpr n (var x args) pf with (1 + x) ≤? n
+term2boolexpr n (var x args) pf | yes p = Atomic (fromℕ≤ {x} p)
 term2boolexpr n (var x args) () | no ¬p
 term2boolexpr n (con tf []) pf with tf ≟-Name quote true
 term2boolexpr n (con tf []) pf | yes p = Truth
@@ -1366,6 +1363,14 @@ how record type arguments having only one alternative can be automatically infer
 
     \begin{figure}[h]
 \begin{code}
+{- TODO nicer story
+notice that u is automatically instantiated, since
+there is only one option, namely tt,tt. this is special and
+cool, the type system is doing work for us. Note that this is
+because eta-reduction only is done in the type system for records
+and not for general data types. possibly the reason is because this is
+safe in records because recursion isn't allowed. question for agda-café?
+-}
 foo : ⊤ × ⊤ → ℕ
 foo u = 5
 

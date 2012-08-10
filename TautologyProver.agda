@@ -253,31 +253,31 @@ soundnessAcc {m} bexp {n} env (Step y) H =
 soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBoolSo n b
 soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 
-open import Metaprogramming.AutoQuote
+open import Metaprogramming.Autoquote
 
 boolTable : Table BoolIntermediate
 boolTable = (Atomic ,
-              Entry 2 (quote _∧_  ) And
-            ∷ Entry 2 (quote _∨_  ) Or
-            ∷ Entry 1 (quote  ¬_  ) Not
-            ∷ Entry 0 (quote true ) Truth
-            ∷ Entry 0 (quote false) Falsehood
-            ∷ Entry 2 (quote _⇒_  ) Imp
+              2 # (quote _∧_  ) ↦ And
+            ∷ 2 # (quote _∨_  ) ↦ Or
+            ∷ 1 # (quote  ¬_  ) ↦ Not
+            ∷ 0 # (quote true ) ↦ Truth
+            ∷ 0 # (quote false) ↦ Falsehood
+            ∷ 2 # (quote _⇒_  ) ↦ Imp
             ∷ [])
             
 term2boolexpr' : (t : Term) → {pf : convertManages boolTable t} → BoolIntermediate
 term2boolexpr' t {pf} = doConvert boolTable t {pf}
 
 bool2finCheck : (n : ℕ) → (t : BoolIntermediate) → Set
-bool2finCheck n Truth = ⊤
-bool2finCheck n Falsehood = ⊤
-bool2finCheck n (And t t₁) = bool2finCheck n t × bool2finCheck n t₁
-bool2finCheck n (Or t t₁) = bool2finCheck n t × bool2finCheck n t₁
-bool2finCheck n (Not t) = bool2finCheck n t
-bool2finCheck n (Imp t t₁) = bool2finCheck n t × bool2finCheck n t₁
-bool2finCheck n (Atomic x) with suc x ≤? n
-bool2finCheck n (Atomic x) | yes p = ⊤
-bool2finCheck n (Atomic x) | no ¬p = ⊥
+bool2finCheck n Truth        = ⊤
+bool2finCheck n Falsehood    = ⊤
+bool2finCheck n (And t t₁)   = bool2finCheck n t × bool2finCheck n t₁
+bool2finCheck n (Or t t₁)    = bool2finCheck n t × bool2finCheck n t₁
+bool2finCheck n (Not t)      = bool2finCheck n t
+bool2finCheck n (Imp t t₁)   = bool2finCheck n t × bool2finCheck n t₁
+bool2finCheck n (Atomic x)   with suc x ≤? n
+bool2finCheck n (Atomic x)   | yes p = ⊤
+bool2finCheck n (Atomic x)   | no ¬p = ⊥
 
 bool2fin : (n : ℕ) → (t : BoolIntermediate) → (bool2finCheck n t) → BoolExpr n
 bool2fin n Truth       pf = Truth
@@ -325,7 +325,7 @@ peirce = quoteGoal e in proveTautology e
 mft : myfavouritetheorem
 mft = quoteGoal e in proveTautology e
 
-foo : quoteTerm (\(x : Bool) -> x) ≡ lam visible (var 0 [])
+foo : quoteTerm (\(x : Bool) -> x) ≡ lam visible (el _ (def (quote Bool) [])) (var 0 [])
 foo = refl
 
 -- -- acknowledge Ruud:
@@ -335,5 +335,3 @@ foo = refl
 -- -- another : (a b : Bool) → a ∧ b ⇒ b ∧ a ≡ true
 -- -- another a b with anotherTheorem a b
 -- -- ...  | asdf = {!asdf!}
-exampleQuoteGoal : ℕ
-exampleQuoteGoal = quoteGoal e in {!!}
