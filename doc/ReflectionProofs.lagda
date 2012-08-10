@@ -531,7 +531,8 @@ the |_+_| operator should be a |Plus| constructor (we are required to specify th
 that a |zero|, from the |Data.Nat| standard library, should be treated as our |Zero| constructor, and
 finally that |suc| translates to |Succ| and expects 1 argument.
 
-The function that does this conversion for us looks like this.
+The function that does this conversion for us looks like this. Note that it isn't intended to
+be called directly; a convenience function |doConvert| is defined below. 
 
 \ignore{
 \begin{code}
@@ -600,11 +601,26 @@ mapping, and if all the arguments, provided they are of the right number, also c
 all this is true, the converted |Term| is returned as a |just e|, where $e$ is the new, converted member
 of the AST. For example, see the unit tests in Fig. \ref{fig:test-autoquote}.
 
+\begin{code}
+convertManages : {a : Set} → Table a → Term → Set
+convertManages t term with convert t term
+convertManages t term | just x  = ⊤
+convertManages t term | nothing = ⊥
+
+doConvert : {a : Set} → (tab : Table a) → (t : Term) → {man : convertManages tab t} → a
+doConvert tab t {man} with convert tab t
+doConvert tab t {man} | just x = x
+doConvert tab t {() } | nothing
+\end{code}
+
+The module also exports the function |convertManages| and |doConvert|, which are to be used in the following
+way.
+
 
 \begin{figure}[h]
 \begin{code}
-something : {x y : ℕ}    → convert exprTable (quoteTerm ((1 + x + 2) + y))
-                         ≡ just (Succ (Plus (Plus (Variable 1) (Succ (Succ Zero))) (Variable 0)))
+something : {x y : ℕ}    → doConvert exprTable (quoteTerm ((1 + x + 2) + y))
+                         ≡ Succ (Plus (Plus (Variable 1) (Succ (Succ Zero))) (Variable 0))
 something = refl
 \end{code}
 \caption{Examples of |Autoquote| in use.}\label{fig:test-autoquote}
@@ -1240,12 +1256,56 @@ Furthermore, by using the proof by reflection technique, the proof is generated 
 
 \subsection{An aside: real-world example of |Autoquote|}\label{sec:autoquote-example}
 
-The process of quoting to a |BoolExpr| outlined above can actually be
-made less ugly.  Recall the |Autoquote| module developed in
-Sec. \ref{sec:autoquote}; this will be used here, both as an
+The process of quoting to a |BoolExpr n| outlined in Sec. \ref{sec:boolexpr}
+quickly becomes an ugly mess, with functions checking properties of an expression (such
+as only certain functions occurring) being pretty similar, save the number of arguments
+functions require or which functions are allowed.
+
+The actual conversion function also ends up having many branches, checking if the current
+constructor or definition is on we know, \&c. This process can be made a lot less ugly.
+Recall the |Autoquote| module developed in
+Sec. \ref{sec:autoquote}; this can be used here, both as an
 illustration of the use of |Autoquote|, and to avoid code duplication,
 thus making the code for |term2boolexpr| more concise.
 
+|Autoquote| only supports simple recursive data types, so the first problem we encounter is that
+|BoolExpr n| has an argument of type |Fin n| to its constructor |Atomic| (see Fig. \ref{fig:boolexprn}).
+Because of this, we introduce a simpler, intermediary data structure, to which we will convert
+from |Term|. This type, |BoolInter|, is presented in Fig. \ref{fig:boolinter}.
+
+\begin{figure}[h]
+\begin{code}
+data BoolInter : Set where
+  Truth        :                                  BoolInter
+  Falsehood    :                                  BoolInter
+  And          : BoolInter     → BoolInter    →   BoolInter
+  Or           : BoolInter     → BoolInter    →   BoolInter
+  Not          : BoolInter                    →   BoolInter
+  Imp          : BoolInter     → BoolInter    →   BoolInter
+  Atomic       : ℕ                            →   BoolInter
+\end{code}
+\caption{An intermediary data type, which is a simplified (constraint-free) version of |BoolExpr|.}\label{fig:boolinter}
+\end{figure}
+
+The mapping needed for |Autoquote| is as follows: we mention which constructor represents
+de Bruijn-indexed variables and what the arity is of the different constructors. This way
+only |Term|s with and, or, not, true or false are accepted. Using this mapping, we can construct
+the function |term2boolexpr'| which, for suitable |Term|s, gives us an expression in |BoolInter|. 
+
+\begin{code}
+boolTable : Table BoolInter
+boolTable = (Atomic ,
+              2 \# (quote _∧_  ) ↦ And
+            ∷ 2 \# (quote _∨_  ) ↦ Or
+            ∷ 1 \# (quote  ¬_  ) ↦ Not
+            ∷ 0 \# (quote true ) ↦ Truth
+            ∷ 0 \# (quote false) ↦ Falsehood
+            ∷ 2 \# (quote _⇒_  ) ↦ Imp
+            ∷ [])
+
+term2boolexpr' : (t : Term) → {pf : convertManages boolTable t} → BoolInter
+term2boolexpr' t {pf} = doConvert boolTable t {pf}
+\end{code}
 
 
 \chapter{Type-safe metaprogramming}\label{sec:type-safe-metaprogramming}
