@@ -1878,10 +1878,11 @@ raw2wt r {()}     | bad
 
 
 \begin{code}
-exampleTerm : WT [] (typeOf (term2raw (quoteTerm (\ (x : ℕ) → x))))
-exampleTerm = raw2wt (term2raw (quoteTerm (\ (x : ℕ) → x)))
+exampleTerm : WT []      (   typeOf (   term2raw (quoteTerm (\ (x : ℕ) → x))))
+exampleTerm =                raw2wt (   term2raw (quoteTerm (\ (x : ℕ) → x)))
 
-explained : typeOf (term2raw (quoteTerm (\ (x : ℕ) → x))) ≡ O Nat => O Nat
+explained      : typeOf (term2raw (quoteTerm (\ (x : ℕ) → x)))
+               ≡ O Nat => O Nat
 explained = refl
 
 explained₁ : exampleTerm ≡ Lam (O Nat) (Var here)
