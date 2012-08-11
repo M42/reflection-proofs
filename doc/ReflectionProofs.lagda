@@ -25,7 +25,7 @@ module ReflectionProofs where
 -- imports for Evenness
 open import Relation.Binary.PropositionalEquality
 open import Data.Maybe using (Maybe ; just ; nothing)
-open import Data.Bool renaming (not to ¬_)
+open import Data.Bool hiding (T) renaming (not to ¬_) 
 open import Data.Nat renaming (_≟_ to _≟-Nat_)
 \end{code}
 }
@@ -33,7 +33,7 @@ open import Data.Nat renaming (_≟_ to _≟-Nat_)
 \ignore{
 \begin{code}
 -- imports for Boolean tauto solver
-open import Data.String hiding (fromList)
+open import Data.String using (String)
 open import Relation.Nullary hiding (¬_)
 open import Data.Product hiding (map)
 open import Relation.Binary hiding (_⇒_)
@@ -1528,8 +1528,8 @@ quoteBack Nat (suc x) = con (quote ℕ.suc) (arg visible relevant (quoteBack Nat
 equal? : (x : U) → (y : U) → Equal? x y
 equal? Nat Nat = yes
 
-halttype : U
-halttype = Nat
+ReturnType : U
+ReturnType = Nat
 
 type? : Name → Maybe U
 type? n with n ≟-Name (quote ℕ.suc)
@@ -1889,11 +1889,227 @@ explained₁ : exampleTerm ≡ Lam (O Nat) (Var here)
 explained₁ = refl
 \end{code}
 
+\subsection{Doing something useful with |WT|}
 
+Conversely, we can also construct a term in |WT| and use the |unquote| keyword to
+turn it back into concrete syntax.... . . . ..  %TODO explain this, also make a note about lack of APPLY construct, and the hack I do.
 
 
 
 \section{Example: CPS transformation}
+
+Given the fact that we can now easily move from the world of concrete Agda syntax to a well-typed lambda calculus and back,
+the obvious next step is to do something with these well-typed terms. Doing anything with these terms constitutes
+a program transformation, since lambda terms represent simple programs. An additional bonus feature we now have at our
+disposal is the ability to do these transformations while ensuring that certain properties (notably the well-typedness of
+our terms) are not violated (preserved?).
+
+The first case study in this area is that  of transforming lambda terms into continuation-passing style (CPS).
+The idea of CPS is not new; it is what happens when you take the primitive idea of computer programming, which
+essentially involves calling functions and returning values after their completion, and remove the notion
+of returning. % todo cite
+
+This seems both profound and unusable, yet it turns out to be a useful
+paradigm for many applications. %todo cite, among others web
+                                %programming, free book by indian dude
+Consider the example where you want to print an integer, but before doing so, would like
+to call, on that number, the function which increases integers by 1. That might look something like
+this:
+
+\begin{spec}
+main = print (suc 5)
+\end{spec}
+
+If the idea of \emph{returning} values is forbidden, how then must one \emph{continue}? The answer is
+to do a transformation on the code; a continuation-passing style transformation. This name refers
+to the fact that functions which would normally do something analogue to issueing a \texttt{return} statement,
+are passed, as an additional parameter, a function to call on the result, instead of \texttt{return}.
+
+The following translation provides an example.
+
+\begin{code}
+factorial : ℕ → ℕ
+factorial 0         = 1
+factorial (suc n)   = (suc n) * (factorial n)
+
+factCPS : {a : Set} → ℕ → (ℕ → a) → a
+factCPS   0        k      = k 1
+factCPS (suc n)    k      = factCPS n (\ f -> mult f (suc n) k)
+  where
+    mult : {a : Set} → ℕ -> ℕ -> (ℕ → a) → a
+    mult n m k = k (n * m)
+\end{code}
+
+Here we have translated the function by adding a new parameter (called |k|) which is called on the original
+result of the computation, instead of just returning that result. In the base case the translation was trivial,
+but in the inductive case we have to do a little more work. There, we immediately call the function recursively,
+asking for the factorial of the next smaller number, but providing a continuation which combines the result of
+that computation with the ``current'' value of $n$. We multiply the result of the recursive call with the current
+value of $n$ by calling the |mult| function, which is also in continuation passing style; the result of this multiplication
+is what we would like to return, which is why we provide $k$ as the continuation function.
+
+We can now use this function in the traditional way if we pass the identity function as our continuation. This way,
+the result of the computation is returned unchanged. Notice, though, that the type of the CPS-transformed function
+is necessarily different from the original function.
+
+\ignore{
+\begin{code}
+id : {A : Set}  → A → A
+id x = x
+open  import Relation.Binary.EqReasoning
+
+RT : U'
+RT = O ReturnType
+
+\end{code}
+}
+
+Some anecdotal evidence that our CPS-transformed function does, indeed, perform
+as we expect it to.
+
+
+\begin{code}
+equivFact1 : factorial 1 ≡ factCPS 1 id
+equivFact1 = refl
+equivFact5 : factorial 5 ≡ factCPS 5 id
+equivFact5 = refl
+\end{code}
+
+%TODO wouter's "background reading on CPS"
+
+This transformation can be done in a mechanical way, too. Also the type we
+expect the new function to have can be derived. This is discussed at length by
+Might %TODO cite might
+, whose implementation was also used as inspiration for this type-safe version.
+
+The type of a CPS-transformed function can be computed as follows, where |RT| stands
+for some return type.
+
+\begin{code}
+cpsType : U' → U'
+cpsType (O x)     = O x
+cpsType (t => t₁) = cpsType t => ((cpsType t₁ => RT) => RT)
+cpsType (Cont t)  = cpsType t => RT
+\end{code}
+
+The type we would like our transformation function to have is something which takes
+as input a term with some environment and type (|WT Γ σ|), a
+continuation (necessarily |WT (map cpsType Γ) (cpsType σ => RT)|) and returns a
+semantically equal term with type |WT (map cpsType Γ) RT|. In other words, the continuation
+function must not rely on any variables which are not in the scope of the to-be-transformed function,
+and must produce a value of type |RT|.%TODO maybe make this arbitrary...
+If these are then applied to each other, a value of type |RT| should be returned.
+
+The term of type |TAcc wt| which is also included will be explained later, and has to do
+with termination of the function.
+
+\ignore{
+\begin{code}
+
+noApp : {σ : U'} {Γ : Ctx} → WT Γ σ → Set
+noApp (Var inpf)   = ⊤
+noApp (Lam σ wt)   = ⊤
+noApp (wt ⟨ wt₁ ⟩) = ⊥
+noApp (Lit x )     = ⊥
+
+
+cpsvar : forall {t g} → t ∈' g → (cpsType t) ∈' (map cpsType g)
+cpsvar   here    = here
+cpsvar (there v) = there (cpsvar v)
+
+-- show that we can add more variables to our environment for free;
+-- variables that used to be in the environment are still there 
+weakvar : forall {τ Γ} → (τ' : U') → (Γ' : Ctx) → τ ∈' (Γ' ++ Γ) → τ ∈' (Γ' ++ (τ' ∷ Γ))
+weakvar t' [] x = there x
+weakvar t' (x ∷ env) here = here
+weakvar t' (x ∷ env) (there x₁) = there (weakvar t' env x₁)
+
+
+-- show that we can add a type variable somewhere in the middle of our
+-- environment and stuff still is okay.
+weak : forall {Γ' τ Γ} → WT (Γ' ++ Γ) τ → (τ' : U') → WT (Γ' ++ (τ' ∷ Γ)) τ
+weak (Lit x) t = Lit x
+weak {Γ'} (Var x) t' = Var (weakvar t' Γ' x)
+weak {g'} {t => t1} (Lam .t e) t' = Lam t (weak { t ∷ g' } e t')
+weak {g'} {t2} {g} (_⟨_⟩ .{_}{t1}.{t2} e1 e2) t' =
+               (weak {g'} {t1 => t2} e1 t')
+               ⟨   (weak {g'} {t1} e2 t') ⟩
+ 
+-- increase all the de Bruijn indices by 1. Needs to have some
+-- arbitrary type added to the front of the environment to keep
+-- the lengths right. special case of weakening, but with empty prefix environment.
+shift1 : forall {Γ τ} → (τ' : U') → WT Γ τ → WT (τ' ∷ Γ) τ
+shift1 t' e = weak {[]} e t'
+
+
+data TAcc : {Γ : Ctx} {σ : U'} → WT Γ σ → Set where
+  TBaseLit : forall {Γ σ x} → TAcc (Lit {Γ} {σ} x)
+  TBaseVar : forall {Γ σ x} → TAcc (Var {Γ} {σ} x)
+  TLam : forall {Γ t1 t2} {a : WT (t1 ∷ Γ) t2}
+         --→ TAcc a
+         → TAcc (shift1 (Cont t2) a)
+         → TAcc {Γ} {t1 => t2} (Lam {Γ} t1 a)
+  TApp : forall {Γ σ σ₁} {a : WT Γ (σ => σ₁)} {b : WT Γ σ}
+         → TAcc {Γ} {σ => σ₁} a
+      --   → TAcc b
+         → TAcc (shift1 (σ => σ₁) b)
+         → TAcc (a ⟨ b ⟩)
+
+
+\end{code}
+}
+\begin{code}
+T : {σ : U'} {Γ : Ctx}       → (wt : WT Γ σ)
+                             → TAcc wt
+                             → WT (map cpsType Γ) (cpsType σ => RT)
+                             → WT (map cpsType Γ) RT
+\end{code}
+
+The case for literals and variables is, as usual, not very difficult. All that happens here is
+that the continuation function is applied to the original term, and in
+the case of variables, some housekeeping (a proof is given that if some variable with type |σ| is inside the
+environment |Γ|, then it will also be inside the new environment |map cpsType Γ|, but having type |cpsType σ|)  is done.
+
+\begin{code}
+T (Lit x)             TBaseLit                    cont = cont ⟨ (Lit x) ⟩
+T (Var inpf  )        TBaseVar                    cont = cont ⟨ (Var (cpsvar inpf)) ⟩
+\end{code}
+
+The case for lambdas is slightly more involved; the body is recursively CPS transformed, and a new abstraction is
+introduced ...
+
+\begin{code}
+T {t1 => t2} (Lam .t1 expr)     (TLam pf)     cont = cont ⟨ (Lam (cpsType t1)
+                                                                 (Lam (cpsType t2 => RT)
+                                                                      (T (shift1 (Cont t2) expr) pf
+                                                                         (Var here)
+                                                                      )
+                                                                 )
+                                                            )
+                                                          ⟩
+
+\end{code}
+
+Finally, we have the application case.
+
+\begin{code}
+T .{σ₂} (_⟨_⟩ .{_}{σ₁}{σ₂} f e) (TApp pf pf2) cont =
+   T f pf (Lam (cpsType σ₁ => ((cpsType σ₂ => RT) => RT))
+                           (T (shift1 (σ₁ => σ₂) e) pf2 (Lam (cpsType σ₁)
+                              (((Var (there here)) ⟨ (Var here) ⟩ ) 
+                                  ⟨ (shift1 (cpsType σ₁) (shift1 (cpsType σ₁ => ((cpsType σ₂ => RT) => RT)) cont)) ⟩ ))))
+
+
+\end{code}
+\begin{code}
+
+\end{code}
+
+
+
+
+
+
 
 
 Maybe we can give a Bove-Capretta example here, too, since |T| uses general recursion.
