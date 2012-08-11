@@ -40,7 +40,7 @@ open import Relation.Binary hiding (_⇒_)
 open import Reflection
 
 open import Data.Fin hiding (_+_; pred )
-open import Data.Vec renaming (reverse to vreverse ; map to vmap; foldr to vfoldr; _++_ to _v++_)
+open import Data.Vec renaming (reverse to vreverse ; map to vmap; foldr to vfoldr; _++_ to _v++_ ; _∈_ to _vecin_)
 open import Data.Unit hiding (_≤?_)
 open import Data.Empty
 open import Data.Sum hiding (map)
@@ -1485,18 +1485,86 @@ defined as the number of $\lambda$'s before one is at top-level
 scope. %TODO reference a paper about debruijn indices.
 
 
+\begin{code}
+-- equality of types.
+data Equal? {A : Set} : A → A → Set where
+  yes  : forall {τ}     → Equal? τ τ
+  no   : forall {σ τ}   → Equal? σ τ
+
+-- ugh, this may not be in a parameterised module. if it is, such as
+-- where it was in CPS.Apply, if you import CPS as CPS' = CPS . . . e.g.
+-- then there's a panic, since quote Apply returns CPS.Apply, and all of
+-- a sudden the number of arguments is invalid. ugh.
+Apply : {A B : Set} → (A → B) → A → B
+Apply {A} {B} x y = x y
+
+\end{code}
+
+
+
+
+For example, the arguments might look like this %todo less ugly wording
+
+\begin{code}
+
+---------
+--- THIS STUFF may not be used other than as a parameter to the module.
+
+data U : Set where
+  Nat : U
+
+
+?type : U → Name
+?type r = quote ℕ
+
+Uel : U → Set
+Uel r = ℕ
+
+
+quoteBack : (x : U) → Uel x → Term
+quoteBack Nat zero    = con (quote ℕ.zero) []
+quoteBack Nat (suc x) = con (quote ℕ.suc) (arg visible relevant (quoteBack Nat x) ∷ [])
+
+equal? : (x : U) → (y : U) → Equal? x y
+equal? Nat Nat = yes
+
+halttype : U
+halttype = Nat
+
+type? : Name → Maybe U
+type? n with n ≟-Name (quote ℕ.suc)
+type? n | yes p = just Nat
+type? n | no ¬p with n ≟-Name (quote ℕ.zero)
+type? n | no ¬p | yes p = just Nat
+type? n | no ¬p₁ | no ¬p with n ≟-Name (quote ℕ)
+type? n | no ¬p₁ | no ¬p | yes p = just Nat
+type? n | no ¬p₂ | no ¬p₁ | no ¬p = nothing
+
+quoteVal : (x : U) → Term → Uel x
+quoteVal Nat (var x args) = 0
+quoteVal Nat (con c args) with c ≟-Name quote ℕ.zero
+quoteVal Nat (con c args) | yes p = 0
+quoteVal Nat (con c args) | no ¬p with c ≟-Name quote ℕ.suc
+quoteVal Nat (con c []) | no ¬p | yes p = 0
+quoteVal Nat (con c (arg v r x ∷ args)) | no ¬p | yes p = 1 + quoteVal Nat x
+quoteVal Nat (con c args) | no ¬p₁ | no ¬p = 0
+quoteVal Nat      _       = 0
+
+-- result type.
+
+-- end THIS STUFF
+------------------------
+
+
+\end{code}
+
+
+
 Another constraint expressed is that an application can only be
 introduced if both sub-expressions have reasonable types. Reasonable
 in this context means that the function being applied must take an
 argument of the type of the to-be-applied sub-expression.
 
-\ignore{
-\begin{code}
-infixl 30 _⟨_⟩ 
-infixr 20 _=>_
-infix 3 _∈_
-\end{code}
-}
 
 \begin{figure}[h]
 \begin{code}
@@ -1508,18 +1576,25 @@ data U' : Set where
 Ctx : Set
 Ctx = List U'
 
-data _∈_ {A : Set} (x : A) : List A → Set where
-  here    : {xs : List A}                        → x ∈ x ∷ xs
-  there   : {xs : List A} {y : A} → x ∈ xs       → x ∈ y ∷ xs
+data _∈'_ {A : Set} (x : A) : List A → Set where
+  here    : {xs : List A}                        → x ∈' x ∷ xs
+  there   : {xs : List A} {y : A} → x ∈' xs       → x ∈' y ∷ xs
   
 data WT : (Γ : Ctx) → U' -> Set where
-  Var   : ∀ {Γ} {τ}     → τ ∈ Γ                       → WT Γ τ
+  Var   : ∀ {Γ} {τ}     → τ ∈' Γ                      → WT Γ τ
   _⟨_⟩  : ∀ {Γ} {σ τ}   → WT Γ (σ => τ) → WT Γ σ      → WT Γ τ
   Lam   : ∀ {Γ} σ {τ}   → WT (σ ∷ Γ) τ                → WT Γ (σ => τ)
   Lit   : ∀ {Γ} {x}     → Uel x                       → WT Γ (O x)
 \end{code}
 \caption{The data type modeling well-typed, well-scoped lambda calculus.}\label{fig:stlc}
 \end{figure}
+\ignore{
+\begin{code}
+infixl 30 _⟨_⟩ 
+infixr 20 _=>_
+infix 3 _∈'_
+\end{code}
+}
 
 Note that the argument to |Var| is not an integral index, as one might expect, but a proof
 that the variable points to a reasonable spot in the context. This proof is encoded in the |_∈_|
@@ -1576,6 +1651,48 @@ data Raw : Set where
 
 Next we define the erasure of types and a view on terms which tells us if a term is
 well-typed or not, and if it is, gives us the representation in |WT|.
+
+
+\ignore{
+\begin{code}
+
+index : {A : Set} {x : A} {xs : List A} → x ∈' xs → ℕ
+index   here    = zero
+index (there h) = suc (index h)
+
+data Lookup {A : Set} (xs : List A) : ℕ → Set where
+  inside   : (x : A) (p : x ∈' xs) → Lookup xs (index p)
+  outside  : (m : ℕ) → Lookup xs (length xs + m)
+
+  
+_!_ : {A : Set} (xs : List A) (n : ℕ) → Lookup xs n
+[]        ! n      = outside n
+(x ∷ x₁)  ! zero   = inside x here
+(x ∷ x₁)  ! suc n with x₁ ! n
+(x₂ ∷ x₁) ! suc .(index p)       | inside x p  = inside x (there p)
+(x ∷ x₁)  ! suc .(length x₁ + m) | outside  m  = outside m
+
+_=?=_ : (σ τ : U') → Equal? σ τ
+O x          =?= O  y       with (equal? x y)
+O .y         =?= O y  | yes = yes
+O x          =?= O y  | no  = no
+-- O          =?= O        = yes
+O x          =?= (_ => _)   = no
+(σ => τ)     =?= O  y       = no
+(σ₁ => τ₁)   =?= (σ₂ => τ₂) with σ₁ =?= σ₂ | τ₁ =?= τ₂
+(.σ₂ => .τ₂) =?= (σ₂ => τ₂) | yes | yes = yes
+(.σ₂ => τ₁)  =?= (σ₂ => τ₂) | yes | no  = no
+(σ₁ => .τ₂)  =?= (σ₂ => τ₂) | no  | yes = no
+(σ₁ => τ₁)   =?= (σ₂ => τ₂) | no  | no  = no
+O x          =?= Cont b     = no
+(a => a₁)    =?= Cont b     = no
+Cont a       =?= O y        = no
+Cont a       =?= (b => b₁)  = no
+Cont a       =?= Cont b     with a =?= b
+Cont .b      =?= Cont b     | yes = yes
+Cont a       =?= Cont b     | no  = no
+
+\end{code}
 
 \begin{code}
 erase : forall {Γ τ} → WT Γ τ → Raw
