@@ -29,6 +29,8 @@
 
 
 \newcommand{\textlambda}{\ensuremath{\lambda}}
+\newcommand{\textGamma}{\ensuremath{\Gamma}}
+\newcommand{\texttau}{\ensuremath{\tau}}
 
 
 
@@ -39,3 +41,8 @@
 
 %format dollarn = "\defin{\ensuremath{\$^{n}}}"
 %format _dollarn_ = "\defin{\ensuremath{\_\$^{n}\_}}"
+%format _=>_ = "\ensuremath{\_\Rightarrow\_}"
+
+%%% we don't want all dots to become function composition. sometimes we're referring to inferrable arguments.
+%format .     = "{"                 "."   "\mkern-5mu"     "}"
+%format _∷_   = "{" _ "\mkern1mu"    ∷    "\mkern-1mu"   _ "}"
