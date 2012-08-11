@@ -212,7 +212,8 @@ a fragment of concrete syntax into a |Term| data type. Note that the
 |quoteTerm| keyword reduces like any other function in Agda. As an
 example, the following unit test type checks:
 \begin{code}
-example₀ : quoteTerm (\ (x : Bool) -> x) ≡ lam visible (el _ (def (quote Bool) [])) (var 0 [])
+example₀   : quoteTerm (\ (x : Bool) -> x)
+           ≡ lam visible (el _ (def (quote Bool) [])) (var 0 [])
 example₀ = refl
 \end{code}
 
@@ -519,6 +520,7 @@ a mapping and a |Name|, finds the corresponding entry in the mapping table. If n
 
 An example of such a mapping would be the one required for our |Expr| example.
 
+\begin{figure}[h]
 \begin{code}
 exprTable : Table Expr
 exprTable = (Variable ,
@@ -527,6 +529,8 @@ exprTable = (Variable ,
              1   \# (quote ℕ.suc )   ↦ Succ ∷
              [])
 \end{code}
+\caption{The mapping for converting to the imaginary |Expr| AST. }\label{fig:exprTable}
+\end{figure}
 
 Here, we are saying that any variables encountered should be stored as |Variable| elements,
 the |_+_| operator should be a |Plus| constructor (we are required to specify that it takes 2 arguments),
@@ -561,8 +565,8 @@ suc m ≟-ℕ suc n = ≟-Nat-cong m n (m ≟-ℕ n)
 mutual
   convert : {a : Set} → Table a → Term → Maybe a
   convert (vc , tab) (var x args) = just (vc x)
-  convert (vc , tab) (con c args) = handleNameArgs (vc , tab) c args
-  convert (vc , tab) (def f args) = handleNameArgs (vc , tab) f args
+  convert (vc , tab) (con c args) = appCons (vc , tab) c args
+  convert (vc , tab) (def f args) = appCons (vc , tab) f args
   convert (vc , tab)     _        = nothing
 \end{code}
 
@@ -576,18 +580,22 @@ an intermediary data structure to convert to, after which checks for invariants 
 it will not be possible to directly |convert| to some property-preserving data structure such
 as |BoolExpr n| in one step; this will typically require post-processing.
 
-In the case of a constructor or a definition applied to arguments, the function |handleNameArgs| is called,
-which looks up a |Name| in the mapping and tries to recursively |convert| its arguments.
+In the case of a constructor or a definition applied to arguments, the function |appCons| is called,
+which looks up a |Name| in the mapping and tries to recursively |convert| its arguments, then applies the given constructor to
+these new arguments.
 
+% the comment at the top of this code block fixes the indentation.
+% indentation is forgotten over code blocks, it seems.
 \begin{code}
-  handleNameArgs : {a : Set} → Table a → Name → List (Arg Term) → Maybe a
-  handleNameArgs (vc , tab) name args with lookupName tab name
-  handleNameArgs (vc , tab) name args | just (arity       \# x  ↦ x₁)   with convertArgs (vc , tab) args
-  handleNameArgs (vc , tab) name args | just (arity       \# x₁ ↦ x₂)   | just x with length x ≟-ℕ arity
-  handleNameArgs (vc , tab) name args | just (.(length x) \# x₁ ↦ x₂)   | just x | yes = just (x₂ dollarn fromList x)
-  handleNameArgs (vc , tab) name args | just (arity       \# x₁ ↦ x₂)   | just x | no  = nothing
-  handleNameArgs (vc , tab) name args | just (arity       \# x  ↦ x₁)   | nothing = nothing
-  handleNameArgs (vc , tab) name args | nothing = nothing
+-- mutual continues...
+  appCons : {a : Set} → Table a → Name → List (Arg Term) → Maybe a
+  appCons (vc , tab) name args with lookupName tab name
+  appCons (vc , tab) name args | just (arity       \# x  ↦ x₁)   with convertArgs (vc , tab) args
+  appCons (vc , tab) name args | just (arity       \# x₁ ↦ x₂)   | just x with length x ≟-ℕ arity
+  appCons (vc , tab) name args | just (.(length x) \# x₁ ↦ x₂)   | just x | yes = just (x₂ dollarn fromList x)
+  appCons (vc , tab) name args | just (arity       \# x₁ ↦ x₂)   | just x | no  = nothing
+  appCons (vc , tab) name args | just (arity       \# x  ↦ x₁)   | nothing = nothing
+  appCons (vc , tab) name args | nothing = nothing
 
   convertArgs : {a : Set} → Table a → List (Arg Term) → Maybe (List a)
   convertArgs tab [] = just []
@@ -598,7 +606,7 @@ which looks up a |Name| in the mapping and tries to recursively |convert| its ar
   convertArgs tab (arg v r x ∷ ls) | nothing = nothing
 \end{code}
 
-|handleNameArgs| and |convertArgs| just check to see if the desired |Name| is present in the provided
+|appCons| and |convertArgs| just check to see if the desired |Name| is present in the provided
 mapping, and if all the arguments, provided they are of the right number, also convert successfully. If
 all this is true, the converted |Term| is returned as a |just e|, where $e$ is the new, converted member
 of the AST. For example, see the unit tests in Fig. \ref{fig:test-autoquote}.
@@ -1382,18 +1390,22 @@ concrete2abstract t {pf} {pf2} fin = bool2fin     (freeVars t)
 \chapter{Type-safe metaprogramming}\label{sec:type-safe-metaprogramming}
 
 Another area in which an application for the new reflection API was found is that
-of metaprogramming. By taking advantage of Agda's very powerful type system,
-it was possible to develop type-safe metaprograms.
+of type-safe metaprogramming, taking advantage of Agda's very powerful type system.
 
-Metaprogramming is a technique which is widely used in the LISP
+Metaprogramming is a technique which is already widely used, for example in the LISP
 community, and involves converting terms in the concrete syntax of a
 programming language into an abstract syntax tree which can be
-inspected and/or manipulated, and possibly (as in the case of LISP) be
+inspected and/or manipulated, and possibly be
 made
 concrete again, and thus can be evaluated as if it were code the
-programmer had directly entered into a source file.
+programmer had directly entered into a source file. In Agda the reflection happens at
+compile-time, allowing for the strong static typing we have come to know and love.
+If run-time reflection were possible, any program compiled with Agda would need to
+include the complete typing system, a problem which doesn't exist in, for example,
+Lisp, since it is dynamically typed, which makes run-time reflection possible. Here, therefore,
+a compromise of sorts is required.
 
-This technique is well-supported and widely used in LISP and more
+Reflection is well-supported and widely used in LISP and more
 recently in Haskell, using the Template Haskell compiler
 extension\cite{template-haskell}. It has enabled many time-saving
 automations of tasks otherwise requiring
@@ -1408,18 +1420,18 @@ or % TODO insert example of metaprogramming applications here.
 
 Clearly, the technique is a very useful one, but it does have a glaring
 limitation (or should we say, potential pitfall), namely that when one
-is developing, for example, a piece of Template Haskell code which
+is developing a piece of Template Haskell code which
 should generate some function, it often happens that one ends up
 debugging type errors in the produced (machine-generated) code. This
-is often a tedious and painful process, since typically generated code is
-much less intuitive and readable than human-written code.
+is a tedious and painful process, since typically generated code is
+much less self-explanatory or readable than human-written code.
 
 Here we propose a new way of looking at metaprogramming, namely
 type-safe metaprogramming. It would be great if one could define some
 data structure for, say, lambda calculus, and have the guarantee that
 any term constructed in this AST is type-correct. The obvious
 advantage is then that the compiler will show up errors in whichever
-method tries to build an invalid piece of abstract syntax, as opposed
+method tries to build an invalid piece of abstract syntax at compile time, as opposed
 to giving an obscure error pointing at some generated code, leaving
 the programmer to figure out how to solve the problem.
 
@@ -1429,24 +1441,114 @@ dependent types when metaprogramming.
 \section{Example: Type-checking $\lambda$-calculus}
 
 For the running example in this section, we will look at a
-simply-typed lambda calculus (STLC) defined by the 
-AST in Fig. \ref{fig:stlc}. The |WT| data type represents well-typed and closed (thus well-scoped)
+simply-typed lambda calculus (STLC) with type and scoping rules as
+in Fig. \ref{fig:lambda-rules}. 
+All the modules that deal with well-typed lambda expressions (everything in the |Metaprogramming| namespace
+of the repository) are parameterised with a number of elements. A user of this
+library should provide the following elements.
+
+\begin{code}
+
+
+\end{code}
+
+\begin{itemize}
+\item |U : Set| A data type representing your own universe. It might have such elements as |Nat| and |Bl| which might stand for natural numbers and boolean values.
+\item |?type : U → Name| A function which, given an element of your universe, gives back the concrete Agda identifier which it stands for, such as |quote ℕ|.
+\item |Uel : U → Set| An interpretation function, which returns the Agda type corresponding to some element of your universe.
+\item |quoteBack : (x : U) → Uel x → Term| A function which can turn a value in your universe into an Agda |Term|
+\item |equal? : (x : U) → (y : U) → Equal? x y| A function which implements decidable equality between elements of your universe.
+\item |returnType : U| The return type for a CPS transformed function. Will be detailed in Sec. \ref{sec:cps}.
+\item |type? : Name → Maybe U| A function which translates Agda identifiers into elements of your universe |U|.
+\item |quoteVal : (x : U) → Term → Uel x| Finally, a function which, given an Agda term, translates it into your universe.
+\end{itemize}
+
+
+The universe (set of possible types) we
+use is |U'|, which is made up of base types (|O|) and function types (|_=>_|). There
+is also an extra constructor |Cont| which stands for the type of a continuation. This will
+be explained in the section on continuation-passing style, Sec. \ref{sec:cps}.
+
+
+%% TODO insert typing derivations here.
+
+
+As usual, these typing judgments (or derivations) translate naturally into
+Agda syntax. This translation has been done in Fig. \ref{fig:stlc}.
+
+The |WT| data type represents well-typed and closed (thus well-scoped)
 simply-typed lambda calculus terms. Notice that type-incorrect terms cannot be instantiated, since
 the dependent type signatures of the constructors allow us to express
 constraints such as that a de Bruijn-indexed variable must be at most
 $n$, with $n$ the depth of the current sub-expression, with depth
 defined as the number of $\lambda$'s before one is at top-level
 scope. %TODO reference a paper about debruijn indices.
+
+
 Another constraint expressed is that an application can only be
 introduced if both sub-expressions have reasonable types. Reasonable
 in this context means that the function being applied must take an
 argument of the type of the to-be-applied sub-expression.
 
-The Agda compiler had to be modified for this work to be feasible, since by default
-the lambda abstractions in the |Term| data type don't have any typing information,
-which makes type inference necessary to determine the types of sub-expressions. This
-is necessary, even if the top-level type of an expression is known (for example if the user
-is required to provide it). It is not impossible to implement a type inferencer in Agda (for example using Algorithm
+\ignore{
+\begin{code}
+infixl 30 _⟨_⟩ 
+infixr 20 _=>_
+infix 3 _∈_
+\end{code}
+}
+
+\begin{figure}[h]
+\begin{code}
+data U' : Set where
+  O       : U             → U'
+  _=>_    : U'    → U'    → U'
+  Cont    : U'            → U'
+  
+Ctx : Set
+Ctx = List U'
+
+data _∈_ {A : Set} (x : A) : List A → Set where
+  here    : {xs : List A}                        → x ∈ x ∷ xs
+  there   : {xs : List A} {y : A} → x ∈ xs       → x ∈ y ∷ xs
+  
+data WT : (Γ : Ctx) → U' -> Set where
+  Var   : ∀ {Γ} {τ}     → τ ∈ Γ                       → WT Γ τ
+  _⟨_⟩  : ∀ {Γ} {σ τ}   → WT Γ (σ => τ) → WT Γ σ      → WT Γ τ
+  Lam   : ∀ {Γ} σ {τ}   → WT (σ ∷ Γ) τ                → WT Γ (σ => τ)
+  Lit   : ∀ {Γ} {x}     → Uel x                       → WT Γ (O x)
+\end{code}
+\caption{The data type modeling well-typed, well-scoped lambda calculus.}\label{fig:stlc}
+\end{figure}
+
+Note that the argument to |Var| is not an integral index, as one might expect, but a proof
+that the variable points to a reasonable spot in the context. This proof is encoded in the |_∈_|
+data structure, and is a semantically-extended index, in that the value in the list that is being
+pointed at is stored along with the pointer. Thus, an index is recoverable from this structure, which
+is useful if one wants to cast back to a true de Bruijn representation of a given lambda term. 
+
+The |Ctx| type is simply our context for variables (mapping variables
+to their type): it is defined as |List U'|, where the position in the list corresponds
+to the de Bruijn-index of a variable. Since all terms are required to be well-scoped,
+this makes sense, since each time a lambda-abstraction is introduced, the type of the 
+variable to be bound at that point is consed onto the environment. This way, variables 
+which are bound ``further away'' (in the de Bruijn-index sense) are nearer to the back of the list.
+
+The following illustration should make this idea clearer.
+
+... insert illustration here where variables are put on the ``stack''...
+
+Now that we have this well-typed, well-scoped lambda language defined in Agda,
+we can construct terms by hand which are well-formed by construction. The idea, though,
+is to be able to do this automatically, using |quoteTerm|. This implies that
+we need to write a function which converts |Term|s into a value of type |WT .. ..|. 
+Constructing this |WT| term requires annotating the elements with types, but 
+as it stands at the time of this writing, Agda returns untyped
+terms. Therefore, the Agda compiler had to be modified for this work
+to be feasible, since without type annotations, 
+ type inference is necessary to determine the types of sub-expressions (especially of applications, since we are basically 
+free to introduce the type of the applicand). %TODO does that word even exist?
+It is not impossible to implement a type inferencer in Agda (for example using Algorithm
 W), %TODO reference algo W + possible implementations in Agda
 but it is outside of the scope of this project. Additionally, this would require the
 implementation of a type unification algorithm, and a total, structurally recursive (so as
@@ -1456,16 +1558,94 @@ Therefore the Agda compiler was modified to extend the internal data structure r
 |Term|s with a field on lambda abstractions, representing the type of their arguments. The precise
 modifications to the compiler are detailed in Appendix \ref{sec:annotating-lambdas}.
 
+Now that we have annotations in |Term|s, all that remains is to
+type-check them and simultaneously convert them into |WT| terms. The
+algorithm used here is inspired by a tutorial written by Norell
+\cite{...}. The function |term2raw| first converts terms which are
+actually lambda expressions (as opposed to, say, boolean expressions)
+into an intermediary datatype, |Raw|, which can express all lambda
+terms.
+
+\begin{code}
+data Raw : Set where
+  Var  : ℕ              → Raw
+  App  : Raw   → Raw    → Raw
+  Lam  : U'    → Raw    → Raw
+  Lit  : (x : U)   →  Uel x → Raw
+\end{code}
+
+Next we define the erasure of types and a view on terms which tells us if a term is
+well-typed or not, and if it is, gives us the representation in |WT|.
+
+\begin{code}
+erase : forall {Γ τ} → WT Γ τ → Raw
+erase (Var inpf)      = Var (index inpf)
+erase (t ⟨ t₁ ⟩)      = App (erase t) (erase t₁)
+erase (Lam σ t)       = Lam σ (erase t)
+erase (Lit {_}{σ} x)  = Lit σ x
+
+data Infer (Γ : Ctx) : Raw → Set where
+  ok    : (τ : U') (t : WT Γ τ)  → Infer Γ (erase t)
+  bad   : {e : Raw}              → Infer Γ e
+\end{code}
+
+Using this, we can assemble the various parts. For brevity, the function |term2raw| is omitted, but
+it is very much comparable to the function which converts a |Term| into a |BoolExpr| (see Sec. \ref{sec:boolexpr}). One
+might reasonably ask why then |Autoquote| was not used, but |Autoquote| is most suited to simple inductive
+data types without abstractions (eg. the definition of a simple |List| in Haskell).
+
+Now we can write the actual type checking function, |infer|.  For variables and constants, the types are easy to deduce.
 
 
-We don't use |Autoquote| here, because...
+\begin{code}
+infer : (Γ : Ctx)(e : Raw) → Infer Γ e
+infer Γ (Lit ty x) = ok (O ty) (Lit {_}{ty} x)
+infer Γ (Var x) with Γ ! x
+infer Γ (Var .(index p))      | inside σ p = ok σ (Var p)
+infer Γ (Var .(length Γ + m)) | outside m = bad
+\end{code}
+
+The lambda case is also not so complicated: a type $\sigma$ is added to the 
+environment-stack, where $\sigma$ is the type of the argument to the lambda, and the body is type-checked with this new environment,
+and if the body correctly type-checks with type $\tau$, we can return $\sigma \Rightarrow \tau$ as the type of the 
+expression.
+
+\begin{code}
+infer Γ (Lam σ e) with infer (σ ∷ Γ) e
+infer Γ (Lam σ .(erase t)) | ok τ t = ok (σ => τ) (Lam σ t)
+infer Γ (Lam σ e) | bad = bad
+\end{code}
+
+The case for an application is a little trickier, since we must first check that the LHS
+has a function type, and if so, check the type of the RHS, and finally verify that the type
+of the RHS matches the domain of the function type.  If all this holds,  we have a valid application.
+\begin{code}
+infer Γ (App e e₁) with infer Γ e
+infer Γ (App .(erase t) e₁) | ok (Cont a) t = bad
+infer Γ (App .(erase t) e₁) | ok (O x) t = bad
+infer Γ (App .(erase t) e₁) | ok (τ => τ₁) t with infer Γ e₁
+infer Γ (App .(erase t₁) .(erase t₂)) | ok (σ => τ) t₁   | ok σ' t₂ with σ =?= σ'
+infer Γ (App .(erase t₁) .(erase t₂)) | ok (.σ' => τ) t₁ | ok σ' t₂ | yes = ok τ (t₁ ⟨ t₂ ⟩ )
+infer Γ (App .(erase t₁) .(erase t₂)) | ok (σ => τ) t₁   | ok σ' t₂ | no = bad
+infer Γ (App .(erase t) e₁) | ok (τ => τ₁) t | bad = bad
+infer Γ (App e e₁) | bad = bad
+\end{code}
+
+If all of this works, we know we have a term of type |WT Γ σ|, a term which is well-typed (with type |σ|) under the context |Γ|.
+Note that a well-scoped term then has type |WT [] σ|, meaning it contains no references to variables which are not bound
+in the term. 
+
+
+
 
 
 \section{Example: CPS transformation}
 
-% A transformation will be made into SKI combinators.
 
 Maybe we can give a Bove-Capretta example here, too, since |T| uses general recursion.
+
+% TODO how to strike a balance between just presenting what I have now without making
+% the difficulties clear, and writing an irrelevant logbook?
 
 Could be an idea to prove correctness by normalisation and translation back into lambda calculus.
 
@@ -1530,7 +1710,14 @@ us to one of the drawbacks of this solution which has been used quite often (chi
 a proof witness of for example an input term being of the right shape), which is that if such
 an argument is ambiguous, or worse, if it is a type with no inhabitants, the compiler won't fail
 with a type error, but merely with an unsolved meta warning (highlighting the piece of code yellow
-in the Emacs Agda mode).
+in the Emacs Agda mode). This is particularly unfortunate when we are using this technique
+to hide an inferrable proof of the soundness of a theorem, such as in the boolean tautology example (Sec. \ref{sec:boolexpr}).
+The thing is, we do not want a user to get away with being able to prove that something which is not a
+tautology, is a tautology. Since the proof that under all environments the theorem evaluates
+to true is an implicit argument in this style, one is merely left with an unsolved meta, which
+might seem a triviality if one doesn't read the compiler's output carefully. Luckily Agda disallows
+importing modules with unsolved metas, which means such a spurious proof will not be usable elsewhere
+in a real-life development. 
 
 
 \section{Reflection API limitations}\label{sec:reflection-api-limitations}
