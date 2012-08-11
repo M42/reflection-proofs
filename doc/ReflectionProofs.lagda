@@ -1693,6 +1693,7 @@ Cont .b      =?= Cont b     | yes = yes
 Cont a       =?= Cont b     | no  = no
 
 \end{code}
+}
 
 \begin{code}
 erase : forall {Γ τ} → WT Γ τ → Raw
