@@ -104,10 +104,11 @@ should not enjoy doing.
 One of the many techniques invented to allow writing more effective
 code is that of \emph{metaprogramming}, which, in vague terms, refers
 to the ability of a program to inspect (or \emph{reflect}) its own code
-and modify it. This sounds rather magical, but has long been a favourite
+and modify it. To the uninitiated, this sounds rather magical, % cite stupid questions? http://stackoverflow.com/questions/11965535/hey-cant-understand-this-piece-of-code
+but has long been a favourite
 feature of users of such languages as LISP~\cite{lisp-macros}, in many cases allowing
 code to be a lot more concise and general, and thus reusable, than 
-usually is possible in simple imperative languages.%todo citation needed.
+usually is possible in simple imperative languages.%todo citation needed?
 
 
 
@@ -282,6 +283,28 @@ representing the type of the current goal. In this example, the value
 of $e$ in the hole will be |def ℕ []|, i.e., the |Term| representing
 the type |ℕ|.
 
+Another keyword which deals with types is the aptly-named |type| function. Given
+a |Name|, such as the result of |quote identifier|, |type| returns the |Type| representing the
+type of that identifier. This indeed implies one cannot ask the type of an arbitrary
+|Term|, since one would need to introduce it as a defition first, to be able to get its |Name|.
+In |example₂| we see what |type| returns when asked about the successor function (a function with
+type |ℕ → ℕ|, and in |example₃| we illustrate that the term shown is in fact the same as a
+function type from naturals to naturals.
+
+\begin{code}
+example₂   : type (quote ℕ.suc)
+           ≡ el (lit 0)     (pi (arg visible relevant
+                                      (el (lit 0) (def (quote ℕ) [])))
+                                      (el (lit 0) (def (quote ℕ) [])))
+example₂ = refl
+
+example₃   : type          (quote ℕ.suc)
+           ≡ el (lit 0)    (quoteTerm (∀ (n : ℕ) → ℕ))
+example₃ = refl
+
+\end{code}
+
+
 The |unquote| keyword converts a |Term| data type back to concrete
 syntax. Just as |quoteTerm| and |quoteGoal|, it type checks and
 normalizes the |Term| before it is spliced into the program text.
@@ -375,6 +398,8 @@ a description of their use.
 \begin{figure}[h]
 \begin{spec}
 _≟-Name_ : Decidable {A = Name} _≡_
+-- also list the rest of the decidable things?
+-- or just leave it to peoples' imagination?
 
 type : Name → Type
 definition : Name → Definition
@@ -1044,6 +1069,8 @@ zeroleast k (suc n) = Step (coerceDiff (succLemma k n) (zeroleast (1 + k) n))
 
 \end{code}
 }
+
+%TODO explain thoroughly what Diff does.
 
 Now that we have these helper functions, it is easy to define what it
 means to be a tautology. We quantify over a few boolean variables, and
@@ -2328,8 +2355,7 @@ Talk about extension to compiler here, give example of use (as detailed as possi
 % TODO: explain somewhere how the distribution works. i.e. `mk extract` for code extraction, what module contains what, etc.
 
 
-% maybe TODO: talk about first using ≡ true for bool tautologies, and why ⊤/⊥ is much better
-%TODO explain why: since eta-expansion works for records and not data's. has to do with recursion: records don't have recursion. TODO: is this statement correct?
+% TODO: talk about first using ≡ true for bool tautologies, and why ⊤/⊥ is much better
 
 
 % TODO reference Ulf's tutorial for the STLC checker.
@@ -2341,7 +2367,7 @@ Talk about extension to compiler here, give example of use (as detailed as possi
 
 %TODO compare the tauto-solver to tactics, note how this is embedded in agda and not some funny sub-language of coq
 
-% Patrick Bahr's tree automata?
+%todo what are Patrick Bahr's tree automata?
 
 %TODO: Dependently typed LC is difficult to type check: Outrageous but Meaningful Coincidences -- McBride.
 
