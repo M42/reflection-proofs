@@ -30,6 +30,7 @@
 
 \newcommand{\textlambda}{\ensuremath{\lambda}}
 \newcommand{\textGamma}{\ensuremath{\Gamma}}
+\newcommand{\textSigma}{\ensuremath{\Sigma}}
 \newcommand{\texttau}{\ensuremath{\tau}}
 
 

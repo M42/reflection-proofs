@@ -174,6 +174,45 @@ The code and examples presented in this paper all compile using the
 latest version of Agda 2.3.0.1 and are available on
 github.\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}} %TODO this isn't true.
 
+\chapter{Related Work}
+
+% TODO : Mention AChlipala and wjzz here; mcbride with ornaments; 
+
+% TODO : http://web.cecs.pdx.edu/~sheard/staged.html <-- this can be referenced to explain
+% what kind of quoting Agda supports at this point. Also useful for pointing out where stuff
+% isn't powerful enough. Note for example:
+
+% TODO : I would like to do something like this:
+% 
+% cs : (A : Set) → List Name -- give a list of constructors
+% cs type = ... quote type ...
+% 
+% but I can't, because type isn't a defined thing. if I try to use quoteTerm here, I just get
+% something like var 0 [], which of course also isn't useful. I would actually like the same as
+% `quote Col`, for example. i.e. a QName I can actually use.
+% 
+% The same sort of problem holds for unquote: I can't do `unquote (somethingreturningaTerm ...)`
+% because at compile-time it's not always clear that the function `somethingreturningaTerm`
+% will return a bunch of constructors of Term. What we need is delayed or lazy quoting, maybe.
+
+
+This project's main innovations are the novel combinations of existing
+techniques; therefore quite a number of subjects are relevant to mention
+here.
+
+First of all, the idea of reflection in the programming language technology sense,
+was poineered by ... Lisp (check this). People sometimes jokingly say that the more advanced
+a given programming language becomes, the closer it is getting towards Lisp (quote Paul Graham here).
+The fact is, though, that it is becoming increasingly more common to generate pieces of code 
+from a general recipe, giving rise to possibly a more efficient specific implementation, 
+or at the very least not having to reinvent the wheel. Reflection and its applications in
+various settings has been studied in for example .. .. ....
+
+This would seem to be the inspiration for the current reflection system recently introduced
+in Agda, although we shall see that it is lacking in a number of fundamental capabilities.
+
+
+
 \chapter{Reflection in Agda}
 \label{sec:reflection}
 
@@ -795,6 +834,9 @@ data BoolExpr (n : ℕ) : Set where
   Imp           : BoolExpr n → BoolExpr n      →   BoolExpr n
   Atomic        : Fin n                        →   BoolExpr n
 \end{code}
+
+
+%TODO: why can't we go ∀ (e : Env n) → P (formula) ????? Explain!
 
 There is nothing
 surprising about this definition; we use the type |Fin n| to ensure
@@ -2132,23 +2174,29 @@ will we ever get here?
 \section{Implicit record-type arguments}\label{sec:implicit-unit}
 
 As has been noted before, if a particular argument is a record type,
-and it has only one possible inhabitant, the Agda type inferencer can
-automatically infer its value. Thus, it also need not be passed as an argument
+and it has only one possible inhabitant, Agda can
+automatically infer its value. Thus, it also need not be passed as an explicit argument
 at the call-site. The following code snippet (Fig. \ref{code:implicit-example}) illustrates
 how record type arguments having only one alternative can be automatically inferred.
 
+The function |foo| expects a value of type |⊤ × ⊤|, and returns a natural number.
+We know, however, that | _×_ | is a record and only has the constructor | _,_ : A → B → A × B| (this pair type
+is a special case of the dependent pair |Σ (A : Set) (B : A → Set) : Set|), therefore the only
+possible value is one using the constructor |_,_|. If we next look at the values for |A| and |B| here,
+namely the left and right-hand arguments' types, we see that in both cases they have type |⊤|. The
+unit type also is defined as a record with only one constructor, namely |tt|. This means that the 
+only value possible is |tt , tt|, which is why we can use the underscore-notation, meaning
+Agda should infer the argument for us.
+
+The fact that pairs and unit are defined as records in the standard library is pretty crucial here.
+The type system does some work for us in these cases: since eta-conversion is done on record types, which
+allows Agda to infer that there is exactly one inhabitant of a certain type. This eta reduction is not done
+on general data types, since this would increase the complexity of the work the compiler needs to do as
+well as potentially introduce unsound behaviour. %todo cite mcbride here: http://www.haskell.org/pipermail/haskell-cafe/2010-December/087850.html
 
 
-    \begin{figure}[h]
+\begin{figure}[h]
 \begin{code}
-{- TODO nicer story
-notice that u is automatically instantiated, since
-there is only one option, namely tt,tt. this is special and
-cool, the type system is doing work for us. Note that this is
-because eta-reduction only is done in the type system for records
-and not for general data types. possibly the reason is because this is
-safe in records because recursion isn't allowed. question for agda-café?
--}
 foo : ⊤ × ⊤ → ℕ
 foo u = 5
 
@@ -2158,9 +2206,8 @@ bar = foo _
         \caption{Illustrating the automatic inference of record arguments.}
         \label{code:implicit-example}
     \end{figure}
-Since this inference is possible, we omit the argument with the |_|, which tells
-Agda to automatically infer that argument. We can therefore also turn inferrable arguments
-into implicit arguments, as in Fig. \ref{fig:implicit0}.
+Since this inference is possible, we can also make this argument implicit, which effectively
+hides from the user that a value is being inferred and passed, as in Fig. \ref{fig:implicit0}.
     
     \begin{figure}[h]
 \begin{code}
@@ -2174,6 +2221,7 @@ bar' = foo'
         \label{fig:implicit0}
     \end{figure}
 
+    
 This is possible, since the type |⊤ × ⊤| only has one inhabitant, namely |(tt , tt)|. If
 multiple values were valid, the above code would have resulted in an unsolved meta. That brings
 us to one of the drawbacks of this solution which has been used quite often (chiefly to ``hide''
@@ -2201,15 +2249,6 @@ in a real-life development.
 \item untyped terms are returned. this is solved.
 \end{itemize}
 
-\chapter{Related Work}
-
-% Mention AChlipala and wjzz here.
-
-This project's main innovations are the novel combinations of existing
-techniques; therefore quite a number of subjects are relevant to mention
-here.
-
-
 
 \chapter{Discussion}
 \label{sec:discussion}
@@ -2218,7 +2257,8 @@ This paper has presented two simple applications of proof by
 reflection. In the final version, we will show how
 Agda's reflection API has several other applications.
 
-\chapter{Conclusion}\label{sec:conclusion}
+%\chapter{Conclusion}\label{sec:conclusion}
+% is this even a real separate section? Isn't discussion enough?
 
 Answer the research question here.
 
