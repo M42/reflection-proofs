@@ -201,8 +201,14 @@ This project's main innovations are the novel combinations of existing
 techniques; therefore quite a number of subjects are relevant to mention
 here.
 
-First of all, the idea of reflection in the programming language technology sense,
-was poineered by ... Lisp (check this). People sometimes jokingly say that the more advanced
+As far as reflection in general goes, Demers and Malenfant wrote a nice historical overview on the topic. %todo cite.
+What we are referring to as reflection dates back to work by Brian Smith %cite
+and was initially presented in the Lisp family of languages in the 80's. Since then,
+many developments in the functional, logic as well as object-oriented programming worlds have 
+been inspired -- systems with varying power and scope.
+
+
+People sometimes jokingly say that the more advanced
 a given programming language becomes, the closer it is getting towards Lisp (quote Paul Graham here).
 The fact is, though, that it is becoming increasingly more common to generate pieces of code 
 from a general recipe, giving rise to possibly a more efficient specific implementation, 
@@ -211,6 +217,41 @@ various settings has been studied in for example .. .. ....
 
 This would seem to be the inspiration for the current reflection system recently introduced
 in Agda, although we shall see that it is lacking in a number of fundamental capabilities.
+If we look at the taxonomy of reflective systems in programming language technology written up 
+by Sheard %todo cite
+we see that we can make a few rough judgments about the metaprogramming facilities Agda currently 
+supports\footnote{Of course the current implementation is more a proof-of-concept, and is still far from
+being considered finished, so it would be unfair to judge the current implementation all too harshly. In
+fact, the author hopes that this work might motivate the Agda developers to include some more features, to
+make the system truly usable. %TODO is this not becoming more of a discussion / conclusion?
+}. 
+
+Agda's reflection API\ldots
+\begin{itemize}
+\item leans more towards analysis than generation
+\item supports encoding as an algebraic data type (as opposed to a string, for example)
+\item involves manual staging annotations (with keywords such as |quote| and |unquote|)
+\item is neither strictly static nor runtime, but compile-time. This behaves much like a 
+  static system (one which compiles an object program, as does for example YAcc%todo cite
+) would, but doesn't produce intermediate code which might be modified.
+  Note that this fact is essential for Agda to remain sound as a logical framework.
+\item is homogeneous, in that the object language lives inside the metalanguage (as a native
+  data type), but
+\item is only two-stage: we cannot as yet produce an object program which is itself a metaprogram. This is
+  because we rely on built-in keywords such as |quote|, which cannot themselves be quoted.
+\end{itemize}
+
+
+%TODO: idea: put the above in discussion, and just mention Sheard's taxonomy here.
+
+
+Other related work includes the large body of publications in the domain of generic programming, %TODO cite: something like Regular,
+where we found the inspiration to try and  implement some of the techniques in a dependently-typed 
+setting.
+
+Program transformations and their correctness (by various definitions) have long been a subject of research. %todo cite
+
+
 
 
 
@@ -441,17 +482,7 @@ At the time of writing the only constructor we can do anything with is |data-typ
 it we can get a list of constructors, by calling the suitably-named |constructors| function. See the
 illustration in Sec. \ref{sec:inspecting-definitions}.
 
-Finally we have decidable equality on the following types:
-
-\begin{itemize}
-  \item |Visibility|,
-\item |Relevance|,
-\item |List Arg|s, |Arg Type|s, |Arg Term|s, 
-\item  |Name|s, 
-\item  |Term|s,
-  \item |Sort|s
-\item  and |Type|s. 
-  \end{itemize}
+Finally, we have decidable equality on the following types: |Visibility|, |Relevance|, |List Arg|s, |Arg Type|s, |Arg Term|s,  |Name|s,  |Term|s, |Sort|s  and |Type|s. 
 
 Typically, this is useful for deciding which constructor is present in some expression, such as:
 
@@ -480,10 +511,17 @@ isDatatype _ = ⊥
 giveDatatype : (d : Definition) → {pf : isDatatype d} → Data-type
 giveDatatype (data-type d) = d
 giveDatatype (function x)   {()}
+...
+\end{code}
+\vskip -7mm
+\ignore{
+\begin{code}
 giveDatatype (record′ x)    {()}
 giveDatatype constructor′   {()}
 giveDatatype axiom          {()}
 giveDatatype primitive′     {()}
+\end{code}}
+\begin{code}
 
 ℕcons : List Name
 ℕcons = constructors (giveDatatype (definition (quote ℕ)))
@@ -1096,7 +1134,7 @@ to lift our decision function to arbitrary environments.
 
 
 
-The way we do this is the function |foralls|. This function represents the real analogue
+The way we do this is the function |foralls|. This function represents the  analogue
 of |even?| in this situation: it returns a type which is only inhabited if the argument boolean
 expression is true under all variable assignments. This is done by generating a full binary tree
 of unit values |⊤|, the single possible value which only exists if the interpretation function |⟦_⊢_⟧|
