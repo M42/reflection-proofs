@@ -10,8 +10,8 @@
 %include generated-colour.fmt
 %endif
 
-%\usepackage{todonotes}
-\usepackage[disable]{todonotes}
+\usepackage{todonotes}
+%\usepackage[disable]{todonotes}
 \newcommand{\ignore}[1]{}
 \def\CC{{C\nolinebreak[4]\hspace{ -.05em}\raisebox{.4ex}{\tiny\bf ++}}}
 
@@ -63,14 +63,13 @@ open import Data.List hiding (_∷ʳ_)
 %%Department of Computer Science, Utrecht University
 %%}
 
-%TODO make a fancy front page
 
 %TODO add citations to everything which seems like an unfounded statement.
 
 \begin{document}
 
 \maketitle
-%todo: create own title page. hint: something about hens.
+%TODO make a fancy title page
 
 \clearpage
 \pagestyle{empty}
@@ -104,7 +103,7 @@ should not enjoy doing.
 One of the many techniques invented to allow writing more effective
 code is that of \emph{metaprogramming}, which, in vague terms, refers
 to the ability of a program to inspect (or \emph{reflect}) its own code
-and modify it. To the uninitiated, this sounds rather magical, % cite stupid questions? http://stackoverflow.com/questions/11965535/hey-cant-understand-this-piece-of-code
+and modify it. To the uninitiated, this sounds rather magical \cite{reflection-stackoverflow},
 but has long been a favourite
 feature of users of such languages as LISP~\cite{lisp-macros}, in many cases allowing
 code to be a lot more concise and general, and thus reusable, than 
@@ -162,13 +161,13 @@ reflection. More specifically it makes the following contributions:
   guarantee \emph{type safety of meta-programs}. To illustrate this
   point, we will develop a type safe translation from the simply typed
   lambda calculus to combinatory logic, followed
-by a type-safe translation of closed lambda terms into SKI combinator calculus (Chapter \ref{sec:type-safe-metaprogramming}).
+by a type-safe translation of closed lambda terms into SKI combinator calculus (Chapter~\ref{sec:type-safe-metaprogramming}).
  
 \item A number of neat examples are given on how to automate certain
   aspects of modifying a program to use generic programming techniques in Chapter~\ref{sec:generic-programming}. 
 
 \item Finally, we also discuss some of the
-  limitations of the current implementation of reflection (Sec. \ref{sec:reflection-api-limitations}).
+  limitations of the current implementation of reflection (Sec.~\ref{sec:reflection-api-limitations}).
 \end{itemize}
 
 The code and examples presented in this paper all compile using the
@@ -218,13 +217,13 @@ various settings has been studied in for example .. .. ....
 This would seem to be the inspiration for the current reflection system recently introduced
 in Agda, although we shall see that it is lacking in a number of fundamental capabilities.
 If we look at the taxonomy of reflective systems in programming language technology written up 
-by Sheard %todo cite
+by Sheard \cite{sheard-staged-programming}
 we see that we can make a few rough judgments about the metaprogramming facilities Agda currently 
 supports\footnote{Of course the current implementation is more a proof-of-concept, and is still far from
 being considered finished, so it would be unfair to judge the current implementation all too harshly. In
 fact, the author hopes that this work might motivate the Agda developers to include some more features, to
-make the system truly usable. %TODO is this not becoming more of a discussion / conclusion?
-}. 
+make the system truly useful. 
+}. \todo{ is this not becoming more of a discussion / conclusion?}
 
 Agda's reflection API\ldots
 \begin{itemize}
@@ -242,12 +241,14 @@ Agda's reflection API\ldots
 \end{itemize}
 
 
-%TODO: idea: put the above in discussion, and just mention Sheard's taxonomy here.
+\todo{idea: put the above in discussion, and just mention Sheard's taxonomy here.}
 
 
-Other related work includes the large body of publications in the domain of generic programming, %TODO cite: something like Regular,
-where we found the inspiration to try and  implement some of the techniques in a dependently-typed 
-setting.
+Other related work includes the large body of publications in the
+domain of generic programming
+\cite{Rodriguez:2008:CLG:1543134.1411301,mcbride2010ornamental}, where we found the
+inspiration to try and implement some of the techniques in a
+dependently-typed setting.
 
 Program transformations and their correctness (by various definitions) have long been a subject of research. %todo cite
 
@@ -277,7 +278,7 @@ terms. An overview of the core data types involved has been
 included in Figure~\ref{fig:reflection}. In addition to these data
 types that represent \emph{terms}, there is limited support for
 reflecting \emph{definitions} as opposed to terms. Inspection of definitions
-is detailed in Sec. \ref{sec:inspecting-definitions}.
+is detailed in Sec.~\ref{sec:inspecting-definitions}.
 
 There are several new keywords that can be used to quote and unquote
 |Term| values: |quote|, |quoteTerm|, |quoteGoal|, and |unquote|. The
@@ -427,7 +428,7 @@ example in how to pull apart |Term|s, as well as a useful function,
 since it provides the feature of automatically converting a |Term|
 into some AST type, if a mapping is provided from concrete Agda
 |Name|s to constructors of this AST. An explanation of its implementation is given
-in Sec. \ref{sec:autoquote}, and an example use-case is given in \ref{sec:autoquote-example}.
+in Sec.~\ref{sec:autoquote}, and an example use-case is given in \ref{sec:autoquote-example}.
 
 
 \section{List of functions exported by |Reflection|}
@@ -480,7 +481,7 @@ data Definition : Set where
 
 At the time of writing the only constructor we can do anything with is |data-type|: using
 it we can get a list of constructors, by calling the suitably-named |constructors| function. See the
-illustration in Sec. \ref{sec:inspecting-definitions}.
+illustration in Sec.~\ref{sec:inspecting-definitions}.
 
 Finally, we have decidable equality on the following types: |Visibility|, |Relevance|, |List Arg|s, |Arg Type|s, |Arg Term|s,  |Name|s,  |Term|s, |Sort|s  and |Type|s. 
 
@@ -534,14 +535,14 @@ consExample = refl
 So now we have in |ℕcons| a list of the names of the constructors of the data type |ℕ|, which we
 could use to do more interesting things which depend on the structure of a data type, such as
 giving isomorphisms to generic representations of data types, such as is often done using
-Template Haskell. % TODO:  cite example of TH doing auto-EP (regular?)
-This capability is exploited in Sec. \ref{sec:generic-programming}.
+Template Haskell, for example in the Regular library for generic programming \cite{van2010lightweight}.
+This capability is exploited in Sec.~\ref{sec:generic-programming}.
 
 
 
 
 
-\section{Introducing |Autoquote|}\label{sec:autoquote} % TODO move this to after boolexpr? or ??
+\section{Introducing |Autoquote|}\label{sec:autoquote} \todo{move this to after boolexpr? or?}
 
 Imagine we have some AST, for example |Expr|, which is presented below.
 This is a rather simple data structure representing terms which can contain Peano style natural
@@ -557,7 +558,7 @@ data Expr : Set where
 
 We might concievably want to convert a piece of concrete syntax, such as $5 + x$, to this
 AST, using Agda's reflection system. This typically involves ugly and verbose functions such
-as the one from Sec. \ref{sec:boolean-tautologies} with many with-clauses and frankly, too
+as the one from Sec.~\ref{sec:boolean-tautologies} with many with-clauses and frankly, too
 much tedium to be anything to be proud of. What we would actually like to be able to do,
 is provide a mapping from concrete constructs such as the |_+_| function to elements of our
 AST, and get a conversion function for free.
@@ -580,10 +581,10 @@ this is a copy of the standard library |Data.Vec.N-ary|, but has been instantiat
 to contain functions with types in |Set|. This was necessary, since the standard library version of
 |N-ary| can hold functions of arbitrary level (i.e. |Set n|), and therefore the level of the 
 |N-ary| argument inside |ConstructorMapping| could not be inferred, giving an unsolved constraint
-which prevented the module from being imported. % TODO be more clear about this error.
+which prevented the module from being imported.  \todo{ be more clear about this error.}
 
 Using this |N-ary| we can now define an entry in our mapping |Table| as having an arity, and mapping
-a |Name| (which is Agda's internal representation of an identifier, see Sec. \ref{sec:refl-doc}) to a
+a |Name| (which is Agda's internal representation of an identifier, see Sec.~\ref{sec:refl-doc}) to a
 constructor in the AST we would like to cast the |Term| to.
 
 \begin{code}
@@ -741,7 +742,7 @@ something = refl
 The |BoolExpr| AST used in \ref{sec:boolean-tautologies} provides a
 good motivating example for using |Autoquote|, therefore a slightly
 more real-world example of |Autoquote| in use can be found in
-Sec. \ref{sec:autoquote-example}.
+Sec.~\ref{sec:autoquote-example}.
 
 
 \chapter{Proof by Reflection}
@@ -755,7 +756,7 @@ is the capability of converting some piece of concrete program syntax
 into a syntax tree object which can be manipulated in the same
 system. Reflection in the proof technical sense is the method of
 mechanically constructing a proof of a theorem by inspecting its
-shape. %todo cite some mathematical reference.
+shape. \todo{cite some mathematical reference.}
 Here we will present two case studies illustrating proof by
 reflection and how Agda's reflection mechanism can make the technique
 more usable and accessible.
@@ -860,7 +861,7 @@ implicit argument, meaning a user could get away with writing just
 clarity this is not done here, but the complete implementation
 available on github does use this trick. A detailed explanation of this
 technique, which is used extensively in the final code, is given in
-Sec. \ref{sec:implicit-unit}.
+Sec.~\ref{sec:implicit-unit}.
 
 \section{Second Example: Boolean Tautologies}\label{sec:boolean-tautologies}
 
@@ -883,7 +884,7 @@ trying all possible variable assignments, since this will give $2^n$
 cases, where $n$ is the number of variables.
 
 To automate this process, we will follow a similar approach to
-the one given in the section on even natural numbers (Sec. \ref{sec:evenness}). We start by defining an
+the one given in the section on even natural numbers (Sec.~\ref{sec:evenness}). We start by defining an
 inductive data type to represent boolean expressions with $n$ free
 variables.
 
@@ -1267,7 +1268,7 @@ formula twice. We also have to count the number of variables
 ourselves and convert them the to De Bruijn indices. This is
 error-prone given how cluttered the abstract representation can get
 for formulae containing many variables. It would be desirable for this
-process to be automated. In Sec. \ref{sec:addrefl} a solution is
+process to be automated. In Sec.~\ref{sec:addrefl} a solution is
 presented using Agda's recent reflection API.
 
 \section{Adding Reflection}\label{sec:addrefl}
@@ -1351,7 +1352,7 @@ hand.
 These are all the ingredients required to automatically prove that
 formulae are tautologies.  The following code illustrates the use of
 the |proveTautology| functions; we can omit the implicit arguments for
-the reasons outlined in Sec. \ref{sec:implicit-unit}.
+the reasons outlined in Sec.~\ref{sec:implicit-unit}.
 
 \begin{code}
 exclMid    : (b : Bool) → P(b ∨ ¬ b)
@@ -1373,7 +1374,7 @@ Furthermore, by using the proof by reflection technique, the proof is generated 
 
 \subsection{An aside: real-world example of |Autoquote|}\label{sec:autoquote-example}
 
-The process of quoting to a |BoolExpr n| outlined in Sec. \ref{sec:boolexpr}
+The process of quoting to a |BoolExpr n| outlined in Sec.~\ref{sec:boolexpr}
 quickly becomes an ugly mess, with functions checking properties of an expression (such
 as only certain functions occurring) being pretty similar, save the number of arguments
 functions require or which functions are allowed.
@@ -1381,7 +1382,7 @@ functions require or which functions are allowed.
 The actual conversion function also ends up having many branches, checking if the current
 constructor or definition is on we know, \&c. This process can be made a lot less ugly.
 Recall the |Autoquote| module developed in
-Sec. \ref{sec:autoquote}; this can be used here, both as an
+Sec.~\ref{sec:autoquote}; this can be used here, both as an
 illustration of the use of |Autoquote|, and to avoid code duplication,
 thus making the code for |term2boolexpr| more concise.
 
@@ -1472,7 +1473,7 @@ bool2fin n (Atomic x)  p₁ | yes p = Atomic (fromℕ≤ {x} p)
 bool2fin n (Atomic x)  () | no ¬p
 \end{spec}
 
-With these ingredients, our |concrete2abstract| function presented in Sec. \ref{sec:boolexpr}
+With these ingredients, our |concrete2abstract| function presented in Sec.~\ref{sec:boolexpr}
 can be rewritten to the following  drop-in replacement, illustrating how useful such an
 abstraction can be. 
 
@@ -1521,9 +1522,8 @@ automations of tasks otherwise requiring
     text for use as clauses in contracts or as part of a computer
     program''}.} code, such as automatically generating
 embedding-projection function pairs for generic programming (for
-example in \cite{norell2004prototyping})
-or % TODO insert example of metaprogramming applications here.
-\dots.
+example in \cite{norell2004prototyping}).
+
 
 Clearly, the technique is a very useful one, but it does have a glaring
 limitation (or should we say, potential pitfall), namely that when one
@@ -1565,7 +1565,7 @@ library should provide the following elements.
 \item |Uel : U → Set| An interpretation function, which returns the Agda type corresponding to some element of your universe.
 \item |quoteBack : (x : U) → Uel x → Term| A function which can turn a value in your universe into an Agda |Term|
 \item |equal? : (x : U) → (y : U) → Equal? x y| A function which implements decidable equality between elements of your universe.
-\item |returnType : U| The return type for a CPS transformed function. Will be detailed in Sec. \ref{sec:cps}.
+\item |returnType : U| The return type for a CPS transformed function. Will be detailed in Sec.~\ref{sec:cps}.
 \item |type? : Name → Maybe U| A function which translates Agda identifiers into elements of your universe |U|.
 \item |quoteVal : (x : U) → Term → Uel x| Finally, a function which, given an Agda term, translates it into your universe.
 \end{itemize}
@@ -1574,10 +1574,10 @@ library should provide the following elements.
 The universe (set of possible types) we
 use is |U'|, which is made up of base types (|O|) and function types (|_=>_|). There
 is also an extra constructor |Cont| which stands for the type of a continuation. This will
-be explained in the section on continuation-passing style, Sec. \ref{sec:cps}.
+be explained in the section on continuation-passing style, Sec.~\ref{sec:cps}.
 
 
-%% TODO insert typing derivations here.
+\todo{ insert typing derivations here.}
 
 
 As usual, these typing judgments (or derivations) translate naturally into
@@ -1589,7 +1589,7 @@ the dependent type signatures of the constructors allow us to express
 constraints such as that a de Bruijn-indexed variable must be at most
 $n$, with $n$ the depth of the current sub-expression, with depth
 defined as the number of $\lambda$'s before one is at top-level
-scope. %TODO reference a paper about debruijn indices.
+scope. \todo{ reference a paper about debruijn indices?}
 
 
 \begin{code}
@@ -1815,7 +1815,7 @@ data Infer (Γ : Ctx) : Raw → Set where
 \end{code}
 
 Using this, we can assemble the various parts. For brevity, the function |term2raw| is omitted, but
-it is very much comparable to the function which converts a |Term| into a |BoolExpr| (see Sec. \ref{sec:boolexpr}). One
+it is very much comparable to the function which converts a |Term| into a |BoolExpr| (see Sec.~\ref{sec:boolexpr}). One
 might reasonably ask why then |Autoquote| was not used, but |Autoquote| is most suited to simple inductive
 data types without abstractions (eg. the definition of a simple |List| in Haskell).
 
@@ -2014,11 +2014,9 @@ our terms) are not violated (preserved?).
 The first case study in this area is that  of transforming lambda terms into continuation-passing style (CPS).
 The idea of CPS is not new; it is what happens when you take the primitive idea of computer programming, which
 essentially involves calling functions and returning values after their completion, and remove the notion
-of returning. % todo cite
-
+of returning \cite{asai2011introduction}.\todo{elaborate}
 This seems both profound and unusable, yet it turns out to be a useful
-paradigm for many applications. %todo cite, among others web
-                                %programming, free book by indian dude
+paradigm for many applications \cite{krishnamurthi2007programming}.
 Consider the example where you want to print an integer, but before doing so, would like
 to call, on that number, the function which increases integers by 1. That might look something like
 this:
@@ -2086,8 +2084,7 @@ equivFact5 = refl
 
 This transformation can be done in a mechanical way, too. Also the type we
 expect the new function to have can be derived. This is discussed at length by
-Might %TODO cite might
-, whose implementation was also used as inspiration for this type-safe version.
+Might \cite{might-cps}, whose implementation was also used as inspiration for this type-safe version.
 
 The type of a CPS-transformed function can be computed as follows, where |RT| stands
 for some return type.
@@ -2257,7 +2254,7 @@ The fact that pairs and unit are defined as records in the standard library is p
 The type system does some work for us in these cases: since eta-conversion is done on record types, which
 allows Agda to infer that there is exactly one inhabitant of a certain type. This eta reduction is not done
 on general data types, since this would increase the complexity of the work the compiler needs to do as
-well as potentially introduce unsound behaviour. %todo cite mcbride here: http://www.haskell.org/pipermail/haskell-cafe/2010-December/087850.html
+well as potentially introduce unsound behaviour \cite{mcbride-motivation-eta-rules}.
 
 
 \begin{figure}[h]
@@ -2294,7 +2291,7 @@ a proof witness of for example an input term being of the right shape), which is
 an argument is ambiguous, or worse, if it is a type with no inhabitants, the compiler won't fail
 with a type error, but merely with an unsolved meta warning (highlighting the piece of code yellow
 in the Emacs Agda mode). This is particularly unfortunate when we are using this technique
-to hide an inferrable proof of the soundness of a theorem, such as in the boolean tautology example (Sec. \ref{sec:boolexpr}).
+to hide an inferrable proof of the soundness of a theorem, such as in the boolean tautology example (Sec.~\ref{sec:boolexpr}).
 The thing is, we do not want a user to get away with being able to prove that something which is not a
 tautology, is a tautology. Since the proof that under all environments the theorem evaluates
 to true is an implicit argument in this style, one is merely left with an unsolved meta, which
@@ -2349,16 +2346,16 @@ The modifications made are the following.
 \begin{itemize}
 
 \item The output of the reflection system (in other words the |Term| data type)
-was modified to include type annotations on lambda abstractions. See Sec. \ref{sec:annotating-lambdas}.
+was modified to include type annotations on lambda abstractions. See Sec.~\ref{sec:annotating-lambdas}.
 \item For convenience of producing syntax-highlighted documents from Literate Agda,
-the compiler was extended to output a list of formatting rules based on the currently in-scope identifiers. See Sec. \ref{sec:lhs-syntax}.
+the compiler was extended to output a list of formatting rules based on the currently in-scope identifiers. See Sec.~\ref{sec:lhs-syntax}.
 \end{itemize}
 
 
 
 \section{Annotating |λ| expressions with type}\label{sec:annotating-lambdas}
 
-As mentioned in Sec. \ref{sec:...} it was necessary to slightly modify the
+As mentioned in Sec.~\ref{sec:...} it was necessary to slightly modify the
 representation of |Term|s that the reflection system returns to the user. What was
 needed was to annotate lambda abstractions with the type of their argument, since without
 this, type inferencing would be necessary. However possible, this would introduce unneeded complexity
