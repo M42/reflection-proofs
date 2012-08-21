@@ -1,9 +1,23 @@
 @article{mcbride2010ornamental,
   title={Ornamental algebras, algebraic ornaments},
-  author={McBRIDE, C.},
+  author={McBride, C.},
   journal={Journal of Functional Programming},
   year={2010}
 }
+
+@article{DBLP:journals/lisp/Stump09,
+  author    = {Aaron Stump},
+  title     = {Directly reflective meta-programming},
+  journal   = {Higher-Order and Symbolic Computation},
+  volume    = {22},
+  number    = {2},
+  year      = {2009},
+  pages     = {115-144},
+  ee        = {http://dx.doi.org/10.1007/s10990-007-9022-0},
+  bibsource = {DBLP, http://dblp.uni-trier.de}
+}
+
+
 @article{van2010lightweight,
   title={A lightweight approach to datatype-generic rewriting},
   author={Van Noort, T. and Rodriguez Yakushev, A. and Holdermans, S. and Jeuring, J. and Heeren, B. and Magalh{\~a}es, J.P.},
@@ -14,10 +28,12 @@
   year={2010},
   publisher={Cambridge Univ Press}
 }
-@article{asai2011introduction,
+@misc{asai2011introduction,
   title={Introduction to Programming with Shift and Reset},
   author={Asai, K. and Kiselyov, O.},
-  year={2011}
+  year={2011},
+  howpublished={online, \url{http://pllab.is.ocha.ac.jp/~asai/cw2011tutorial/main-e.pdf}},
+  note={[accessed 21-Aug-2012]}
 }
 
 
@@ -68,11 +84,14 @@ note={[online, accessed 20-Aug-2010]}}
 	Bdsk-Url-1 = {http://doi.acm.org/10.1145/258993.259019},
 	Bdsk-Url-2 = {http://dx.doi.org/10.1145/258993.259019}}
 
-% useful for CPS transform info
-@article{krishnamurthi2007programming,
-      title={Programming languages: Application and interpretation},
-        author={Krishnamurthi, S.},
-          year={2007}
+% useful for CPS transform info, and why it's a good idea
+@book{krishnamurthi2007programming,
+  author    = {Shriram Krishnamurthi},
+  title     = {Programming languages - application and interpretation},
+  publisher = {e-book},
+  year      = {2003},
+  ee        = {http://www.cs.brown.edu/$\sim$sk/Publications/Books/ProgLangs/},
+  bibsource = {DBLP, http://dblp.uni-trier.de}
 }
 
 
@@ -114,13 +133,6 @@ note={[online, accessed 20-Aug-2010]}}
 	Volume = {13},
 	Year = {2003}}
 
-@article{norell2009dependently,
-	Author = {Norell, U.},
-	Journal = {Advanced Functional Programming},
-	Pages = {230--266},
-	Publisher = {Springer},
-	Title = {Dependently typed programming in Agda},
-	Year = {2009}}
 
 @book{nielson1999principles,
 	Author = {Nielson, F. and Nielson, H.R. and Hankin, C.},
@@ -193,10 +205,51 @@ note={[online, accessed 20-Aug-2010]}}
 @misc{reflection-stackoverflow,
 	Howpublished = {online, \url{http://stackoverflow.com/questions/11965535/hey-cant-understand-this-piece-of-code}},
 	Note = {[accessed 20-Aug-2012]},
-	Title = {{hey can't understand this piece of code -- a question about reflection}},
+	Title = {{``hey can't understand this piece of code'' -- a question about reflection}},
 	Author = {{Stackoverflow user maddy}}
 	}
 	
+@inproceedings{demers1995reflection,
+  title={Reflection in logic, functional and object-oriented programming: a short comparative study},
+  author={Demers, F.N. and Malenfant, J.},
+  booktitle={Proceedings of the IJCAI},
+  volume={95},
+  pages={29--38},
+  year={1995}
+}
+
+@inproceedings{Smith:1984:RSL:800017.800513,
+ author = {Smith, Brian Cantwell},
+ title = {Reflection and semantics in LISP},
+ booktitle = {Proceedings of the 11th ACM SIGACT-SIGPLAN symposium on Principles of programming languages},
+ series = {POPL '84},
+ year = {1984},
+ isbn = {0-89791-125-3},
+ location = {Salt Lake City, Utah, United States},
+ pages = {23--35},
+ numpages = {13},
+ url = {http://doi.acm.org/10.1145/800017.800513},
+ doi = {10.1145/800017.800513},
+ acmid = {800513},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+} 
+@book{graham04,
+  added-at = {2009-10-04T21:26:12.000+0200},
+  author = {Graham, Paul},
+  biburl = {http://www.bibsonomy.org/bibtex/20c70645da3a77a5b1b6f0f5a3996cca0/fneur},
+  howpublished = {Hardcover},
+  interhash = {e7839273cd28f027ba851e21b66e6ea9},
+  intrahash = {0c70645da3a77a5b1b6f0f5a3996cca0},
+  keywords = {imported},
+  month = May,
+  publisher = {O'Reilly},
+  timestamp = {2009-10-04T21:26:12.000+0200},
+  title = {Hackers and Painters: Big Ideas from the Computer Age},
+  url = {http://www.seknews.de/2009/03/19/skimming-fall-fahndung-nach-drei-tatverdaechtigen/},
+  year = 2004,
+  chapter = 13
+}
 @misc{unified-diff,
 	Author = {{GNU Project, various authors}},
 	Howpublished = {online, \url{https://www.gnu.org/software/diffutils/manual/html_node/Detailed-Unified.html#Detailed-Unified}},
@@ -230,6 +283,24 @@ note={[online, accessed 20-Aug-2010]}}
 	Title = {Agda 2.2.8 release notes},
 	Year = 2012}
 
+@article{Partsch:1983:PTS:356914.356917,
+ author = {Partsch, H. and Steinbr\"{u}ggen, R.},
+ title = {Program Transformation Systems},
+ journal = {ACM Comput. Surv.},
+ issue_date = {Sept. 1983},
+ volume = {15},
+ number = {3},
+ month = sep,
+ year = {1983},
+ issn = {0360-0300},
+ pages = {199--236},
+ numpages = {38},
+ url = {http://doi.acm.org/10.1145/356914.356917},
+ doi = {10.1145/356914.356917},
+ acmid = {356917},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+} 
 @book{chlipala2011certified,
 	Author = {Chlipala, A.},
 	Publisher = {MIT Press},
@@ -267,3 +338,20 @@ note={[online, accessed 20-Aug-2010]}}
 	Pages = {43--54},
 	Title = {Type inference in context},
 	Year = {2010}}
+@inproceedings{Norell:2009:DTP:1481861.1481862,
+ author = {Norell, Ulf},
+ title = {Dependently typed programming in Agda},
+ booktitle = {Proceedings of the 4th international workshop on Types in language design and implementation},
+ series = {TLDI '09},
+ year = {2009},
+ isbn = {978-1-60558-420-1},
+ location = {Savannah, GA, USA},
+ pages = {1--2},
+ numpages = {2},
+ url = {http://doi.acm.org/10.1145/1481861.1481862},
+ doi = {10.1145/1481861.1481862},
+ acmid = {1481862},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {dependent types, programming},
+}

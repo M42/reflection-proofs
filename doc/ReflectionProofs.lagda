@@ -114,7 +114,7 @@ usually is possible in simple imperative languages.%todo citation needed?
 
 
 The dependently typed programming language
-Agda~\cite{norell:thesis,norell2009dependently} has recently been
+Agda~\cite{norell:thesis,Norell:2009:DTP:1481861.1481862} has recently been
 extended with a \emph{reflection mechanism} for compile time meta
 programming in the style of Lisp~\cite{lisp-macros},
 MetaML~\cite{metaml}, Template Haskell~\cite{template-haskell}, and
@@ -200,19 +200,20 @@ This project's main innovations are the novel combinations of existing
 techniques; therefore quite a number of subjects are relevant to mention
 here.
 
-As far as reflection in general goes, Demers and Malenfant wrote a nice historical overview on the topic. %todo cite.
-What we are referring to as reflection dates back to work by Brian Smith %cite
+As far as reflection in general goes, Demers and Malenfant \cite{demers1995reflection} wrote a nice historical overview on the topic.
+What we are referring to as reflection dates back to work by Brian Smith \cite{Smith:1984:RSL:800017.800513}
 and was initially presented in the Lisp family of languages in the 80's. Since then,
 many developments in the functional, logic as well as object-oriented programming worlds have 
 been inspired -- systems with varying power and scope.
 
 
 People sometimes jokingly say that the more advanced
-a given programming language becomes, the closer it is getting towards Lisp (quote Paul Graham here).
-The fact is, though, that it is becoming increasingly more common to generate pieces of code 
+a given programming language becomes, the more it converges towards Lisp \cite{graham04}.
+The fact is, though, that it is becoming increasingly common to generate pieces of code 
 from a general recipe, giving rise to possibly a more efficient specific implementation, 
-or at the very least not having to reinvent the wheel. Reflection and its applications in
-various settings has been studied in for example .. .. ....
+or at the very least not having to reinvent the wheel. Reflection is becoming more common, to
+various extents, in industry-standard languages such as Java, Objective-C, as well as theoretically more interesting
+languages, such as Haskell \cite{DBLP:journals/lisp/Stump09}.
 
 This would seem to be the inspiration for the current reflection system recently introduced
 in Agda, although we shall see that it is lacking in a number of fundamental capabilities.
@@ -250,8 +251,11 @@ domain of generic programming
 inspiration to try and implement some of the techniques in a
 dependently-typed setting.
 
-Program transformations and their correctness (by various definitions) have long been a subject of research. %todo cite
+Program transformations and their correctness (by various definitions) have long been a subject of research \cite{Partsch:1983:PTS:356914.356917},
+and given more advanced languages with more powerful generative programming techniques, this will likely prove a continuing trend.
 
+As far as the proof techniques used in the section on proof by reflection (Chapter~\ref{sec:proof-by-reflection}) is concerned,  
+Chlipala's work \cite{chlipala2011certified} proved an invaluable resource, both for inspiration and guidance.
 
 
 
@@ -1742,8 +1746,8 @@ modifications to the compiler are detailed in Appendix \ref{sec:annotating-lambd
 
 Now that we have annotations in |Term|s, all that remains is to
 type-check them and simultaneously convert them into |WT| terms. The
-algorithm used here is inspired by a tutorial written by Norell
-\cite{...}. The function |term2raw| first converts terms which are
+algorithm used here is inspired by the Agda tutorial written by Norell
+\cite{Norell:2009:DTP:1481861.1481862}. The function |term2raw| first converts terms which are
 actually lambda expressions (as opposed to, say, boolean expressions)
 into an intermediary datatype, |Raw|, which can express all lambda
 terms.
