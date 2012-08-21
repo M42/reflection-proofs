@@ -1137,6 +1137,12 @@ wrap the formula in our |P| decision function. If the resulting type is
 inhabited, the argument to |P| is a tautology, i.e., for each
 assignment of the free variables the entire equation still evaluates
 to |true|. An example encoding of such a theorem is Figure \ref{fig:exampletheorem}.
+
+One might wonder why propositions are not encoded in the slightly more 
+intuitive propositional equality style, for example |(b : Bool) → b ∨ ¬ b ≡ true|, since
+that notation more obviously reflects the meaning of ``being a tautology'', as opposed 
+to one having to understand the |So| function. This is detailed in Sec.~\ref{sec:no-propositional-equality}.
+
 \begin{figure}\label{fig:exampletheorem}
 \begin{code}
 exampletheorem : Set
@@ -1183,7 +1189,7 @@ What should the return type of the |sound| lemma be? We would like to
 prove that the argument |b| is a tautology, and hence, the |sound|
 function should return something of the form |(b1 ... bn : Bool) -> P
 B|, where |B| is an expression in the image of the interpretation
-|⟦_⊢_⟧|. For instance, the statement |exampletheorem| is a statement
+|⟦_⊢_⟧|. For instance, the statement |exampletheorem| is a proposition
 of this form.
 
 The function |proofObligation|, given a |BoolExpr n|, generates the
@@ -1289,6 +1295,31 @@ error-prone given how cluttered the abstract representation can get
 for formulae containing many variables. It would be desirable for this
 process to be automated. In Sec.~\ref{sec:addrefl} a solution is
 presented using Agda's recent reflection API.
+
+\subsection{Why Not Propositional Equality?}\label{sec:no-propositional-equality}
+
+The question of why the |So| operator is used here to denote that a formula is 
+a tautology, as opposed to just writing the literal definition of tautology, namely
+|∀ (b : Bool) → Q(b) ≡ true| for some formula |Q| depending on |b|, was posed in the previous section.
+The reason for this is mainly a technical one. It is possible to prove tautologies of this form, but
+using this format for reasoning about Boolean formulae becomes rather more involved.
+
+The reason for this is
+that the |So| operator returns a type, namely either unit or empty, which can
+be passed around as an automatically-inferred implicit value (see Sec.~\ref{sec:implicit-unit} for a 
+detailed explanation about implicit inferred arguments). Because of this, the
+recursive cases of functions such as |soundness| become a lot simpler: the interpretation
+of a sub-expression being true becomes the same as a unit type being inhabited, and the and-operator
+corresponds to a pair. If the propositional equality way was being used, many lemmas such as that 
+|a ∧ b ≡ true ⇒ a ≡ true ∧ b ≡ true| need to be proven, and they are continually needed to
+pull apart such propositions for recursive calls. Using an existential type is much simpler in this
+case.
+% proof irrelevance: prove a type with a program, but then throw away the program, i.e. the actual proof doesn't matter??
+
+\subsection{Why Not Enumerate Environments?}\label{sec:no-enumerate-environments}
+
+
+
 
 \section{Adding Reflection}\label{sec:addrefl}
 
@@ -1445,9 +1476,9 @@ term2boolexpr' t {pf} = doConvert boolTable t {pf}
 \end{code}
 
 Once we have a |BoolInter| expression, we just need to check that its
-variables are all in-scope (this means that $\forall Atomic x : x < n$, if we
-want to convert to a |BoolExpr n|. This is done in |bool2fin|, assuming that |bool2finCheck|
-holds (the latter simple expresses the aforementioned property).
+variables are all in-scope (this means that $\forall$ |Atomic x| $ : x < n$, if we
+want to convert to a |BoolExpr n|). This is done in |bool2fin|, assuming that |bool2finCheck|
+holds (the latter simple expresses the aforementioned in-scope property).
 
 \ignore{
 \begin{code}
@@ -1463,14 +1494,14 @@ bool2finCheck n (Atomic x)   | yes p = ⊤
 bool2finCheck n (Atomic x)   | no ¬p = ⊥
 
 bool2fin : (n : ℕ) → (t : BoolInter) → (bool2finCheck n t) → BoolExpr n
-bool2fin n Truth       pf = Truth
-bool2fin n Falsehood   pf = Falsehood
-bool2fin n (And t t₁) (p₁ , p₂) = And (bool2fin n t p₁) (bool2fin n t₁ p₂)
-bool2fin n (Or t t₁)  (p₁ , p₂) = Or (bool2fin n t p₁) (bool2fin n t₁ p₂)
-bool2fin n (Not t)     p₁ = Not (bool2fin n t p₁)
-bool2fin n (Imp t t₁) (p₁ , p₂) =  Imp (bool2fin n t p₁) (bool2fin n t₁ p₂)
+bool2fin n Truth       pf          = Truth
+bool2fin n Falsehood   pf          = Falsehood
+bool2fin n (And t t₁) (p₁ , p₂)    = And (bool2fin n t p₁) (bool2fin n t₁ p₂)
+bool2fin n (Or t t₁)  (p₁ , p₂)    = Or  (bool2fin n t p₁) (bool2fin n t₁ p₂)
+bool2fin n (Not t)     p₁          = Not (bool2fin n t p₁)
+bool2fin n (Imp t t₁) (p₁ , p₂)    = Imp (bool2fin n t p₁) (bool2fin n t₁ p₂)
 bool2fin n (Atomic x)  p₁ with suc x ≤? n
-bool2fin n (Atomic x)  p₁ | yes p = Atomic (fromℕ≤ {x} p)
+bool2fin n (Atomic x)  p₁ | yes p  = Atomic (fromℕ≤ {x} p)
 bool2fin n (Atomic x)  () | no ¬p
 \end{code}
 }
@@ -1480,8 +1511,8 @@ bool2finCheck n Truth        = ⊤
 bool2finCheck n (And t t₁)   = bool2finCheck n t × bool2finCheck n t₁
 ...
 bool2finCheck n (Atomic x)   with suc x ≤? n
-bool2finCheck n (Atomic x)   | yes p = ⊤
-bool2finCheck n (Atomic x)   | no ¬p = ⊥
+bool2finCheck n (Atomic x)   | yes p    = ⊤
+bool2finCheck n (Atomic x)   | no ¬p    = ⊥
 
 bool2fin : (n : ℕ) → (t : BoolInter) → (bool2finCheck n t) → BoolExpr n
 bool2fin n Truth       pf = Truth
@@ -1492,7 +1523,7 @@ bool2fin n (Atomic x)  p₁ | yes p = Atomic (fromℕ≤ {x} p)
 bool2fin n (Atomic x)  () | no ¬p
 \end{spec}
 
-With these ingredients, our |concrete2abstract| function presented in Sec.~\ref{sec:boolexpr}
+With these ingredients, our |concrete2abstract| function presented in Sec.~\ref{sec:addrefl}
 can be rewritten to the following  drop-in replacement, illustrating how useful such an
 abstraction can be. 
 
@@ -1511,6 +1542,9 @@ concrete2abstract t {pf} {pf2} fin = bool2fin     (freeVars t)
                                                   fin
 \end{spec}
 
+This example illustrates how the |Autoquote| module can save a lot
+of repetitive coding for converting an Agda |Term| into some invariant-preserving
+AST such as |BoolExpr n|. 
 
 
 
