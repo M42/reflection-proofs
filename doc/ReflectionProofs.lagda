@@ -588,7 +588,7 @@ to contain functions with types in |Set|. This was necessary, since the standard
 which prevented the module from being imported.  \todo{ be more clear about this error.}
 
 Using this |N-ary| we can now define an entry in our mapping |Table| as having an arity, and mapping
-a |Name| (which is Agda's internal representation of an identifier, see Sec.~\ref{sec:refl-doc}) to a
+a |Name| (which is Agda's internal representation of an identifier, see Fig.~\ref{fig:reflection}) to a
 constructor in the AST we would like to cast the |Term| to.
 
 \begin{code}
@@ -1732,8 +1732,9 @@ Constructing this |WT| term requires annotating the elements with types, but
 as it stands at the time of this writing, Agda returns untyped
 terms. Therefore, the Agda compiler had to be modified for this work
 to be feasible, since without type annotations, 
- type inference is necessary to determine the types of sub-expressions (especially of applications, since we are basically 
-free to introduce the type of the applicand). %TODO does that word even exist?
+ type inference is necessary to determine the types of sub-expressions (especially of applications (e.g. |f ⟨ x ⟩ |), since we are basically 
+free to introduce the type of the argument expression, $x$ in the example), which is why
+unification of type variables is normally necessary. %TODO explain this properly
 It is not impossible to implement a type inferencer in Agda (for example using Algorithm
 W), %TODO reference algo W + possible implementations in Agda
 but it is outside of the scope of this project. Additionally, this would require the
