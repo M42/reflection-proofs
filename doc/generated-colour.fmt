@@ -105,7 +105,6 @@
 %format Preserves₂⟶⟶ = "\defin{Preserves₂⟶⟶}"
 %format Respects = "\defin{Respects}"
 %format Respects₂ = "\defin{Respects₂}"
-%format dollarn = "\defin{dollarn}"
 %format v++ = "\defin{v++}"
 %format vecin = "\defin{vecin}"
 %format xor = "\defin{xor}"
