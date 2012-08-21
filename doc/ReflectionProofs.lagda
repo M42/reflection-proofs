@@ -6,12 +6,11 @@
 %if style == newcode
 %else
 %include agda.fmt
-%include codecolour.fmt
 %include generated-colour.fmt
+%include codecolour.fmt
 %endif
 
 \usepackage{todonotes}
-%\usepackage[disable]{todonotes}
 \newcommand{\ignore}[1]{}
 
 \newcommand{\pref}[1]{~\ref{#1} on page~\pageref{#1}}
@@ -110,7 +109,7 @@ and modify it. To the uninitiated, this sounds rather magical \cite{reflection-s
 but has long been a favourite
 feature of users of such languages as LISP~\cite{lisp-macros}, in many cases allowing
 code to be a lot more concise and general, and thus reusable, than 
-usually is possible in simple imperative languages.%todo citation needed?
+usually is possible in simple imperative languages.
 
 
 
@@ -121,7 +120,7 @@ Agda~\cite{norell:thesis,Norell:2009:DTP:1481861.1481862} has recently been
 extended with a \emph{reflection mechanism} for compile time meta
 programming in the style of Lisp~\cite{lisp-macros},
 MetaML~\cite{metaml}, Template Haskell~\cite{template-haskell}, and
-\CC\ templates~\cite{cplusplus}. Agda's reflection mechanisms make it
+\CC\ templates~\cite{cplusplus}. Agda's reflection mechanisms makes it
 possible to convert a program fragment into its corresponding abstract
 syntax tree and vice versa. In tandem with Agda's dependent types,
 this provides promising new programming potential. 
@@ -179,11 +178,8 @@ github.\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}} %TODO
 
 \chapter{Related Work}
 
-% TODO : Mention AChlipala and wjzz here; mcbride with ornaments; 
+% TODO : Mention mcbride with ornaments; 
 
-% TODO : http://web.cecs.pdx.edu/~sheard/staged.html <-- this can be referenced to explain
-% what kind of quoting Agda supports at this point. Also useful for pointing out where stuff
-% isn't powerful enough. Note for example:
 
 % TODO : I would like to do something like this:
 % 
@@ -258,7 +254,9 @@ Program transformations and their correctness (by various definitions) have long
 and given more advanced languages with more powerful generative programming techniques, this will likely prove a continuing trend.
 
 As far as the proof techniques used in the section on proof by reflection (Chapter~\ref{sec:proof-by-reflection}) is concerned,  
-Chlipala's work \cite{chlipala2011certified} proved an invaluable resource, both for inspiration and guidance.
+Chlipala's work \cite{chlipala2011certified} proved an invaluable resource, both for inspiration and guidance. One motivating example
+for doing this in Agda was Wojciech Jedynak's ring solver \cite{ringsolver}, which was the first example of Agda's reflection
+API in use that came to our attention.
 
 
 
@@ -311,7 +309,7 @@ this, we introduced a lambda abstraction, so we expect the |lam|
 constructor. It's one argument is visible, and
 the body of the lambda abstraction is just a reference to the
 nearest-bound variable, thus |var 0|, applied to no arguments, hence
-the empty list. %todo: talk about type. 
+the empty list.
 
 Furthermore, |quoteTerm| type checks and normalizes its term before
 returning the required |Term|, as the following example demonstrates:
@@ -519,9 +517,12 @@ isDatatype _ = ⊥
 giveDatatype : (d : Definition) → {pf : isDatatype d} → Data-type
 giveDatatype (data-type d) = d
 giveDatatype (function x)   {()}
-...
 \end{code}
 \vskip -7mm
+\begin{spec}
+...
+\end{spec}
+\vskip -4mm
 \ignore{
 \begin{code}
 giveDatatype (record′ x)    {()}
@@ -587,8 +588,9 @@ apply the ``stored'' function to a |Vec n| of arguments, where $n$ is the arity 
 this is a copy of the standard library |Data.Vec.N-ary|, but has been instantiated here specifically
 to contain functions with types in |Set|. This was necessary, since the standard library version of
 |N-ary| can hold functions of arbitrary level (i.e. |Set n|), and therefore the level of the 
-|N-ary| argument inside |ConstructorMapping| could not be inferred, giving an unsolved constraint
-which prevented the module from being imported.  \todo{ be more clear about this error.}
+|N-ary| argument inside |ConstructorMapping| could not be inferred (since this depends on which function
+one tries to store in that field), giving an unsolved constraint
+which prevented the module from being imported without using the unsound type-in-type option.
 
 Using this |N-ary| we can now define an entry in our mapping |Table| as having an arity, and mapping
 a |Name| (which is Agda's internal representation of an identifier, see Fig.~\ref{fig:reflection}) to a
@@ -923,7 +925,6 @@ data BoolExpr (n : ℕ) : Set where
 \end{figure}
 
 
-%TODO: why can't we go ∀ (e : Env n) → P (formula) ????? Explain!
 
 There is nothing
 surprising about this definition; we use the type |Fin n| to ensure
@@ -1710,7 +1711,9 @@ the dependent type signatures of the constructors allow us to express
 constraints such as that a de Bruijn-indexed variable must be at most
 $n$, with $n$ the depth of the current sub-expression, with depth
 defined as the number of $\lambda$'s before one is at top-level
-scope. \todo{ reference a paper about debruijn indices?}
+scope. We assume the reader to be familiar with nameless de Bruijn notation for 
+lambda calculus (see \cite{de1972lambda}), i.e. the term $\lambda x . x$ is represented
+as $\lambda . 0$.
 
 
 \begin{code}
@@ -1722,7 +1725,8 @@ data Equal? {A : Set} : A → A → Set where
 -- ugh, this may not be in a parameterised module. if it is, such as
 -- where it was in CPS.Apply, if you import CPS as CPS' = CPS . . . e.g.
 -- then there's a panic, since quote Apply returns CPS.Apply, and all of
--- a sudden the number of arguments is invalid. ugh.
+-- a sudden the number of arguments is invalid (i.e. the module arguments
+-- are missing). ugh.
 Apply : {A B : Set} → (A → B) → A → B
 Apply {A} {B} x y = x y
 
@@ -2494,7 +2498,7 @@ Here the changes required to the Agda compiler's source code are presented in Fi
 
 
 \begin{figure}[h]
-insert diff here %TODO
+insert darcs-diff here %TODO
 \caption{The changes required to the Agda compiler to enable annotation of lambda abstractions with the type of their argument.}\label{fig:agda-lambda-diff}
 \end{figure}
 
@@ -2517,8 +2521,7 @@ Talk about extension to compiler here, give example of use (as detailed as possi
 
 %TODO in introduction: list motivating examples for using reflection? include bove-capretta, so we later can conclude reflection API isn't yet powerful enough?
 
-
-%TODO compare the tauto-solver to tactics, note how this is embedded in agda and not some sub-language of coq
+%TODO compare the tauto-solver to tactics, note how this is embedded in agda and not some sub-language of coq (for in the discussion, perhaps)
 
 %todo what are Patrick Bahr's tree automata?
 
