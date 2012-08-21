@@ -1140,9 +1140,8 @@ to |true|. An example encoding of such a theorem is Figure \ref{fig:exampletheor
 \begin{figure}\label{fig:exampletheorem}
 \begin{code}
 exampletheorem : Set
-exampletheorem = (p1 q1 p2 q2 : Bool)   →   P  ((p1 ∨ q1) ∧ (p2 ∨ q2)
-                                                   ⇒ (q1 ∨ p1) ∧ (q2 ∨ p2)
-                                                   )
+exampletheorem = (p1 q1 p2 q2 : Bool)   →   P  (         (p1 ∨ q1) ∧ (p2 ∨ q2)
+                                                   ⇒     (q1 ∨ p1) ∧ (q2 ∨ p2))
 \end{code}
 \caption{Example encoding of a tautology.}
 \end{figure}
@@ -1382,7 +1381,7 @@ exclMid    = quoteGoal e in proveTautology e
 peirce     : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
 peirce     = quoteGoal e in proveTautology e
 
-mft        : exampletheorem
+mft        : exampletheorem -- defined in Fig.~\ref{fig:exampletheorem}
 mft        = quoteGoal e in proveTautology e
 \end{code}
 
