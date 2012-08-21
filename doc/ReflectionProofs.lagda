@@ -273,7 +273,7 @@ generating frequently needed but slightly different expressions automatically.
 
 %TODO give more of an intro to the idea of reflection here. idea: wikipedia has short article on reflection.
 
-\section{The basics}
+\section{The Basics}
 
 Agda's reflection API defines several data types which represent terms,
 types, and sorts. These definitions take into account various
@@ -435,7 +435,7 @@ into some AST type, if a mapping is provided from concrete Agda
 in Sec.~\ref{sec:autoquote}, and an example use-case is given in \ref{sec:autoquote-example}.
 
 
-\section{List of functions exported by |Reflection|}
+\section{List of Functions Exported by |Reflection|}
 
 The |Reflection| module of the Agda standard library (version 0.6 was used here) exports a number of
 functions. Here we will provide a list of them (see Fig. \ref{fig:reflection-functions}) along with
@@ -499,7 +499,7 @@ convert (def c args) with c ≟-Name quote foo
 \end{spec}
 
 
-\subsection{Inspecting definitions}\label{sec:inspecting-definitions}
+\subsection{Inspecting Definitions}\label{sec:inspecting-definitions}
 
 Using the functions exported by the module |Reflection|, we are able
 to get a list of constructors for some data type. The following code snippet
@@ -822,7 +822,7 @@ since the unit type has one inhabitant, the empty type none.
 \begin{code}
 even? : ℕ → Set
 even? 0                 = ⊤
-even? (1       )        = ⊥
+even? 1                 = ⊥
 even? (suc (suc n))     = even? n
 \end{code}
 
@@ -903,8 +903,9 @@ cases, where $n$ is the number of variables.
 To automate this process, we will follow a similar approach to
 the one given in the section on even natural numbers (Sec.~\ref{sec:evenness}). We start by defining an
 inductive data type to represent boolean expressions with $n$ free
-variables.
+variables in Fig.~\ref{fig:boolexprn}.
 
+\begin{figure}[h]
 \begin{code}
 data BoolExpr (n : ℕ) : Set where
   Truth         :                                  BoolExpr n
@@ -915,6 +916,8 @@ data BoolExpr (n : ℕ) : Set where
   Imp           : BoolExpr n → BoolExpr n      →   BoolExpr n
   Atomic        : Fin n                        →   BoolExpr n
 \end{code}
+\caption{Inductive definition of Boolean expressions having $n$ free variables.}\label{fig:boolexprn}
+\end{figure}
 
 
 %TODO: why can't we go ∀ (e : Env n) → P (formula) ????? Explain!
@@ -1310,13 +1313,14 @@ concrete2abstract t n {pf} {pf2} = term2boolexpr n (stripSo (stripPi t) pf) pf2
 Note that not every |Term| can be converted to a |BoolExpr|. The
 |concrete2abstract| function requires additional assumptions about the
 |Term|: it should only contain functions such as |_∧_| or |_∨_|, and
-boolean variables. This is ensured by the assumptions
+bound variables. This is ensured by the assumptions
 |isBoolExprQ| and friends.
 
 The |concrete2abstract| function is rather verbose, and is mostly omitted.
 A representative snippet is given in Fig. \ref{fig:concrete2abstract}. The functions |isBoolExprQ|
 and |isSoExprQ| simply traverse the |Term| to see if it fulfills the requirements of
-being a boolean expression preceded by a series of universally quantified boolean variables.
+being a boolean expression preceded by a series of universally quantified boolean variables, enclosed in a
+call to |P|.
 
 \begin{figure}\label{fig:concrete2abstract}
 \begin{spec}
@@ -1389,9 +1393,9 @@ twice in a slightly different format. The conversion now happens automatically, 
 of expressive power or general applicability of the proofs resulting from |soundness|.
 Furthermore, by using the proof by reflection technique, the proof is generated automatically.
 
-\subsection{An aside: real-world example of |Autoquote|}\label{sec:autoquote-example}
+\subsection{An Aside: Real-world Example of |Autoquote|}\label{sec:autoquote-example}
 
-The process of quoting to a |BoolExpr n| outlined in Sec.~\ref{sec:boolexpr}
+The process of quoting to a |BoolExpr n| outlined in Sec.~\ref{sec:addrefl}
 quickly becomes an ugly mess, with functions checking properties of an expression (such
 as only certain functions occurring) being pretty similar, save the number of arguments
 functions require or which functions are allowed.
@@ -1404,9 +1408,9 @@ illustration of the use of |Autoquote|, and to avoid code duplication,
 thus making the code for |term2boolexpr| more concise.
 
 |Autoquote| only supports simple recursive data types, so the first problem we encounter is that
-|BoolExpr n| has an argument of type |Fin n| to its constructor |Atomic| (see Fig. \ref{fig:boolexprn}).
+|BoolExpr n| has an argument of type |Fin n| to its constructor |Atomic| (see Fig.~\ref{fig:boolexprn}).
 Because of this, we introduce a simpler, intermediary data structure, to which we will convert
-from |Term|. This type, |BoolInter|, is presented in Fig. \ref{fig:boolinter}.
+from |Term|. This type, called |BoolInter|, is presented in Fig. \ref{fig:boolinter}.
 
 \begin{figure}[h]
 \begin{code}
@@ -1430,13 +1434,12 @@ the function |term2boolexpr'| which, for suitable |Term|s, gives us an expressio
 \begin{code}
 boolTable : Table BoolInter
 boolTable = (Atomic ,
-              2 \# (quote _∧_  ) ↦ And
-            ∷ 2 \# (quote _∨_  ) ↦ Or
-            ∷ 1 \# (quote  ¬_  ) ↦ Not
-            ∷ 0 \# (quote true ) ↦ Truth
-            ∷ 0 \# (quote false) ↦ Falsehood
-            ∷ 2 \# (quote _⇒_  ) ↦ Imp
-            ∷ [])
+                  2 \# (quote _∧_  ) ↦ And
+            ∷     2 \# (quote _∨_  ) ↦ Or
+            ∷     1 \# (quote  ¬_  ) ↦ Not
+            ∷     0 \# (quote true ) ↦ Truth
+            ∷     0 \# (quote false) ↦ Falsehood
+            ∷     2 \# (quote _⇒_  ) ↦ Imp ∷ [])
 
 term2boolexpr' : (t : Term) → {pf : convertManages boolTable t} → BoolInter
 term2boolexpr' t {pf} = doConvert boolTable t {pf}
@@ -1512,7 +1515,7 @@ concrete2abstract t {pf} {pf2} fin = bool2fin     (freeVars t)
 
 
 
-\chapter{Type-safe metaprogramming}\label{sec:type-safe-metaprogramming}
+\chapter{Type-safe Metaprogramming}\label{sec:type-safe-metaprogramming}
 
 Another area in which an application for the new reflection API was found is that
 of type-safe metaprogramming, taking advantage of Agda's very powerful type system.
@@ -2014,14 +2017,14 @@ explained₁ : exampleTerm ≡ Lam (O Nat) (Var here)
 explained₁ = refl
 \end{code}
 
-\subsection{Doing something useful with |WT|}
+\subsection{Doing Something Useful with |WT|}
 
 Conversely, we can also construct a term in |WT| and use the |unquote| keyword to
 turn it back into concrete syntax.... . . . ..  %TODO explain this, also make a note about lack of APPLY construct, and the hack I do.
 
 
 
-\section{Example: CPS transformation}
+\section{Example: CPS Transformation}
 
 Given the fact that we can now easily move from the world of concrete Agda syntax to a well-typed lambda calculus and back,
 the obvious next step is to do something with these well-typed terms. Doing anything with these terms constitutes
@@ -2241,17 +2244,17 @@ Maybe we can give a Bove-Capretta example here, too, since |T| uses general recu
 
 Could be an idea to prove correctness by normalisation and translation back into lambda calculus.
 
-\section{Example: Translation to SKI combinators}
+\section{Example: Translation to SKI Combinators}
 
 hullo
 
-\chapter{Generic programming}\label{sec:generic-programming}
+\chapter{Generic Programming}\label{sec:generic-programming}
 
 Ornaments / containers?
 will we ever get here?
 
 \chapter{Miscellaneous}
-\section{Implicit record-type arguments}\label{sec:implicit-unit}
+\section{Implicit Record-type Arguments}\label{sec:implicit-unit}
 
 As has been noted before, if a particular argument is a record type,
 and it has only one possible inhabitant, Agda can
@@ -2301,6 +2304,7 @@ bar' = foo'
         \label{fig:implicit0}
     \end{figure}
 
+%todo use the term "proof irrelevance"
     
 This is possible, since the type |⊤ × ⊤| only has one inhabitant, namely |(tt , tt)|. If
 multiple values were valid, the above code would have resulted in an unsolved meta. That brings
@@ -2318,7 +2322,7 @@ importing modules with unsolved metas, which means such a spurious proof will no
 in a real-life development. 
 
 
-\section{Reflection API limitations}\label{sec:reflection-api-limitations}
+\section{Reflection API Limitations}\label{sec:reflection-api-limitations}
 
 
 \begin{itemize}
@@ -2346,7 +2350,7 @@ Answer the research question here.
 
 % \appendixpage
 
-\chapter{Modifications to the Agda compiler}
+\chapter{Modifications to the Agda Compiler}
 
 During the course of this project, a few modifications were made to the Agda
 code base, to facilitate various processes. Since these modifications have
@@ -2371,7 +2375,7 @@ the compiler was extended to output a list of formatting rules based on the curr
 
 
 
-\section{Annotating |λ| expressions with type}\label{sec:annotating-lambdas}
+\section{Annotating |λ| Expressions with Type}\label{sec:annotating-lambdas}
 
 As mentioned in Sec.~\ref{sec:...} it was necessary to slightly modify the
 representation of |Term|s that the reflection system returns to the user. What was
@@ -2397,7 +2401,7 @@ insert diff here %TODO
 
 
 
-\section{Automatic syntax highlighting for Literate Agda}\label{sec:lhs-syntax}
+\section{Automatic Syntax Highlighting for Literate Agda}\label{sec:lhs-syntax}
 
 Talk about extension to compiler here, give example of use (as detailed as possible, i.e. with Makefile, the --lagda flag, etc.
 
