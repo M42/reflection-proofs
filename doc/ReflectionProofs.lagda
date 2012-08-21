@@ -1319,6 +1319,19 @@ case.
 \subsection{Why Not Enumerate Environments?}\label{sec:no-enumerate-environments}
 
 
+One of the reasons for not enumerating environments (|∀ (e : Env n) → P( someprop )|) is that
+referring to variables becomes a bit of a problem. One would have to introduce some new syntax, such as a constructor
+|Var : Fin n → Bool| which could be used to refer to an element of the environment by number. This is 
+rather less elegant than the current implementation, where one simply brings a few Boolean variables into scope in
+the native Agda manner, using a telescope (i.e. |(p q r : Bool) → P(p ∧ q ⇒ r)|). This has another advantage, namely
+that if one writes down a proposition, one is forced to only use valid variables, which translate to in-scope de Bruijn indices.
+
+Another difficulty of enumerating over environments is the generation of the proof obligation. Currently, a telescope
+can be generated easily via recursion (see the function |proofObligation|), as opposed to having to generate all possible 
+lists. Some investigation was done to try and show that environments (lists of Booleans) of length $n$ are enumerable,
+but the results were not as elegant as those presented in Sec.~\ref{sec:boolean-tautologies}. Also, generating the environments by quantifying over
+fresh variables and adding them to an accumulating environment saves creating a large binary tree with all the possible
+environments in the leaves.
 
 
 \section{Adding Reflection}\label{sec:addrefl}
@@ -2445,17 +2458,12 @@ Talk about extension to compiler here, give example of use (as detailed as possi
 % TODO: explain somewhere how the distribution works. i.e. `mk extract` for code extraction, what module contains what, etc.
 
 
-% TODO: talk about first using ≡ true for bool tautologies, and why ⊤/⊥ is much better
-
-
-% TODO reference Ulf's tutorial for the STLC checker.
-
 
 
 %TODO in introduction: list motivating examples for using reflection? include bove-capretta, so we later can conclude reflection API isn't yet powerful enough?
 
 
-%TODO compare the tauto-solver to tactics, note how this is embedded in agda and not some funny sub-language of coq
+%TODO compare the tauto-solver to tactics, note how this is embedded in agda and not some sub-language of coq
 
 %todo what are Patrick Bahr's tree automata?
 
