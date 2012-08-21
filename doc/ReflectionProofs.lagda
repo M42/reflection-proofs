@@ -13,6 +13,9 @@
 \usepackage{todonotes}
 %\usepackage[disable]{todonotes}
 \newcommand{\ignore}[1]{}
+
+\newcommand{\pref}[1]{~\ref{#1} on page~\pageref{#1}}
+
 \def\CC{{C\nolinebreak[4]\hspace{ -.05em}\raisebox{.4ex}{\tiny\bf ++}}}
 
 \ignore{
@@ -72,7 +75,7 @@ open import Data.List hiding (_∷ʳ_)
 %TODO make a fancy title page
 
 \clearpage
-\pagestyle{empty}
+\thispagestyle{empty}
 \vspace*{\fill} 
 \begin{quote} 
 \centering 
@@ -1129,7 +1132,6 @@ zeroleast k (suc n) = Step (coerceDiff (succLemma k n) (zeroleast (1 + k) n))
 \end{code}
 }
 
-%TODO explain thoroughly what Diff does.
 
 Now that we have these helper functions, it is easy to define what it
 means to be a tautology. We quantify over a few boolean variables, and
@@ -1167,8 +1169,7 @@ of unit values |⊤|, the single possible value which only exists if the interpr
 evaluates to |true| in every leaf. This corresponds precisely to $b$ being a tautology.
 
 The |Diff| argument is unfortunately needed to prove that forallsAcc will eventually produce a
-tree with depth equal to the number of free variables in an expression.
-
+tree with depth equal to the number of free variables in an expression. 
 \begin{code}
 forallsAcc : {n m : ℕ} → BoolExpr m → Env n → Diff n m → Set
 forallsAcc b acc    (Base     ) = P ⟦ acc ⊢ b ⟧
@@ -1200,6 +1201,8 @@ variables. These variables are accumulated in an environment. Finally, when $m$
 binders have been introduced, the |BoolExpr| is evaluated under this
 environment.
 
+Refer to Sec.~\pref{sec:explain-diff} for
+a thorough explanation of the parameter |Diff n m| which, like here in |proofObligation|, is also passed into |forallsAcc|.
 
 \begin{code}
 proofObligation   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
@@ -1307,7 +1310,10 @@ using this format for reasoning about Boolean formulae becomes rather more invol
 The reason for this is
 that the |So| operator returns a type, namely either unit or empty, which can
 be passed around as an automatically-inferred implicit value (see Sec.~\ref{sec:implicit-unit} for a 
-detailed explanation about implicit inferred arguments). Because of this, the
+detailed explanation about implicit inferred arguments), removing the need to put |refl| everywhere
+such a proof is needed -- a unit or pair type can be inferred if it exists\footnote{Compare the example
+implementation of a ring solver in Agda, which has |refl|s all over the place \cite{ringsolver}, which
+cannot be made implicit and thus omitted.}. Because of this, the
 recursive cases of functions such as |soundness| become a lot simpler: the interpretation
 of a sub-expression being true becomes the same as a unit type being inhabited, and the and-operator
 corresponds to a pair. If the propositional equality way was being used, many lemmas such as that 
@@ -1332,6 +1338,51 @@ lists. Some investigation was done to try and show that environments (lists of B
 but the results were not as elegant as those presented in Sec.~\ref{sec:boolean-tautologies}. Also, generating the environments by quantifying over
 fresh variables and adding them to an accumulating environment saves creating a large binary tree with all the possible
 environments in the leaves.
+
+\subsection{What Is This |Diff| You Speak Of?}\label{sec:explain-diff}
+
+Back in Sec.~\ref{sec:boolean-tautologies} the function |proofObligation| (among others)
+had a parameter of type |Diff n m|. Recalling the function's
+definition, note that there are two variables, $n$ and $m$ giving the size of the environment
+and the maximum number of bound variables in the proposition, respectively. 
+
+\begin{spec}
+proofObligation   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
+proofObligation   .m   m    (Base    ) b acc = P ⟦ acc ⊢ b ⟧ 
+proofObligation   n    m    (Step y  ) b acc =
+  (a : Bool) →
+      proofObligation (1 + n) m y b (a ∷ acc)
+\end{spec}
+
+This cannot be 
+right, since our interpretation function |⟦_⊢_⟧| requires that these $m$ and $n$ are equal.
+We cannot, however, make them equal in the type signature for |proofObligation|, since we are 
+building up the environment with an accumulating parameter. Because of this, we introduce |Diff|.
+
+
+\begin{figure}[h]
+\begin{spec}
+data Diff : ℕ → ℕ → Set where
+  Base : ∀ {n}   → Diff n n
+  Step : ∀ {n m} → Diff (suc n) m → Diff n m
+\end{spec}
+\caption{The definition of |Diff|}\label{fig:diff-datatype}
+\end{figure}
+
+The |Diff| data type is defined as in Fig.~\ref{fig:diff-datatype}, and was necessary 
+because given a term of type |BoolExpr m|, being a proposition with at most $m$ 
+variables, it should be ensured that in the end an environment of size $m$ would be produced.
+The necessity of $m \equiv n$ is obvious considering that the evaluation function needs to
+be able to look up the variables in the Boolean expression, but being a recursive function
+which introduces a new variable to the telescope one at a time, we need some way to ``promise''
+that in the end $m$ will be equal to $n$. As can be seen in the definition of the |Base| constructor,
+this is exactly what is happening.
+
+The same thing is necessary in the functions |forallsAcc| and 
+friends, given that they also recursively construct or look up proofs that need to have a corresponding
+size to the |BoolExpr|, but given that they use the same technique in a slightly less overt manner
+they are not separately detailed here.
+
 
 
 \section{Adding Reflection}\label{sec:addrefl}
@@ -1360,12 +1411,16 @@ bound variables. This is ensured by the assumptions
 |isBoolExprQ| and friends.
 
 The |concrete2abstract| function is rather verbose, and is mostly omitted.
-A representative snippet is given in Fig. \ref{fig:concrete2abstract}. The functions |isBoolExprQ|
+A representative snippet is given in Fig. \pref{fig:concrete2abstract}. The attentive reader will notice that
+the function in the referenced figure is called |term2boolexpr|; this is because we also unwrap the outermost call to |P| 
+and the telescope quantifying over (introducing) the variables before doing the conversion, since these elements are unnecessary in the |BoolExpr| representation. 
+This can be seen as a helper function to |concrete2abstract| where the ``interesting'' (if you happen to be a flagellant) work happens.
+The functions |isBoolExprQ|
 and |isSoExprQ| simply traverse the |Term| to see if it fulfills the requirements of
 being a boolean expression preceded by a series of universally quantified boolean variables, enclosed in a
 call to |P|.
 
-\begin{figure}\label{fig:concrete2abstract}
+\begin{figure}
 \begin{spec}
 term2boolexpr n (con tf []) pf with tf ≟-Name quote true
 term2boolexpr n (con tf []) pf | yes p = Truth
@@ -1377,7 +1432,7 @@ term2boolexpr n (def f (arg v r x ∷ [])) pf | yes p = Not (term2boolexpr n x p
 term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) pf | no ¬p with f ≟-Name quote _∧_
 ...
 \end{spec}
-\caption{An illustration of converting a |Term| into a |BoolExpr|.}
+\caption{An illustration of converting a |Term| into a |BoolExpr|.}\label{fig:concrete2abstract}
 \end{figure}
 
 
@@ -1425,8 +1480,8 @@ exclMid    = quoteGoal e in proveTautology e
 peirce     : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
 peirce     = quoteGoal e in proveTautology e
 
-mft        : exampletheorem -- defined in Fig.~\ref{fig:exampletheorem}
-mft        = quoteGoal e in proveTautology e
+fave       : exampletheorem -- defined in Fig.~\ref{fig:exampletheorem}
+fave       = quoteGoal e in proveTautology e
 \end{code}
 
 
