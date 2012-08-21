@@ -150,7 +150,7 @@ reflection. More specifically it makes the following contributions:
   mechanism. The existing documentation is limited to a paragraph in
   the release notes~\cite{agda-relnotes-228} and comments in the
   compiler's source code. In Chapter~\ref{sec:reflection} we give
-  several short examples of the reflection API in action.
+  several short examples the reflection API in action.
 \item This paper illustrates how to use Agda's reflection mechanism to
   automate certain categories of proofs
   (Chapter~\ref{sec:proof-by-reflection}). The idea of \emph{proof by
@@ -633,8 +633,7 @@ exprTable : Table Expr
 exprTable = (Variable ,
              2   \# (quote _+_ )     ↦ Plus ∷
              0   \# (quote ℕ.zero)   ↦ Zero ∷
-             1   \# (quote ℕ.suc )   ↦ Succ ∷
-             [])
+             1   \# (quote ℕ.suc )   ↦ Succ ∷ [])
 \end{code}
 \caption{The mapping for converting to the imaginary |Expr| AST. }\label{fig:exprTable}
 \end{figure}
@@ -721,13 +720,16 @@ of the AST. For example, see the unit tests in Fig. \ref{fig:test-autoquote}.
 \begin{code}
 convertManages : {a : Set} → Table a → Term → Set
 convertManages t term with convert t term
-convertManages t term | just x  = ⊤
-convertManages t term | nothing = ⊥
+convertManages t term | just x       = ⊤
+convertManages t term | nothing      = ⊥
 
-doConvert : {a : Set} → (tab : Table a) → (t : Term) → {man : convertManages tab t} → a
-doConvert tab t {man} with convert tab t
-doConvert tab t {man} | just x = x
-doConvert tab t {() } | nothing
+doConvert : {a : Set}      → (tab : Table a) 
+                           → (t : Term) 
+                           → {man : convertManages tab t} 
+                           → a
+doConvert tab t {man   }      with convert tab t
+doConvert tab t {man   }      | just x     = x
+doConvert tab t {()    }      | nothing
 \end{code}
 
 The module also exports the function |convertManages| and |doConvert|, which are to be used in the following
@@ -742,6 +744,17 @@ something = refl
 \end{code}
 \caption{Examples of |Autoquote| in use.}\label{fig:test-autoquote}
 \end{figure}
+
+Note the type signature of the |doConvert| function: we are implicitly assuming
+that the conversion is successful (i.e. that it returns a |just| value). This 
+allows a much cleaner implementation of the |convert| function; it can try all
+the allowed constructors, and if none of them match, it can fail with a |nothing| value.
+This is a lot simpler than writing a predicate function with the same pattern matching 
+structure by hand, since sometimes the with-clauses are expanded unpredictably. The net effect
+of writing a pair of functions in this style is the same as the ``usual'' way of writing a predicate
+function by hand, in that a compile-time error is generated if the function |doConvert| is 
+invoked on an argument with the wrong shape.
+
 
 The |BoolExpr| AST used in \ref{sec:boolean-tautologies} provides a
 good motivating example for using |Autoquote|, therefore a slightly
@@ -760,7 +773,7 @@ is the capability of converting some piece of concrete program syntax
 into a syntax tree object which can be manipulated in the same
 system. Reflection in the proof technical sense is the method of
 mechanically constructing a proof of a theorem by inspecting its
-shape. \todo{cite some mathematical reference.}
+shape.
 Here we will present two case studies illustrating proof by
 reflection and how Agda's reflection mechanism can make the technique
 more usable and accessible.
