@@ -2381,6 +2381,11 @@ The type system does some work for us in these cases: since eta-conversion is do
 allows Agda to infer that there is exactly one inhabitant of a certain type. This eta reduction is not done
 on general data types, since this would increase the complexity of the work the compiler needs to do as
 well as potentially introduce unsound behaviour \cite{mcbride-motivation-eta-rules}.
+Also, it means that you can assert to Agda that your
+function that returns a certain type always produces an
+inhabited value. On the other hand, single-constructor data types may not be
+inhabited if their indices can't be satisfied (for example: |refl| and the equality
+type).
 
 
 \begin{figure}[h]
