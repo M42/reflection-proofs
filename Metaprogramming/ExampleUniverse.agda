@@ -1,0 +1,120 @@
+module ExampleUniverse where
+
+open import Reflection
+open import Data.List
+open import Data.Maybe
+open import Data.Nat
+open import Equal
+open import Relation.Nullary.Core
+
+---------
+--- THIS STUFF may not be used other than as a parameter to the module.
+
+data U : Set where
+  Nat : U
+
+
+?type : U → Name
+?type r = quote ℕ
+
+Uel : U → Set
+Uel r = ℕ
+
+
+quoteBack : (x : U) → Uel x → Term
+quoteBack Nat zero    = con (quote zero) []
+quoteBack Nat (suc x) = con (quote suc) (arg visible relevant (quoteBack Nat x) ∷ [])
+
+equal? : (x : U) → (y : U) → Equal? x y
+equal? Nat Nat = yes
+
+halttype : U
+halttype = Nat
+
+type? : Name → Maybe U
+type? n with n ≟-Name (quote suc)
+type? n | yes p = just Nat
+type? n | no ¬p with n ≟-Name (quote zero)
+type? n | no ¬p | yes p = just Nat
+type? n | no ¬p₁ | no ¬p with n ≟-Name (quote ℕ)
+type? n | no ¬p₁ | no ¬p | yes p = just Nat
+type? n | no ¬p₂ | no ¬p₁ | no ¬p = nothing
+
+quoteVal : (x : U) → Term → Uel x
+quoteVal Nat (var x args) = 0
+quoteVal Nat (con c args) with c ≟-Name quote zero
+quoteVal Nat (con c args) | yes p = 0
+quoteVal Nat (con c args) | no ¬p with c ≟-Name quote suc
+quoteVal Nat (con c []) | no ¬p | yes p = 0
+quoteVal Nat (con c (arg v r x ∷ args)) | no ¬p | yes p = 1 + quoteVal Nat x
+quoteVal Nat (con c args) | no ¬p₁ | no ¬p = 0
+quoteVal Nat      _       = 0
+
+-- result type.
+
+-- end THIS STUFF
+------------------------
+
+import Datatypes
+open module DT = Datatypes U equal? Uel
+import TypeCheck
+open module TC = TypeCheck U equal? type? Uel quoteVal quoteBack
+import CPS
+open module CPS' = CPS U Uel equal? type? quoteBack halttype
+
+-- termination/reachability for T algorithm.
+allTsAcc : forall {Γ σ} → (wt : WT Γ σ) → TAcc wt
+allTsAcc (Var x) = TBaseVar
+allTsAcc (Lit x₁) = TBaseLit
+allTsAcc {_}{τ => σ} (Lam .τ wt) = TLam (allTsAcc (shift1 (Cont σ) wt))
+allTsAcc (_⟨_⟩ {Γ} {σ} {σ₁} wt wt₁) = TApp (allTsAcc wt) (allTsAcc (shift1 (σ => σ₁) wt₁))
+
+
+-- notice how we can quote a term, automatically getting
+-- a well-typed lambda
+arrow : Term
+arrow = quoteTerm (\ (x : ℕ → ℕ) → \ (y : ℕ) → x y)
+
+wtarrow : WT [] (typeOf (term2raw arrow))
+wtarrow = raw2wt (term2raw arrow)
+
+-- we can reflect this back to "concrete" Agda; the function
+-- is the same as the original term in arrow
+arrowconcrete :          lam2type wtarrow
+arrowconcrete = unquote (lam2term wtarrow)
+
+open import Relation.Binary.PropositionalEquality
+
+unittest : arrowconcrete ≡ (λ (a : ℕ → ℕ) → λ (b : ℕ) → a b)
+unittest = refl
+-- note that types are preserved.
+-- unittest0 : arrowconcrete ≡ (\ (a : Bool → Bool) → \ (b : Bool) → a b)
+-- unittest0 = ?
+-- that wouldn't work.
+
+---
+-- we can also quote terms, CPS transform them,
+-- then unquote them back into usable functions. cool!
+
+g : Raw
+g = term2raw (quoteTerm (λ (n : ℕ) → n))
+a : Raw
+a = term2raw (quoteTerm 7)
+
+test0 : Raw
+test0 = App g a
+
+typedtest0 : WT [] (typeOf test0)
+typedtest0 = raw2wt test0
+
+viewTypedTest0 : typedtest0 ≡ Lam (O Nat) (Var here) ⟨ Lit 7 ⟩
+viewTypedTest0 = refl
+
+id1 : ∀ {Γ σ} → WT Γ (σ => σ)
+id1 = Lam _ (Var here)
+
+test1 : WT [] RT
+test1 = T typedtest0 (allTsAcc typedtest0) id1
+
+test1concrete :          lam2type test1
+test1concrete = unquote (lam2term test1)
