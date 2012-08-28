@@ -234,7 +234,7 @@ addExprsSym wt n = {!!}
 allTsAcc : forall {Γ σ} → (wt : WT Γ σ) → Acc wt → TAcc wt
 allTsAcc (Var x) _ = TBaseVar
 allTsAcc (Lit x₁) _ = TBaseLit
-allTsAcc {Γ} {τ => σ} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ) wt) (x (shift1 (Cont σ) wt) (shift-weak2 {τ ∷ Γ}{σ}{σ}{wt} (shift-size {{!!}}{[]}{{!τ ∷ Γ!}} (geez wt)))))
+allTsAcc {Γ} {τ => σ} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ) wt) (x (shift1 (Cont σ) wt) (shift-weak2 {τ ∷ Γ}{σ}{σ}{wt} (shift-size {Cont σ}{τ ∷ Γ}{[]} wt))))
 allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁} wt wt₁) (acc x) = TApp (allTsAcc wt (x wt (addExprs wt wt₁))) (allTsAcc (shift1 (σ => σ₁) wt₁) (x (shift1 (σ => σ₁) wt₁) (addExprsSym {σ => σ₁}{Γ}{σ} wt₁ wt) ) )
 
 
