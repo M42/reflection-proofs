@@ -176,11 +176,24 @@ iets (<-step nn1) (<-step mm1) = <-step (iets4 nn1 mm1)
 
 open import Relation.Binary.PropositionalEquality
 
-allEqual : ∀ {Γ σ} → (wt : WT Γ σ) → ∀ τ → measure wt ≡ measure (shift1 τ wt)
-allEqual (Var x)      τ = refl
-allEqual (wt ⟨ wt₁ ⟩) τ = cong suc (cong suc (cong₂ _+_ (allEqual wt τ) (allEqual wt₁ τ)))
-allEqual (Lam σ wt)   τ = cong suc (allEqual {{!!}}{{!!}} {!wt!} {!!})
-allEqual (Lit x₁)     τ = refl
+allEqual : ∀ {Γ Γ' σ τ} → (wt : WT (Γ' ++ Γ) σ) → measure wt ≡ measure (weak {Γ'} {σ} {Γ} wt τ)
+allEqual (Var x)       = refl
+allEqual {Γ}{Γ'}{σ}(_⟨_⟩ {.(Γ' ++ Γ)}{σ₁}{.σ} wt  wt₁ )  = cong suc (cong suc
+  (cong₂ _+_
+    (allEqual {Γ}{Γ'}{σ₁ => σ} wt)
+    (allEqual {Γ}{Γ'}{σ₁} wt₁)))
+allEqual {Γ}{Γ'}{σ => τ}(Lam .σ wt) = cong suc (allEqual {Γ}{σ ∷ Γ'}{τ} wt)
+allEqual (Lit x₁)      = refl
+
+geez∈ : {A : Set} {x : A} → ∀{xs} → x ∈ xs → x ∈ (xs ++ [])
+geez∈ here = here
+geez∈ (there inn) = there (geez∈ inn)
+
+geez : ∀{Γ σ} → WT Γ σ → WT (Γ ++ []) σ
+geez (Var x) = Var (geez∈ x)
+geez (wt ⟨ wt₁ ⟩) = geez wt ⟨ geez wt₁ ⟩
+geez (Lam σ wt) = Lam σ (geez wt)
+geez (Lit x₁) = Lit x₁
 
 shift-size : ∀ {τ Γ σ} → (x : WT Γ σ) → shift1 τ x ≼ x
 shift-size (Var x)  = <-base
@@ -188,10 +201,9 @@ shift-size (Lit x₁) = <-base
 shift-size {τ} (x ⟨ x₁ ⟩) with shift1 τ x | shift-size {τ} x | shift1 τ x₁ | shift-size {τ} x₁
 ... | a | b | c | d =  (s<s (s<s (iets b d)))
 shift-size {τ}{Γ}{τ₁ => σ} (Lam .τ₁ x) with shift1 τ x | shift-size {τ} x
-shift-size {τ} {Γ} {τ₁ => σ} (Lam .τ₁ x) | Var x₁ | b = s<s {!!}
-shift-size {τ} {Γ} {τ₁ => σ} (Lam .τ₁ x) | a ⟨ a₁ ⟩ | b = {!!}
-shift-size {τ} {Γ} {τ₁ => (σ => τ₂)} (Lam .τ₁ x) | Lam .σ a | b = {!!}
-shift-size {τ} {Γ} {τ₁ => (O x₂)} (Lam .τ₁ x₁) | Lit x | b = s<s {!b!}
+shift-size {τ}{Γ}{τ₁ => σ} (Lam .τ₁ x) | a | b with geez x
+... | eqq with allEqual {[]} {τ₁ ∷ Γ} {σ} {{!!}} eqq
+... | ss = s<s {!!}
 
 
 -- measure>0 : ∀ {Γ : Ctx} {σ : U'} (wt : WT Γ σ) → 0 < measure wt
