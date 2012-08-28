@@ -69,10 +69,10 @@ data _∈_ {A : Set} (x : A) : List A → Set where
   there   : {xs : List A} {y : A} → x ∈ xs → x ∈ y ∷ xs
   
 data WT : (Γ : Ctx) → U' → Set where
-  Var   : forall {Γ} {τ}   → τ ∈ Γ → WT Γ τ
-  _⟨_⟩  : forall {Γ} {σ τ} → WT Γ (σ => τ) → WT Γ σ → WT Γ τ
-  Lam   : forall {Γ} σ {τ} → WT (σ ∷ Γ) τ → WT Γ (σ => τ)
-  Lit   : forall {Γ} {x} → Uel x → WT Γ (O x) -- a constant
+  Var   : forall {Γ} {τ}      → τ ∈ Γ → WT Γ τ
+  _⟨_⟩  : forall {Γ} {σ τ}    → WT Γ (σ => τ) → WT Γ σ → WT Γ τ
+  Lam   : forall {Γ} σ {τ}    → WT (σ ∷ Γ) τ → WT Γ (σ => τ)
+  Lit   : forall {Γ} {x}      → Uel x → WT Γ (O x) -- a constant
 
 FreshVariables : Set
 FreshVariables = Stream ℕ
@@ -103,8 +103,7 @@ _!_ : {A : Set} (xs : List A) (n : ℕ) → Lookup xs n
 (x₂ ∷ x₁) ! suc .(index p)       | inside x p  = inside x (there p)
 (x ∷ x₁)  ! suc .(length x₁ + m) | outside  m  = outside m
 
--- a way to get untyped terms back
-
+-- the way to get untyped terms back
 erase : forall {Γ τ} → WT Γ τ → Raw
 erase (Var inpf)      = Var (index inpf)
 erase (t ⟨ t₁ ⟩)      = App (erase t) (erase t₁)
