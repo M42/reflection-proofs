@@ -3,7 +3,7 @@ module ExampleUniverse where
 open import Reflection
 open import Data.List
 open import Data.Maybe
-open import Data.Nat hiding (_<_)
+open import Data.Nat hiding (_<_ ; _>_)
 open import Equal
 open import Relation.Nullary.Core
 
@@ -84,6 +84,8 @@ module WF where
   -- Well-founded : Set
   -- Well-founded = (∀ x → Acc x)
 
+  _>_ : ℕ → ℕ → Set
+  m > n = n < m
 
 open WF
 -- 
@@ -172,28 +174,44 @@ iets {n}{m}{.n}{m₁} <-base (<-step mm1) = <-step (iets2 {n}{m}{m₁} mm1)
 iets {n}{m}{n₁}{.m} (<-step nn1) <-base = <-step (iets3 nn1)
 iets (<-step nn1) (<-step mm1) = <-step (iets4 nn1 mm1)
 
+open import Relation.Binary.PropositionalEquality
+
+allEqual : ∀ {Γ σ} → (wt : WT Γ σ) → ∀ τ → measure wt ≡ measure (shift1 τ wt)
+allEqual (Var x)      τ = refl
+allEqual (wt ⟨ wt₁ ⟩) τ = cong suc (cong suc (cong₂ _+_ (allEqual wt τ) (allEqual wt₁ τ)))
+allEqual (Lam σ wt)   τ = cong suc (allEqual {{!!}}{{!!}} {!wt!} {!!})
+allEqual (Lit x₁)     τ = refl
+
 shift-size : ∀ {τ Γ σ} → (x : WT Γ σ) → shift1 τ x ≼ x
 shift-size (Var x)  = <-base
 shift-size (Lit x₁) = <-base
 shift-size {τ} (x ⟨ x₁ ⟩) with shift1 τ x | shift-size {τ} x | shift1 τ x₁ | shift-size {τ} x₁
 ... | a | b | c | d =  (s<s (s<s (iets b d)))
-shift-size {τ} (Lam σ x) with shift1 τ x | shift-size {τ} x
-... | a | b = s<s {!b!}
+shift-size {τ}{Γ}{τ₁ => σ} (Lam .τ₁ x) with shift1 τ x | shift-size {τ} x
+shift-size {τ} {Γ} {τ₁ => σ} (Lam .τ₁ x) | Var x₁ | b = s<s {!!}
+shift-size {τ} {Γ} {τ₁ => σ} (Lam .τ₁ x) | a ⟨ a₁ ⟩ | b = {!!}
+shift-size {τ} {Γ} {τ₁ => (σ => τ₂)} (Lam .τ₁ x) | Lam .σ a | b = {!!}
+shift-size {τ} {Γ} {τ₁ => (O x₂)} (Lam .τ₁ x₁) | Lit x | b = s<s {!b!}
 
-open import Relation.Binary.PropositionalEquality
 
-measure>0 : ∀ {Γ : Ctx} {σ : U'} (wt : WT Γ σ) → 0 < measure wt
-measure>0 (Var x) = <-base
-measure>0 (wt ⟨ wt₁ ⟩) with measure>0 wt | measure>0 wt₁
-... |  a | b = {!n<n+m+1!}
-measure>0 (Lam σ wt) = <-step (measure>0 wt)
-measure>0 (Lit x₁) = <-base
+-- measure>0 : ∀ {Γ : Ctx} {σ : U'} (wt : WT Γ σ) → 0 < measure wt
+-- measure>0 (Var x) = <-base
+-- measure>0 (wt ⟨ wt₁ ⟩) with measure>0 wt | measure>0 wt₁
+-- ... |  a | b = {!n<n+m+1!}
+-- measure>0 (Lam σ wt) = <-step (measure>0 wt)
+-- measure>0 (Lit x₁) = <-base
+
+triv : ∀ {n m} → n < suc (n + m)
+triv {zero} {zero} = <-base
+triv {zero} {suc m} = <-step triv
+triv {suc n} {zero} = s<s triv
+triv {suc n} {suc m} = s<s triv
 
 addExprs : forall {Γ σ Γ' σ'} → (wt : WT Γ σ) (n : WT Γ' σ') → measure wt < (2 + measure wt + measure n)
-addExprs wr = {!cong-< ? ? ? !}
+addExprs wr n = <-step triv
 
 addExprsSym : forall {τ Γ σ Γ' σ'} → (wt : WT Γ σ) (n : WT Γ' σ') → measure (shift1 τ wt) < (2 + measure n + measure wt)
-addExprsSym wt n = {!cong!}
+addExprsSym wt n = {!!}
 
 -- termination/reachability for T algorithm.
 allTsAcc : forall {Γ σ} → (wt : WT Γ σ) → Acc wt → TAcc wt
