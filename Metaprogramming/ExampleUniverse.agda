@@ -195,16 +195,21 @@ geez (wt ⟨ wt₁ ⟩) = geez wt ⟨ geez wt₁ ⟩
 geez (Lam σ wt) = Lam σ (geez wt)
 geez (Lit x₁) = Lit x₁
 
-shift-size : ∀ {τ Γ σ} → (x : WT Γ σ) → shift1 τ x ≼ x
+shift-size : ∀ {τ Γ Γ' σ} → (x : WT (Γ' ++ Γ) σ) → weak {Γ'}{σ}{Γ} x τ ≼ x
 shift-size (Var x)  = <-base
 shift-size (Lit x₁) = <-base
-shift-size {τ} (x ⟨ x₁ ⟩) with shift1 τ x | shift-size {τ} x | shift1 τ x₁ | shift-size {τ} x₁
+shift-size {τ}{Γ}{Γ'} (x ⟨ x₁ ⟩) with shift1 τ x | shift-size {τ}{Γ}{Γ'} x | shift1 τ x₁ | shift-size {τ}{Γ}{Γ'} x₁
 ... | a | b | c | d =  (s<s (s<s (iets b d)))
-shift-size {τ}{Γ}{τ₁ => σ} (Lam .τ₁ x) with shift1 τ x | shift-size {τ} x
-shift-size {τ}{Γ}{τ₁ => σ} (Lam .τ₁ x) | a | b with geez x
-... | eqq with allEqual {[]} {τ₁ ∷ Γ} {σ} {{!!}} eqq
-... | ss = s<s {!!}
+shift-size {τ}{Γ}{Γ'}{τ₁ => σ} (Lam .τ₁ x) with shift1 τ x | shift-size {τ}{Γ}{τ₁ ∷ Γ'} x
+shift-size {τ}{Γ}{Γ'}{τ₁ => σ} (Lam .τ₁ x) | a | b with geez x
+... | eqq with allEqual {[]} {τ₁ ∷ (Γ' ++ Γ)} {σ} {τ₁} eqq
+... | ss = s<s b
 
+shift-weak : ∀ {Γ τ σ} {wt : WT Γ τ} → weak {[]} wt (Cont σ) ≡ shift1 (Cont σ) wt
+shift-weak = refl
+
+shift-weak2 : ∀ {Γ τ σ} {wt : WT Γ τ} → weak {[]} wt (Cont σ) ≼ wt → shift1 (Cont σ) wt ≼ wt
+shift-weak2 = {!!}
 
 -- measure>0 : ∀ {Γ : Ctx} {σ : U'} (wt : WT Γ σ) → 0 < measure wt
 -- measure>0 (Var x) = <-base
@@ -229,7 +234,7 @@ addExprsSym wt n = {!!}
 allTsAcc : forall {Γ σ} → (wt : WT Γ σ) → Acc wt → TAcc wt
 allTsAcc (Var x) _ = TBaseVar
 allTsAcc (Lit x₁) _ = TBaseLit
-allTsAcc {Γ} {τ => σ} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ) wt) (x (shift1 (Cont σ) wt) (shift-size wt)))
+allTsAcc {Γ} {τ => σ} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ) wt) (x (shift1 (Cont σ) wt) (shift-weak2 {τ ∷ Γ}{σ}{σ}{wt} (shift-size {{!!}}{[]}{{!τ ∷ Γ!}} (geez wt)))))
 allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁} wt wt₁) (acc x) = TApp (allTsAcc wt (x wt (addExprs wt wt₁))) (allTsAcc (shift1 (σ => σ₁) wt₁) (x (shift1 (σ => σ₁) wt₁) (addExprsSym {σ => σ₁}{Γ}{σ} wt₁ wt) ) )
 
 
