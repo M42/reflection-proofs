@@ -145,33 +145,32 @@ s<s <-base = <-base
 s<s (<-step y) = <-step (s<s y)
 
 
-mutual
   
-  iets2 : ∀ {n m m1} → m < m1 → (n + m) < (n + m1)
-  iets2 {zero} {m} {suc .m} <-base = <-base
-  iets2 {suc n} {m} {suc .m} <-base = s<s (iets2 {n}{m}{suc m} <-base)
-  iets2 {zero} (<-step a) = <-step a
-  iets2 {suc n} (<-step a) = s<s (iets2 {n}{_}{_} (<-step a))
-  
-  
-  iets3 : ∀ {n m n₁} → n < n₁ → (n + m) < (n₁ + m)
-  iets3 {zero} {m} {suc .0} <-base = <-base
-  iets3 {suc n} {m} {suc .(suc n)} <-base = <-base
-  iets3 {zero} (<-step a) = <-step (iets3 a)
-  iets3 {suc n} (<-step a) = <-step (iets3 a)
-  
-  iets4 : ∀ {n m nn mm} → n < nn → m < mm → (n + m) < (nn + mm)
-  iets4 {n}{m}{suc .n}{suc .m} <-base <-base = <-step (iets2 {n}{m}{suc m}<-base)
-  iets4 {zero} <-base (<-step b) = <-step (<-step b)
-  iets4 {suc n} <-base (<-step b) = <-step (s<s (iets2 {n} (<-step b)))
-  iets4 (<-step a) <-base = <-step (iets4 a <-base)
-  iets4 (<-step a) (<-step b) = <-step (iets4 a (<-step b))
-  
-  iets : ∀ {n m n₁ m₁} → n < suc n₁ → m < suc m₁ → (n + m) < (suc (n₁ + m₁))
-  iets <-base <-base = <-base
-  iets {n}{m}{.n}{m₁} <-base (<-step mm1) = <-step (iets2 {n}{m}{m₁} mm1)
-  iets {n}{m}{n₁}{.m} (<-step nn1) <-base = <-step (iets3 nn1)
-  iets (<-step nn1) (<-step mm1) = <-step (iets4 nn1 mm1)
+iets2 : ∀ {n m m1} → m < m1 → (n + m) < (n + m1)
+iets2 {zero} {m} {suc .m} <-base = <-base
+iets2 {suc n} {m} {suc .m} <-base = s<s (iets2 {n}{m}{suc m} <-base)
+iets2 {zero} (<-step a) = <-step a
+iets2 {suc n} (<-step a) = s<s (iets2 {n}{_}{_} (<-step a))
+
+
+iets3 : ∀ {n m n₁} → n < n₁ → (n + m) < (n₁ + m)
+iets3 {zero} {m} {suc .0} <-base = <-base
+iets3 {suc n} {m} {suc .(suc n)} <-base = <-base
+iets3 {zero} (<-step a) = <-step (iets3 a)
+iets3 {suc n} (<-step a) = <-step (iets3 a)
+
+iets4 : ∀ {n m nn mm} → n < nn → m < mm → (n + m) < (nn + mm)
+iets4 {n}{m}{suc .n}{suc .m} <-base <-base = <-step (iets2 {n}{m}{suc m}<-base)
+iets4 {zero} <-base (<-step b) = <-step (<-step b)
+iets4 {suc n} <-base (<-step b) = <-step (s<s (iets2 {n} (<-step b)))
+iets4 (<-step a) <-base = <-step (iets4 a <-base)
+iets4 (<-step a) (<-step b) = <-step (iets4 a (<-step b))
+
+iets : ∀ {n m n₁ m₁} → n < suc n₁ → m < suc m₁ → (n + m) < (suc (n₁ + m₁))
+iets <-base <-base = <-base
+iets {n}{m}{.n}{m₁} <-base (<-step mm1) = <-step (iets2 {n}{m}{m₁} mm1)
+iets {n}{m}{n₁}{.m} (<-step nn1) <-base = <-step (iets3 nn1)
+iets (<-step nn1) (<-step mm1) = <-step (iets4 nn1 mm1)
 
 shift-size : ∀ {τ Γ σ} → (x : WT Γ σ) → shift1 τ x ≼ x
 shift-size (Var x)  = <-base
