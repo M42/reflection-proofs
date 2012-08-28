@@ -155,10 +155,17 @@ mutual
   
   
   iets3 : ∀ {n m n₁} → n < n₁ → (n + m) < (n₁ + m)
-  iets3 a = {!!}
+  iets3 {zero} {m} {suc .0} <-base = <-base
+  iets3 {suc n} {m} {suc .(suc n)} <-base = <-base
+  iets3 {zero} (<-step a) = <-step (iets3 a)
+  iets3 {suc n} (<-step a) = <-step (iets3 a)
   
   iets4 : ∀ {n m nn mm} → n < nn → m < mm → (n + m) < (nn + mm)
-  iets4 a b = {!!}
+  iets4 {n}{m}{suc .n}{suc .m} <-base <-base = <-step (iets2 {n}{m}{suc m}<-base)
+  iets4 {zero} <-base (<-step b) = <-step (<-step b)
+  iets4 {suc n} <-base (<-step b) = <-step (s<s (iets2 {n} (<-step b)))
+  iets4 (<-step a) <-base = <-step (iets4 a <-base)
+  iets4 (<-step a) (<-step b) = <-step (iets4 a (<-step b))
   
   iets : ∀ {n m n₁ m₁} → n < suc n₁ → m < suc m₁ → (n + m) < (suc (n₁ + m₁))
   iets <-base <-base = <-base
