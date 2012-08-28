@@ -68,7 +68,7 @@ data _∈_ {A : Set} (x : A) : List A → Set where
   here    : {xs : List A} → x ∈ x ∷ xs
   there   : {xs : List A} {y : A} → x ∈ xs → x ∈ y ∷ xs
   
-data WT : (Γ : Ctx) → U' -> Set where
+data WT : (Γ : Ctx) → U' → Set where
   Var   : forall {Γ} {τ}   → τ ∈ Γ → WT Γ τ
   _⟨_⟩  : forall {Γ} {σ τ} → WT Γ (σ => τ) → WT Γ σ → WT Γ τ
   Lam   : forall {Γ} σ {τ} → WT (σ ∷ Γ) τ → WT Γ (σ => τ)
