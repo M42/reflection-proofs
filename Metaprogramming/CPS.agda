@@ -104,54 +104,12 @@ data TAcc : {Γ : Ctx} {σ : U'} → WT Γ σ → Set where
   TBaseLit : forall {Γ σ x} → TAcc (Lit {Γ} {σ} x)
   TBaseVar : forall {Γ σ x} → TAcc (Var {Γ} {σ} x)
   TLam : forall {Γ t1 t2} {a : WT (t1 ∷ Γ) t2}
-         --→ TAcc a
          → TAcc (shift1 (Cont t2) a)
          → TAcc {Γ} {t1 => t2} (Lam {Γ} t1 a)
   TApp : forall {Γ σ σ₁} {a : WT Γ (σ => σ₁)} {b : WT Γ σ}
          → TAcc {Γ} {σ => σ₁} a
-      --   → TAcc b
          → TAcc (shift1 (σ => σ₁) b)
          → TAcc (a ⟨ b ⟩)
-
-
-
---mutual
---  bluh1 : ∀ {Γ σ} {wt} → TAcc {Γ} {σ} wt → TAcc {Cont σ ∷ Γ} (shift1 (Cont σ) wt)
---  bluh1 TBaseLit = TBaseLit
---  bluh1 TBaseVar = TBaseVar
---  bluh1 (TLam tacc) = TLam (bluh1 {!!})
---  bluh1 (TApp tacc tacc₁) = TApp {!tacc!} (bluh2 {!!})
---  
---  bluh2 : ∀ {Γ σ σ₁} {wt} → TAcc {Γ}{σ} wt → TAcc {σ => σ₁ ∷ Γ} (shift1 (σ => σ₁) wt)
---  bluh2 TBaseLit = TBaseLit
---  bluh2 TBaseVar = TBaseVar
---  bluh2 (TLam tacc) = {!!}
---  bluh2 (TApp tacc tacc₁) = {!!}
---
---mutual
---  -- smaller2 : ∀ {Γ σ} → (wt : WT Γ σ) → TAcc {Cont σ ∷ Γ} {σ} (shift1 (Cont σ) wt)
---  -- smaller2 {Γ}{.s => τ} (Lam {.Γ} s b) = {!!}
---  -- smaller2 (Lit x) = TBaseLit
---  -- smaller2 (Var x) = TBaseVar
---  -- smaller2 {Γ}{σ} (_⟨_⟩ {.Γ}{σ₁}{.σ} wt wt1) = {!!}
---  -- -- TApp (allTsAcc (shift1 ( σ) wt)) (allTsAcc (shift1 (σ) wt₁)) (allTsAcc (shift1 ({!!} => σ) (shift1 ( σ) wt₁)))
---  
---  -- smaller3 : ∀ {Γ σ σ₂} → (wt : WT Γ σ) → TAcc {σ => σ₂ ∷ Γ} {σ} (shift1 (σ => σ₂) wt)
---  -- smaller3 {Γ}{.s => τ} (Lam {.Γ} s b) = {!!}
---  -- smaller3 (Lit x) = TBaseLit
---  -- smaller3 (Var x) = TBaseVar
---  -- smaller3 {Γ}{σ}{σ₂} (_⟨_⟩ {.Γ}{σ₁}{.σ} wt wt1) = TApp (allTsAcc (shift1 (σ => σ₂) wt)) (allTsAcc {!!}) {!!}
---  -- -- TApp (allTsAcc (shift1
---  -- ( σ) wt)) (allTsAcc (shift1 (σ) wt₁)) (allTsAcc (shift1 ({!!} => σ) (shift1 ( σ) wt₁)))
---  
---  allTsAcc : forall {Γ σ} → (wt : WT Γ σ) → TAcc wt
---  allTsAcc (Var x)  = TBaseVar
---  allTsAcc (Lit x₁) = TBaseLit
---  allTsAcc {Γ}{τ => σ} (Lam .τ wt) with allTsAcc wt
---  ... | a   = TLam (bluh1 a)
---  allTsAcc (_⟨_⟩ {Γ} {σ} {σ₁} wt wt₁) with allTsAcc wt | allTsAcc wt₁
---  ... | a | b = TApp a (bluh2 b)
-
 
 
 
