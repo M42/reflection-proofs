@@ -3,7 +3,7 @@ module ExampleUniverse where
 open import Reflection
 open import Data.List
 open import Data.Maybe
-open import Data.Nat hiding (_<_ ; _>_)
+open import Data.Nat hiding (_<_ ; _>_) renaming (_≟_ to _≟-Nat_) 
 open import Equal
 open import Relation.Nullary.Core
 
@@ -78,8 +78,8 @@ module WF where
   measure (Lam σ wt) = 1 + measure wt 
   measure (Lit x₁) = 1 
 
-  data Acc {Γ : Ctx} {σ : U'} (x : WT Γ σ) : Set where
-    acc : (∀ {Γ' σ'} (y : WT Γ' σ') → measure y < measure x → Acc y) → Acc x
+  data Acc {Γ : Ctx} {σ : U'} (x : WT Γ σ) (msr< : (Γ' : Ctx) → (σ' : U') → WT Γ' σ' → WT Γ σ → Set) : Set where
+    acc : (∀ {Γ' σ'} (y : WT Γ' σ') → msr< Γ' σ' y x → Acc y msr<) → Acc x
 
   Well-founded : Set
   Well-founded = (∀ {Γ σ} x → Acc {Γ}{σ} x)
@@ -210,13 +210,6 @@ shift-weak wt = refl
 shift-weak2 : ∀ {Γ τ σ} {wt : WT Γ τ} → weak {[]} wt σ ≼ wt → shift1 σ wt ≼ wt
 shift-weak2 {Γ} {τ} {σ} {wt} wk = wk
 
--- measure>0 : ∀ {Γ : Ctx} {σ : U'} (wt : WT Γ σ) → 0 < measure wt
--- measure>0 (Var x) = <-base
--- measure>0 (wt ⟨ wt₁ ⟩) with measure>0 wt | measure>0 wt₁
--- ... |  a | b = {!n<n+m+1!}
--- measure>0 (Lam σ wt) = <-step (measure>0 wt)
--- measure>0 (Lit x₁) = <-base
-
 triv : ∀ {n m} → n < suc (n + m)
 triv {zero} {zero} = <-base
 triv {zero} {suc m} = <-step triv
@@ -249,22 +242,29 @@ allTsAcc {Γ} {τ => σ} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ)
 allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁} wt wt₁) (acc x) = TApp (allTsAcc wt (x wt (addExprs wt wt₁))) (allTsAcc (shift1 (σ => σ₁) wt₁) (x (shift1 (σ => σ₁) wt₁) (addExprsSym {Γ}{σ}{_}{_} wt₁ wt {σ => σ₁}) ) )
 
 
-private 
+
+mutual
   aux : (Γ : Ctx) (σ : U') → ∀ {Γ'}{σ'} (x : WT Γ σ) (y : WT Γ' σ') → measure y < measure x → Acc y
   aux Γ σ (Var x) (Var x₁) (<-step ())
   aux Γ σ (Var x) (y ⟨ y₁ ⟩) (<-step ())
   aux Γ σ (Var x) (Lam σ₁ y) (<-step ())
   aux Γ σ (Var x) (Lit x₂) (<-step ())
-  aux Γ σ {Γ'}{σ'} (x Datatypes.⟨ x₁ ⟩) (Datatypes.Var x₂) m = aux Γ' σ' {!x!} (Var x₂) (<-step m)
-  aux Γ σ (x Datatypes.⟨ x₁ ⟩) (y Datatypes.⟨ y₁ ⟩) m = {!!}
-  aux Γ σ (x Datatypes.⟨ x₁ ⟩) (Datatypes.Lam σ₂ y) m = {!!}
-  aux Γ σ (x Datatypes.⟨ x₁ ⟩) (Datatypes.Lit x₃) m = {!!}
-  aux Γ .(σ => τ) (Lam σ {τ} x) y m = {!!}
-  aux Γ .(O x) (Lit {.Γ} {x} x₁) y m = {!!}
+  aux Γ σ (x ⟨ x₁ ⟩) (Var x₂) m = {!wf!}
+  aux Γ σ (x ⟨ x₁ ⟩) (y ⟨ y₁ ⟩) m = {!!}
+  aux Γ σ (x ⟨ x₁ ⟩) (Lam σ₂ y) m = {!!}
+  aux Γ σ (x ⟨ x₁ ⟩) (Lit x₃) m = {!!}
+  aux Γ .(σ => τ) (Lam σ {τ} x) (Var x₁) m = acc (aux {!!} τ x)
+  aux Γ .(σ => τ) (Lam σ {τ} x) (y ⟨ y₁ ⟩) m = {!!}
+  aux Γ .(σ => τ) (Lam σ {τ} x) (Lam σ₁ y) m = {!!}
+  aux Γ .(σ => τ) (Lam σ {τ} x) (Lit x₂) m = {!!}
+  aux Γ .(O x) (Lit {.Γ} {x} x₁) (Var x₂) (<-step ())
+  aux Γ .(O x) (Lit {.Γ} {x} x₁) (y ⟨ y₁ ⟩) (<-step ())
+  aux Γ .(O x) (Lit {.Γ} {x} x₁) (Lam σ y) (<-step ())
+  aux Γ .(O x) (Lit {.Γ} {x} x₁) (Lit x₃) (<-step ())
   
   wf : ∀ (Γ : Ctx) (σ : U') → (wt : WT Γ σ) → Acc wt
-  wf Γ σ (Var x) = acc (aux Γ σ (Var x))
-  wf Γ σ (wt ⟨ wt₁ ⟩) = acc (aux Γ σ (wt ⟨ wt₁ ⟩))
+  wf Γ σ (Var x)                = acc (aux Γ σ (Var x))
+  wf Γ σ (wt ⟨ wt₁ ⟩)           = acc (aux Γ σ (wt ⟨ wt₁ ⟩))
   wf Γ .(σ => τ) (Lam σ {τ} wt) = acc (aux Γ (σ => τ) (Lam σ wt))
   wf Γ .(O x) (Lit {.Γ} {x} x₁) = acc (aux Γ (O x) (Lit x₁))  -- acc (aux wt)
 --  where
