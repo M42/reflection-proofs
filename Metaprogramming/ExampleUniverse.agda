@@ -81,11 +81,8 @@ module WF where
   data Acc {Γ : Ctx} {σ : U'} (x : WT Γ σ) : Set where
     acc : (∀ {Γ' σ'} (y : WT Γ' σ') → measure y < measure x → Acc y) → Acc x
 
-  -- Well-founded : Set
-  -- Well-founded = (∀ x → Acc x)
-
-  _>_ : ℕ → ℕ → Set
-  m > n = n < m
+  Well-founded : Set
+  Well-founded = (∀ {Γ σ} x → Acc {Γ}{σ} x)
 
 open WF
 -- 
@@ -96,12 +93,14 @@ open WF
 --     aux .(suc y) y <-base = <-ℕ-wf y
 --     aux .(suc x) y (<-step {x} y<x) = aux x y y<x
 
--- module Inverse-image-Well-founded {A B} (_<_ : Rel B) (f : A → B) where
+-- module Inverse-image-Well-founded {Γ σ Γ' σ'}
+--        (_<_ : ℕ → ℕ → Set) (f : WT Γ σ → ℕ)
+--        (g : WT Γ' σ' → ℕ) where
 -- 
---   _≺_ : Rel A
---   _≺_ x y = f x < f y
+--   _≺_ : WT Γ σ → WT Γ' σ' → Set
+--   _≺_ x y = f x < g y
 -- 
---   ii-acc : ∀ {x} → Acc _<_ (f x) → Acc _≺_ x
+--   ii-acc : ∀ {x} → Acc {Γ}{σ} x → Acc _≺_ x
 --   ii-acc (acc g) = acc (λ y fy<fx → ii-acc (g (f y) fy<fx))
 -- 
 --   ii-wf  : Well-founded _<_ → Well-founded _≺_
@@ -229,7 +228,10 @@ triv2 {n} {zero} = <-base
 triv2 {n} {suc m} = <-step (triv2 {n}{m})
 
 triv3 : ∀ {n m} → n < (2 + (m + n))
-triv3 {n}{m} = {!!}
+triv3 {zero} {zero} = <-step <-base
+triv3 {suc n} {zero} = <-step <-base
+triv3 {zero} {suc m} = <-step (triv3 {zero}{m})
+triv3 {suc n} {suc m} = <-step (triv3 {suc n}{m})
 
 addExprs : forall {Γ σ Γ' σ'} → (wt : WT Γ σ) (n : WT Γ' σ') → measure wt < (2 + measure wt + measure n)
 addExprs wr n = <-step triv
@@ -238,13 +240,6 @@ addExprsSym : forall {Γ σ Γ' σ'} → (wt : WT Γ σ) (n : WT Γ' σ') → �
 addExprsSym {Γ}{σ}{Γ'}{σ'} wt n {τ} with allEqual {Γ}{[]}{σ}{τ} wt
 ... | a rewrite a = triv3 {_}{measure n}
 
--- addExprsSym {τ}{Γ}{σ} wt n with shift-weak {Γ}{σ}{τ} wt
--- addExprsSym (Var x) n | refl = <-step (triv2 {_}{measure n})
--- addExprsSym {τ}{Γ}{σ} (_⟨_⟩ {.Γ}{σ₁}{.σ} wt wt₁) n | refl with allEqual {[]}{Γ}{σ₁ => σ}{τ} (geez wt) | allEqual {Γ}{[]}{σ₁}{τ} wt₁
--- --... | a | b = {!!}
--- ... | refl | refl = {!!}
--- addExprsSym {τ}{Γ}{σ => σ₁} (Lam .σ wt) n | refl = s<s {!!}
--- addExprsSym {τ}{Γ}{O σ} (Lit x₁) n | refl = <-step (triv2 {_} {measure n})
 
 -- termination/reachability for T algorithm.
 allTsAcc : forall {Γ σ} → (wt : WT Γ σ) → Acc wt → TAcc wt
@@ -253,6 +248,31 @@ allTsAcc (Lit x₁) _ = TBaseLit
 allTsAcc {Γ} {τ => σ} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ) wt) (x (shift1 (Cont σ) wt) (shift-weak2 {τ ∷ Γ}{σ}{Cont σ}{wt} (shift-size {Cont σ}{τ ∷ Γ}{[]} wt))))
 allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁} wt wt₁) (acc x) = TApp (allTsAcc wt (x wt (addExprs wt wt₁))) (allTsAcc (shift1 (σ => σ₁) wt₁) (x (shift1 (σ => σ₁) wt₁) (addExprsSym {Γ}{σ}{_}{_} wt₁ wt {σ => σ₁}) ) )
 
+
+private 
+  aux : (Γ : Ctx) (σ : U') → ∀ {Γ'}{σ'} (x : WT Γ σ) (y : WT Γ' σ') → measure y < measure x → Acc y
+  aux Γ σ (Var x) (Var x₁) (<-step ())
+  aux Γ σ (Var x) (y ⟨ y₁ ⟩) (<-step ())
+  aux Γ σ (Var x) (Lam σ₁ y) (<-step ())
+  aux Γ σ (Var x) (Lit x₂) (<-step ())
+  aux Γ σ {Γ'}{σ'} (x Datatypes.⟨ x₁ ⟩) (Datatypes.Var x₂) m = aux Γ' σ' {!x!} (Var x₂) (<-step m)
+  aux Γ σ (x Datatypes.⟨ x₁ ⟩) (y Datatypes.⟨ y₁ ⟩) m = {!!}
+  aux Γ σ (x Datatypes.⟨ x₁ ⟩) (Datatypes.Lam σ₂ y) m = {!!}
+  aux Γ σ (x Datatypes.⟨ x₁ ⟩) (Datatypes.Lit x₃) m = {!!}
+  aux Γ .(σ => τ) (Lam σ {τ} x) y m = {!!}
+  aux Γ .(O x) (Lit {.Γ} {x} x₁) y m = {!!}
+  
+  wf : ∀ (Γ : Ctx) (σ : U') → (wt : WT Γ σ) → Acc wt
+  wf Γ σ (Var x) = acc (aux Γ σ (Var x))
+  wf Γ σ (wt ⟨ wt₁ ⟩) = acc (aux Γ σ (wt ⟨ wt₁ ⟩))
+  wf Γ .(σ => τ) (Lam σ {τ} wt) = acc (aux Γ (σ => τ) (Lam σ wt))
+  wf Γ .(O x) (Lit {.Γ} {x} x₁) = acc (aux Γ (O x) (Lit x₁))  -- acc (aux wt)
+--  where
+
+
+
+finally : ∀{Γ σ} → (wt : WT Γ σ) → TAcc wt
+finally wt = allTsAcc wt (wf _ _ wt)
 
 -- -- notice how we can quote a term, automatically getting
 -- -- a well-typed lambda
