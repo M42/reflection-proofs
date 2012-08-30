@@ -56,7 +56,7 @@ RT = O ReturnType
 
 -- the CPS transformation, take 1:
 
-noApp : {σ : U'} {Γ : Ctx} → WT Γ σ → Set
+noApp : {σ : U'} {Γ : Ctx} {n : ℕ} → WT Γ σ n → Set
 noApp (Var inpf)   = ⊤
 noApp (Lam σ wt)   = ⊤
 noApp (wt ⟨ wt₁ ⟩) = ⊥
@@ -84,7 +84,7 @@ weakvar t' (x ∷ env) (there x₁) = there (weakvar t' env x₁)
 
 -- show that we can add a type variable somewhere in the middle of our
 -- environment and stuff still is okay.
-weak : forall {Γ' τ Γ} → WT (Γ' ++ Γ) τ → (τ' : U') → WT (Γ' ++ (τ' ∷ Γ)) τ
+weak : forall {Γ' τ Γ n} → WT (Γ' ++ Γ) τ n → (τ' : U') → WT (Γ' ++ (τ' ∷ Γ)) τ n
 weak (Lit x) t = Lit x
 weak {Γ'} (Var x) t' = Var (weakvar t' Γ' x)
 weak {g'} {t => t1} (Lam .t e) t' = Lam t (weak { t ∷ g' } e t')
@@ -95,38 +95,87 @@ weak {g'} {t2} {g} (_⟨_⟩ .{_}{t1}.{t2} e1 e2) t' =
 -- increase all the de Bruijn indices by 1. Needs to have some
 -- arbitrary type added to the front of the environment to keep
 -- the lengths right. special case of weakening, but with empty prefix environment.
-shift1 : forall {Γ τ} → (τ' : U') → WT Γ τ → WT (τ' ∷ Γ) τ
+shift1 : forall {Γ τ n} → (τ' : U') → WT Γ τ n → WT (τ' ∷ Γ) τ n
 shift1 t' e = weak {[]} e t'
 
 
+data Add : ℕ → Set where
+  base : (n : ℕ) → Add n
+  add : ∀ {n m} → Add n → Add m → Add (n + m)
 
-data TAcc : {Γ : Ctx} {σ : U'} → WT Γ σ → Set where
+data TAccℕ : {Γ : Ctx} {σ : U'} {n : ℕ} → WT Γ σ n → Add n → Set where
+  TBaseLit : forall {Γ σ x} → TAccℕ (Lit {Γ} {σ} x) (base 1)
+  TBaseVar : forall {Γ σ x} → TAccℕ (Var {Γ} {σ} x) (base 1)
+  TLam : forall {Γ t1 t2 n} {a : WT (t1 ∷ Γ) t2 n} {body : Add n}
+         → TAccℕ (shift1 (Cont t2) a) body
+         → TAccℕ {Γ} {t1 => t2}{suc n} (Lam {Γ} t1 a) (add (base 1) body)
+  TApp : forall {Γ σ σ₁ sza szb} {a : WT Γ (σ => σ₁) sza} {b : WT Γ σ szb} {l : Add sza} {r : Add szb}
+         → TAccℕ {Γ} {σ => σ₁}{sza} a l
+         → TAccℕ {_}{_}{szb}(shift1 (σ => σ₁) b) r
+         → TAccℕ {_}{_}{suc sza + szb} (_⟨_⟩ {_}{_}{_}{sza}{szb} a b) (add (base 1) (add l r))
+         
+data TAcc : {Γ : Ctx} {σ : U'} {n : ℕ} → WT Γ σ n → Set where
   TBaseLit : forall {Γ σ x} → TAcc (Lit {Γ} {σ} x)
   TBaseVar : forall {Γ σ x} → TAcc (Var {Γ} {σ} x)
-  TLam : forall {Γ t1 t2} {a : WT (t1 ∷ Γ) t2}
+  TLam : forall {Γ t1 t2 n} {a : WT (t1 ∷ Γ) t2 n}
          → TAcc (shift1 (Cont t2) a)
-         → TAcc {Γ} {t1 => t2} (Lam {Γ} t1 a)
-  TApp : forall {Γ σ σ₁} {a : WT Γ (σ => σ₁)} {b : WT Γ σ}
-         → TAcc {Γ} {σ => σ₁} a
-         → TAcc (shift1 (σ => σ₁) b)
-         → TAcc (a ⟨ b ⟩)
+         → TAcc {Γ} {t1 => t2}{suc n} (Lam {Γ} t1 a)
+  TApp : forall {Γ σ σ₁ sza szb} {a : WT Γ (σ => σ₁) sza} {b : WT Γ σ szb}
+         → TAcc {Γ} {σ => σ₁}{sza} a
+         → TAcc {_}{_}{szb}(shift1 (σ => σ₁) b)
+         → TAcc {_}{_}{suc sza + szb} (_⟨_⟩ {_}{_}{_}{sza}{szb} a b)
 
 
 
--- M converts a lambda or a var into an atomic CPS expression
--- M has been inlined into the Var and Lam cases in T
+
+wtSize : ∀{Γ σ n} → WT Γ σ n → ℕ
+wtSize {_}{_}{n} wt = n
+
+
+{-# NO_TERMINATION_CHECK #-}
+sizeCPS : {σ : U'} {Γ : Ctx} {n : ℕ} → (wt : WT Γ σ n) → (m : ℕ) → ℕ
+sizeCPS wt cont with wtSize wt
+... | a with wt
+sizeCPS wt cont | .1 | Var x = suc cont + 1
+sizeCPS {σ₂} wt cont | .(suc (n + m)) | _⟨_⟩ {._} {σ₁} {.σ₂} {n} {m} f e = sizeCPS f (suc (sizeCPS (shift1 (σ₁ => σ₂) e) (suc (suc 3 + cont))))
+sizeCPS {t1 => t2} wt cont | .(suc n) | Lam .t1 {.t2} {n} z = suc (cont + suc (suc (sizeCPS (shift1 (Cont t2) z) 1)))
+sizeCPS wt cont | .1 | Lit x₁ = suc cont + 1
+
+
+
+{-
+sizeCPS {σ} {Γ} {zero} () cont
+sizeCPS {σ} {Γ} {suc n} {zero} wt ()
+sizeCPS {σ} {Γ} {suc .0} {suc m} (Datatypes.Var x) cont = suc (1 + suc m)
+sizeCPS {.(Datatypes.O _)} {Γ} {suc .0} {suc m} (Datatypes.Lit x₁) cont = 1 -- suc (suc m + suc 0)
+sizeCPS _ _ = 1
+sizeCPS {σ} {Γ} {suc .(n + m₁)} {suc m} (_⟨_⟩{._}{_}{._}{n}{m₁} wt wt₁) cont = {!!}
+sizeCPS {.(σ Datatypes.=> τ)} {Γ} {suc n} {suc m} (Datatypes.Lam σ {τ} wt) cont = {!!}
+-}
+
+{-
+T : {σ : U'} {Γ : Ctx} {n m : ℕ} → (wt : WT Γ σ n) → (cont : WT (map cpsType Γ) (cpsType σ => RT) m) → WT (map cpsType Γ) RT (sizeCPS wt m)
+T {O σ}{Γ} (Lit x) cont = cont ⟨ Lit x ⟩
+T {σ}{Γ} (Var x) cont = cont ⟨ Var (cpsvar x) ⟩
+T {t1 => t2} {Γ}{suc n}{m} (Lam .t1 expr) cont = cont ⟨ (Lam (cpsType t1) (Lam (cpsType t2 => RT) (T (shift1 (Cont t2) expr) (Var here)))) ⟩
+T .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂}{n}{m} f e) cont =
+  T f (Lam (cpsType σ₁ => (cpsType σ₂ => RT) => RT)
+                           (T (shift1 (σ₁ => σ₂) e) (Lam (cpsType σ₁)
+                              ((Var (there here)) ⟨ Var here ⟩  
+                                  ⟨ shift1 (cpsType σ₁) (shift1 (cpsType σ₁ => (cpsType σ₂ => RT) => RT) cont) ⟩ ))))
+                                  -}
 
 -- T takes an expression and a syntactic continuation, and applies the
 --   continuation to a CPS-converted version of the expression.
-T : {σ : U'} {Γ : Ctx} → (wt : WT Γ σ) → TAcc wt → WT (map cpsType Γ) (cpsType σ => RT) → WT (map cpsType Γ) RT
-T (Lit x)             TBaseLit                    cont = cont ⟨ (Lit x) ⟩
-T (Var inpf  )        TBaseVar                    cont = cont ⟨ (Var (cpsvar inpf)) ⟩
-T {t1 => t2} {Γ} (Lam .t1 expr)     (TLam pf)     cont = cont ⟨ (Lam (cpsType t1) (Lam (cpsType t2 => RT) (T (shift1 (Cont t2) expr) pf (Var here)))) ⟩
-T .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂} f e)  (TApp pf pf2) cont =
-   T f pf (Lam (cpsType σ₁ => ((cpsType σ₂ => RT) => RT))
+T : {σ : U'} {Γ : Ctx} {n m : ℕ} {szn : Add n} → (wt : WT Γ σ n) → TAccℕ wt szn → (cont : WT (map cpsType Γ) (cpsType σ => RT) m) → WT (map cpsType Γ) RT (sizeCPS wt m)
+T {O σ}{Γ} .(Datatypes.Lit x) (TBaseLit {.Γ} {.σ} {x}) cont = cont ⟨ Lit x ⟩
+T {σ}{Γ} .(Datatypes.Var x) (TBaseVar {.Γ} {.σ} {x}) cont = cont ⟨ Var (cpsvar x) ⟩
+T {t1 => t2} {Γ}{suc n}{m} (Lam .t1 expr)     (TLam pf)     cont = cont ⟨ (Lam (cpsType t1) (Lam (cpsType t2 => RT) (T (shift1 (Cont t2) expr) pf (Var here)))) ⟩
+T .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂}{n}{m} f e)  (TApp pf pf2) cont =
+  T f pf (Lam (cpsType σ₁ => (cpsType σ₂ => RT) => RT)
                            (T (shift1 (σ₁ => σ₂) e) pf2 (Lam (cpsType σ₁)
-                              (((Var (there here)) ⟨ (Var here) ⟩ ) 
-                                  ⟨ (shift1 (cpsType σ₁) (shift1 (cpsType σ₁ => ((cpsType σ₂ => RT) => RT)) cont)) ⟩ ))))
+                              ((Var (there here)) ⟨ Var here ⟩  
+                                  ⟨ shift1 (cpsType σ₁) (shift1 (cpsType σ₁ => (cpsType σ₂ => RT) => RT) cont) ⟩ ))))
 
 
 

@@ -71,82 +71,21 @@ module WF where
   data _<_ (m : ℕ) : ℕ → Set where
     <-base : m < suc m
     <-step : {n : ℕ} → m < n → m < suc n
-
-  measure : ∀ {Γ σ} → WT Γ σ → ℕ
-  measure (Var x) = 1
-  measure (wt ⟨ wt₁ ⟩) = 2 + measure wt + measure wt₁
-  measure (Lam σ wt) = 1 + measure wt 
-  measure (Lit x₁) = 1 
-
-  data Acc {Γ : Ctx} {σ : U'} (x : WT Γ σ) (msr< : (Γ' : Ctx) → (σ' : U') → WT Γ' σ' → WT Γ σ → Set) : Set where
-    acc : (∀ {Γ' σ'} (y : WT Γ' σ') → msr< Γ' σ' y x → Acc y msr<) → Acc x
-
-  Well-founded : Set
-  Well-founded = (∀ {Γ σ} x → Acc {Γ}{σ} x)
-
+    
+  data Acc {Γ : Ctx} {σ : U'} {n : ℕ} (x : WT Γ σ n) : Set where
+    acc : (∀ {Γ' σ' n'} (y : WT Γ' σ' n') → n' < n → Acc y) → Acc x
+-- 
+--   Well-founded : Set
+--   Well-founded = (∀ {Γ σ} x → Acc {Γ}{σ} x)
+-- 
 open WF
--- 
--- <-ℕ-wf : Well-founded _<_
--- <-ℕ-wf x = acc (aux x)
---   where
---     aux : ∀ x y → y < x → Acc _<_ y
---     aux .(suc y) y <-base = <-ℕ-wf y
---     aux .(suc x) y (<-step {x} y<x) = aux x y y<x
-
--- module Inverse-image-Well-founded {Γ σ Γ' σ'}
---        (_<_ : ℕ → ℕ → Set) (f : WT Γ σ → ℕ)
---        (g : WT Γ' σ' → ℕ) where
--- 
---   _≺_ : WT Γ σ → WT Γ' σ' → Set
---   _≺_ x y = f x < g y
--- 
---   ii-acc : ∀ {x} → Acc {Γ}{σ} x → Acc _≺_ x
---   ii-acc (acc g) = acc (λ y fy<fx → ii-acc (g (f y) fy<fx))
--- 
---   ii-wf  : Well-founded _<_ → Well-founded _≺_
---   ii-wf wf x = ii-acc (wf (f x))
-
--- for the wt / T case:
--- _<_ : Rel ℕ
--- measure : Raw? → ℕ
--- _≺_ : Rel Raw
-
--- now we want to be able to compare distinct types with a same measure.
--- module Heterogeneous-Well-founded {A B C} (_<_ : Rel C) (f : A → C) (g : B → C) where
-
---   _≺_ : A → B → Set
---   _≺_ x y = f x < g y
-
---   ii-acc : ∀ {x} → Acc _<_ (f x) → Acc _≺_ x
---   ii-acc (acc g) = acc (λ y fy<fx → ii-acc (g (f y) fy<fx))
-
-  -- ii-wf  : Well-founded _<_ → Well-founded _≺_
-  -- ii-wf wf x = ii-acc (wf (f x))
-  
-
--- measure : Raw    → ℕ
--- measure (Var x) = 1
--- measure (App wt wt₁) = measure wt + measure wt₁
--- measure (Lam σ wt) = 1 + measure wt
--- measure (Lit a x₁) = 1
--- 
--- module <-on-measure-Well-founded where
---   open Inverse-image-Well-founded {Raw} _<_ measure public
--- 
---   wf : Well-founded _≺_
---   wf = ii-wf <-ℕ-wf
--- 
--- 
--- module ShiftLemma where
-_≼_ : forall {Γ Γ' σ} → WT Γ σ → WT Γ' σ → Set
-x ≼ y = measure x < (1 + measure y)
+_≼_ : forall {Γ Γ' σ n m} → WT Γ σ n → WT Γ' σ m → Set
+_≼_ {_}{_}{_}{n}{m} x y = n < (1 + m)
 
 s<s : ∀ {a b} → a < b → suc a < suc b
 s<s <-base = <-base
 s<s (<-step y) = <-step (s<s y)
 
-
-  
 iets2 : ∀ {n m m1} → m < m1 → (n + m) < (n + m1)
 iets2 {zero} {m} {suc .m} <-base = <-base
 iets2 {suc n} {m} {suc .m} <-base = s<s (iets2 {n}{m}{suc m} <-base)
@@ -175,39 +114,36 @@ iets (<-step nn1) (<-step mm1) = <-step (iets4 nn1 mm1)
 
 open import Relation.Binary.PropositionalEquality
 
-allEqual : ∀ {Γ Γ' σ τ} → (wt : WT (Γ' ++ Γ) σ) → measure wt ≡ measure (weak {Γ'} {σ} {Γ} wt τ)
+allEqual : ∀ {Γ Γ' σ τ n} → (wt : WT (Γ' ++ Γ) σ n) → n ≡ wtSize (weak {Γ'} {σ} {Γ} wt τ)
 allEqual (Var x)       = refl
-allEqual {Γ}{Γ'}{σ}(_⟨_⟩ {.(Γ' ++ Γ)}{σ₁}{.σ} wt  wt₁ )  = cong suc (cong suc
-  (cong₂ _+_
-    (allEqual {Γ}{Γ'}{σ₁ => σ} wt)
-    (allEqual {Γ}{Γ'}{σ₁} wt₁)))
-allEqual {Γ}{Γ'}{σ => τ}(Lam .σ wt) = cong suc (allEqual {Γ}{σ ∷ Γ'}{τ} wt)
+allEqual {Γ}{Γ'}{σ}(_⟨_⟩ {.(Γ' ++ Γ)}{σ₁}{.σ} wt  wt₁ )  = cong suc refl
+allEqual {Γ}{Γ'}{σ => τ}{τ₂}{suc n}(Lam .σ wt) = cong suc (allEqual {Γ}{σ ∷ Γ'}{τ}{τ₂}{n} wt)
 allEqual (Lit x₁)      = refl
 
 geez∈ : {A : Set} {x : A} → ∀{xs} → x ∈ xs → x ∈ (xs ++ [])
 geez∈ here = here
 geez∈ (there inn) = there (geez∈ inn)
 
-geez : ∀{Γ σ} → WT Γ σ → WT (Γ ++ []) σ
+geez : ∀{Γ σ n} → WT Γ σ n → WT (Γ ++ []) σ n
 geez (Var x) = Var (geez∈ x)
 geez (wt ⟨ wt₁ ⟩) = geez wt ⟨ geez wt₁ ⟩
 geez (Lam σ wt) = Lam σ (geez wt)
 geez (Lit x₁) = Lit x₁
 
-shift-size : ∀ {τ Γ Γ' σ} → (x : WT (Γ' ++ Γ) σ) → weak {Γ'}{σ}{Γ} x τ ≼ x
+shift-size : ∀ {τ Γ Γ' σ n} → (x : WT (Γ' ++ Γ) σ n) → weak {Γ'}{σ}{Γ} x τ ≼ x
 shift-size (Var x)  = <-base
 shift-size (Lit x₁) = <-base
 shift-size {τ}{Γ}{Γ'} (x ⟨ x₁ ⟩) with shift-size {τ}{Γ}{Γ'} x | shift-size {τ}{Γ}{Γ'} x₁
-... | b | d =  (s<s (s<s (iets b d)))
+... | b | d =  ((s<s (iets b d)))
 shift-size {τ}{Γ}{Γ'}{τ₁ => σ} (Lam .τ₁ x) with shift-size {τ}{Γ}{τ₁ ∷ Γ'} x
 shift-size {τ}{Γ}{Γ'}{τ₁ => σ} (Lam .τ₁ x) | b with geez x
 ... | eqq with allEqual {[]} {τ₁ ∷ (Γ' ++ Γ)} {σ} {τ₁} eqq
 ... | ss = s<s b
 
-shift-weak : ∀ {Γ τ σ} (wt : WT Γ τ) → weak {[]} wt σ ≡ shift1 σ wt
+shift-weak : ∀ {Γ τ σ n} (wt : WT Γ τ n) → weak {[]} wt σ ≡ shift1 σ wt
 shift-weak wt = refl
 
-shift-weak2 : ∀ {Γ τ σ} {wt : WT Γ τ} → weak {[]} wt σ ≼ wt → shift1 σ wt ≼ wt
+shift-weak2 : ∀ {Γ τ σ n} {wt : WT Γ τ n} → weak {[]} wt σ ≼ wt → shift1 σ wt ≼ wt
 shift-weak2 {Γ} {τ} {σ} {wt} wk = wk
 
 triv : ∀ {n m} → n < suc (n + m)
@@ -226,52 +162,50 @@ triv3 {suc n} {zero} = <-step <-base
 triv3 {zero} {suc m} = <-step (triv3 {zero}{m})
 triv3 {suc n} {suc m} = <-step (triv3 {suc n}{m})
 
-addExprs : forall {Γ σ Γ' σ'} → (wt : WT Γ σ) (n : WT Γ' σ') → measure wt < (2 + measure wt + measure n)
-addExprs wr n = <-step triv
+addExprs : forall {Γ σ Γ' σ' szwt szn} → (wt : WT Γ σ szwt) (n : WT Γ' σ' szn) → szwt < (1 + szwt + szn)
+addExprs wr n = triv
 
-addExprsSym : forall {Γ σ Γ' σ'} → (wt : WT Γ σ) (n : WT Γ' σ') → ∀ {τ} → measure (shift1 τ wt) < (2 + measure n + measure wt)
-addExprsSym {Γ}{σ}{Γ'}{σ'} wt n {τ} with allEqual {Γ}{[]}{σ}{τ} wt
-... | a rewrite a = triv3 {_}{measure n}
+addExprsSym : forall {Γ σ Γ' σ' szwt szn} → (wt : WT Γ σ szwt) (n : WT Γ' σ' szn) → szwt < (1 + szn + szwt)
+addExprsSym {Γ}{σ}{Γ'}{σ'}{szwt}{szn} wt n = triv2 {szwt}{szn}
 
 
 -- termination/reachability for T algorithm.
-allTsAcc : forall {Γ σ} → (wt : WT Γ σ) → Acc wt → TAcc wt
+
+-- allTsAccℕ : forall {Γ σ n} → {szn : Add n} → (wt : WT Γ σ n) → TAccℕ wt szn
+-- allTsAccℕ {_}{_}{1}{szn} (Var x)  = ?
+-- allTsAccℕ (Lit x₁)  = ?
+-- allTsAccℕ {Γ} {τ => σ}{suc n} (Lam .τ wt)  = ?
+-- allTsAccℕ {_}{.σ₁}{.(suc n + m)}(_⟨_⟩ {._}{σ}{σ₁}{n}{m} wt wt₁) = ?
+
+allTsAcc : forall {Γ σ n} → (wt : WT Γ σ n) → Acc wt → TAcc wt
 allTsAcc (Var x) _ = TBaseVar
 allTsAcc (Lit x₁) _ = TBaseLit
-allTsAcc {Γ} {τ => σ} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ) wt) (x (shift1 (Cont σ) wt) (shift-weak2 {τ ∷ Γ}{σ}{Cont σ}{wt} (shift-size {Cont σ}{τ ∷ Γ}{[]} wt))))
-allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁} wt wt₁) (acc x) = TApp (allTsAcc wt (x wt (addExprs wt wt₁))) (allTsAcc (shift1 (σ => σ₁) wt₁) (x (shift1 (σ => σ₁) wt₁) (addExprsSym {Γ}{σ}{_}{_} wt₁ wt {σ => σ₁}) ) )
+allTsAcc {Γ} {τ => σ}{suc n} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ) wt) (x (shift1 (Cont σ) wt) (shift-weak2 {τ ∷ Γ}{σ}{Cont σ}{n}{wt} (shift-size {Cont σ}{τ ∷ Γ}{[]} wt))))
+allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁}{n}{m} wt wt₁) (acc x) = TApp (allTsAcc wt (x wt (addExprs wt wt₁))) (allTsAcc (shift1 (σ => σ₁) wt₁) (x (shift1 (σ => σ₁) wt₁) (addExprsSym {Γ}{σ}{_}{_}{m}{n} wt₁ wt) ) )
+
+
 
 
 
 mutual
-  aux : (Γ : Ctx) (σ : U') → ∀ {Γ'}{σ'} (x : WT Γ σ) (y : WT Γ' σ') → measure y < measure x → Acc y
-  aux Γ σ (Var x) (Var x₁) (<-step ())
-  aux Γ σ (Var x) (y ⟨ y₁ ⟩) (<-step ())
-  aux Γ σ (Var x) (Lam σ₁ y) (<-step ())
-  aux Γ σ (Var x) (Lit x₂) (<-step ())
-  aux Γ σ (x ⟨ x₁ ⟩) (Var x₂) m = {!wf!}
-  aux Γ σ (x ⟨ x₁ ⟩) (y ⟨ y₁ ⟩) m = {!!}
-  aux Γ σ (x ⟨ x₁ ⟩) (Lam σ₂ y) m = {!!}
-  aux Γ σ (x ⟨ x₁ ⟩) (Lit x₃) m = {!!}
-  aux Γ .(σ => τ) (Lam σ {τ} x) (Var x₁) m = acc (aux {!!} τ x)
-  aux Γ .(σ => τ) (Lam σ {τ} x) (y ⟨ y₁ ⟩) m = {!!}
-  aux Γ .(σ => τ) (Lam σ {τ} x) (Lam σ₁ y) m = {!!}
-  aux Γ .(σ => τ) (Lam σ {τ} x) (Lit x₂) m = {!!}
-  aux Γ .(O x) (Lit {.Γ} {x} x₁) (Var x₂) (<-step ())
-  aux Γ .(O x) (Lit {.Γ} {x} x₁) (y ⟨ y₁ ⟩) (<-step ())
-  aux Γ .(O x) (Lit {.Γ} {x} x₁) (Lam σ y) (<-step ())
-  aux Γ .(O x) (Lit {.Γ} {x} x₁) (Lit x₃) (<-step ())
-  
-  wf : ∀ (Γ : Ctx) (σ : U') → (wt : WT Γ σ) → Acc wt
+  aux : (Γ : Ctx) (σ : U') {n : ℕ} → ∀ {Γ'}{σ'}{n'} (x : WT Γ σ n) (y : WT Γ' σ' n') → n' < n → Acc y
+  aux Γ σ (Var x) () <-base
+  aux Γ σ (Var x) y (<-step ())
+  aux Γ σ {.(suc (n + m))} (_⟨_⟩ {._}{_}{._}{n}{m} x x₁) y <-base = acc (λ {Γ'}{σ'}{n'} y₁ x₂ → aux {!!} {!!} {!!} {!!} x₂)
+  aux Γ σ (x ⟨ x₁ ⟩) y (<-step m₁) = acc (λ {Γ'}{σ'}{n'} y₁ x₂ → aux {!!} {!!} {!!} {!!} {!m₁!})
+  aux Γ .(σ => τ) (Lam σ {τ} x) y m = {!!}
+  aux Γ .(O x) (Lit {.Γ} {x} x₁) () <-base
+  aux Γ .(O x) (Lit {.Γ} {x} x₁) y (<-step ())
+
+  wf : ∀ (Γ : Ctx) (σ : U') {n : ℕ} → (wt : WT Γ σ n) → Acc wt
   wf Γ σ (Var x)                = acc (aux Γ σ (Var x))
   wf Γ σ (wt ⟨ wt₁ ⟩)           = acc (aux Γ σ (wt ⟨ wt₁ ⟩))
   wf Γ .(σ => τ) (Lam σ {τ} wt) = acc (aux Γ (σ => τ) (Lam σ wt))
-  wf Γ .(O x) (Lit {.Γ} {x} x₁) = acc (aux Γ (O x) (Lit x₁))  -- acc (aux wt)
---  where
+  wf Γ .(O x) (Lit {.Γ} {x} x₁) = acc (aux Γ (O x) (Lit x₁))
 
 
 
-finally : ∀{Γ σ} → (wt : WT Γ σ) → TAcc wt
+finally : ∀{Γ σ n} → (wt : WT Γ σ n) → TAcc wt
 finally wt = allTsAcc wt (wf _ _ wt)
 
 -- -- notice how we can quote a term, automatically getting
