@@ -1,7 +1,9 @@
 module ExampleUniverse where
 
 open import Reflection
+open import Relation.Binary.PropositionalEquality
 open import Data.List
+open import Data.Product
 open import Data.Maybe
 open import Data.Nat hiding (_<_ ; _>_) renaming (_≟_ to _≟-Nat_) 
 open import Equal
@@ -62,25 +64,23 @@ open module TC = TypeCheck U equal? type? Uel quoteVal quoteBack
 import CPS
 open module CPS' = CPS U Uel equal? type? quoteBack halttype
 
-Rel : Set → Set₁
-Rel A = A → A → Set
-
+open import Relation.Binary
 
 data _<_ (m : ℕ) : ℕ → Set where
   <-base : m < suc m
   <-step : {n : ℕ} → m < n → m < suc n
 
+-- module WF {A : Set} (_<_ : Rel A) where
+-- 
+--   data Acc (x : A) : Set where
+--     acc : (∀ y → y < x → Acc y) → Acc x
+-- 
+--   Well-founded : Set
+--   Well-founded = ∀ x → Acc x
+-- 
+-- open WF
 
-module WF {A : Set} (_<_ : Rel A) where
-
-    
-  data Acc (x : A) : Set where
-    acc : (∀ y → y < x → Acc y) → Acc x
-
-  Well-founded : Set
-  Well-founded = ∀ x → Acc x
-
-open WF
+open import Induction.WellFounded
 
 <-ℕ-wf : Well-founded _<_
 <-ℕ-wf x = acc (aux x)
@@ -89,24 +89,13 @@ open WF
     aux zero y ()
     aux (suc x₁) .x₁ <-base = <-ℕ-wf x₁
     aux (suc x₁) y (<-step m) = aux x₁ y m
-
-module Inverse-image-Well-founded {A B} (_<_ : Rel B) (f : A → B) where
-  _≺_ : Rel A
-  x ≺ y = f x < f y
-
-  ii-acc : ∀ {x} → Acc _<_ (f x) → Acc _≺_ x
-  ii-acc (acc g) = acc (λ y fy<fx → ii-acc (g (f y) fy<fx))
-
-  ii-wf : Well-founded _<_ → Well-founded _≺_
-  ii-wf wf x = ii-acc (wf (f x))
-
-open import Data.Product
-
+    
 WTpack = Σ ℕ (λ n → Σ U' (λ u → Σ Ctx (λ g → WT g u n)))
 
 to : ∀ {Γ σ n} → WT Γ σ n → WTpack
 to {Γ}{σ}{n} wt = n , σ , Γ , wt
 
+-- prove to . from = id
 
 getEnv : WTpack → Ctx
 getEnv (proj₁ , proj₂ , proj₃ , proj₄) = proj₃
@@ -122,62 +111,22 @@ sz : WTpack → ℕ
 sz (proj₁ , proj₂ , proj₃ , proj₄) = proj₁
 
 module <-on-sz-Well-founded where
-  open Inverse-image-Well-founded {WTpack} _<_ sz public
+  open Inverse-image {_} {WTpack} {ℕ} {_<_} sz public
+  
+  _≺_ : Rel WTpack _
+  x ≺ y = sz x < sz y
 
   wf : Well-founded _≺_
-  wf = ii-wf <-ℕ-wf
+  wf = well-founded <-ℕ-wf
 
 s<s : ∀ {a b} → a < b → suc a < suc b
 s<s <-base = <-base
 s<s (<-step y) = <-step (s<s y)
 
-iets2 : ∀ {n m m1} → m < m1 → (n + m) < (n + m1)
-iets2 {zero} {m} {suc .m} <-base = <-base
-iets2 {suc n} {m} {suc .m} <-base = s<s (iets2 {n}{m}{suc m} <-base)
-iets2 {zero} (<-step a) = <-step a
-iets2 {suc n} (<-step a) = s<s (iets2 {n}{_}{_} (<-step a))
-
-
-iets3 : ∀ {n m n₁} → n < n₁ → (n + m) < (n₁ + m)
-iets3 {zero} {m} {suc .0} <-base = <-base
-iets3 {suc n} {m} {suc .(suc n)} <-base = <-base
-iets3 {zero} (<-step a) = <-step (iets3 a)
-iets3 {suc n} (<-step a) = <-step (iets3 a)
-
-iets4 : ∀ {n m nn mm} → n < nn → m < mm → (n + m) < (nn + mm)
-iets4 {n}{m}{suc .n}{suc .m} <-base <-base = <-step (iets2 {n}{m}{suc m}<-base)
-iets4 {zero} <-base (<-step b) = <-step (<-step b)
-iets4 {suc n} <-base (<-step b) = <-step (s<s (iets2 {n} (<-step b)))
-iets4 (<-step a) <-base = <-step (iets4 a <-base)
-iets4 (<-step a) (<-step b) = <-step (iets4 a (<-step b))
-
-iets : ∀ {n m n₁ m₁} → n < suc n₁ → m < suc m₁ → (n + m) < (suc (n₁ + m₁))
-iets <-base <-base = <-base
-iets {n}{m}{.n}{m₁} <-base (<-step mm1) = <-step (iets2 {n}{m}{m₁} mm1)
-iets {n}{m}{n₁}{.m} (<-step nn1) <-base = <-step (iets3 nn1)
-iets (<-step nn1) (<-step mm1) = <-step (iets4 nn1 mm1)
-
-open import Relation.Binary.PropositionalEquality
-
-allEqual : ∀ {Γ Γ' σ τ n} → (wt : WT (Γ' ++ Γ) σ n) → n ≡ wtSize (weak {Γ'} {σ} {Γ} wt τ)
-allEqual (Var x)       = refl
-allEqual {Γ}{Γ'}{σ}(_⟨_⟩ {.(Γ' ++ Γ)}{σ₁}{.σ} wt  wt₁ )  = cong suc refl
-allEqual {Γ}{Γ'}{σ => τ}{τ₂}{suc n}(Lam .σ wt) = cong suc (allEqual {Γ}{σ ∷ Γ'}{τ}{τ₂}{n} wt)
-allEqual (Lit x₁)      = refl
-
-geez∈ : {A : Set} {x : A} → ∀{xs} → x ∈ xs → x ∈ (xs ++ [])
-geez∈ here = here
-geez∈ (there inn) = there (geez∈ inn)
-
-geez : ∀{Γ σ n} → WT Γ σ n → WT (Γ ++ []) σ n
-geez (Var x) = Var (geez∈ x)
-geez (wt ⟨ wt₁ ⟩) = geez wt ⟨ geez wt₁ ⟩
-geez (Lam σ wt) = Lam σ (geez wt)
-geez (Lit x₁) = Lit x₁
 
 module TLemma where
 
-  _≼_ : Rel WTpack
+  _≼_ : Rel WTpack _
   x ≼ y = sz x < (1 + sz y)
 
   shift-pack-size : ∀ {τ Γ Γ' σ n} → (x : WT (Γ' ++ Γ) σ n) → to (weak {Γ'}{σ}{Γ} x τ) ≼ to x
@@ -186,55 +135,14 @@ module TLemma where
   shift-pack-size (Lam σ x) = s<s <-base
   shift-pack-size (Lit x₁) = <-base
 
-{-
-shift-size : ∀ {τ Γ Γ' σ n} → (x : WT (Γ' ++ Γ) σ n) → weak {Γ'}{σ}{Γ} x τ ≼ x
-shift-size (Var x)  = <-base
-shift-size (Lit x₁) = <-base
-shift-size {τ}{Γ}{Γ'} (x ⟨ x₁ ⟩) with shift-size {τ}{Γ}{Γ'} x | shift-size {τ}{Γ}{Γ'} x₁
-... | b | d =  ((s<s (iets b d)))
-shift-size {τ}{Γ}{Γ'}{τ₁ => σ} (Lam .τ₁ x) with shift-size {τ}{Γ}{τ₁ ∷ Γ'} x
-shift-size {τ}{Γ}{Γ'}{τ₁ => σ} (Lam .τ₁ x) | b with geez x
-... | eqq with allEqual {[]} {τ₁ ∷ (Γ' ++ Γ)} {σ} {τ₁} eqq
-... | ss = s<s b
-
-shift-weak : ∀ {Γ τ σ n} (wt : WT Γ τ n) → weak {[]} wt σ ≡ shift1 σ wt
-shift-weak wt = refl
-
-shift-weak2 : ∀ {Γ τ σ n} {wt : WT Γ τ n} → weak {[]} wt σ ≼ wt → shift1 σ wt ≼ wt
-shift-weak2 {Γ} {τ} {σ} {wt} wk = wk
--}
-
 triv : ∀ {n m} → n < suc (n + m)
 triv {zero} {zero} = <-base
 triv {zero} {suc m} = <-step triv
-triv {suc n} {zero} = s<s triv
-triv {suc n} {suc m} = s<s triv
+triv {suc n} {m} = s<s triv
 
 triv2 : ∀ {n m} → n < suc (m + n)
 triv2 {n} {zero} = <-base
 triv2 {n} {suc m} = <-step (triv2 {n}{m})
-
-{-
-triv3 : ∀ {n m} → n < (2 + (m + n))
-triv3 {zero} {zero} = <-step <-base
-triv3 {suc n} {zero} = <-step <-base
-triv3 {zero} {suc m} = <-step (triv3 {zero}{m})
-triv3 {suc n} {suc m} = <-step (triv3 {suc n}{m})
-
-addExprs : forall {Γ σ Γ' σ' szwt szn} → (wt : WT Γ σ szwt) (n : WT Γ' σ' szn) → szwt < (1 + szwt + szn)
-addExprs wr n = triv
-
-addExprsSym : forall {Γ σ Γ' σ' szwt szn} → (wt : WT Γ σ szwt) (n : WT Γ' σ' szn) → szwt < (1 + szn + szwt)
-addExprsSym {Γ}{σ}{Γ'}{σ'}{szwt}{szn} wt n = triv2 {szwt}{szn}
-
--}
--- termination/reachability for T algorithm.
-
--- allTsAccℕ : forall {Γ σ n} → {szn : Add n} → (wt : WT Γ σ n) → TAccℕ wt szn
--- allTsAccℕ {_}{_}{1}{szn} (Var x)  = ?
--- allTsAccℕ (Lit x₁)  = ?
--- allTsAccℕ {Γ} {τ => σ}{suc n} (Lam .τ wt)  = ?
--- allTsAccℕ {_}{.σ₁}{.(suc n + m)}(_⟨_⟩ {._}{σ}{σ₁}{n}{m} wt wt₁) = ?
 
 open <-on-sz-Well-founded ; open TLemma
 
@@ -244,30 +152,6 @@ allTsAcc (Lit x₁) _ = TBaseLit
 allTsAcc {Γ} {τ => σ}{suc n} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ) wt) (x (to (shift1 (Cont σ) wt)) <-base))
 allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁}{n}{m} wt wt₁) (acc x) = TApp (allTsAcc wt (x (to wt) triv))
                                                        (allTsAcc (shift1 (σ => σ₁) wt₁) (x (to (shift1 (σ => σ₁) wt₁)) (triv2 {_}{n})) )
-
-
-
-
-
-{-
-mutual
-  aux : (Γ : Ctx) (σ : U') {n : ℕ} → ∀ {Γ'}{σ'}{n'} (x : WT Γ σ n) (y : WT Γ' σ' n') → n' < n → Acc y
-  aux Γ σ (Var x) () <-base
-  aux Γ σ (Var x) y (<-step ())
-  aux Γ σ {.(suc (n + m))} (_⟨_⟩ {._}{_}{._}{n}{m} x x₁) y <-base = acc (λ {Γ'}{σ'}{n'} y₁ x₂ → aux {!!} {!!} {!!} {!!} x₂)
-  aux Γ σ (x ⟨ x₁ ⟩) y (<-step m₁) = acc (λ {Γ'}{σ'}{n'} y₁ x₂ → aux {!!} {!!} {!!} {!!} {!m₁!})
-  aux Γ .(σ => τ) (Lam σ {τ} x) y m = {!!}
-  aux Γ .(O x) (Lit {.Γ} {x} x₁) () <-base
-  aux Γ .(O x) (Lit {.Γ} {x} x₁) y (<-step ())
-
-  wf : ∀ (Γ : Ctx) (σ : U') {n : ℕ} → (wt : WT Γ σ n) → Acc wt
-  wf Γ σ (Var x)                = acc (aux Γ σ (Var x))
-  wf Γ σ (wt ⟨ wt₁ ⟩)           = acc (aux Γ σ (wt ⟨ wt₁ ⟩))
-  wf Γ .(σ => τ) (Lam σ {τ} wt) = acc (aux Γ (σ => τ) (Lam σ wt))
-  wf Γ .(O x) (Lit {.Γ} {x} x₁) = acc (aux Γ (O x) (Lit x₁))
-
-
--}
 
 finally : ∀{Γ σ n} → (wt : WT Γ σ n) → TAcc wt
 finally wt = allTsAcc wt (wf (to wt))
@@ -282,21 +166,21 @@ arrow = quoteTerm (\ (x : ℕ → ℕ) → \ (y : ℕ) → x y)
 wtarrow : WT [] (typeOf (term2raw arrow)) (sizeOf (term2raw arrow))
 wtarrow = raw2wt (term2raw arrow)
 
--- -- we can reflect this back to "concrete" Agda; the function
--- -- is the same as the original term in arrow
--- arrowconcrete :          lam2type wtarrow
--- arrowconcrete = unquote (lam2term wtarrow)
+-- we can reflect this back to "concrete" Agda; the function
+-- is the same as the original term in arrow
+arrowconcrete :          lam2type wtarrow
+arrowconcrete = unquote (lam2term wtarrow)
 
--- open import Relation.Binary.PropositionalEquality
+unittest : arrowconcrete ≡ (λ (a : ℕ → ℕ) → λ (b : ℕ) → a b)
+unittest = refl
 
--- unittest : arrowconcrete ≡ (λ (a : ℕ → ℕ) → λ (b : ℕ) → a b)
--- unittest = refl
--- -- note that types are preserved.
--- -- unittest0 : arrowconcrete ≡ (\ (a : Bool → Bool) → \ (b : Bool) → a b)
--- -- unittest0 = ?
--- -- that wouldn't work.
+open import Data.Bool hiding (T)
 
--- ---
+-- note that types are preserved.
+-- unittest0 : arrowconcrete ≡ (\ (a : Bool → Bool) → \ (b : Bool) → a b)
+-- unittest0 = ?
+-- that wouldn't work.
+
 -- -- we can also quote terms, CPS transform them,
 -- -- then unquote them back into usable functions. cool!
 
