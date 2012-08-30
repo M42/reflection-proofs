@@ -99,20 +99,20 @@ shift1 : forall {Γ τ n} → (τ' : U') → WT Γ τ n → WT (τ' ∷ Γ) τ n
 shift1 t' e = weak {[]} e t'
 
 
-data Add : ℕ → Set where
-  base : (n : ℕ) → Add n
-  add : ∀ {n m} → Add n → Add m → Add (n + m)
+-- data Add : ℕ → Set where
+--   base : (n : ℕ) → Add n
+--   add : ∀ {n m} → Add n → Add m → Add (n + m)
 
-data TAccℕ : {Γ : Ctx} {σ : U'} {n : ℕ} → WT Γ σ n → Add n → Set where
-  TBaseLit : forall {Γ σ x} → TAccℕ (Lit {Γ} {σ} x) (base 1)
-  TBaseVar : forall {Γ σ x} → TAccℕ (Var {Γ} {σ} x) (base 1)
-  TLam : forall {Γ t1 t2 n} {a : WT (t1 ∷ Γ) t2 n} {body : Add n}
-         → TAccℕ (shift1 (Cont t2) a) body
-         → TAccℕ {Γ} {t1 => t2}{suc n} (Lam {Γ} t1 a) (add (base 1) body)
-  TApp : forall {Γ σ σ₁ sza szb} {a : WT Γ (σ => σ₁) sza} {b : WT Γ σ szb} {l : Add sza} {r : Add szb}
-         → TAccℕ {Γ} {σ => σ₁}{sza} a l
-         → TAccℕ {_}{_}{szb}(shift1 (σ => σ₁) b) r
-         → TAccℕ {_}{_}{suc sza + szb} (_⟨_⟩ {_}{_}{_}{sza}{szb} a b) (add (base 1) (add l r))
+-- data TAccℕ : {Γ : Ctx} {σ : U'} {n : ℕ} → WT Γ σ n → Add n → Set where
+--   TBaseLit : forall {Γ σ x} → TAccℕ (Lit {Γ} {σ} x) (base 1)
+--   TBaseVar : forall {Γ σ x} → TAccℕ (Var {Γ} {σ} x) (base 1)
+--   TLam : forall {Γ t1 t2 n} {a : WT (t1 ∷ Γ) t2 n} {body : Add n}
+--          → TAccℕ (shift1 (Cont t2) a) body
+--          → TAccℕ {Γ} {t1 => t2}{suc n} (Lam {Γ} t1 a) (add (base 1) body)
+--   TApp : forall {Γ σ σ₁ sza szb} {a : WT Γ (σ => σ₁) sza} {b : WT Γ σ szb} {l : Add sza} {r : Add szb}
+--          → TAccℕ {Γ} {σ => σ₁}{sza} a l
+--          → TAccℕ {_}{_}{szb}(shift1 (σ => σ₁) b) r
+--          → TAccℕ {_}{_}{suc sza + szb} (_⟨_⟩ {_}{_}{_}{sza}{szb} a b) (add (base 1) (add l r))
          
 data TAcc : {Γ : Ctx} {σ : U'} {n : ℕ} → WT Γ σ n → Set where
   TBaseLit : forall {Γ σ x} → TAcc (Lit {Γ} {σ} x)
@@ -167,7 +167,7 @@ T .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂}{n}{m} f e) cont =
 
 -- T takes an expression and a syntactic continuation, and applies the
 --   continuation to a CPS-converted version of the expression.
-T : {σ : U'} {Γ : Ctx} {n m : ℕ} {szn : Add n} → (wt : WT Γ σ n) → TAccℕ wt szn → (cont : WT (map cpsType Γ) (cpsType σ => RT) m) → WT (map cpsType Γ) RT (sizeCPS wt m)
+T : {σ : U'} {Γ : Ctx} {n m : ℕ} → (wt : WT Γ σ n) → TAcc wt → (cont : WT (map cpsType Γ) (cpsType σ => RT) m) → WT (map cpsType Γ) RT (sizeCPS wt m)
 T {O σ}{Γ} .(Datatypes.Lit x) (TBaseLit {.Γ} {.σ} {x}) cont = cont ⟨ Lit x ⟩
 T {σ}{Γ} .(Datatypes.Var x) (TBaseVar {.Γ} {.σ} {x}) cont = cont ⟨ Var (cpsvar x) ⟩
 T {t1 => t2} {Γ}{suc n}{m} (Lam .t1 expr)     (TLam pf)     cont = cont ⟨ (Lam (cpsType t1) (Lam (cpsType t2 => RT) (T (shift1 (Cont t2) expr) pf (Var here)))) ⟩

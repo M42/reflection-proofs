@@ -66,21 +66,61 @@ Rel : Set → Set₁
 Rel A = A → A → Set
 
 
-module WF where
+data _<_ (m : ℕ) : ℕ → Set where
+  <-base : m < suc m
+  <-step : {n : ℕ} → m < n → m < suc n
 
-  data _<_ (m : ℕ) : ℕ → Set where
-    <-base : m < suc m
-    <-step : {n : ℕ} → m < n → m < suc n
+
+module WF {A : Set} (_<_ : Rel A) where
+
     
-  data Acc {Γ : Ctx} {σ : U'} {n : ℕ} (x : WT Γ σ n) : Set where
-    acc : (∀ {Γ' σ' n'} (y : WT Γ' σ' n') → n' < n → Acc y) → Acc x
--- 
---   Well-founded : Set
---   Well-founded = (∀ {Γ σ} x → Acc {Γ}{σ} x)
--- 
+  data Acc (x : A) : Set where
+    acc : (∀ y → y < x → Acc y) → Acc x
+
+  Well-founded : Set
+  Well-founded = ∀ x → Acc x
+
 open WF
-_≼_ : forall {Γ Γ' σ n m} → WT Γ σ n → WT Γ' σ m → Set
-_≼_ {_}{_}{_}{n}{m} x y = n < (1 + m)
+
+<-ℕ-wf : Well-founded _<_
+<-ℕ-wf x = acc (aux x)
+  where
+    aux : ∀ x y → y < x → Acc _<_ y
+    aux zero y ()
+    aux (suc x₁) .x₁ <-base = <-ℕ-wf x₁
+    aux (suc x₁) y (<-step m) = aux x₁ y m
+
+module Inverse-image-Well-founded {A B} (_<_ : Rel B) (f : A → B) where
+  _≺_ : Rel A
+  x ≺ y = f x < f y
+
+  ii-acc : ∀ {x} → Acc _<_ (f x) → Acc _≺_ x
+  ii-acc (acc g) = acc (λ y fy<fx → ii-acc (g (f y) fy<fx))
+
+  ii-wf : Well-founded _<_ → Well-founded _≺_
+  ii-wf wf x = ii-acc (wf (f x))
+
+open import Data.Product
+
+WTpack = Σ ℕ (λ n → Σ U' (λ u → Σ Ctx (λ g → WT g u n)))
+
+to : ∀ {Γ σ n} → WT Γ σ n → WTpack
+to {Γ}{σ}{n} wt = n , σ , Γ , wt
+
+{-
+from : WTpack → WT _ _ _
+from (proj₁ , proj₂ , proj₃ , proj₄) = {!proj₄!}
+-}
+
+
+sz : WTpack → ℕ
+sz (proj₁ , proj₂ , proj₃ , proj₄) = proj₁
+
+module <-on-sz-Well-founded where
+  open Inverse-image-Well-founded {WTpack} _<_ sz public
+
+  wf : Well-founded _≺_
+  wf = ii-wf <-ℕ-wf
 
 s<s : ∀ {a b} → a < b → suc a < suc b
 s<s <-base = <-base
@@ -130,6 +170,18 @@ geez (wt ⟨ wt₁ ⟩) = geez wt ⟨ geez wt₁ ⟩
 geez (Lam σ wt) = Lam σ (geez wt)
 geez (Lit x₁) = Lit x₁
 
+module TLemma where
+
+  _≼_ : Rel WTpack
+  x ≼ y = sz x < (1 + sz y)
+
+  shift-pack-size : ∀ {τ Γ Γ' σ n} → (x : WT (Γ' ++ Γ) σ n) → to (weak {Γ'}{σ}{Γ} x τ) ≼ to x
+  shift-pack-size (Var x) = <-base
+  shift-pack-size (x ⟨ x₁ ⟩) = s<s <-base
+  shift-pack-size (Lam σ x) = s<s <-base
+  shift-pack-size (Lit x₁) = <-base
+
+{-
 shift-size : ∀ {τ Γ Γ' σ n} → (x : WT (Γ' ++ Γ) σ n) → weak {Γ'}{σ}{Γ} x τ ≼ x
 shift-size (Var x)  = <-base
 shift-size (Lit x₁) = <-base
@@ -145,6 +197,7 @@ shift-weak wt = refl
 
 shift-weak2 : ∀ {Γ τ σ n} {wt : WT Γ τ n} → weak {[]} wt σ ≼ wt → shift1 σ wt ≼ wt
 shift-weak2 {Γ} {τ} {σ} {wt} wk = wk
+-}
 
 triv : ∀ {n m} → n < suc (n + m)
 triv {zero} {zero} = <-base
@@ -156,6 +209,7 @@ triv2 : ∀ {n m} → n < suc (m + n)
 triv2 {n} {zero} = <-base
 triv2 {n} {suc m} = <-step (triv2 {n}{m})
 
+{-
 triv3 : ∀ {n m} → n < (2 + (m + n))
 triv3 {zero} {zero} = <-step <-base
 triv3 {suc n} {zero} = <-step <-base
@@ -168,7 +222,7 @@ addExprs wr n = triv
 addExprsSym : forall {Γ σ Γ' σ' szwt szn} → (wt : WT Γ σ szwt) (n : WT Γ' σ' szn) → szwt < (1 + szn + szwt)
 addExprsSym {Γ}{σ}{Γ'}{σ'}{szwt}{szn} wt n = triv2 {szwt}{szn}
 
-
+-}
 -- termination/reachability for T algorithm.
 
 -- allTsAccℕ : forall {Γ σ n} → {szn : Add n} → (wt : WT Γ σ n) → TAccℕ wt szn
@@ -177,16 +231,20 @@ addExprsSym {Γ}{σ}{Γ'}{σ'}{szwt}{szn} wt n = triv2 {szwt}{szn}
 -- allTsAccℕ {Γ} {τ => σ}{suc n} (Lam .τ wt)  = ?
 -- allTsAccℕ {_}{.σ₁}{.(suc n + m)}(_⟨_⟩ {._}{σ}{σ₁}{n}{m} wt wt₁) = ?
 
-allTsAcc : forall {Γ σ n} → (wt : WT Γ σ n) → Acc wt → TAcc wt
+open <-on-sz-Well-founded ; open TLemma
+
+allTsAcc : forall {Γ σ n} → (wt : WT Γ σ n) → Acc _≺_ (to wt) → TAcc wt
 allTsAcc (Var x) _ = TBaseVar
 allTsAcc (Lit x₁) _ = TBaseLit
-allTsAcc {Γ} {τ => σ}{suc n} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ) wt) (x (shift1 (Cont σ) wt) (shift-weak2 {τ ∷ Γ}{σ}{Cont σ}{n}{wt} (shift-size {Cont σ}{τ ∷ Γ}{[]} wt))))
-allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁}{n}{m} wt wt₁) (acc x) = TApp (allTsAcc wt (x wt (addExprs wt wt₁))) (allTsAcc (shift1 (σ => σ₁) wt₁) (x (shift1 (σ => σ₁) wt₁) (addExprsSym {Γ}{σ}{_}{_}{m}{n} wt₁ wt) ) )
+allTsAcc {Γ} {τ => σ}{suc n} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ) wt) (x (to (shift1 (Cont σ) wt)) <-base))
+allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁}{n}{m} wt wt₁) (acc x) = TApp (allTsAcc wt (x (to wt) triv))
+                                                       (allTsAcc (shift1 (σ => σ₁) wt₁) (x (to (shift1 (σ => σ₁) wt₁)) (triv2 {_}{n})) )
 
 
 
 
 
+{-
 mutual
   aux : (Γ : Ctx) (σ : U') {n : ℕ} → ∀ {Γ'}{σ'}{n'} (x : WT Γ σ n) (y : WT Γ' σ' n') → n' < n → Acc y
   aux Γ σ (Var x) () <-base
@@ -204,17 +262,20 @@ mutual
   wf Γ .(O x) (Lit {.Γ} {x} x₁) = acc (aux Γ (O x) (Lit x₁))
 
 
+-}
 
 finally : ∀{Γ σ n} → (wt : WT Γ σ n) → TAcc wt
-finally wt = allTsAcc wt (wf _ _ wt)
+finally wt = allTsAcc wt (wf (to wt))
 
--- -- notice how we can quote a term, automatically getting
--- -- a well-typed lambda
--- arrow : Term
--- arrow = quoteTerm (\ (x : ℕ → ℕ) → \ (y : ℕ) → x y)
 
--- wtarrow : WT [] (typeOf (term2raw arrow))
--- wtarrow = raw2wt (term2raw arrow)
+
+-- notice how we can quote a term, automatically getting
+-- a well-typed lambda
+arrow : Term
+arrow = quoteTerm (\ (x : ℕ → ℕ) → \ (y : ℕ) → x y)
+
+wtarrow : WT [] (typeOf (term2raw arrow)) (sizeOf (term2raw arrow))
+wtarrow = raw2wt (term2raw arrow)
 
 -- -- we can reflect this back to "concrete" Agda; the function
 -- -- is the same as the original term in arrow
@@ -234,25 +295,25 @@ finally wt = allTsAcc wt (wf _ _ wt)
 -- -- we can also quote terms, CPS transform them,
 -- -- then unquote them back into usable functions. cool!
 
--- g : Raw
--- g = term2raw (quoteTerm (λ (n : ℕ) → n))
--- a : Raw
--- a = term2raw (quoteTerm 7)
+g : Raw
+g = term2raw (quoteTerm (λ (n : ℕ) → n))
+a : Raw
+a = term2raw (quoteTerm 7)
 
--- test0 : Raw
--- test0 = App g a
+test0 : Raw
+test0 = App g a
 
--- typedtest0 : WT [] (typeOf test0)
--- typedtest0 = raw2wt test0
+typedtest0 : WT [] (typeOf test0) (sizeOf test0)
+typedtest0 = raw2wt test0
 
 -- viewTypedTest0 : typedtest0 ≡ Lam (O Nat) (Var here) ⟨ Lit 7 ⟩
 -- viewTypedTest0 = refl
 
--- id1 : ∀ {Γ σ} → WT Γ (σ => σ)
--- id1 = Lam _ (Var here)
+id1 : ∀ {Γ σ} → WT Γ (σ => σ) 2
+id1 = Lam _ (Var here)
 
--- test1 : WT [] RT
--- test1 = T typedtest0 (allTsAcc typedtest0) id1
+test1 : WT [] RT _
+test1 = T typedtest0 (finally typedtest0) id1
 
 -- test1concrete :          lam2type test1
 -- test1concrete = unquote (lam2term test1)
