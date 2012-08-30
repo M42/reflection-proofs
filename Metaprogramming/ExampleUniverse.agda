@@ -107,11 +107,16 @@ WTpack = Σ ℕ (λ n → Σ U' (λ u → Σ Ctx (λ g → WT g u n)))
 to : ∀ {Γ σ n} → WT Γ σ n → WTpack
 to {Γ}{σ}{n} wt = n , σ , Γ , wt
 
-{-
-from : WTpack → WT _ _ _
-from (proj₁ , proj₂ , proj₃ , proj₄) = {!proj₄!}
--}
 
+getEnv : WTpack → Ctx
+getEnv (proj₁ , proj₂ , proj₃ , proj₄) = proj₃
+getType : WTpack → U'
+getType (proj₁ , proj₂ , proj₃ , proj₄) = proj₂
+getSize : WTpack → ℕ
+getSize (proj₁ , proj₂ , proj₃ , proj₄) = proj₁
+
+from : ( p : WTpack) → WT (getEnv p) (getType p) (getSize p)
+from (p1 , p2 , p3 , p4 ) = p4
 
 sz : WTpack → ℕ
 sz (proj₁ , proj₂ , proj₃ , proj₄) = proj₁
@@ -306,8 +311,8 @@ test0 = App g a
 typedtest0 : WT [] (typeOf test0) (sizeOf test0)
 typedtest0 = raw2wt test0
 
--- viewTypedTest0 : typedtest0 ≡ Lam (O Nat) (Var here) ⟨ Lit 7 ⟩
--- viewTypedTest0 = refl
+viewTypedTest0 : typedtest0 ≡ Lam (O Nat) (Var here) ⟨ Lit 7 ⟩
+viewTypedTest0 = refl
 
 id1 : ∀ {Γ σ} → WT Γ (σ => σ) 2
 id1 = Lam _ (Var here)
@@ -315,5 +320,5 @@ id1 = Lam _ (Var here)
 test1 : WT [] RT _
 test1 = T typedtest0 (finally typedtest0) id1
 
--- test1concrete :          lam2type test1
--- test1concrete = unquote (lam2term test1)
+test1concrete :          lam2type test1
+test1concrete = unquote (lam2term test1)

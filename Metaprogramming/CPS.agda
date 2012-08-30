@@ -132,14 +132,13 @@ wtSize : ∀{Γ σ n} → WT Γ σ n → ℕ
 wtSize {_}{_}{n} wt = n
 
 
-{-# NO_TERMINATION_CHECK #-}
-sizeCPS : {σ : U'} {Γ : Ctx} {n : ℕ} → (wt : WT Γ σ n) → (m : ℕ) → ℕ
-sizeCPS wt cont with wtSize wt
+sizeCPS : {σ : U'} {Γ : Ctx} {n : ℕ} → (wt : WT Γ σ n) → (TAcc wt) → (m : ℕ) → ℕ
+sizeCPS wt acc cont with wtSize wt
 ... | a with wt
-sizeCPS wt cont | .1 | Var x = suc cont + 1
-sizeCPS {σ₂} wt cont | .(suc (n + m)) | _⟨_⟩ {._} {σ₁} {.σ₂} {n} {m} f e = sizeCPS f (suc (sizeCPS (shift1 (σ₁ => σ₂) e) (suc (suc 3 + cont))))
-sizeCPS {t1 => t2} wt cont | .(suc n) | Lam .t1 {.t2} {n} z = suc (cont + suc (suc (sizeCPS (shift1 (Cont t2) z) 1)))
-sizeCPS wt cont | .1 | Lit x₁ = suc cont + 1
+sizeCPS wt acc cont | .1 | Var x = suc cont + 1
+sizeCPS {σ₂} wt (TApp pf pf2) cont | .(suc (n + m)) | _⟨_⟩ {._} {σ₁} {.σ₂} {n} {m} f e = sizeCPS f pf (suc (sizeCPS (shift1 (σ₁ => σ₂) e) pf2 (suc (suc 3 + cont))))
+sizeCPS {t1 => t2} wt (TLam pf) cont | .(suc n) | Lam .t1 {.t2} {n} z = suc (cont + suc (suc (sizeCPS (shift1 (Cont t2) z) pf 1)))
+sizeCPS wt acc cont | .1 | Lit x₁ = suc cont + 1
 
 
 
@@ -167,7 +166,7 @@ T .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂}{n}{m} f e) cont =
 
 -- T takes an expression and a syntactic continuation, and applies the
 --   continuation to a CPS-converted version of the expression.
-T : {σ : U'} {Γ : Ctx} {n m : ℕ} → (wt : WT Γ σ n) → TAcc wt → (cont : WT (map cpsType Γ) (cpsType σ => RT) m) → WT (map cpsType Γ) RT (sizeCPS wt m)
+T : {σ : U'} {Γ : Ctx} {n m : ℕ} → (wt : WT Γ σ n) → (ta : TAcc wt) → (cont : WT (map cpsType Γ) (cpsType σ => RT) m) → WT (map cpsType Γ) RT (sizeCPS wt ta m)
 T {O σ}{Γ} .(Datatypes.Lit x) (TBaseLit {.Γ} {.σ} {x}) cont = cont ⟨ Lit x ⟩
 T {σ}{Γ} .(Datatypes.Var x) (TBaseVar {.Γ} {.σ} {x}) cont = cont ⟨ Var (cpsvar x) ⟩
 T {t1 => t2} {Γ}{suc n}{m} (Lam .t1 expr)     (TLam pf)     cont = cont ⟨ (Lam (cpsType t1) (Lam (cpsType t2 => RT) (T (shift1 (Cont t2) expr) pf (Var here)))) ⟩

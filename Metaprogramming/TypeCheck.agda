@@ -169,10 +169,10 @@ sizeOf r {pf} with infer [] r
 sizeOf .(Datatypes.erase U equal? Uel t) | Datatypes.ok n τ t = n
 sizeOf r {()} | Datatypes.bad
 
-raw2wt : {n : ℕ} (r : Raw) → {pf : typechecks r} → WT [] (typeOf r {pf}) (sizeOf r {pf})
-raw2wt {n} r {pf} with infer [] r
-raw2wt {n} .(erase t) | ok n₁ τ t = t
-raw2wt {n} r {()}     | bad
+raw2wt : (r : Raw) → {pf : typechecks r} → WT [] (typeOf r {pf}) (sizeOf r {pf})
+raw2wt r {pf} with infer [] r
+raw2wt .(erase t) | ok n₁ τ t = t
+raw2wt r {()}     | bad
 
 open import Apply
 
