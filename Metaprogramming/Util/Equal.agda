@@ -1,4 +1,4 @@
-module Metaprogramming.Equal where
+module Metaprogramming.Util.Equal where
 
 -- equality of types.
 data Equal? {A : Set} : A → A → Set where

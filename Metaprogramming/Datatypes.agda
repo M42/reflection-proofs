@@ -1,4 +1,4 @@
-open import Metaprogramming.Equal
+open import Metaprogramming.Util.Equal
 
 module Metaprogramming.Datatypes (U : Set) (equal? : (x : U) → (y : U) → Equal? x y) (Uel : U → Set) where
 

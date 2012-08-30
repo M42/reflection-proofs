@@ -1,5 +1,5 @@
-open import Metaprogramming.Equal
-open import Metaprogramming.Apply
+open import Metaprogramming.Util.Equal
+open import Metaprogramming.Util.Apply
 open import Reflection
 open import Data.Maybe
 

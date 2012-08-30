@@ -1,4 +1,4 @@
-module Metaprogramming.ConcreteSKI where
+module Metaprogramming.Util.ConcreteSKI where
 
 s : ∀ {a b c : Set} → (a → b → c) → (a → b) → a → c
 s f g x = f x (g x)

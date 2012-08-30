@@ -1,4 +1,4 @@
-open import Metaprogramming.Equal
+open import Metaprogramming.Util.Equal
 open import Reflection
 open import Data.Maybe
 

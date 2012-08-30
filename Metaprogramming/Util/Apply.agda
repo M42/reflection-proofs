@@ -1,4 +1,4 @@
-module Metaprogramming.Apply where
+module Metaprogramming.Util.Apply where
 
 -- ugh, this may not be in a parameterised module. if it is, such as
 -- where it was in CPS.Apply, if you import CPS as CPS' = CPS . . . e.g.

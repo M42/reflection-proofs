@@ -1,4 +1,6 @@
-open import Metaprogramming.Equal
+open import Metaprogramming.Util.Equal
+open import Metaprogramming.Util.Apply
+
 open import Reflection
 open import Data.Maybe
 
@@ -173,8 +175,6 @@ raw2wt : (r : Raw) → {pf : typechecks r} → WT [] (typeOf r {pf}) (sizeOf r {
 raw2wt r {pf} with infer [] r
 raw2wt .(erase t) | ok n₁ τ t = t
 raw2wt r {()}     | bad
-
-open import Metaprogramming.Apply
 
 lam2type : {σ : U'} {Γ : Ctx} {n : ℕ} → WT Γ σ n → Set
 lam2type {σ} t = el' σ

@@ -2,7 +2,7 @@ module Metaprogramming.ExampleTypeCheck where
 
 open import Data.Nat
 
-open import Metaprogramming.Equal
+open import Metaprogramming.Util.Equal
 
 open import Data.Nat renaming (_≟_ to _≟-Nat_)
 open import Data.Bool

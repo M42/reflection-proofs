@@ -6,7 +6,7 @@ open import Data.List
 open import Data.Product
 open import Data.Maybe
 open import Data.Nat hiding (_<_ ; _>_) renaming (_≟_ to _≟-Nat_) 
-open import Metaprogramming.Equal
+open import Metaprogramming.Util.Equal
 open import Relation.Nullary.Core
 open import Induction.WellFounded
 
