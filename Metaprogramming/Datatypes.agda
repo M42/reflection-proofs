@@ -3,11 +3,12 @@ open import Equal
 module Datatypes (U : Set) (equal? : (x : U) → (y : U) → Equal? x y) (Uel : U → Set) where
 
 open import Data.List
-open import Data.Nat hiding (_≟_)
+open import Data.Nat hiding (_≟_ ; _<_)
 open import Data.Unit hiding (_≟_)
 open import Data.Empty
+open import Data.Product
 open import Data.Fin using (Fin ;  zero ; suc)
-
+open import Relation.Binary.PropositionalEquality
 
 infixl 30 _⟨_⟩ 
 infixr 20 _=>_
@@ -74,6 +75,34 @@ data WT : (Γ : Ctx) → U' → ℕ → Set where
   Lam   : forall {Γ} σ {τ} {n}   → WT (σ ∷ Γ) τ n → WT Γ (σ => τ) (suc n)
   Lit   : forall {Γ} {x}      → Uel x → WT Γ (O x) 1 -- a constant
 
+WTpack = Σ ℕ (λ n → Σ U' (λ u → Σ Ctx (λ g → WT g u n)))
+
+getEnv : WTpack → Ctx
+getEnv (proj₁ , proj₂ , proj₃ , proj₄) = proj₃
+getType : WTpack → U'
+getType (proj₁ , proj₂ , proj₃ , proj₄) = proj₂
+sz : WTpack → ℕ
+sz (proj₁ , proj₂ , proj₃ , proj₄) = proj₁
+
+to : ∀ {Γ σ n} → WT Γ σ n → WTpack
+to {Γ}{σ}{n} wt = n , σ , Γ , wt
+
+private
+  -- showing that we have a valid isomorphism between
+  -- WT and WTpack
+  fromWT : (p : WTpack) → WT (getEnv p) (getType p) (sz p)
+  fromWT (p1 , p2 , p3 , p4 ) = p4
+  
+  from-toWT : ∀ {Γ σ n} → {x : WT Γ σ n} → fromWT (to x) ≡ x
+  from-toWT = refl
+  
+  to-fromWT : ∀ {x : WTpack} → to (fromWT x) ≡ x
+  to-fromWT = refl
+
+
+wtSize : ∀{Γ σ n} → WT Γ σ n → ℕ
+wtSize {_}{_}{n} wt = n
+
 FreshVariables : Set
 FreshVariables = Stream ℕ
 
@@ -113,3 +142,16 @@ erase (Lit {_}{σ} x)  = Lit σ x
 data Infer (Γ : Ctx) : Raw → Set where
   ok    : (n : ℕ)(τ : U') (t : WT Γ τ n)  → Infer Γ (erase t)
   bad   : {e : Raw}              → Infer Γ e
+
+-- We capture that two sets are isomorphic using the following record.
+record Iso (A B : Set) : Set where
+  field
+    from    : A → B
+    isoto   : B → A
+    from-to : {x : B} → from (isoto x) ≡ x
+    to-from : {x : A} → isoto (from x) ≡ x
+    
+data _<_ (m : ℕ) : ℕ → Set where
+  <-base : m < suc m
+  <-step : {n : ℕ} → m < n → m < suc n
+

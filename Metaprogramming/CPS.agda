@@ -3,13 +3,18 @@ open import Apply
 open import Reflection
 open import Data.Maybe
 
-module CPS (U : Set) (Uel : U → Set) (equal? : (x : U) → (y : U) → Equal? x y) (type? : Name → Maybe U) (quoteBack : (x : U) → Uel x → Term) (ReturnType : U) where
+module CPS (U : Set)
+           (Uel : U → Set)
+           (equal? : (x : U) → (y : U) → Equal? x y)
+           (type? : Name → Maybe U)
+           (quoteBack : (x : U) → Uel x → Term)
+           (ReturnType : U) where
 
 open import Relation.Nullary.Core
 open import Data.Bool hiding (T) renaming (_≟_ to _≟Bool_) 
 open import Reflection
-open import Data.Nat renaming (_≟_ to _≟-Nat_)
-
+open import Data.Nat  hiding (_<_) renaming (_≟_ to _≟-Nat_)
+open import Relation.Binary
 open import Data.Stream using (Stream ; evens ; odds ; _∷_ )
 open import Coinduction
 open import Data.Maybe
@@ -18,7 +23,7 @@ open import Data.Product hiding (map)
 open import Data.Unit hiding (_≤_; _≤?_)
 open import Relation.Binary.PropositionalEquality
 open import Data.String renaming (_++_ to _+S+_)
-open import Data.Fin hiding (_+_ ; _<_; _≤_ ; suc ; zero) renaming (compare to fcompare)
+open import Data.Fin hiding (_≺_ ; _+_ ; _<_; _≤_ ; suc ; zero) renaming (compare to fcompare)
 open import Data.List
 
 import Datatypes
@@ -30,8 +35,6 @@ open module TC = TypeCheck U equal? type? Uel
 map/k : {a b : Set} → (a → (a → b) → b) → List a → (List a → b) → b
 map/k f/k []       k = k []
 map/k f/k (x ∷ xs) k = f/k x (λ v → (map/k f/k xs (λ v-rest → k (v ∷ v-rest))))
-
-
 
 testlist : List ℕ
 testlist = 1 ∷ 2 ∷ 3 ∷ []
@@ -45,25 +48,15 @@ incrlist  = map/k (λ n k → k (suc n)) testlist identity
 incrlist' : List ℕ
 incrlist' = map (λ n → suc n) testlist
 
-------------
--- CPS types
-------------
-
 -- result type...
-
 RT : U'
 RT = O ReturnType
-
--- the CPS transformation, take 1:
 
 noApp : {σ : U'} {Γ : Ctx} {n : ℕ} → WT Γ σ n → Set
 noApp (Var inpf)   = ⊤
 noApp (Lam σ wt)   = ⊤
 noApp (wt ⟨ wt₁ ⟩) = ⊥
 noApp (Lit x )     = ⊥
-
--- and now the hybrid approach
--- thanks to http://matt.might.net/articles/cps-conversion/
 
 cpsType : U' → U'
 cpsType (O x)     = O x
@@ -98,22 +91,6 @@ weak {g'} {t2} {g} (_⟨_⟩ .{_}{t1}.{t2} e1 e2) t' =
 shift1 : forall {Γ τ n} → (τ' : U') → WT Γ τ n → WT (τ' ∷ Γ) τ n
 shift1 t' e = weak {[]} e t'
 
-
--- data Add : ℕ → Set where
---   base : (n : ℕ) → Add n
---   add : ∀ {n m} → Add n → Add m → Add (n + m)
-
--- data TAccℕ : {Γ : Ctx} {σ : U'} {n : ℕ} → WT Γ σ n → Add n → Set where
---   TBaseLit : forall {Γ σ x} → TAccℕ (Lit {Γ} {σ} x) (base 1)
---   TBaseVar : forall {Γ σ x} → TAccℕ (Var {Γ} {σ} x) (base 1)
---   TLam : forall {Γ t1 t2 n} {a : WT (t1 ∷ Γ) t2 n} {body : Add n}
---          → TAccℕ (shift1 (Cont t2) a) body
---          → TAccℕ {Γ} {t1 => t2}{suc n} (Lam {Γ} t1 a) (add (base 1) body)
---   TApp : forall {Γ σ σ₁ sza szb} {a : WT Γ (σ => σ₁) sza} {b : WT Γ σ szb} {l : Add sza} {r : Add szb}
---          → TAccℕ {Γ} {σ => σ₁}{sza} a l
---          → TAccℕ {_}{_}{szb}(shift1 (σ => σ₁) b) r
---          → TAccℕ {_}{_}{suc sza + szb} (_⟨_⟩ {_}{_}{_}{sza}{szb} a b) (add (base 1) (add l r))
-         
 data TAcc : {Γ : Ctx} {σ : U'} {n : ℕ} → WT Γ σ n → Set where
   TBaseLit : forall {Γ σ x} → TAcc (Lit {Γ} {σ} x)
   TBaseVar : forall {Γ σ x} → TAcc (Var {Γ} {σ} x)
@@ -125,13 +102,6 @@ data TAcc : {Γ : Ctx} {σ : U'} {n : ℕ} → WT Γ σ n → Set where
          → TAcc {_}{_}{szb}(shift1 (σ => σ₁) b)
          → TAcc {_}{_}{suc sza + szb} (_⟨_⟩ {_}{_}{_}{sza}{szb} a b)
 
-
-
-
-wtSize : ∀{Γ σ n} → WT Γ σ n → ℕ
-wtSize {_}{_}{n} wt = n
-
-
 sizeCPS : {σ : U'} {Γ : Ctx} {n : ℕ} → (wt : WT Γ σ n) → (TAcc wt) → (m : ℕ) → ℕ
 sizeCPS wt acc cont with wtSize wt
 ... | a with wt
@@ -141,105 +111,53 @@ sizeCPS {t1 => t2} wt (TLam pf) cont | .(suc n) | Lam .t1 {.t2} {n} z = suc (con
 sizeCPS wt acc cont | .1 | Lit x₁ = suc cont + 1
 
 
-
-{-
-sizeCPS {σ} {Γ} {zero} () cont
-sizeCPS {σ} {Γ} {suc n} {zero} wt ()
-sizeCPS {σ} {Γ} {suc .0} {suc m} (Datatypes.Var x) cont = suc (1 + suc m)
-sizeCPS {.(Datatypes.O _)} {Γ} {suc .0} {suc m} (Datatypes.Lit x₁) cont = 1 -- suc (suc m + suc 0)
-sizeCPS _ _ = 1
-sizeCPS {σ} {Γ} {suc .(n + m₁)} {suc m} (_⟨_⟩{._}{_}{._}{n}{m₁} wt wt₁) cont = {!!}
-sizeCPS {.(σ Datatypes.=> τ)} {Γ} {suc n} {suc m} (Datatypes.Lam σ {τ} wt) cont = {!!}
--}
-
-{-
-T : {σ : U'} {Γ : Ctx} {n m : ℕ} → (wt : WT Γ σ n) → (cont : WT (map cpsType Γ) (cpsType σ => RT) m) → WT (map cpsType Γ) RT (sizeCPS wt m)
-T {O σ}{Γ} (Lit x) cont = cont ⟨ Lit x ⟩
-T {σ}{Γ} (Var x) cont = cont ⟨ Var (cpsvar x) ⟩
-T {t1 => t2} {Γ}{suc n}{m} (Lam .t1 expr) cont = cont ⟨ (Lam (cpsType t1) (Lam (cpsType t2 => RT) (T (shift1 (Cont t2) expr) (Var here)))) ⟩
-T .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂}{n}{m} f e) cont =
-  T f (Lam (cpsType σ₁ => (cpsType σ₂ => RT) => RT)
-                           (T (shift1 (σ₁ => σ₂) e) (Lam (cpsType σ₁)
-                              ((Var (there here)) ⟨ Var here ⟩  
-                                  ⟨ shift1 (cpsType σ₁) (shift1 (cpsType σ₁ => (cpsType σ₂ => RT) => RT) cont) ⟩ ))))
-                                  -}
-
 -- T takes an expression and a syntactic continuation, and applies the
 --   continuation to a CPS-converted version of the expression.
-T : {σ : U'} {Γ : Ctx} {n m : ℕ} → (wt : WT Γ σ n) → (ta : TAcc wt) → (cont : WT (map cpsType Γ) (cpsType σ => RT) m) → WT (map cpsType Γ) RT (sizeCPS wt ta m)
-T {O σ}{Γ} .(Datatypes.Lit x) (TBaseLit {.Γ} {.σ} {x}) cont = cont ⟨ Lit x ⟩
-T {σ}{Γ} .(Datatypes.Var x) (TBaseVar {.Γ} {.σ} {x}) cont = cont ⟨ Var (cpsvar x) ⟩
-T {t1 => t2} {Γ}{suc n}{m} (Lam .t1 expr)     (TLam pf)     cont = cont ⟨ (Lam (cpsType t1) (Lam (cpsType t2 => RT) (T (shift1 (Cont t2) expr) pf (Var here)))) ⟩
-T .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂}{n}{m} f e)  (TApp pf pf2) cont =
-  T f pf (Lam (cpsType σ₁ => (cpsType σ₂ => RT) => RT)
-                           (T (shift1 (σ₁ => σ₂) e) pf2 (Lam (cpsType σ₁)
+T' : {σ : U'} {Γ : Ctx} {n m : ℕ} → (wt : WT Γ σ n) → (ta : TAcc wt) → (cont : WT (map cpsType Γ) (cpsType σ => RT) m) → WT (map cpsType Γ) RT (sizeCPS wt ta m)
+T' {O σ}{Γ} .(Datatypes.Lit x) (TBaseLit {.Γ} {.σ} {x}) cont = cont ⟨ Lit x ⟩
+T' {σ}{Γ} .(Datatypes.Var x) (TBaseVar {.Γ} {.σ} {x}) cont = cont ⟨ Var (cpsvar x) ⟩
+T' {t1 => t2} {Γ}{suc n}{m} (Lam .t1 expr)     (TLam pf)     cont = cont ⟨ (Lam (cpsType t1) (Lam (cpsType t2 => RT) (T' (shift1 (Cont t2) expr) pf (Var here)))) ⟩
+T' .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂}{n}{m} f e)  (TApp pf pf2) cont =
+  T' f pf (Lam (cpsType σ₁ => (cpsType σ₂ => RT) => RT)
+                           (T' (shift1 (σ₁ => σ₂) e) pf2 (Lam (cpsType σ₁)
                               ((Var (there here)) ⟨ Var here ⟩  
                                   ⟨ shift1 (cpsType σ₁) (shift1 (cpsType σ₁ => (cpsType σ₂ => RT) => RT) cont) ⟩ ))))
+                                  
+import WTWellfounded
+open module WTWf = WTWellfounded U equal? Uel type? quoteBack ReturnType
+open import Induction.WellFounded
 
+module TLemma where
 
+  _≼_ : Rel WTpack _
+  x ≼ y = sz x < (1 + sz y)
 
--- id1 : forall {x} → WT [] (O x => O x)
--- id1 {x} = Lam (O x) (Var here)
--- id2 : forall {x} → WT (O x => O  x ∷ []) ((O x => O x) => (O x => O x))
--- id2 {x} = Lam (O x => O x) (Var (there here))
+  shift-pack-size : ∀ {τ Γ Γ' σ n} → (x : WT (Γ' ++ Γ) σ n) → to (weak {Γ'}{σ}{Γ} x τ) ≼ to x
+  shift-pack-size (Var x) = <-base
+  shift-pack-size (x ⟨ x₁ ⟩) = s<s <-base
+  shift-pack-size (Lam σ x) = s<s <-base
+  shift-pack-size (Lit x₁) = <-base
 
+triv : ∀ {n m} → n < suc (n + m)
+triv {zero} {zero} = <-base
+triv {zero} {suc m} = <-step triv
+triv {suc n} {m} = s<s triv
 
+triv2 : ∀ {n m} → n < suc (m + n)
+triv2 {n} {zero} = <-base
+triv2 {n} {suc m} = <-step (triv2 {n}{m})
 
+open <-on-sz-Well-founded ; open TLemma
 
+private
+  allTsAcc : forall {Γ σ n} → (wt : WT Γ σ n) → Acc _≺_ (to wt) → TAcc wt
+  allTsAcc (Var x) _ = TBaseVar
+  allTsAcc (Lit x₁) _ = TBaseLit
+  allTsAcc {Γ} {τ => σ}{suc n} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ) wt) (x (to (shift1 (Cont σ) wt)) <-base))
+  allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁}{n}{m} wt wt₁) (acc x) = TApp (allTsAcc wt (x (to wt) triv))
+                                                         (allTsAcc (shift1 (σ => σ₁) wt₁) (x (to (shift1 (σ => σ₁) wt₁)) (triv2 {_}{n})) )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- mutual
---   T-c : forall {σ Γ} → WT Γ σ → WT (map cpsType Γ) (cpsType σ => RT) → WT (map cpsType Γ) RT
---   T-c (Halt t)    c = {!!}
---   T-c (Var inpf ) c = App c (M-h (Var inpf) tt)
---   T-c (Lam σ t  ) c = App c (M-h (Lam σ t)  tt)
---   T-c (App f e  ) c = T-k f (λ $f →
---                                   T-k e (λ $e →
---                                       App (App {!!} $e) c))
--- 
---   T-k : forall {σ Γ} → WT Γ σ
---                      → (WT (map cpsType Γ) (cpsType σ) → WT (map cpsType Γ) RT)
---                      → WT (map cpsType Γ) RT
---   T-k (Halt t)    k = {!!}
---   T-k (Var inpf ) k = k (M-h (Var inpf) tt)
---   T-k (Lam σ t  ) k = k (M-h (Lam σ t) tt)
---   T-k {σ} {Γ} (App f e  ) k = 
---                          T-k f ( (λ $f →
---                                T-k e ((λ $e →
---                                    App (App  $f  $e) cont ))))
---        where
---            cont : WT (map cpsType Γ) (cpsType σ => RT)
---            cont = Lam (cpsType σ)
---                               (k ((Var {{!!}} {!here {?} {?}!})) ) -- Lam ($rv ∷ []) (k (Var $rv))
--- 
---   M-h : {σ : U'} {Γ : Ctx} → (t : WT Γ σ) → noApp t → WT (map cpsType Γ) (cpsType σ)
---   M-h {t1 => t2} (Lam .t1 t) pf = Lam (cpsType t1)
---                                       (Lam (cpsType t2 => RT)
---                                            (T-c (shift1 (Cont t2) t) (Var here)))
---   M-h (Var inpf) pf = Var (cpsvar inpf)
---   M-h (App t t₁) ()
---   M-h (Halt t )  ()
-
--- testIdId = T-c id1 id2
+T : {σ : U'} {Γ : Ctx} {n m : ℕ} → (wt : WT Γ σ n)
+                                 → (cont : WT (map cpsType Γ) (cpsType σ => RT) m)
+                                 → WT (map cpsType Γ) RT (sizeCPS wt (allTsAcc wt (wf (to wt))) m)
+T wt cont = T' wt (allTsAcc wt (wf (to wt))) cont
