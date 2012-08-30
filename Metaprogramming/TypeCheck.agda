@@ -24,15 +24,6 @@ open import Data.Bool hiding (T) renaming (_≟_ to _≟Bool_)
 import Metaprogramming.Datatypes
 open module DT = Metaprogramming.Datatypes U equal? Uel
 
-----------------------------------------------------------------
--- examples.
-wellScoped : Term -- :: (O => O) => (O => O)
-wellScoped = quoteTerm (λ (x : Set → Set) → λ (y : Set) → x y)
-
-sth : Term -- :: ℕ
-sth = quoteTerm (λ (y : ℕ → ℕ) → y 5)
-----------------------------------------------------------------
-
 
 -- type checking:
 -- here we expect as input the type of the whole expression. It's a checker, not
@@ -183,7 +174,7 @@ lam2term : {σ : U'} {Γ : Ctx} {n : ℕ} → WT Γ σ n → Term
 lam2term (Lit {_}{σ} x)   = quoteBack σ x
 lam2term (Var x)          = var (index x) []
 -- somehow type inference doesn't work here, i.e. we cannot introduce
--- 2 lam's and apply t₁ to t₂ that way.
+-- 2 lam's and apply t₁ to t₂ that way (as we do in Metaprogramming.SKI).
 lam2term (t₁ ⟨ t₂ ⟩)      = def (quote Apply) (arg visible relevant (lam2term t₁) ∷
                                                arg visible relevant (lam2term t₂) ∷ [])
 lam2term (Lam σ t)        = lam visible (el unknown unknown) (lam2term t)

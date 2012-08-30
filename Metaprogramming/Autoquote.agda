@@ -11,50 +11,16 @@ open import Data.Bool
 open import Relation.Binary.PropositionalEquality
 open import Data.List
 open import Data.Vec hiding (map)
+open import Metaprogramming.Util.PropEqNat
 
 -- here we'll try and generalise the concrete->Term->AST process
 -- idea: provide a table with (Name, arity, Constructor ∈ AST) and
 -- we'll try and quote it.
 
--- here's an example AST
-
-data Expr : Set where
-  Variable : ℕ               → Expr
-  Plus     : Expr → Expr     → Expr
-  Succ     : Expr            → Expr
-  Zero     :                   Expr
-
-testterm : {a b : ℕ} → Term
-testterm {a} {b} = quoteTerm ((1 + a) + b)
-
-testterm0 : {a : ℕ} → Term
-testterm0 {a} = quoteTerm a
-
-testterm1 : {a : ℕ} → Term
-testterm1 {a} = quoteTerm 1
-
-data EqN : ℕ → ℕ → Set where
-  yes : {m : ℕ} → EqN m m
-  no  : {m n : ℕ} → EqN m n
-
-
-≟-Nat-cong : (m : ℕ) → (n : ℕ) → EqN m n → EqN (suc m) (suc n)
-≟-Nat-cong .n n yes = yes
-≟-Nat-cong  m n no  = no
-
-
-_≟-Nat_ : (m : ℕ) → (n : ℕ) → EqN m n
-zero ≟-Nat zero = yes
-zero ≟-Nat suc n = no
-suc m ≟-Nat zero = no
-suc m ≟-Nat suc n = ≟-Nat-cong m n (m ≟-Nat n)
-
-
 ------
 -- this is copied from the standard library, Data.Vec.N-Ary,
 -- because given the variable astType we don't want to have
 -- to use type-in-type.
-
 N-ary : (n : ℕ) → Set → Set → Set
 N-ary zero    A B = B
 N-ary (suc n) A B = A → N-ary n A B
@@ -67,9 +33,6 @@ f $ⁿ (x ∷ xs) = f x $ⁿ xs
 
 data ConstructorMapping (astType : Set) : Set₁ where
   _#_↦_ : (arity : ℕ) → Name → N-ary arity astType astType → ConstructorMapping astType
-
-
-
 
 Table : Set → Set₁
 Table a = ((ℕ → a) × List (ConstructorMapping a))
@@ -120,21 +83,8 @@ convertManages t term with convert t term
 convertManages t term | just x  = ⊤
 convertManages t term | nothing = ⊥
   
-exprTable : Table Expr
-exprTable = (Variable ,
-             2 # (quote _+_ ) ↦ Plus ∷
-             0 # (quote zero) ↦ Zero ∷
-             1 # (quote suc ) ↦ Succ ∷
-             [])
-
-  
-
 doConvert : {a : Set} → (tab : Table a) → (t : Term) → {man : convertManages tab t} → a
 doConvert tab t {man} with convert tab t
 doConvert tab t {man} | just x = x
 doConvert tab t {() } | nothing
 
--- an illustration of getting an Expr
-
-something : {x y : ℕ} → Expr
-something {x}{y} = doConvert exprTable (quoteTerm ((2 + x + 3) + y))

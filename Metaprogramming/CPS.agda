@@ -10,7 +10,6 @@ module Metaprogramming.CPS (U : Set)
            (quoteBack : (x : U) → Uel x → Term)
            (ReturnType : U) where
 
-open import Relation.Nullary.Core
 open import Data.Bool hiding (T) renaming (_≟_ to _≟Bool_) 
 open import Reflection
 open import Data.Nat  hiding (_<_) renaming (_≟_ to _≟-Nat_)
@@ -21,8 +20,6 @@ open import Data.Maybe
 open import Data.Empty
 open import Data.Product hiding (map)
 open import Data.Unit hiding (_≤_; _≤?_)
-open import Relation.Binary.PropositionalEquality
-open import Data.String renaming (_++_ to _+S+_)
 open import Data.Fin hiding (_≺_ ; _+_ ; _<_; _≤_ ; suc ; zero) renaming (compare to fcompare)
 open import Data.List
 
@@ -31,22 +28,6 @@ open module DT = Metaprogramming.Datatypes U equal? Uel
 import Metaprogramming.TypeCheck
 open module TC = Metaprogramming.TypeCheck U equal? type? Uel
 
-
-map/k : {a b : Set} → (a → (a → b) → b) → List a → (List a → b) → b
-map/k f/k []       k = k []
-map/k f/k (x ∷ xs) k = f/k x (λ v → (map/k f/k xs (λ v-rest → k (v ∷ v-rest))))
-
-testlist : List ℕ
-testlist = 1 ∷ 2 ∷ 3 ∷ []
-
-identity : {a : Set} → a → a
-identity x = x
-
-incrlist  : List ℕ
-incrlist  = map/k (λ n k → k (suc n)) testlist identity
--- ... as opposed to
-incrlist' : List ℕ
-incrlist' = map (λ n → suc n) testlist
 
 -- result type...
 RT : U'

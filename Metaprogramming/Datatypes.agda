@@ -28,7 +28,6 @@ _=?=_ : (σ τ : U') → Equal? σ τ
 O x          =?= O  y       with (equal? x y)
 O .y         =?= O y  | yes = yes
 O x          =?= O y  | no  = no
--- O          =?= O        = yes
 O x          =?= (_ => _)   = no
 (σ => τ)     =?= O  y       = no
 (σ₁ => τ₁)   =?= (σ₂ => τ₂) with σ₁ =?= σ₂ | τ₁ =?= τ₂
@@ -103,19 +102,11 @@ private
 wtSize : ∀{Γ σ n} → WT Γ σ n → ℕ
 wtSize {_}{_}{n} wt = n
 
-FreshVariables : Set
-FreshVariables = Stream ℕ
-
-fv : FreshVariables
-fv = startAt 0
-  where startAt : ℕ → FreshVariables
-        startAt n = n ∷ ♯ startAt (suc n)
-  
--- todo: replace with finindex?
 index : {A : Set} {x : A} {xs : List A} → x ∈ xs → ℕ
 index   here    = zero
 index (there h) = suc (index h)
 
+-- or, optionally, return a Fin.
 finindex : {A : Set} {x : A} {xs : List A} → x ∈ xs → Fin (length xs)
 finindex   here     = zero
 finindex (there h)  = suc (finindex h)
@@ -123,7 +114,6 @@ finindex (there h)  = suc (finindex h)
 data Lookup {A : Set} (xs : List A) : ℕ → Set where
   inside   : (x : A) (p : x ∈ xs) → Lookup xs (index p)
   outside  : (m : ℕ) → Lookup xs (length xs + m)
-  
 
 _!_ : {A : Set} (xs : List A) (n : ℕ) → Lookup xs n
 []        ! n      = outside n

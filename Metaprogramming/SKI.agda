@@ -22,6 +22,7 @@ open import Coinduction
 open import Data.Maybe
 open import Data.Empty
 open import Data.Product hiding (map)
+open import Data.Vec hiding (_∈_)
 open import Data.Unit hiding (_≤_; _≤?_)
 open import Relation.Binary.PropositionalEquality
 open import Data.String renaming (_++_ to _+S+_)
@@ -71,7 +72,6 @@ topCompile {τ}(nwt ⟨ nwt₁ ⟩)      = compile [] τ (nwt ⟨ nwt₁ ⟩)
 topCompile {.σ => τ}(Lam σ nwt) = compile [] (σ => τ) (Lam σ nwt)
 
   
-open import Data.Vec hiding (_∈_)
 
 private
 
@@ -138,7 +138,7 @@ ski2term {a => .a} I        = lam visible pleaseinfer (def (quote i) (
 ski2type : {σ : U'} → Comb [] σ → Set
 ski2type {σ} c = el' σ
 
--- alternative; this is shorter.
+-- alternative; this is shorter and reuses code.
 ski2term' : {σ : U'} → Comb [] σ → Term
 ski2term' c = lam2term (ski2wt c) 
 
