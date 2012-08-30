@@ -1,4 +1,4 @@
-module ExampleUniverse where
+module Metaprogramming.ExampleUniverse where
 
 open import Reflection
 open import Relation.Binary.PropositionalEquality
@@ -6,7 +6,7 @@ open import Data.List
 open import Data.Product
 open import Data.Maybe
 open import Data.Nat hiding (_<_ ; _>_) renaming (_≟_ to _≟-Nat_) 
-open import Equal
+open import Metaprogramming.Equal
 open import Relation.Nullary.Core
 open import Induction.WellFounded
 
@@ -56,14 +56,14 @@ quoteVal Nat      _       = 0
 ------------------------
 
 -- now define aliases for the modules
-import Datatypes
-open module DT = Datatypes U equal? Uel
-import TypeCheck
-open module TC = TypeCheck U equal? type? Uel quoteVal quoteBack
-import CPS
-open module CPS' = CPS U Uel equal? type? quoteBack halttype
-import SKI
-open module SKI' = SKI U equal? type? Uel quoteVal quoteBack
+import Metaprogramming.Datatypes
+open module DT = Metaprogramming.Datatypes U equal? Uel
+import Metaprogramming.TypeCheck
+open module TC = Metaprogramming.TypeCheck U equal? type? Uel quoteVal quoteBack
+import Metaprogramming.CPS
+open module CPS' = Metaprogramming.CPS U Uel equal? type? quoteBack halttype
+import Metaprogramming.SKI
+open module SKI' = Metaprogramming.SKI U equal? type? Uel quoteVal quoteBack
 
 -- notice how we can quote a term, automatically getting
 -- a well-typed lambda
@@ -109,7 +109,7 @@ id1 : ∀ {Γ σ} → WT Γ (σ => σ) 2
 id1 = Lam _ (Var here)
 
 test1 : WT [] RT _
-test1 = T' typedtest0 (finally typedtest0) id1
+test1 = T typedtest0 id1
 
 -- test1concrete :          lam2type test1
 -- test1concrete = unquote (lam2term test1)

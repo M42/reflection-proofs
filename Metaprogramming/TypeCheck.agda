@@ -1,8 +1,8 @@
-open import Equal
+open import Metaprogramming.Equal
 open import Reflection
 open import Data.Maybe
 
-module TypeCheck (U : Set) (equal? : (x : U) → (y : U) → Equal? x y) (type? : Name → Maybe U) (Uel : U → Set) (quoteVal : (x : U) → Term → Uel x) (quoteBack : (x : U) → Uel x → Term) where
+module Metaprogramming.TypeCheck (U : Set) (equal? : (x : U) → (y : U) → Equal? x y) (type? : Name → Maybe U) (Uel : U → Set) (quoteVal : (x : U) → Term → Uel x) (quoteBack : (x : U) → Uel x → Term) where
 
 open import Data.Stream using (Stream ; evens ; odds ; _∷_ )
 open import Coinduction
@@ -19,8 +19,8 @@ open import Data.List
 open import Data.Nat renaming (_≟_ to _≟-Nat_)
 open import Data.Bool hiding (T) renaming (_≟_ to _≟Bool_)
 
-import Datatypes
-open module DT = Datatypes U equal? Uel
+import Metaprogramming.Datatypes
+open module DT = Metaprogramming.Datatypes U equal? Uel
 
 ----------------------------------------------------------------
 -- examples.
@@ -166,15 +166,15 @@ typeOf r {()}     | bad
 
 sizeOf : (r : Raw) → {pf : typechecks r} → ℕ
 sizeOf r {pf} with infer [] r
-sizeOf .(Datatypes.erase U equal? Uel t) | Datatypes.ok n τ t = n
-sizeOf r {()} | Datatypes.bad
+sizeOf .(erase t) | ok n τ t = n
+sizeOf r {()} | bad
 
 raw2wt : (r : Raw) → {pf : typechecks r} → WT [] (typeOf r {pf}) (sizeOf r {pf})
 raw2wt r {pf} with infer [] r
 raw2wt .(erase t) | ok n₁ τ t = t
 raw2wt r {()}     | bad
 
-open import Apply
+open import Metaprogramming.Apply
 
 lam2type : {σ : U'} {Γ : Ctx} {n : ℕ} → WT Γ σ n → Set
 lam2type {σ} t = el' σ

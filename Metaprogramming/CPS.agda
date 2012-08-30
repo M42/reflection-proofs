@@ -1,9 +1,9 @@
-open import Equal
-open import Apply
+open import Metaprogramming.Equal
+open import Metaprogramming.Apply
 open import Reflection
 open import Data.Maybe
 
-module CPS (U : Set)
+module Metaprogramming.CPS (U : Set)
            (Uel : U → Set)
            (equal? : (x : U) → (y : U) → Equal? x y)
            (type? : Name → Maybe U)
@@ -26,10 +26,10 @@ open import Data.String renaming (_++_ to _+S+_)
 open import Data.Fin hiding (_≺_ ; _+_ ; _<_; _≤_ ; suc ; zero) renaming (compare to fcompare)
 open import Data.List
 
-import Datatypes
-open module DT = Datatypes U equal? Uel
-import TypeCheck
-open module TC = TypeCheck U equal? type? Uel
+import Metaprogramming.Datatypes
+open module DT = Metaprogramming.Datatypes U equal? Uel
+import Metaprogramming.TypeCheck
+open module TC = Metaprogramming.TypeCheck U equal? type? Uel
 
 
 map/k : {a b : Set} → (a → (a → b) → b) → List a → (List a → b) → b
@@ -114,8 +114,8 @@ sizeCPS wt acc cont | .1 | Lit x₁ = suc cont + 1
 -- T takes an expression and a syntactic continuation, and applies the
 --   continuation to a CPS-converted version of the expression.
 T' : {σ : U'} {Γ : Ctx} {n m : ℕ} → (wt : WT Γ σ n) → (ta : TAcc wt) → (cont : WT (map cpsType Γ) (cpsType σ => RT) m) → WT (map cpsType Γ) RT (sizeCPS wt ta m)
-T' {O σ}{Γ} .(Datatypes.Lit x) (TBaseLit {.Γ} {.σ} {x}) cont = cont ⟨ Lit x ⟩
-T' {σ}{Γ} .(Datatypes.Var x) (TBaseVar {.Γ} {.σ} {x}) cont = cont ⟨ Var (cpsvar x) ⟩
+T' {O σ}{Γ} .(Lit x) (TBaseLit {.Γ} {.σ} {x}) cont = cont ⟨ Lit x ⟩
+T' {σ}{Γ} .(Var x) (TBaseVar {.Γ} {.σ} {x}) cont = cont ⟨ Var (cpsvar x) ⟩
 T' {t1 => t2} {Γ}{suc n}{m} (Lam .t1 expr)     (TLam pf)     cont = cont ⟨ (Lam (cpsType t1) (Lam (cpsType t2 => RT) (T' (shift1 (Cont t2) expr) pf (Var here)))) ⟩
 T' .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂}{n}{m} f e)  (TApp pf pf2) cont =
   T' f pf (Lam (cpsType σ₁ => (cpsType σ₂ => RT) => RT)
@@ -123,8 +123,8 @@ T' .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂}{n}{m} f e)  (TApp pf pf2) cont =
                               ((Var (there here)) ⟨ Var here ⟩  
                                   ⟨ shift1 (cpsType σ₁) (shift1 (cpsType σ₁ => (cpsType σ₂ => RT) => RT) cont) ⟩ ))))
                                   
-import WTWellfounded
-open module WTWf = WTWellfounded U equal? Uel type? quoteBack ReturnType
+import Metaprogramming.WTWellfounded
+open module WTWf = Metaprogramming.WTWellfounded U equal? Uel type? quoteBack ReturnType
 open import Induction.WellFounded
 
 module TLemma where

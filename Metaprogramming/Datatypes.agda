@@ -1,6 +1,6 @@
-open import Equal
+open import Metaprogramming.Equal
 
-module Datatypes (U : Set) (equal? : (x : U) → (y : U) → Equal? x y) (Uel : U → Set) where
+module Metaprogramming.Datatypes (U : Set) (equal? : (x : U) → (y : U) → Equal? x y) (Uel : U → Set) where
 
 open import Data.List
 open import Data.Nat hiding (_≟_ ; _<_)

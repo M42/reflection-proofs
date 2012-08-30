@@ -1,8 +1,8 @@
-open import Equal
+open import Metaprogramming.Equal
 open import Reflection
 open import Data.Maybe
 
-module SKI (U : Set)
+module Metaprogramming.SKI (U : Set)
            (equal? : (x : U) → (y : U) → Equal? x y)
            (type? : Name → Maybe U)
            (Uel : U → Set)
@@ -168,8 +168,8 @@ ski2wt K = Krep
 ski2wt I = Irep
 ski2wt (Lit x₁) = Lit x₁
 
-open import ConcreteSKI
-open import Apply
+open import Metaprogramming.ConcreteSKI
+open import Metaprogramming.Apply
 
 ski2term : {σ : U'} → Comb [] σ → Term
 ski2term {O σ} (Lit x) = quoteBack σ x

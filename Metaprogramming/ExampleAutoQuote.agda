@@ -1,15 +1,23 @@
-module ExampleAutoQuote where
+module Metaprogramming.ExampleAutoQuote where
 
-import AutoQuote
+open import Metaprogramming.Autoquote
 open import Data.List
+open import Data.Nat
+open import Data.Product
 
-open import TypeCheck
-
+data Combinatory : Set where
+  S K I : Combinatory
+  _$_   : Combinatory → Combinatory → Combinatory
+  VarC  : ℕ → Combinatory
+  
 skiTable : Table Combinatory
-skiTable = Entry 0 (quote  S )  S  ∷
-           Entry 0 (quote  K )  K  ∷
-           Entry 0 (quote  I )  I  ∷
-           Entry 2 (quote _$_) _$_ ∷ [] 
+skiTable = VarC ,
+           0 # (quote  S ) ↦  S  ∷
+           0 # (quote  K ) ↦  K  ∷
+           0 # (quote  I ) ↦  I  ∷
+           2 # (quote _$_) ↦ _$_ ∷ [] 
 
+-- the variable x here is just to introduce something
+-- which is out-of-scope
 trySKI0 : {a : Combinatory} → Combinatory
-trySKI0 {x} = doConvert VarC skiTable (quoteTerm ((S $ K) $ x))
+trySKI0 {x} = doConvert skiTable (quoteTerm ((S $ K) $ x))
