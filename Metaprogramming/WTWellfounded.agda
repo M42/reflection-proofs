@@ -15,9 +15,7 @@ import Metaprogramming.Datatypes
 open module DT = Metaprogramming.Datatypes U equal? Uel
 
 open import Data.List
-
 open import Relation.Binary
-
 open import Induction.WellFounded
 
 <-ℕ-wf : Well-founded _<_
