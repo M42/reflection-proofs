@@ -1,4 +1,4 @@
-module TautologyProver where
+module Proofs.TautologyProver where
 
 open import Relation.Binary.PropositionalEquality renaming ([_] to by ; subst to substpe)
 open import Data.String
@@ -264,7 +264,7 @@ boolTable = (Atomic ,
             ∷ 0 # (quote false) ↦ Falsehood
             ∷ 2 # (quote _⇒_  ) ↦ Imp
             ∷ [])
-            
+
 term2boolexpr' : (t : Term) → {pf : convertManages boolTable t} → BoolIntermediate
 term2boolexpr' t {pf} = doConvert boolTable t {pf}
 

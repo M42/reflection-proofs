@@ -1,4 +1,4 @@
-module IsEven where
+module Proofs.IsEven where
 
 open import Relation.Binary.PropositionalEquality
 open import Data.Bool
