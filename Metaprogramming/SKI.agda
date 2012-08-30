@@ -49,15 +49,15 @@ data Comb : (Γ : Ctx) → U' → Set where
   Lit    : forall {Γ} {x} → Uel x → Comb Γ (O x) -- a constant
 
 lambda : {σ τ : U'}{Γ : Ctx} → (c : Comb (σ ∷ Γ) τ) → (Comb Γ (σ => τ))
-lambda           (Lit l)    = K ⟨ Lit l ⟩
-lambda           S          = K ⟨ S ⟩
-lambda           K          = K ⟨ K ⟩
-lambda           I          = K ⟨ I ⟩
-lambda {σ}  (Var .σ  here) = I
-lambda {σ} {τ}  (Var .τ  (there i)) = K ⟨ Var τ  i ⟩
+lambda {σ}     (Var .σ   here)    = I
+lambda {σ} {τ} (Var .τ (there i)) = K ⟨ Var τ i ⟩
 lambda  (t ⟨ t₁ ⟩) = let l1 = lambda  t
                          l2 = lambda  t₁
                       in S ⟨ l1 ⟩ ⟨ l2 ⟩
+lambda           (Lit l)          = K ⟨ Lit l ⟩
+lambda           S                = K ⟨ S ⟩
+lambda           K                = K ⟨ K ⟩
+lambda           I                = K ⟨ I ⟩
 
 compile : (Γ : Ctx) → (τ : U') → {n : ℕ} → WT Γ τ n → (Comb Γ τ)
 compile Γ (O σ) (Lit x) = Lit x
@@ -72,6 +72,24 @@ topCompile {τ}(nwt ⟨ nwt₁ ⟩)      = compile [] τ (nwt ⟨ nwt₁ ⟩)
 topCompile {.σ => τ}(Lam σ nwt) = compile [] (σ => τ) (Lam σ nwt)
 
   
+-- inspiration : http://code.haskell.org/~dolio/
+-- this function slightly rewrites the (admittedly
+-- cumbersome) terms produced by `compile`. the correctness
+-- is guaranteed by the type signature preservation as well
+-- as that one can trivially see that precisely the semantic
+-- rules of the combinators are being interpreted, eg. the I
+-- combinator should just return its first argument, etc.
+
+reduce₁ : ∀ {Γ τ} → Comb Γ τ → Comb Γ τ
+reduce₁ (I ⟨ c₁ ⟩) = reduce₁ c₁
+reduce₁ (S ⟨ f ⟩ ⟨ g ⟩ ⟨ x ⟩ ) = reduce₁ f ⟨ reduce₁ x ⟩ ⟨ reduce₁ g ⟨ reduce₁ x ⟩ ⟩ 
+reduce₁ (K ⟨ x ⟩ ⟨ y ⟩) = reduce₁ x
+reduce₁ (f ⟨ x ⟩ ) = reduce₁ f ⟨ reduce₁ x ⟩
+reduce₁ e = e
+
+reduce : ∀ {Γ τ} → ℕ → Comb Γ τ → Comb Γ τ
+reduce zero e = e
+reduce (suc n) e = reduce n (reduce₁ e)
 
 private
 
