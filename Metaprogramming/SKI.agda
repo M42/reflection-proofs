@@ -36,10 +36,12 @@ open module TC = Metaprogramming.TypeCheck U equal? type? Uel quoteVal quoteBack
 
 open import Data.Nat
 
--- inspiration : http://code.haskell.org/~dolio/
-
 -- new idea: give Comb a notion of environments.
 
+-- the Comb datatype represents typed SKI-combinator terms.
+-- terms of this structure have sensible types by construction;
+-- note how the application constructor matches the function and
+-- argument types.
 data Comb : (Γ : Ctx) → U' → Set where
   Var    : forall {Γ}        → (τ : U') → τ ∈ Γ → Comb Γ τ
   _⟨_⟩   : forall {Γ σ τ}    → Comb Γ (σ => τ) → Comb Γ σ → Comb Γ τ
@@ -65,6 +67,10 @@ compile Γ τ (Var  h) = Var τ  h
 compile Γ τ (_⟨_⟩ {.Γ}{σ} wt wt₁) = compile Γ (σ => τ) wt ⟨ compile Γ σ wt₁ ⟩
 compile Γ (σ => τ) (Lam .σ wt) = lambda (compile ( σ ∷ Γ) τ wt) 
   
+
+-- a "helpful" wrapper which does nothing except show that we
+-- can be certain that a closed term (i.e. empty environment)
+-- results in a closed SKI combinator.
 topCompile : {τ : U'} {n : ℕ} → WT [] τ n → Comb [] τ
 topCompile (Lit x) = Lit x
 topCompile (Var ())
@@ -93,6 +99,10 @@ reduce (suc n) e = reduce n (reduce₁ e)
 
 private
 
+    -- defining a predicate on Comb's, indicating whether they
+    -- have any free variables. this is rather superfluous, because
+    -- by the definition of the Comb datatype, an empty environment (Γ)
+    -- implies a lack of variables.
     noVar : {τ : U'} → {Γ : Ctx} → Comb Γ τ → Set
     noVar (Lit x) = ⊤
     noVar (Var τ  i) = ⊥
@@ -101,6 +111,8 @@ private
     noVar K = ⊤
     noVar I = ⊤
 
+    -- a small proof that a term advertising to be closed (i.e. having
+    -- an empty environment) indeed contains no variable references.
     closed→closed : {σ : U'} → (x : Comb [] σ) → noVar x
     closed→closed (Lit x) = tt
     closed→closed {σ} (Var .σ ())
@@ -109,7 +121,8 @@ private
     closed→closed K = tt
     closed→closed I = tt
 
-
+-- abstract representations of the combinators, to be used for unquoting.
+-- note that these are also type-safe.
 Srep : ∀ {A B C Γ} → WT Γ ((A => B => C) => (A => B) => A => C) _
 Srep {A}{B}{C} = Lam (A => B => C) (Lam (A => B) (Lam A
                       ( Var (there (there here)) ⟨ Var here ⟩ ⟨ (Var (there here)) ⟨ (Var here) ⟩ ⟩ )))
@@ -120,6 +133,8 @@ Irep {A} = Lam A (Var here)
 Krep : ∀ {A B Γ} → WT Γ (A => B => A) _
 Krep {A}{B} = Lam A (Lam B (Var (there here)))
 
+-- the size of a combinator once translated back to WT datatype. this
+-- is needed because it cannot be inferred in the ski2wt type signature.
 combsz : ∀ {Γ σ} → Comb Γ σ → ℕ
 combsz {Γ} {σ} (Var .σ x) = 1
 combsz (c ⟨ c₁ ⟩) = suc (combsz c + combsz c₁)
@@ -128,14 +143,22 @@ combsz K = 3
 combsz I = 2
 combsz (Lit x₁) = 1
 
+-- convert a term in the combinator language back to WT. this
+-- is to be done so that the usual unquote for WT can be used.
+-- below an unquote for combinator terms is also defined, redundantly,
+-- but it does illustrate a more direct way of introducing applications
+-- into concrete Agda, as opposed to the lam2term function, which uses
+-- the "Apply" function for the same purpose. 
 ski2wt : {Γ : Ctx} {σ : U'} → (c : Comb Γ σ) → WT Γ σ (combsz c)
 ski2wt {Γ} {σ} (Var .σ h) = Var h
-ski2wt (c ⟨ c₁ ⟩) = ski2wt c ⟨ ski2wt c₁ ⟩
-ski2wt S = Srep
-ski2wt K = Krep
-ski2wt I = Irep
-ski2wt (Lit x₁) = Lit x₁
+ski2wt (c ⟨ c₁ ⟩)         = ski2wt c ⟨ ski2wt c₁ ⟩
+ski2wt S                  = Srep
+ski2wt K                  = Krep
+ski2wt I                  = Irep
+ski2wt (Lit x₁)           = Lit x₁
 
+-- convert a rich combinator term into abstract untyped Agda, ready
+-- to be unquoted and used as a real function again.
 ski2term : {σ : U'} → Comb [] σ → Term
 ski2term {O σ} (Lit x) = quoteBack σ x
 ski2term {σ} (Var .σ ())
@@ -153,10 +176,13 @@ ski2term {a => b => .a} K   = lam visible pleaseinfer (
 ski2term {a => .a} I        = lam visible pleaseinfer (def (quote i) (
                                  arg visible relevant (var 0 []) ∷ []))
 
+-- method to retrieve the type of a combinator term.
 ski2type : {σ : U'} → Comb [] σ → Set
 ski2type {σ} c = el' σ
 
--- alternative; this is shorter and reuses code.
+-- alternative to ski2term; this is shorter and reuses code,
+-- but does produce a less intuitive term. this isn't an issue
+-- though, since Agda normalises before unquoting anyway. 
 ski2term' : {σ : U'} → Comb [] σ → Term
 ski2term' c = lam2term (ski2wt c) 
 
