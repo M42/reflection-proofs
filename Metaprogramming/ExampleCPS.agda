@@ -53,17 +53,40 @@ testTerm = Lam (O Nat => O Nat) (Lam (O Nat) (Var (there here) ⟨ Var here ⟩ 
 --
 -- so a continuation with type ...  should do it.
 
+arg1 : WT ((
+              (O Nat => (O Nat => O Nat) => O Nat)
+            =>
+              ((O Nat => (O Nat => O Nat) => O Nat) => O Nat)
+            => O Nat
+           ) ∷ []) (O Nat => (O Nat => O Nat) => O Nat) _
+arg1 = Lam (O Nat) (Lam (O Nat => O Nat) (Var here ⟨ Var (there here) ⟩))
+
+arg2 : WT ((
+              (O Nat => (O Nat => O Nat) => O Nat)
+            =>
+              ((O Nat => (O Nat => O Nat) => O Nat) => O Nat)
+            => O Nat
+            ) ∷ []) ((O Nat => (O Nat => O Nat) => O Nat) => O Nat) _
+arg2 = Lam (O Nat => (O Nat => O Nat) => O Nat) (Var here ⟨ Lit 4 ⟩ ⟨ Lam _ (Var here) ⟩ )
+
 testCont : WT []
           (
             (
               (O Nat => (O Nat => O Nat) => O Nat)
-                     =>
+            =>
               ((O Nat => (O Nat => O Nat) => O Nat) => O Nat)
-              => O Nat
-            )
             => O Nat
+            )
+          => O Nat
           ) _
-testCont = {!!}
+testCont = Lam
+            (
+              (O Nat => (O Nat => O Nat) => O Nat)
+            =>
+              ((O Nat => (O Nat => O Nat) => O Nat) => O Nat)
+            => O Nat
+            )
+           (Var here ⟨ arg1 ⟩ ⟨ arg2 ⟩)
 
 testCPS : WT [] RT _
 testCPS = T testTerm testCont
