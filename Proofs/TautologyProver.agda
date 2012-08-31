@@ -251,11 +251,13 @@ bool2fin n (Atomic x)  () | no ¬p
 -- since we need a number of predicates on the shape and properties of the term.
 concrete2abstract :
          (t : Term)
-       → {pf : isSoExprQ (stripPi t)}
-       → let t' = stripSo (stripPi t) pf in
+       → let noPi = stripPi t
+             n    = freeVars t in
+         {pf : isSoExprQ noPi}
+       → let t' = stripSo noPi pf in
             {pf2 : convertManages boolTable t'}
-          → (bool2finCheck (freeVars t) (term2boolexpr' t' {pf2}))
-          → BoolExpr (freeVars t)
+          → (bool2finCheck n (term2boolexpr' t' {pf2}))
+          → BoolExpr n
 concrete2abstract t {pf} {pf2} fin = bool2fin (freeVars t) (term2boolexpr' (stripSo (stripPi t) pf) {pf2}) fin
 
 -- proveTautology is the final API we expose to the user: it accepts a number
@@ -266,12 +268,14 @@ concrete2abstract t {pf} {pf2} fin = bool2fin (freeVars t) (term2boolexpr' (stri
 -- compilation hasn't failed, while in fact, these unsolved metas constitute proofs
 -- we cannot give (of type ⊥, for example).
 proveTautology : (t : Term) →
-        {pf : isSoExprQ (stripPi t)} →
-           let t' = stripSo (stripPi t) pf in
+     let noPi = stripPi t
+         n    = freeVars t in
+        {pf : isSoExprQ noPi} →
+           let t' = stripSo noPi pf in
                 {pf2 : convertManages boolTable t'} → 
-                {fin : bool2finCheck (freeVars t) (term2boolexpr' t' {pf2})} → 
+                {fin : bool2finCheck n (term2boolexpr' t' {pf2})} → 
                 let b = concrete2abstract t {pf} {pf2} fin in
                     {i : foralls b} →
-                    proofObligation (freeVars t) b
+                    proofObligation n b
 proveTautology e {pf} {pf2} {fin} {i} = soundness {freeVars e} (concrete2abstract e fin) {i}
 
