@@ -47,6 +47,8 @@ f $ⁿ (x ∷ xs) = f x $ⁿ xs
 data ConstructorMapping (astType : Set) : Set₁ where
   _#_↦_ : (arity : ℕ) → Name → N-ary arity astType astType → ConstructorMapping astType
 
+  -- TODO: we can try and get the arity via `constructors` and then `type` from Reflection module.
+
 -- here we simply say that a mapping table is a "variable" constructor (assumed to take one
 -- natural as argument representing the de Bruijn index of that variable in whatever context
 -- it was quoted in), and a list of mappings from names to real constructors.
