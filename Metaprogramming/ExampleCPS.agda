@@ -53,28 +53,17 @@ testTerm = Lam (O Nat => O Nat) (Lam (O Nat) (Var (there here) ⟨ Var here ⟩ 
 --
 -- so a continuation with type ...  should do it.
 
-testCont : WT [] (((O Nat
-                      =>
-                      (O Nat
-                       =>
-                       O Nat)
-                      =>
-                      O Nat)
+testCont : WT []
+          (
+            (
+              (O Nat => (O Nat => O Nat) => O Nat)
                      =>
-                     ((O Nat
-                       =>
-                       (O Nat
-                        =>
-                        O Nat)
-                       =>
-                       O Nat)
-                      =>
-                      O Nat)
-                     =>
-                     O Nat)
-                    =>
-                    O Nat) _
-testCont = Lam {!!} ((Lam (O Nat) (Var {!!} ⟨ Var here ⟩)) ⟨ Var {!!} ⟩)
+              ((O Nat => (O Nat => O Nat) => O Nat) => O Nat)
+              => O Nat
+            )
+            => O Nat
+          ) _
+testCont = {!!}
 
 testCPS : WT [] RT _
 testCPS = T testTerm testCont
