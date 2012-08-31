@@ -6,33 +6,25 @@ open import Data.Maybe
 
 module Metaprogramming.TypeCheck (U : Set) (equal? : (x : U) → (y : U) → Equal? x y) (type? : Name → Maybe U) (Uel : U → Set) (quoteVal : (x : U) → Term → Uel x) (quoteBack : (x : U) → Uel x → Term) where
 
-open import Data.Stream using (Stream ; evens ; odds ; _∷_ )
-open import Coinduction
-open import Data.Maybe
+open import Data.Bool hiding (T) renaming (_≟_ to _≟Bool_)
 open import Data.Empty
-open import Data.Product hiding (map)
-open import Data.Unit hiding (_≤_; _≤?_)
-open import Data.Nat.Properties
-open import Relation.Binary.PropositionalEquality
-open import Relation.Nullary.Core
-open import Data.String renaming (_++_ to _+S+_)
 open import Data.Fin hiding (_+_ ; _<_; _≤_) renaming (compare to fcompare)
 open import Data.List
 open import Data.Nat renaming (_≟_ to _≟-Nat_)
-open import Data.Bool hiding (T) renaming (_≟_ to _≟Bool_)
+open import Data.Product hiding (map)
+open import Data.Unit hiding (_≤_; _≤?_)
+open import Relation.Binary.PropositionalEquality
+open import Relation.Nullary.Core
 
 import Metaprogramming.Datatypes
 open module DT = Metaprogramming.Datatypes U equal? Uel
-
 
 -- type checking:
 -- here we expect as input the type of the whole expression. It's a checker, not
 -- an inferrer. This is inspired by the lambdapi paper by löh, mcbride, swierstra
 
-
-open import Relation.Nullary.Core
-
--- we won't care about sorts here.
+-- this function takes an Agda Type and possibly returns a type in our
+-- universe. 
 type2ty'  : Type → Maybe U'
 type2ty' (el s (var x args)) = nothing
 type2ty' (el s (con c args)) with type? c
@@ -41,8 +33,7 @@ type2ty' (el s (con c args)) | nothing = nothing
 type2ty' (el s (def f args)) with type? f
 type2ty' (el s (def f args)) | just x = just (O x)
 type2ty' (el s (def f args)) | nothing = nothing
-type2ty' (el s (lam v ty t)) = nothing -- type2ty ty => O {!!} -- err, we don't support types with lambdas (pi types)
---type2ty' (el s (pi (arg v r x) t₂)) = {!!} -- (type2ty x => type2ty t₂
+type2ty' (el s (lam v ty t)) = nothing -- we don't support types with lambdas (pi types)
 type2ty' (el s (pi (arg v r x) t₂)) with type2ty' x | type2ty' t₂
 type2ty' (el s (pi (arg v r x) t₂)) | just x₁ | just x₂ = just (x₁ => x₂)
 type2ty' (el s (pi (arg v r x) t₂)) | just x₁ | nothing = nothing
@@ -52,48 +43,61 @@ type2ty' (el s unknown) = nothing
 -- if you get an incomplete
 -- pattern matching here... this happens when a lambda wasn't
 -- annotated. the Type is then `unknown', even though that's not a
--- constructor of type Type
+-- constructor of type Type. Let's call this an Agda incompleteness.
 
+-- a predicate ensuring that we're able to construct a type in U'
+-- from some Agda Type.
 type2ty'just : Type → Set
 type2ty'just t with type2ty' t
 ... | nothing = ⊥
 ... | just x  = ⊤
 
+-- assuming the conversion works, do the conversion:
 type2ty : (t : Type) → type2ty'just t → U'
 type2ty t pf with type2ty' t
 type2ty t pf | just x = x
 type2ty t () | nothing
 
 mutual
-  isVarReasonable : ℕ → List (Arg Term) → Set
-  isVarReasonable x  l         with length l ≟-Nat 0
-  isVarReasonable x  []                | yes p = ⊤
-  isVarReasonable x₁ (x ∷ l)           | yes ()
-  isVarReasonable x  l                 | no ¬p with length l ≟-Nat 1
-  isVarReasonable x  []                | no ¬p  | yes ()
-  isVarReasonable x₁ (arg a b c ∷ [])  | no ¬p  | yes p = isLambdaQ' c
-  isVarReasonable x₂ (x ∷ x₁ ∷ l)      | no ¬p  | yes ()
-  isVarReasonable x ls | no ¬p₁ | no ¬p with length ls ≤? 2
-  isVarReasonable x [] | no ¬p₁ | no ¬p | yes p = ⊥
-  isVarReasonable x₁ (arg v r x ∷ []) | no ¬p₁ | no ¬p | yes p = ⊥
-  isVarReasonable x₂ (x ∷ x₁ ∷ []) | no ¬p₁ | no ¬p | yes p = ⊥
-  isVarReasonable x₃ (x ∷ x₁ ∷ x₂ ∷ ls) | no ¬p₁ | no ¬p | yes (s≤s (s≤s ()))
-  isVarReasonable x [] | no ¬p₂ | no ¬p₁ | no ¬p = ⊥
-  isVarReasonable x₁ (arg v r x ∷ ls) | no ¬p₂ | no ¬p₁ | no ¬p = ⊥
-
+  -- this function checks if a Term is a reasonable lambda expression.
+  -- that is, it checks if it has a recognisable type, and only contains
+  -- allowed constructors and variables applied to lambda expressions.
   isLambdaQ' : (t : Term) → Set
   isLambdaQ' (lam v sigma t) = type2ty'just sigma × isLambdaQ' t
-  isLambdaQ' (var a b)       = isVarReasonable a b
+  isLambdaQ' (var a b)       = isVarReasonable b
   isLambdaQ' (def f args)    = ⊥
   isLambdaQ' (con c args)    with type? c
-  isLambdaQ' (con c args) | just x = ⊤
+  isLambdaQ' (con c args) | just x  = ⊤
   isLambdaQ' (con c args) | nothing = ⊥
   isLambdaQ' (pi t₁ t₂)      = ⊥
   isLambdaQ' (sort x)        = ⊥
   isLambdaQ' unknown         = ⊥
 
+  -- check if a variable is applied to maximum 1 argument, and that this argument
+  -- is also a lambda term. in-scopeness is checked later, when converting from Raw
+  -- to WT.
+  isVarReasonable : List (Arg Term) → Set
+  isVarReasonable   l         with length l ≟-Nat 0
+  isVarReasonable   []                | yes p = ⊤
+  isVarReasonable   (x ∷ l)           | yes ()
+  isVarReasonable   l                 | no ¬p with length l ≟-Nat 1
+  isVarReasonable   []                | no ¬p  | yes ()
+  isVarReasonable   (arg a b c ∷ [])  | no ¬p  | yes p = isLambdaQ' c
+  isVarReasonable   (x ∷ x₁ ∷ l)      | no ¬p  | yes ()
+  isVarReasonable  ls | no ¬p₁ | no ¬p with length ls ≤? 2
+  isVarReasonable  [] | no ¬p₁ | no ¬p | yes p = ⊥
+  isVarReasonable   (arg v r x ∷ []) | no ¬p₁ | no ¬p | yes p = ⊥
+  isVarReasonable   (x ∷ x₁ ∷ []) | no ¬p₁ | no ¬p | yes p = ⊥
+  isVarReasonable   (x ∷ x₁ ∷ x₂ ∷ ls) | no ¬p₁ | no ¬p | yes (s≤s (s≤s ()))
+  isVarReasonable  [] | no ¬p₂ | no ¬p₁ | no ¬p = ⊥
+  isVarReasonable   (arg v r x ∷ ls) | no ¬p₂ | no ¬p₁ | no ¬p = ⊥
 
 
+-- assuming we have a reasonable Term (ensured by isLambdaQ'), convert
+-- to a Raw expression. This may still contain nonsensical types and out-of-scope
+-- variables, but at least it will only be lambda expressions plus allowed
+-- constructors (for example suc and zero, if the user has specified these in their
+-- universe U and quoteVal helper functions.
 term2raw :  (t : Term) →
             {pf : isLambdaQ' t} →
             Raw
@@ -123,7 +127,10 @@ term2raw (sort x)          {()}
 term2raw unknown           {()}
 
 
--- this is from Ulf's tutorial.
+-- this is from Ulf's tutorial; given a Raw, we produce a view on it.
+-- either it passes type checking, in which case we produce a WT, or
+-- it fails, in which case we return a `bad`.
+-- see thesis for detailed explanation.
 infer : (Γ : Ctx)(e : Raw) → Infer Γ e
 infer Γ (Lit ty x) = ok 1 (O ty) (Lit {_}{ty} x)
 infer Γ (Var x) with Γ ! x
@@ -143,39 +150,56 @@ infer Γ (Lam σ .(erase t)) | ok n τ t = ok _ (σ => τ) (Lam σ t)
 infer Γ (Lam σ e) | bad = bad
 
 
-
+-- this predicate tells us if a Raw term is going to pass
+-- type checking.
 typechecks : Raw → Set
 typechecks r with infer [] r
 typechecks .(erase t) | ok n τ t   = ⊤
-typechecks r          | bad      = ⊥
+typechecks r          | bad        = ⊥
 
 
--- given a Raw lambda plus a proof (⊤) that it typechecks;
+-- given a Raw lambda plus a proof that it typechecks;
 -- give the type of the expression.
 typeOf : (r : Raw) → {pf : typechecks r} → U'
 typeOf r {pf} with infer [] r
 typeOf .(erase t) | ok n τ t = τ
 typeOf r {()}     | bad
 
+-- return the size of a well-typed term, similar method as typeOf
 sizeOf : (r : Raw) → {pf : typechecks r} → ℕ
 sizeOf r {pf} with infer [] r
 sizeOf .(erase t) | ok n τ t = n
 sizeOf r {()} | bad
 
+-- convert a Raw to a WT, assuming type checking worked. This way we
+-- prevent needing to return a `bad`.
 raw2wt : (r : Raw) → {pf : typechecks r} → WT [] (typeOf r {pf}) (sizeOf r {pf})
 raw2wt r {pf} with infer [] r
 raw2wt .(erase t) | ok n₁ τ t = t
 raw2wt r {()}     | bad
 
+-- given a WT, return the concrete Agda type associated with it. This is
+-- useful for unquoting.
 lam2type : {σ : U'} {Γ : Ctx} {n : ℕ} → WT Γ σ n → Set
 lam2type {σ} t = el' σ
 
+-- a function which translates a WT into the abstract Agda
+-- syntax tree (untyped) for passing to the `unquote` keyword.
+-- illustrations can be found in Metaprogramming.ExampleSKI, among others.
+-- most constructs translate directly into Agda's Term-language, except for
+-- application. There, we need an ugly hack. Luckily Agda normalises
+-- Terms during unquoting, so we never have `Apply` showing up in our final
+-- concrete terms
 lam2term : {σ : U'} {Γ : Ctx} {n : ℕ} → WT Γ σ n → Term
 lam2term (Lit {_}{σ} x)   = quoteBack σ x
 lam2term (Var x)          = var (index x) []
--- somehow type inference doesn't work here, i.e. we cannot introduce
--- 2 lam's and apply t₁ to t₂ that way (as we do in Metaprogramming.SKI).
+-- unfortunately, the only way to introduce application into a Term is
+-- either by def or var, which can have a list of arguments. since var
+-- isn't an option (i.e. how would one apply the intended arguments to a lambda
+-- abstraction, if one used (lam .. (var 0 [list of args])) to try and cheat?
+-- therefore, we need to use def, so Apply is defined to simply take 2 arguments and
+-- apply the one to the other. ugly but effective.
 lam2term (t₁ ⟨ t₂ ⟩)      = def (quote Apply) (arg visible relevant (lam2term t₁) ∷
                                                arg visible relevant (lam2term t₂) ∷ [])
-lam2term (Lam σ t)        = lam visible (el unknown unknown) (lam2term t)
+lam2term (Lam σ t)        = lam visible pleaseinfer (lam2term t)
 
