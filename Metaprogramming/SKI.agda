@@ -12,20 +12,11 @@ module Metaprogramming.SKI (U : Set)
            (quoteVal : (x : U) → Term → Uel x)
            (quoteBack : (x : U) → Uel x → Term) where
 
-open import Relation.Nullary.Core
-open import Data.Bool hiding (T) renaming (_≟_ to _≟Bool_) 
-open import Reflection
-open import Data.Nat renaming (_≟_ to _≟-Nat_)
-
-open import Data.Stream using (Stream ; evens ; odds ; _∷_ )
-open import Coinduction
-open import Data.Maybe
+open import Data.Nat
 open import Data.Empty
 open import Data.Product hiding (map)
-open import Data.Vec hiding (_∈_)
 open import Data.Unit hiding (_≤_; _≤?_)
 open import Relation.Binary.PropositionalEquality
-open import Data.String renaming (_++_ to _+S+_)
 open import Data.Fin hiding (_+_ ; _<_; _≤_ ; suc ; zero) renaming (compare to fcompare)
 open import Data.List
 
@@ -34,14 +25,11 @@ open module DT = Metaprogramming.Datatypes U equal? Uel
 import Metaprogramming.TypeCheck
 open module TC = Metaprogramming.TypeCheck U equal? type? Uel quoteVal quoteBack
 
-open import Data.Nat
-
--- new idea: give Comb a notion of environments.
-
 -- the Comb datatype represents typed SKI-combinator terms.
 -- terms of this structure have sensible types by construction;
 -- note how the application constructor matches the function and
--- argument types.
+-- argument types. The environments are necessary to ensure that
+-- closed terms stay closed.
 data Comb : (Γ : Ctx) → U' → Set where
   Var    : forall {Γ}        → (τ : U') → τ ∈ Γ → Comb Γ τ
   _⟨_⟩   : forall {Γ σ τ}    → Comb Γ (σ => τ) → Comb Γ σ → Comb Γ τ
@@ -50,6 +38,16 @@ data Comb : (Γ : Ctx) → U' → Set where
   I      : forall {Γ A}      → Comb Γ (A => A)
   Lit    : forall {Γ} {x} → Uel x → Comb Γ (O x) -- a constant
 
+-- this function essentially is used whenever a lambda abstraction is
+-- encountered.  the abstraction is removed, the body is compiled
+-- recursively, and this function, called on the result, replaces
+-- possible occurences of (Var 0) (which, if placed directly after the
+-- lambda which introduced it, constitutes an identity function) with
+-- an I-combinator. in other cases the variable is left alone, but
+-- it's index is decreased by one, since there is one less lambda
+-- abstraction between it and its binding site. in other cases,
+-- i.e. if the body isn't a variable, we can safely replace the lambda
+-- + body with a K-combinator applied to the body.
 lambda : {σ τ : U'}{Γ : Ctx} → (c : Comb (σ ∷ Γ) τ) → (Comb Γ (σ => τ))
 lambda {σ}     (Var .σ   here)    = I
 lambda {σ} {τ} (Var .τ (there i)) = K ⟨ Var τ i ⟩
@@ -61,6 +59,11 @@ lambda           S                = K ⟨ S ⟩
 lambda           K                = K ⟨ K ⟩
 lambda           I                = K ⟨ I ⟩
 
+-- recursively compile lambda terms. Var and Lit are boring,
+-- obviously, application doesn't change (but it's subterms are
+-- compiled), only in the lambda-case does anything interesting
+-- happen. The body is compiled, the abstraction is removed, and the
+-- lambda function sorts out the aftermath. see above.
 compile : (Γ : Ctx) → (τ : U') → {n : ℕ} → WT Γ τ n → (Comb Γ τ)
 compile Γ (O σ) (Lit x) = Lit x
 compile Γ τ (Var  h) = Var τ  h
@@ -71,6 +74,8 @@ compile Γ (σ => τ) (Lam .σ wt) = lambda (compile ( σ ∷ Γ) τ wt)
 -- a "helpful" wrapper which does nothing except show that we
 -- can be certain that a closed term (i.e. empty environment)
 -- results in a closed SKI combinator.
+-- this irrefutably means that no Vars will be present in the
+-- output, by construction of the Comb datatype.
 topCompile : {τ : U'} {n : ℕ} → WT [] τ n → Comb [] τ
 topCompile (Lit x) = Lit x
 topCompile (Var ())
@@ -113,6 +118,8 @@ private
 
     -- a small proof that a term advertising to be closed (i.e. having
     -- an empty environment) indeed contains no variable references.
+    -- by definition of the Comb datatype, this proof is trivial. Just
+    -- here for sceptics, is all.
     closed→closed : {σ : U'} → (x : Comb [] σ) → noVar x
     closed→closed (Lit x) = tt
     closed→closed {σ} (Var .σ ())
@@ -164,8 +171,8 @@ ski2wt (Lit x₁)           = Lit x₁
 ski2term : {σ : U'} → Comb [] σ → Term
 ski2term c = lam2term (ski2wt c) 
 
--- method to retrieve the type of a combinator term.
+-- method to retrieve the type of a combinator term; useful when
+-- unquoting (one would like to know the type of the resulting term)
 ski2type : {σ : U'} → Comb [] σ → Set
 ski2type {σ} c = el' σ
-
 
