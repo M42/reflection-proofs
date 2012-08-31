@@ -157,32 +157,15 @@ ski2wt K                  = Krep
 ski2wt I                  = Irep
 ski2wt (Lit x₁)           = Lit x₁
 
--- convert a rich combinator term into abstract untyped Agda, ready
--- to be unquoted and used as a real function again.
+-- convert a rich combinator term into abstract untyped Agda, ready to
+-- be unquoted and used as a real function again.  reuses code from
+-- the CPS developments.  Agda normalises before unquoting, so the
+-- terms are relatively neat.
 ski2term : {σ : U'} → Comb [] σ → Term
-ski2term {O σ} (Lit x) = quoteBack σ x
-ski2term {σ} (Var .σ ())
-ski2term (c ⟨ c₁ ⟩) = lam visible pleaseinfer (lam visible pleaseinfer (var 1 (arg visible relevant (var 0 []) ∷ [])))
-ski2term {(a => b => c) => (.a => .b) => .a => .c} S =      lam visible pleaseinfer (
-                                                               lam visible pleaseinfer (
-                                                                  lam visible pleaseinfer (def (quote s) (
-                                                                       arg visible relevant (var 2 []) ∷
-                                                                       arg visible relevant (var 1 []) ∷
-                                                                       arg visible relevant (var 0 []) ∷ []))))
-ski2term {a => b => .a} K   = lam visible pleaseinfer (
-                                 lam visible pleaseinfer (def (quote k) (
-                                     arg visible relevant (var 1 []) ∷
-                                     arg visible relevant (var 0 []) ∷ [])))
-ski2term {a => .a} I        = lam visible pleaseinfer (def (quote i) (
-                                 arg visible relevant (var 0 []) ∷ []))
+ski2term c = lam2term (ski2wt c) 
 
 -- method to retrieve the type of a combinator term.
 ski2type : {σ : U'} → Comb [] σ → Set
 ski2type {σ} c = el' σ
 
--- alternative to ski2term; this is shorter and reuses code,
--- but does produce a less intuitive term. this isn't an issue
--- though, since Agda normalises before unquoting anyway. 
-ski2term' : {σ : U'} → Comb [] σ → Term
-ski2term' c = lam2term (ski2wt c) 
 
