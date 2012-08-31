@@ -74,8 +74,7 @@ testCont : WT [] (((O Nat
                      O Nat)
                     =>
                     O Nat) _
-testCont = Lam ((O Nat => (O Nat => O Nat) => O Nat) =>
-                  ((O Nat => (O Nat => O Nat) => O Nat) => O Nat) => O Nat) (Lit zero)
+testCont = Lam {!!} ((Lam (O Nat) (Var {!!} ⟨ Var here ⟩)) ⟨ Var {!!} ⟩)
 
 testCPS : WT [] RT _
 testCPS = T testTerm testCont
