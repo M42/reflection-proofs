@@ -8,8 +8,7 @@ open import Relation.Binary.PropositionalEquality
 open import Metaprogramming.ExampleUniverse
 open DT
 open TC
-import Metaprogramming.SKI
-open module SK = Metaprogramming.SKI U equal? type? Uel quoteVal quoteBack
+open SKI'
 
 {-
 Here we give an illustration on how to use the SKI transformer,
