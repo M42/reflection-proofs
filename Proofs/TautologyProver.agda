@@ -2,76 +2,23 @@ module Proofs.TautologyProver where
 
 open import Relation.Binary.PropositionalEquality renaming ([_] to by ; subst to substpe)
 open import Data.String
--- open import Data.Maybe hiding (Eq)
 open import Data.Nat
 open import Relation.Nullary hiding (¬_)
--- open import Data.Product hiding (map)
--- open import Data.Vec.Properties
--- open import Data.Nat.Properties
--- open import Relation.Binary hiding (_⇒_)
 open import Reflection
--- 
--- open import Data.Vec.N-ary
 open import Data.Bool renaming (not to ¬_ )
--- open import Data.Nat
 open import Data.Fin hiding (_+_; pred)
 open import Data.Vec renaming (reverse to vreverse ; map to vmap; foldr to vfoldr; _++_ to _v++_)
 open import Data.Unit hiding (_≤?_)
 open import Data.Empty
--- open import Data.Sum hiding (map)
 open import Data.Product hiding (map)
 open import Data.List hiding (_∷ʳ_)
+open import Proofs.Util.Handy
+open import Proofs.Util.Types
+open import Proofs.Util.Lemmas
 
-infixr 4 _⇒_
-_⇒_ : Bool → Bool → Bool
-true  ⇒ true  = true
-true  ⇒ false = false
-false ⇒ true  = true
-false ⇒ false = true
-
-data Error (a : String) : Set where
-
-So : String → Bool → Set
-So _ true  = ⊤
-So s false = Error s
-
-P : Bool → Set
-P = So "Expression doesn't evaluate to true in this branch."
-
-bOrNotb : (b : Bool) → b ∨ ¬ b ≡ true
-bOrNotb true  = refl
-bOrNotb false = refl
-
-bImpb : (b : Bool) → P(b ⇒ b)
-bImpb true  = tt
-bImpb false = tt
-
--- wouldn't it be nice if we could automate this?
-
--- eventually we'd like to prove these kinds of tautologies:
-myfavouritetheorem : Set
-myfavouritetheorem = (p1 q1 p2 q2 : Bool) → P(  (p1 ∨ q1) ∧ (p2 ∨ q2)
-                                              ⇒ (q1 ∨ p1) ∧ (q2 ∨ p2)
-                                              )
-
--- we'll make some DSL into which we're going to translate theorems
--- (which are actually types of functions), and then use reflection
--- in some unmagical way... see below.
-
-{-
-The point of having SET is to have a place to put stuff subst gives us.
-i.e., if we want to go from BoolExpr → Set, we need a way to reattach a
-variable in the Pi type to some term inside our boolean expression.
--}
-data BoolIntermediate : Set where
-  Truth     :                                       BoolIntermediate
-  Falsehood :                                       BoolIntermediate
-  And       : BoolIntermediate → BoolIntermediate → BoolIntermediate
-  Or        : BoolIntermediate → BoolIntermediate → BoolIntermediate
-  Not       : BoolIntermediate                    → BoolIntermediate
-  Imp       : BoolIntermediate → BoolIntermediate → BoolIntermediate
-  Atomic    : ℕ                                   → BoolIntermediate
-
+-- we'll make some DSL into which we're going to translate theorems,
+-- and using reflection, we'll translate concrete Agda into our
+-- boolean-expression-DSL
 data BoolExpr : ℕ → Set where
   Truth     : {n : ℕ}                           → BoolExpr n
   Falsehood : {n : ℕ}                           → BoolExpr n
@@ -81,17 +28,12 @@ data BoolExpr : ℕ → Set where
   Imp       : {n : ℕ} → BoolExpr n → BoolExpr n → BoolExpr n
   Atomic    : {n : ℕ} → Fin n                   → BoolExpr n
 
--- ...and some way to interpret our representation
--- of the formula at hand:
--- this is compile : S → D
-
--- the environment
+-- the environment, defined as follows, along with the interpretation
+-- function ⟦_⊢_⟧, can reconstruct the concrete value of an abstract
+-- boolean expression. Note that the length of the environment
+-- corresponds to the number of free variables in the boolean expression.
 Env : ℕ → Set
 Env = Vec Bool
--- lijst van lengte n met daarin een Set / Bool
-
--- S = BoolExpr (the syntactic realm)
--- D = the domain of our Props
 
 -- decision procedure:
 -- return whether the given proposition is true
@@ -105,8 +47,9 @@ Env = Vec Bool
 ⟦ env ⊢ Imp be be₁ ⟧ = ⟦ env ⊢ be ⟧ ⇒ ⟦ env ⊢ be₁ ⟧
 ⟦ env ⊢ Atomic n   ⟧ = lookup n env
 
--- returns the number of the outermost pi quantified variables.
-
+-- counts the number of the outermost pi quantified variables.  this
+-- will be used to determine how many free variables (n) to allow in
+-- the abstract boolean expression representation BoolExpr n.
 freeVars : Term → ℕ
 freeVars (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = suc (freeVars t)
 freeVars (pi a b)     = 0
@@ -119,7 +62,6 @@ freeVars unknown      = 0
 
 -- peels off all the outermost Pi constructors,
 -- returning a term with freeVars free variables.
-
 stripPi : Term → Term
 stripPi (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = stripPi t
 -- identity otherwise
@@ -131,6 +73,9 @@ stripPi (lam v σ t)  = lam  v  σ  t
 stripPi (sort x)     = sort x
 stripPi unknown      = unknown
 
+-- a check-function, or predicate, to determine if the thing which has
+-- been quoted is a Term wrapped in a call to So(), which P()
+-- normalises to.
 isSoExprQ : (t : Term) → Set
 isSoExprQ (var x args) = ⊥
 isSoExprQ (con c args) = ⊥
@@ -150,12 +95,17 @@ isSoExprQ (pi t₁ t₂)                   = ⊥
 isSoExprQ (sort x)                     = ⊥
 isSoExprQ unknown                      = ⊥
 
-
+-- assuming the predicate isSoExprQ above, return the
+-- argument to So, which should be the boolean expression
+-- we want.
 stripSo : (t : Term) → isSoExprQ t → Term
 stripSo (var x args)                 ()
 stripSo (con c args)                 ()
 stripSo (def f args)                 pf with Data.Nat._≟_ (length args) 2
-stripSo (def f args)                 pf | yes p with tt
+stripSo (def f args) pf | yes p with tt -- doing "with tt" at the end
+                                        -- is necessary in some cases,
+                                        -- to force normalisation of preceding
+                                        -- arguments.
 stripSo (def f [])                   pf | yes () | tt
 stripSo (def f (x ∷ []))             pf | yes () | tt
 stripSo (def f (a ∷ arg v r x ∷ [])) pf | yes p  | tt with f ≟-Name quote So
@@ -170,59 +120,26 @@ stripSo (pi t₁ t₂)                   ()
 stripSo (sort x)                     ()
 stripSo unknown                      ()
 
+-- this function generates the "original" goal type, by introducing
+-- m boolean variables, which are added to the environment, and finally
+-- calling the interpretation function on the expression under that environment.
+-- this gives back something like the ∀ a b c → P (a ∧ b ...) we would have
+-- started with.
+-- The Diff argument is a promise that in the end, m and n will be equal.
+-- see the corresponding section in the documentation for a more complete explanation.
+proofObligation' : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
+proofObligation' .m m (Base  ) b env = P ⟦ env ⊢ b ⟧ 
+proofObligation' n m  (Step y) b env = (a : Bool) → proofObligation' (suc n) m y b (a ∷ env)
 
+-- ...and this is the 'outer' function to generate the full proof obligation / goal / type.
+proofObligation : (m : ℕ) → BoolExpr m → Set
+proofObligation m b = proofObligation' zero m (zero-least 0 m) b []
 
--- useful for things like Env n → Env m → Env n ⊕ m
-_⊕_ : ℕ → ℕ → ℕ
-zero  ⊕ m = m
-suc n ⊕ m = n ⊕ suc m
-
-data Diff : ℕ → ℕ → Set where
-  Base : ∀ {n}   → Diff n n
-  Step : ∀ {n m} → Diff (suc n) m → Diff n m
-
-
-prependTelescope : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
-prependTelescope .m m (Base  ) b env = P ⟦ env ⊢ b ⟧ 
-prependTelescope n m  (Step y) b env = (a : Bool) → prependTelescope (suc n) m y b (a ∷ env)
-
-zeroId : (n : ℕ) → n ≡ n + 0
-zeroId zero                           = refl
-zeroId (suc  n) with n + 0 | zeroId n
-zeroId (suc .w)    | w     | refl     = refl
-
-succLemma : (n m : ℕ) → suc (n + m) ≡ n + suc m
-succLemma zero m    = refl
-succLemma (suc n) m = cong suc (succLemma n m)
-
-coerceDiff : {n m k : ℕ} → n ≡ m → Diff k n → Diff k m
-coerceDiff refl d = d
-
-zero-least : (k n : ℕ) → Diff k (k + n)
-zero-least k zero    = coerceDiff (zeroId k) Base
-zero-least k (suc n) = Step (coerceDiff (succLemma k n) (zero-least (suc k) n))
-
-forallBoolSo : (m : ℕ) → BoolExpr m → Set
-forallBoolSo m b = prependTelescope zero m (zero-least 0 m) b []
-
-{-
-notice that u is automatically instantiated, since
-there is only one option, namely tt,tt. this is special and
-cool, the type system is doing work for us. Note that this is
-because eta-reduction only is done in the type system for records
-and not for general data types. possibly the reason is because this is
-safe in records because recursion isn't allowed. question for agda-café?
--}
-foo' : {u : ⊤ × ⊤} → ℕ
-foo' = 5
-
-baz : ℕ
-baz = foo'
-
--- very much like ⊥-elim, but for Errors.
-Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
-Error-elim ()
-
+-- this is the decision function, like even? in the IsEven module. It is
+-- only inhabitable (returns ⊤) if all branches, i.e. possible variable assignments,
+-- result in a true (and because of P()) a ⊤ value.
+-- we will eventually exploit that this results in a pair of pairs of unit values,
+-- which are inferrable, being record types.
 forallsAcc : {n m : ℕ} → (b : BoolExpr m) → Env n → Diff n m → Set
 forallsAcc b' env (Base  ) = P ⟦ env ⊢ b' ⟧
 forallsAcc b' env (Step y) = forallsAcc b' (true ∷ env) y × forallsAcc b' (false ∷ env) y
@@ -230,31 +147,64 @@ forallsAcc b' env (Step y) = forallsAcc b' (true ∷ env) y × forallsAcc b' (fa
 foralls : {n : ℕ} → (b : BoolExpr n) → Set
 foralls {n} b = forallsAcc b [] (zero-least 0 n)
 
--- dependently typed if-statement
-if : {P : Bool → Set} → (b : Bool) → P true → P false → P b
-if true  t f = t
-if false t f = f
-
+-- in this function, we prove that if we are able to inhabit the type
+-- generated by foralls, we can also inhabit the original goal type,
+-- which we recover using proofObligation. since we know the structure of the
+-- predicate foralls, we can anticipate and pick the correct branch, depending
+-- on the assignment of the variables in the environment, and show that any other
+-- path through this pair-of-pairs is absurd.
 soundnessAcc : {m : ℕ} →
                  (b : BoolExpr m) →
                  {n : ℕ} →
                  (env : Env n) →
                  (d : Diff n m) →
                  forallsAcc b env d →
-                 prependTelescope n m d b env
+                 proofObligation' n m d b env
 soundnessAcc     bexp     env Base     H with ⟦ env ⊢ bexp ⟧
 soundnessAcc     bexp     env Base     H | true  = H
 soundnessAcc     bexp     env Base     H | false = Error-elim H
 soundnessAcc {m} bexp {n} env (Step y) H =
-  λ a → if {λ b → prependTelescope (suc n) m y bexp (b ∷ env)} a
+  λ a → if {λ b → proofObligation' (suc n) m y bexp (b ∷ env)} a
     (soundnessAcc bexp (true  ∷ env) y (proj₁ H))
     (soundnessAcc bexp (false ∷ env) y (proj₂ H))
 
-soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → forallBoolSo n b
+soundness : {n : ℕ} → (b : BoolExpr n) → {i : foralls b} → proofObligation n b
 soundness {n} b {i} = soundnessAcc b [] (zero-least 0 n) i
 
+{-
+Now we have most of the ingredients we need to be able to automatically
+generate tautology-proofs for arbitrary boolean exrpessions. The only missing
+part in the chain
+
+   concrete expression -> abstract expression -> proof generation -> cast back to concrete goal and proof
+
+is the first arrow, the concrete to abstract translation. This is where the
+reflection API is going to help us; using quoteGoal we'll inspect the
+proof obligation and generate an abstract representation of the boolean expression
+that the user is trying to get a proof for.
+
+We have developed the module Autoquote which will hide a lot of ugly technicalities
+regarding quoting, but one thing it doesn't support is constraints such as the Fin n
+we have in our BoolExpr datatype. Thus, we will first quote to a similar datatype, but
+which allows any Natural in the variable spot. Afterwards we can ensure that the
+expression returned is sensible, and make all the |ℕ|s into |Fin n|s.
+-}
 open import Metaprogramming.Autoquote
 
+-- here is a simplified version of BoolExpr. The only difference is the
+-- Atomic constructor, which holds naturals instead of Fin n's.
+data BoolIntermediate : Set where
+  Truth     :                                       BoolIntermediate
+  Falsehood :                                       BoolIntermediate
+  And       : BoolIntermediate → BoolIntermediate → BoolIntermediate
+  Or        : BoolIntermediate → BoolIntermediate → BoolIntermediate
+  Not       : BoolIntermediate                    → BoolIntermediate
+  Imp       : BoolIntermediate → BoolIntermediate → BoolIntermediate
+  Atomic    : ℕ                                   → BoolIntermediate
+  
+-- this is the translation table we need: refer to the thesis or the
+-- Metaprogramming.ExampleAutoquote module for more details on how
+-- and why this works.
 boolTable : Table BoolIntermediate
 boolTable = (Atomic ,
               2 # (quote _∧_  ) ↦ And
@@ -262,12 +212,16 @@ boolTable = (Atomic ,
             ∷ 1 # (quote  ¬_  ) ↦ Not
             ∷ 0 # (quote true ) ↦ Truth
             ∷ 0 # (quote false) ↦ Falsehood
-            ∷ 2 # (quote _⇒_  ) ↦ Imp
-            ∷ [])
+            ∷ 2 # (quote _⇒_  ) ↦ Imp         ∷ [])
 
+-- we can now convert a Term (Agda's abstract syntax) into our BoolIntermediate
+-- datatype relatively painlessly.
 term2boolexpr' : (t : Term) → {pf : convertManages boolTable t} → BoolIntermediate
 term2boolexpr' t {pf} = doConvert boolTable t {pf}
 
+-- this predicate reflects the notion of a Term having at most n
+-- free variables. Each variable reference (Atomic's argument) must
+-- be smaller than this maximum n to be able to fit into BoolExpr
 bool2finCheck : (n : ℕ) → (t : BoolIntermediate) → Set
 bool2finCheck n Truth        = ⊤
 bool2finCheck n Falsehood    = ⊤
@@ -279,6 +233,7 @@ bool2finCheck n (Atomic x)   with suc x ≤? n
 bool2finCheck n (Atomic x)   | yes p = ⊤
 bool2finCheck n (Atomic x)   | no ¬p = ⊥
 
+-- assuming all's well with the variables, we can cast:
 bool2fin : (n : ℕ) → (t : BoolIntermediate) → (bool2finCheck n t) → BoolExpr n
 bool2fin n Truth       pf = Truth
 bool2fin n Falsehood   pf = Falsehood
@@ -290,7 +245,10 @@ bool2fin n (Atomic x)  p₁ with suc x ≤? n
 bool2fin n (Atomic x)  p₁ | yes p = Atomic (fromℕ≤ {x} p)
 bool2fin n (Atomic x)  () | no ¬p
 
-
+-- and now we have a function which goes directly from the output of quoteGoal
+-- (i.e. a Term which should be a boolean expression wrapped in P() and preceded by
+-- zero or more ∀ (b : Bool) →'s) to a BoolExpr. We've had to make the type rather ugly
+-- since we need a number of predicates on the shape and properties of the term.
 concrete2abstract :
          (t : Term)
        → {pf : isSoExprQ (stripPi t)}
@@ -300,6 +258,13 @@ concrete2abstract :
           → BoolExpr (freeVars t)
 concrete2abstract t {pf} {pf2} fin = bool2fin (freeVars t) (term2boolexpr' (stripSo (stripPi t) pf) {pf2}) fin
 
+-- proveTautology is the final API we expose to the user: it accepts a number
+-- of implicit arguments so that the user needn't worry about anything except passing
+-- the term to be proven. The result of using this technique is that if an invalid
+-- argument is passed (such as a malformed boolean expression or something which isn't
+-- a tautology) we get unsolved metas for the hidden arguments, which might look like
+-- compilation hasn't failed, while in fact, these unsolved metas constitute proofs
+-- we cannot give (of type ⊥, for example).
 proveTautology : (t : Term) →
         {pf : isSoExprQ (stripPi t)} →
            let t' = stripSo (stripPi t) pf in
@@ -307,31 +272,6 @@ proveTautology : (t : Term) →
                 {fin : bool2finCheck (freeVars t) (term2boolexpr' t' {pf2})} → 
                 let b = concrete2abstract t {pf} {pf2} fin in
                     {i : foralls b} →
-                    forallBoolSo (freeVars t) b
+                    proofObligation (freeVars t) b
 proveTautology e {pf} {pf2} {fin} {i} = soundness {freeVars e} (concrete2abstract e fin) {i}
 
-anotherTheorem : (a b : Bool) → P(a ∧ b ⇒ b ∧ a)
-anotherTheorem = quoteGoal e in proveTautology e
-
-goalbla2 : (b : Bool) → P(b ∨ true)
-goalbla2 = quoteGoal e in proveTautology e
-
-not : (b : Bool) → P(b ∨ ¬ b)
-not = quoteGoal e in proveTautology e
-
-peirce : (p q  : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
-peirce = quoteGoal e in proveTautology e
-
-mft : myfavouritetheorem
-mft = quoteGoal e in proveTautology e
-
-foo : quoteTerm (\(x : Bool) -> x) ≡ lam visible (el _ (def (quote Bool) [])) (var 0 [])
-foo = refl
-
--- -- acknowledge Ruud:
--- -- thing : {err : String} {a : Bool} → So err a → a ≡ true
--- -- thing ⊤ = {!!}
--- -- 
--- -- another : (a b : Bool) → a ∧ b ⇒ b ∧ a ≡ true
--- -- another a b with anotherTheorem a b
--- -- ...  | asdf = {!asdf!}
