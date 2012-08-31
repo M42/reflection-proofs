@@ -35,7 +35,9 @@ soundnessEven {suc (suc n)} s = isEvenSS (soundnessEven s)
 isEven28 : Even 28
 isEven28 = soundnessEven tt
 
--- or something which would otherwise have a rather large proof tree
+-- or something which would otherwise have a rather large proof tree;
+-- you can try to normalise one of these terms using C-c C-n isEven28 for
+-- example, to see that an actual proof object is created.
 isEven8772 : Even 8772
 isEven8772 = soundnessEven tt
 
