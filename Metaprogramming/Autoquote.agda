@@ -13,14 +13,23 @@ open import Data.List
 open import Data.Vec hiding (map)
 open import Metaprogramming.Util.PropEqNat
 
--- here we'll try and generalise the concrete->Term->AST process
--- idea: provide a table with (Name, arity, Constructor ∈ AST) and
--- we'll try and quote it.
+{-
+here we'll try and generalise the concrete->Term->AST process
+idea: provide a table with (Name, arity, Constructor ∈ AST) and
+we'll try and quote it.
 
-------
--- this is copied from the standard library, Data.Vec.N-Ary,
+examples on how to use this module are briefly presented in
+Metaprogramming.ExampleAutoquote, but a more detailed real-life
+use-case is presented in the bottom half of the module Proofs.TautologyProver.
+
+For even more details, refer to the thesis in this repository.
+-}
+
+-- this definition is copied from the standard library, Data.Vec.N-Ary,
 -- because given the variable astType we don't want to have
--- to use type-in-type.
+-- to use type-in-type. The thing is, at ConstructorMapping, we use N-ary
+-- on an as-yet undefined astType, and Agda isn't able to infer the level (zero)
+-- N-ary should have. We side-step this by instantiating N-ary directly.
 N-ary : (n : ℕ) → Set → Set → Set
 N-ary zero    A B = B
 N-ary (suc n) A B = A → N-ary n A B
@@ -29,14 +38,23 @@ _$ⁿ_ : ∀ {n} {A : Set} {B : Set} → N-ary n A B → (Vec A n → B)
 f $ⁿ []       = f
 f $ⁿ (x ∷ xs) = f x $ⁿ xs
 -- end copy from stdlib
---------
 
+-- a constructor mapping takes the arity of a constructor (a natural
+-- representing how many arguments it takes), it's Name (which is Agda's internal
+-- representation and can be retrieved using the quote keyword, i.e. `quote zero`), and
+-- the actual constructor, packed in an N-ary function, which will make it easier to apply
+-- the arguments retrieved from a List (Arg Term) to the constructor.
 data ConstructorMapping (astType : Set) : Set₁ where
   _#_↦_ : (arity : ℕ) → Name → N-ary arity astType astType → ConstructorMapping astType
 
+-- here we simply say that a mapping table is a "variable" constructor (assumed to take one
+-- natural as argument representing the de Bruijn index of that variable in whatever context
+-- it was quoted in), and a list of mappings from names to real constructors.
 Table : Set → Set₁
 Table a = ((ℕ → a) × List (ConstructorMapping a))
   
+-- see if a given concrete name is to be found in a list of constructor mappings.
+-- if we manage to find it, return the whole entry.
 lookupName : {a : Set} → List (ConstructorMapping a) → Name → Maybe (ConstructorMapping a)
 lookupName [] name = nothing
 lookupName (arity # x ↦ x₁ ∷ tab) name with name ≟-Name x
@@ -44,6 +62,10 @@ lookupName (arity # x ↦ x₁ ∷ tab) name | yes p = just (arity # x ↦ x₁)
 lookupName (arity # x ↦ x₁ ∷ tab) name | no ¬p = lookupName tab name
 
 mutual
+  -- see if we can find a Name in the constructor table, and if
+  -- possible, apply the AST-constructor we find this way to the list
+  -- of arguments. this list is made by calling convertArgs on the
+  -- list of arguments to that Term.
   handleNameArgs : {a : Set} → Table a → Name → List (Arg Term) → Maybe a
   handleNameArgs (vc , tab) name args with lookupName tab name
   handleNameArgs (vc , tab) name args | just (arity       # x  ↦ x₁)   with convertArgs (vc , tab) args
@@ -53,6 +75,10 @@ mutual
   handleNameArgs (vc , tab) name args | just (arity       # x  ↦ x₁)   | nothing = nothing
   handleNameArgs (vc , tab) name args | nothing = nothing
 
+  -- convert a list of arguments (such as those applied to variables
+  -- and definitions (see the thesis section on Agda's reflection data
+  -- types)) to a list of objects of type a, a being the type of the
+  -- AST we're trying to quote to.
   convertArgs : {a : Set} → Table a → List (Arg Term) → Maybe (List a)
   convertArgs tab [] = just []
   convertArgs tab (arg v r x ∷ ls) with convert tab x
@@ -61,12 +87,13 @@ mutual
   convertArgs tab (arg v r x ∷ ls) | just x₁ | nothing = nothing
   convertArgs tab (arg v r x ∷ ls) | nothing = nothing
   
--- convert's arguments are:
 {-
+  convert's arguments are:
   * a : type of AST
-  * variables : the constructor to use for variables. must be : ℕ → Set
   * table : a constructor table
   * the term to quote.
+
+  It might return a value of type a, if all the conversion steps succeed.
 -}
   convert : {a : Set} → Table a → Term → Maybe a
   convert (vc , tab) (var x args) = just (vc x)
@@ -77,12 +104,19 @@ mutual
   convert (vc , tab) (sort x)     = nothing
   convert (vc , tab) unknown      = nothing
 
-  
+-- this is a rather lamely defined predicate which says that the
+-- conversion succeeds. In actual fact, it tries the conversion, and
+-- if it succeeds, says the conversion will succeed. We use it later
+-- on to get rid of the Maybe, using the trick of passing an
+-- implicit-inferrable argument as predicate.
 convertManages : {a : Set} → Table a → Term → Set
 convertManages t term with convert t term
 convertManages t term | just x  = ⊤
 convertManages t term | nothing = ⊥
   
+-- the API function we expose. We ask for a conversion table and a
+-- term, and assuming all goes well (the man argument) we produce an
+-- a.
 doConvert : {a : Set} → (tab : Table a) → (t : Term) → {man : convertManages tab t} → a
 doConvert tab t {man} with convert tab t
 doConvert tab t {man} | just x = x
