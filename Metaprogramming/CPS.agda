@@ -87,21 +87,19 @@ data TAcc : {Γ : Ctx} {σ : U'} {n : ℕ} → WT Γ σ n → Set where
 -- since the sizes of expressions change rather radically in lambda and application
 -- cases after a CPS transform, we have this helper which tells us how big an expression
 -- is going to be. This can't be inferred, so it is used in the signature of the T function.
-sizeCPS : {σ : U'} {Γ : Ctx} {n : ℕ} → (wt : WT Γ σ n) → (TAcc wt) → (m : ℕ) → ℕ
-sizeCPS wt acc cont with wtSize wt
-... | a with wt -- force pattern matching on wt AFTER wtSize wt, since one implies the other.
-sizeCPS wt acc cont | .1 | Var x = suc cont + 1
-sizeCPS {σ₂} wt (TApp pf pf2) cont | .(suc (n + m)) | _⟨_⟩ {._} {σ₁} {.σ₂} {n} {m} f e = sizeCPS f pf (suc (sizeCPS (shift1 (σ₁ => σ₂) e) pf2 (suc (suc 3 + cont))))
-sizeCPS {t1 => t2} wt (TLam pf) cont | .(suc n) | Lam .t1 {.t2} {n} z = suc (cont + suc (suc (sizeCPS (shift1 (Cont t2) z) pf 1)))
-sizeCPS wt acc cont | .1 | Lit x₁ = suc cont + 1
--- TODO can the above be written using the {n} built into WT?
 
+sizeCPS : {σ : U'} {Γ : Ctx} (n : ℕ) → (wt : WT Γ σ n) → (TAcc wt) → (m : ℕ) → ℕ
+sizeCPS zero () acc cont
+sizeCPS (suc .0) (Var x) acc cont = suc cont + 1
+sizeCPS {σ} (suc .(n + m)) (_⟨_⟩ {._} {σ₁} {.σ} {n} {m} f e) (TApp p p₁) cont = sizeCPS n f p (suc (sizeCPS m (shift1 (σ₁ => σ) e) p₁ (suc (suc 3 + cont))))
+sizeCPS {t1 => t2} (suc n) (Lam .t1 {.t2}{.n} z) (TLam p) cont = suc (cont + suc (suc (sizeCPS n (shift1 (Cont t2) z) p 1)))
+sizeCPS (suc .0) (Lit x₁) acc cont = suc cont + 1
 
 -- T takes an expression and a syntactic continuation, and applies the
 --   continuation to a CPS-converted version of the expression. this function
 -- normally doesn't pass Agda's termination checker, which is why we provide the TAcc predicate.
 -- this does force us to prove ∀ wt → TAcc wt. This is done down below.
-T' : {σ : U'} {Γ : Ctx} {n m : ℕ} → (wt : WT Γ σ n) → (ta : TAcc wt) → (cont : WT (map cpsType Γ) (cpsType σ => RT) m) → WT (map cpsType Γ) RT (sizeCPS wt ta m)
+T' : {σ : U'} {Γ : Ctx} {n m : ℕ} → (wt : WT Γ σ n) → (ta : TAcc wt) → (cont : WT (map cpsType Γ) (cpsType σ => RT) m) → WT (map cpsType Γ) RT (sizeCPS n wt ta m)
 T' {O σ}{Γ} .(Lit x) (TBaseLit {.Γ} {.σ} {x}) cont = cont ⟨ Lit x ⟩
 T' {σ}{Γ} .(Var x) (TBaseVar {.Γ} {.σ} {x}) cont = cont ⟨ Var (cpsvar x) ⟩
 T' {t1 => t2} {Γ}{suc n}{m} (Lam .t1 expr)     (TLam pf)     cont = cont ⟨ (Lam (cpsType t1) (Lam (cpsType t2 => RT) (T' (shift1 (Cont t2) expr) pf (Var here)))) ⟩
@@ -178,5 +176,5 @@ private
 -- us in Induction.WellFounded
 T : {σ : U'} {Γ : Ctx} {n m : ℕ} → (wt : WT Γ σ n)
                                  → (cont : WT (map cpsType Γ) (cpsType σ => RT) m)
-                                 → WT (map cpsType Γ) RT (sizeCPS wt (allTsAcc wt (wf (to wt))) m)
+                                 → WT (map cpsType Γ) RT (sizeCPS n wt (allTsAcc wt (wf (to wt))) m)
 T wt cont = T' wt (allTsAcc wt (wf (to wt))) cont
