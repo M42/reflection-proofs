@@ -142,7 +142,7 @@ infer Γ (App .(erase t) e₁) | ok n (O x) t = bad
 infer Γ (App .(erase t) e₁) | ok n (τ => τ₁) t with infer Γ e₁
 infer Γ (App .(erase t₁) .(erase t₂)) | ok n (σ => τ) t₁   | ok n₂ σ' t₂ with σ =?= σ'
 infer Γ (App .(erase t₁) .(erase t₂)) | ok n (.σ' => τ) t₁ | ok n₂ σ' t₂ | yes = ok _ τ (t₁ ⟨ t₂ ⟩ )
-infer Γ (App .(erase t₁) .(erase t₂)) | ok n (σ => τ) t₁   | ok n₂ σ' t₂ | no = bad
+infer Γ (App .(erase t₁) .(erase t₂)) | ok n (σ => τ) t₁   | ok n₂ σ' t₂ | no  = bad
 infer Γ (App .(erase t) e₁) | ok n (τ => τ₁) t | bad = bad
 infer Γ (App e e₁) | bad = bad
 infer Γ (Lam σ e) with infer (σ ∷ Γ) e
