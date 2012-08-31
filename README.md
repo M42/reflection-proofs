@@ -1,7 +1,7 @@
 Reflection in Agda
 ==================
 
-This is a project exploring the uses and limitations of the reflection API recently included in Agda, the dependently typed programming language slash interactive theorem prover.
+This is a project exploring the uses and limitations of the reflection API recently included in [Agda](http://wiki.portal.chalmers.se/agda/), the dependently typed programming language slash interactive theorem prover.
 
 This repository contains two main components, Proofs and Metaprogramming. Proofs contains an example of how to use the reflection API to accomplish a technique ambiguously named proof by reflection (referring to another type of reflection than the programming language technology reflection as is present in, for example, LISP, and recently Agda).
 
@@ -11,4 +11,10 @@ Also included in this repository is the final thesis for the project, which goes
 
 Questions and comments are of course welcome; my email address is first name at my domain dot org, which can be found in my GitHub profile.
 
-Paul van der Walt
+Paul van der Walt  
+https://denknerd.org
+
+Using the package
+-------------------
+
+The code included in this repository can be used as a convenient starting point for doing your own reflective development, all of it should compile fine in bleeding edge darcs Agda (currently version 2.3.1). You could conceivably also want to prove the evenness of certain naturals, or maybe to a CPS transformation on some of your programs. Examples of how to achieve this are given in the Examples modules, so have a look how that works there.
