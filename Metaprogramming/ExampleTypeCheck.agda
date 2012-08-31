@@ -4,6 +4,7 @@ open import Data.Nat
 open import Data.List
 open import Reflection
 
+open import Relation.Binary.PropositionalEquality
 open import Metaprogramming.ExampleUniverse
 open DT
 open TC
@@ -61,5 +62,18 @@ typedgoal1 = raw2wt testgoal1
 
 typedgoal2 : WT [] (typeOf testgoal2) _
 typedgoal2 = raw2wt testgoal2
+
+-- we can reflect this back to "concrete" Agda; the function
+-- is the same as the original term in testgoal1
+concrete :          lam2type typedgoal1
+concrete = unquote (lam2term typedgoal1)
+
+unittest : concrete ≡ (λ (a : ℕ → ℕ) → λ (b : ℕ) → a b)
+unittest = refl
+
+-- note that types are preserved.
+-- unittest0 : arrowconcrete ≡ (\ (a : Bool → Bool) → \ (b : Bool) → a b)
+-- unittest0 = ?
+-- wouldn't work.
 
 -- and that's all there is to it, folks!
