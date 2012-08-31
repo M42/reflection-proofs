@@ -88,7 +88,7 @@ letsSee = refl
 -- ok that's pretty awful, even though I'm sure it's right. unfortunately,
 -- reduction isn't helping in this case.
 
-noReduction : const₄SKI ≡ reduce 5 const₄SKI
+noReduction : const₄SKI ≡ reduce₁ const₄SKI
 noReduction = refl
 
 -- oh well, back to normal Agda then?
