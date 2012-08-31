@@ -53,6 +53,8 @@ testTerm = Lam (O Nat => O Nat) (Lam (O Nat) (Var (there here) ⟨ Var here ⟩ 
 --
 -- so a continuation with type ...  should do it.
 
+-- note that this function is the same as our original testTerm, but
+-- with an extra element in the context
 arg1 : WT ((
               (O Nat => (O Nat => O Nat) => O Nat)
             =>
@@ -101,6 +103,7 @@ testCPSis : testCPS ≡ testCont
                                                            (Var (there here) ⟨ Var here ⟩ ⟨ Var (there (there here)) ⟩)
                                                            ⟨ Var (there (there here)) ⟩) ⟨ Var (there (there (there here))) ⟩)) ⟩)) ⟩
 testCPSis = refl
+
 
 {-
 Note that something like the above is way less painful to the eyes when
