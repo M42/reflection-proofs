@@ -54,7 +54,10 @@ lambda {σ} {τ} (Var .τ (there i)) = K ⟨ Var τ i ⟩
 lambda  (t ⟨ t₁ ⟩) = let l1 = lambda  t
                          l2 = lambda  t₁
                       in S ⟨ l1 ⟩ ⟨ l2 ⟩
-lambda           (Lit l)          = K ⟨ Lit l ⟩
+lambda           (Lit l)          = K ⟨ Lit l ⟩ -- we can't do a catch-all pattern here,
+                                                -- since we're sneakily removing a type from
+                                                -- the context (namely the one corresponding
+                                                -- to the lambda we've just eliminated.
 lambda           S                = K ⟨ S ⟩
 lambda           K                = K ⟨ K ⟩
 lambda           I                = K ⟨ I ⟩
