@@ -2443,6 +2443,7 @@ in a real-life development.
 \item untyped terms are returned. this is solved.
 \end{itemize}
 
+\todo{mention that program transformation (i.e. automatic bove-capretta) is also difficult/impossible. this is something different from GP automatically}
 
 \chapter{Discussion}
 \label{sec:discussion}
