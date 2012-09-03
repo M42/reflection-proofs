@@ -3,6 +3,7 @@
 \usepackage{color}
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
 
+\colorlet{Hole}{Dandelion!25!white}
 
 %format \# = "\ensuremath{\#}"
 %format _\#_↦_ = "\ensuremath{\_\#\_\mapsto\_}"
@@ -47,3 +48,10 @@
 %%% we don't want all dots to become function composition. sometimes we're referring to inferrable arguments.
 %format .     = "{"                 "."   "\mkern-5mu"     "}"
 %format _∷_   = "{" _ "\mkern1mu"    ∷    "\mkern-1mu"   _ "}"
+
+
+
+
+%%% holes:
+
+%format HOLE x  = "\colorbox{Hole}{\ensuremath{\{~\}_{" x "}}}"
