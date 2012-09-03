@@ -4,6 +4,8 @@
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
 
 \colorlet{Hole}{Dandelion!25!white}
+\definecolor{bordeaux}{rgb}{0.8,0.02,0.27}
+\colorlet{darkbordeaux}{bordeaux!65!black}
 
 %format \# = "\ensuremath{\#}"
 %format _\#_↦_ = "\ensuremath{\_\#\_\mapsto\_}"
@@ -24,7 +26,8 @@
 % field of a record:
 \newcommand{\fld}[1]{{\color{Maroon}\mathsf{#1}}}
 % keywords:
-\newcommand{\keyword}[1]{{\color{Sepia}\mathsf{#1}}}
+\newcommand{\keyword}[1]{{\color{darkbordeaux}\mathsf{#1}}}
+%\newcommand{\keyword}[1]{{\color{Sepia}\mathsf{#1}}}
 
 \newcommand{\textsigma}{\ensuremath{\sigma}}
 

@@ -11,6 +11,13 @@
 %endif
 
 \usepackage{todonotes}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Font definitions.
+\usepackage{tgpagella}
+\usepackage[T1]{fontenc}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \newcommand{\ignore}[1]{}
 
 \newcommand{\pref}[1]{~\ref{#1} on page~\pageref{#1}}
@@ -520,11 +527,11 @@ used for things which are not or cannot be represented in this AST (such as func
 
 A common task will be casting the raw |Term| we get into some AST of
 our own.
-A library has been developed which might serve as both an instructive
-example in how to pull apart |Term|s, as well as a useful function,
+A library, |Autoquote|, has been developed, which might serve as both an instructive
+example in how to pull apart |Term|s, as well as a useful and reusable function,
 since it provides the feature of automatically converting a |Term|
 into some AST type, if a mapping is provided from concrete Agda
-|Name|s to constructors of this AST. An explanation of its implementation is given
+|Name|s to constructors of this AST. An explanation of its implementation and application is given
 in Sec.~\ref{sec:autoquote}, and an example use-case is given in \ref{sec:autoquote-example}.
 
 
@@ -537,8 +544,8 @@ a description of their use.
 \begin{figure}[h]
 \begin{spec}
 _≟-Name_ : Decidable {A = Name} _≡_
--- also list the rest of the decidable things?
--- or just leave it to peoples' imagination?
+-- The other decidable properties are omitted for 
+-- brevity, but are similarly-named.
 
 type : Name → Type
 definition : Name → Definition
@@ -587,8 +594,8 @@ Typically, this is useful for deciding which constructor is present in some expr
 \begin{spec}
 convert : Term → Something
 convert (def c args) with c ≟-Name quote foo
-...                   | yes p = do_something -- foo applied to arguments
-...                   | no ¬p = do_other_thing -- another function than foo
+...                   | yes p     = do_something -- foo applied to arguments
+...                   | no ¬p     = do_other_thing -- another function than foo
 \end{spec}
 
 
@@ -658,7 +665,7 @@ data Expr : Set where
 
 We might concievably want to convert a piece of concrete syntax, such as $5 + x$, to this
 AST, using Agda's reflection system. This typically involves ugly and verbose functions such
-as the one from Sec.~\ref{sec:boolean-tautologies} with many with-clauses and frankly, too
+as the one from Sec.~\ref{sec:boolean-tautologies} with many |with|-clauses and frankly, too
 much tedium to be anything to be proud of. What we would actually like to be able to do,
 is provide a mapping from concrete constructs such as the |_+_| function to elements of our
 AST, and get a conversion function for free.
@@ -839,7 +846,7 @@ something : {x y : ℕ}    → doConvert exprTable (quoteTerm ((1 + x + 2) + y))
                          ≡ Succ (Plus (Plus (Variable 1) (Succ (Succ Zero))) (Variable 0))
 something = refl
 \end{code}
-\caption{Examples of |Autoquote| in use.}\label{fig:test-autoquote}
+\caption{Examples of |Autoquote| in use. See Fig.~\ref{fig:exprTable} for the definition of |exprTable|, a typical |Name|/constructor mapping.}\label{fig:test-autoquote}
 \end{figure}
 
 Note the type signature of the |doConvert| function: we are implicitly assuming
@@ -847,7 +854,7 @@ that the conversion is successful (i.e. that it returns a |just| value). This
 allows a much cleaner implementation of the |convert| function; it can try all
 the allowed constructors, and if none of them match, it can fail with a |nothing| value.
 This is a lot simpler than writing a predicate function with the same pattern matching 
-structure by hand, since sometimes the with-clauses are expanded unpredictably. The net effect
+structure by hand, since sometimes the |with|-clauses are expanded unpredictably. The net effect
 of writing a pair of functions in this style is the same as the ``usual'' way of writing a predicate
 function by hand, in that a compile-time error is generated if the function |doConvert| is 
 invoked on an argument with the wrong shape.
@@ -863,6 +870,16 @@ good motivating example for using |Autoquote|, therefore a slightly
 more real-world example of |Autoquote| in use can be found in
 Sec.~\ref{sec:autoquote-example}.
 
+\section{Real-world Quoting}
+
+Finally, a reference should be made to the implementation of the |Autoquote| library, and the module |Metaprogramming.ExampleAutoquote| where
+a few instructive examples can be found regarding the real-world use of Agda's reflection API. The module |Metaprogramming.Autoquote| contains
+what should be able to serve as a basis for a system for quoting concrete Agda into your own AST, and even if not, it should at the very least
+be didactically interesting to see how the various aspects of reflection can be used. 
+
+Should the |Autoquote| library prove powerful enough for a user's particular needs, the |ExampleAutoquote| module should be clear enough
+to distill a copy-and-paste ready solution from.
+\todo{Is this section even necessary? I'd like to provide pointers to the Examples* modules, but I don't know if this is the right way.}
 
 \chapter{Proof by Reflection}
 \label{sec:proof-by-reflection}
