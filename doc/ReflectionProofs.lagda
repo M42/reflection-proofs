@@ -162,28 +162,30 @@ reflection. More specifically it makes the following contributions:
 \item We show how to
   guarantee \emph{type safety of meta-programs}. To illustrate this
   point, we will develop a type safe translation from the simply typed
-  lambda calculus to combinatory logic, followed
+  lambda calculus to programs in continuation-passing style (CPS), followed
 by a type-safe translation of closed lambda terms into SKI combinator calculus (Chapter~\ref{sec:type-safe-metaprogramming}).
  
-\item A number of neat examples are given on how to automate certain
-  aspects of modifying a program to use generic programming techniques in Chapter~\ref{sec:generic-programming}. 
+% \item A number of neat examples are given on how to automate certain
+%   aspects of modifying a program to use generic programming techniques in Chapter~\ref{sec:generic-programming}. 
 
 \item Finally, we also discuss some of the
-  limitations of the current implementation of reflection (Sec.~\ref{sec:reflection-api-limitations}).
+  limitations of the current implementation of reflection (Sec.~\ref{sec:reflection-api-limitations}),
+  motivated by attempts to automate certain aspects of modifying a program to 
+  use generic programming techniques. 
 \end{itemize}
 
 The code and examples presented in this paper all compile using the
-latest version of Agda 2.3.0.1 and are available on
-github.\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}} %TODO this isn't true.
+latest development version of Agda (currently 2.3.1) and are available on
+github\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}}. %TODO this isn't true.
 
 \chapter{Introducing Agda}
 
 Besides being a common Swedish female name and referring to a certain hen in
-Swedish popular culture\footnote{See Cornelis Vreeswijk's rendition of
+Swedish folklore\footnote{See Cornelis Vreeswijk's rendition of
 a highly instructive song about Agda (the hen) at \url{http://youtu.be/zPY42kkRADc}.}, Agda
 is an implementation of Martin-L\"of's type theory, extended with
 records and modules, as a dependently typed programming language. Agda
-was and is developed at Chalmers\cite{norell:thesis}, and thanks to
+was and is developed at Chalmers \cite{norell:thesis}, and thanks to
 the Curry-Howard isomorphism, it is both a
 functional\footnote{Functional as in practically usable.}
 functional\footnote{Functional as in Haskell.} programming language
@@ -213,40 +215,100 @@ at first be apparent, are explained.
 \section{Pattern-matching}
 
 One of Haskell's selling points is the ability to do pattern matching, which makes writing
-structurally recursive functions both easy and the Natural Way of Doing Things\texttrademark.
+structurally recursive functions both easy and the Natural Way of Doing Things\texttrademark. Agda shares this
+capability and idiomatic programming style, but has a much more powerful version of pattern matching, namely
+dependent pattern matching.
 
-\section{Programming language \emph{and} proof assistant}
+This means that based on the (rich) type information available about terms, certain combinations of
+arguments are automatically regarded as impossible, or \emph{absurd}, to use Agda lingo. For example, consider the 
+following fragment, where we compute the value of a |Fin n|, the type of numbers smaller than $n$, in |ℕ|, the type
+of natural numbers. Note the use of the absurd pattern, \texttt{()}.
 
-total + terminating => we can prove stuff.
+\begin{code}
+natural : (n : ℕ) → Fin n → ℕ
+natural zero      ()
+natural (suc n)   zero       = zero
+natural (suc n)   (suc m)    = suc (natural n m)
+\end{code}
+
+Basically, the dependent in dependent pattern matching refers to the fact that given the specialisation of the function in
+the case where |zero| is the first argument, it can be inferred that the next argument should be of type |Fin zero|, which obviously
+has no inhabitants (no natural numbers are strictly smaller than |zero|). This is something which we cannot do in Haskell, but which
+is also not necessary in Haskell, since we are not required to write total functions (i.e. functions defined on all possible inputs) in
+Haskell. There, we are left to our own devices, and should be responsible enough programmers that we do not write code such that pattern
+matching failures might occur. In Sec.~\ref{sec:plandpa} we will see that this is a pivotal difference between Haskell and Agda, and that 
+this sort of feature makes Agda usable as a logical framework, not just a programming language.
+
+\section{Programming language \emph{and} proof assistant}\label{sec:plandpa}
+
+In the previous section, the necessity of defining total functions was mentioned. This is no arbitrary choice, for without 
+this property, Agda would not be a sound logical framework. All programs in Agda are required to be total and terminating, because
+without this requirement, it would be very easy to define a proof of the absurd, or falsity, which of course would introduce
+unsoundness in the logic. If we do not require termination, the following simple function would prove falsity.
+
+\begin{spec}
+falsity : ⊥
+falsity = falsity
+\end{spec}
+
+This is possible because it would take an infinite amount of evaluation time to discover that this function is
+in fact not making any progress. 
+
+
+Totality of functions, that is, being defined for all possible inputs, is also required. If this requirement were 
+dropped, a number of desirable properties for a logic would not hold any longer. The most obvious example is that
+all of a sudden, run-time exceptions are possible: if a function is not defined on a given input but that value
+is, at some point, passed as an argument, bad things will happen (compare Haskell and a run-time pattern-matching failure).
+Because functions can also return types (which are just more values) and thus be used in type signatures, one would not want
+it to be possible for type-checking to break as a result of an incomplete function definition. 
+
+
+
 
 
 \section{Implicit Record-type Arguments}\label{sec:implicit-unit}
 
-As has been noted before, if a particular argument is a record type,
-and it has only one possible inhabitant, Agda can
-automatically infer its value. Thus, it also need not be passed as an explicit argument
-at the call-site. The following code snippet (Fig. \ref{code:implicit-example}) illustrates
-how record type arguments having only one alternative can be automatically inferred.
+Agda also supports so-called implicit arguments. The distinction
+between explicit (usual arguments to functions, as seen in Haskell,
+for example) and implicit arguments is merely that they are tagged as
+hidden, and do not have to be provided if the can be inferred from the
+context. Arguments are marked hidden by surrounding them with curly braces 
+in the function (or data type) definition. This often reduces the
+number of ``obvious'' arguments that have to be explicitly passed
+around, reducing visual clutter (since the arguments can still be
+inspected, matched on and used as normal in the receiving function).
 
-The function |foo| expects a value of type |⊤ × ⊤|, and returns a natural number.
-We know, however, that | _×_ | is a record and only has the constructor | _,_ : A → B → A × B| (this pair type
-is a special case of the dependent pair |Σ (A : Set) (B : A → Set) : Set|), therefore the only
-possible value is one using the constructor |_,_|. If we next look at the values for |A| and |B| here,
-namely the left and right-hand arguments' types, we see that in both cases they have type |⊤|. The
-unit type also is defined as a record with only one constructor, namely |tt|. This means that the 
-only value possible is |tt , tt|, which is why we can use the underscore-notation, meaning
+Furthermore, if a particular argument is a record type, and it has
+only one possible inhabitant, Agda can automatically infer its
+value. Thus, it also need not be passed as an explicit argument at the
+call-site. The following code snippet
+(Fig. \ref{code:implicit-example}) illustrates how record type
+arguments having only one alternative can be automatically inferred.
+
+The function |foo| expects a value of type |⊤ × ⊤|, and returns a
+natural number.  We know, however, that | _×_ | is a record and only
+has the constructor | _,_ : A → B → A × B| (this pair type is a
+special case of the dependent pair |Σ (A : Set) (B : A → Set) : Set|),
+therefore the only possible value is one using the constructor
+|_,_|. If we next look at the values for |A| and |B| here, namely the
+left and right-hand arguments' types, we see that in both cases they
+have type |⊤|. The unit type also is defined as a record with only one
+constructor, namely |tt|. This means that the only value possible is
+|tt , tt|, which is why we can use the underscore-notation, meaning
 Agda should infer the argument for us.
 
-The fact that pairs and unit are defined as records in the standard library is pretty crucial here.
-The type system does some work for us in these cases: since eta-conversion is done on record types, which
-allows Agda to infer that there is exactly one inhabitant of a certain type. This eta reduction is not done
-on general data types, since this would increase the complexity of the work the compiler needs to do as
-well as potentially introduce unsound behaviour \cite{mcbride-motivation-eta-rules}.
-Also, it means that you can assert to Agda that your
-function that returns a certain type always produces an
-inhabited value. On the other hand, single-constructor data types may not be
-inhabited if their indices can't be satisfied (for example: |refl| and the equality
-type).
+The fact that pairs and unit are defined as records in the standard
+library is pretty crucial here.  The type system does some work for us
+in these cases: since eta-conversion is done on record types, which
+allows Agda to infer that there is exactly one inhabitant of a certain
+type. This eta reduction is not done on general data types, since this
+would increase the complexity of the work the compiler needs to do as
+well as potentially introduce unsound behaviour
+\cite{mcbride-motivation-eta-rules}.  Also, it means that you can
+assert to Agda that your function that returns a certain type always
+produces an inhabited value. On the other hand, single-constructor
+data types may not be inhabited if their indices can't be satisfied
+(for example: |refl| and the equality type).
 
 
 \begin{figure}[h]
@@ -275,8 +337,6 @@ bar' = foo'
         \label{fig:implicit0}
     \end{figure}
 
-%todo use the term "proof irrelevance"
-    
 This is possible, since the type |⊤ × ⊤| only has one inhabitant, namely |(tt , tt)|. If
 multiple values were valid, the above code would have resulted in an unsolved meta. That brings
 us to one of the drawbacks of this solution which has been used quite often (chiefly to ``hide''
@@ -287,7 +347,7 @@ in the Emacs Agda mode). This is particularly unfortunate when we are using this
 to hide an inferrable proof of the soundness of a theorem, such as in the boolean tautology example (Sec.~\ref{sec:boolexpr}).
 The thing is, we do not want a user to get away with being able to prove that something which is not a
 tautology, is a tautology. Since the proof that under all environments the theorem evaluates
-to true is an implicit argument in this style, one is merely left with an unsolved meta, which
+to true is an implicit argument in this style, one is merely left with an unsolved meta (with an uninhabitable type |⊥|, to be fair), which
 might seem a triviality if one doesn't read the compiler's output carefully. Luckily Agda disallows
 importing modules with unsolved metas, which means such a spurious proof will not be usable elsewhere
 in a real-life development. 
