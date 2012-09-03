@@ -79,7 +79,7 @@ open import Data.List hiding (_∷ʳ_)
 
 %%% \maketitle
 %TODO make a fancy title page
-%? \frontmatter
+%? \frontmatter %% only available in book-like classes.
 \begin{titlepage}
 %% Naar een voorbeeld in de LaTeX Companion Second Edition
 %% pagina 858
@@ -87,7 +87,6 @@ open import Data.List hiding (_∷ʳ_)
 \vspace*{\stretch{1}}
 \HRule
 \begin{flushright}
-%\fontencoding{T1}
 %\fontfamily{cap}
 
 %\selectfont
