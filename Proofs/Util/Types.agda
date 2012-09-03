@@ -19,7 +19,7 @@ So s false = Error s
 -- into it's propositional equivalent — inhabited (⊤) means
 -- it's true, uninhabited (⊥) means false.
 P : Bool → Set
-P = So "Expression doesn't evaluate to true in this branch."
+P = So "Argument expression does not evaluate to true."
 
 -- very much like ⊥-elim, but for Errors. in fact, this is
 -- pretty much copied from the Agda standard library, Data.Empty module.
