@@ -178,13 +178,46 @@ github.\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}} %TODO
 
 \chapter{Introducing Agda}
 
-Besides being a common female name and referring to a certain hen in Swedish popular culture\footnote{See Cornelis Vreeswijk's rendition of a song about Agda the hen at \url{http://youtu.be/zPY42kkRADc}.}, %
-%
-%
-Agda is an implementation of Martin-L\"of's type theory, extended with records and modules, as a dependently typed programming language. Agda was and is developed at Chalmers\cite{norell:thesis}, and thanks to the Curry-Howard isomorphism, it is both a functional\footnote{Functional as in practically usable.} functional\footnote{Functional as in Haskell.} programming language and a framework for intuitionistic logic (compare Coquand's calculus of constructions). In
-Agda, one directly manipulates and constructs proof objects in the same language as is used to express computation, as opposed to other theorem proving systems, such as Coq, where one has tactics which automatically construct proofs, and a separate language for describing these tactics \cite{coquand2006emacs}.
+Besides being a common Swedish female name and referring to a certain hen in
+Swedish popular culture\footnote{See Cornelis Vreeswijk's rendition of
+a highly instructive song about Agda (the hen) at \url{http://youtu.be/zPY42kkRADc}.}, Agda
+is an implementation of Martin-L\"of's type theory, extended with
+records and modules, as a dependently typed programming language. Agda
+was and is developed at Chalmers\cite{norell:thesis}, and thanks to
+the Curry-Howard isomorphism, it is both a
+functional\footnote{Functional as in practically usable.}
+functional\footnote{Functional as in Haskell.} programming language
+and a framework for intuitionistic logic (compare Coquand's calculus
+of constructions, another intuitionistic logic framework, the one
+behind Coq, which is similarly a programming language and an
+intuitionistic logic framework). In Agda, one directly manipulates and
+constructs
+proof objects in the same language as is used to express computation,
+as opposed to other theorem proving systems, such as Coq, where one
+has tactics which automatically construct proofs, and a separate
+language for describing these tactics \cite{coquand2006emacs}.
 
+Agda's syntax is inspired by Haskell, and users familiar with programming in
+Haskell (using GADTs) will probably be able to hit the ground running in Agda (in this report
+the assumption is made that the reader is fluent in Haskell).
+The usual constructs such as records, modules and let-bindings are present and
+behave as expected, as do definitions of functions and data types (except that in
+contrast with Haskell, one is forced to use GADT-like notation for data constructors).
+Agda is, practically speaking, like Haskell with a type system on steroids.
 
+After Haskell, looking at Agda for the first time, though, can be confusing, since a number
+of foreign concepts are introduced. In this chapter, a few possible stumbling blocks will
+be highlighted, and a number of tricks, the utility or sense of which might not 
+at first be apparent, are explained.
+
+\section{Pattern-matching}
+
+One of Haskell's selling points is the ability to do pattern matching, which makes writing
+structurally recursive functions both easy and the Natural Way of Doing Things\texttrademark.
+
+\section{Programming language \emph{and} proof assistant}
+
+total + terminating => we can prove stuff.
 
 
 \section{Implicit Record-type Arguments}\label{sec:implicit-unit}
@@ -1495,11 +1528,12 @@ Furthermore, by using the proof by reflection technique, the proof is generated 
 
 The process of quoting to a |BoolExpr n| outlined in Sec.~\ref{sec:addrefl}
 quickly becomes an ugly mess, with functions checking properties of an expression (such
-as only certain functions occurring) being pretty similar, save the number of arguments
-functions require or which functions are allowed.
+as only certain functions like |_∧_| or |¬_| occurring in the |Term|) being repetitive and verbose. If one 
+then wanted to quote to some other AST, the whole process would have to be modified, which, the author can guarantee,
+is a painful process.
 
 The actual conversion function also ends up having many branches, checking if the current
-constructor or definition is on we know, \&c. This process can be made a lot less ugly.
+constructor or definition is on we know, \&c. This process can be made a lot less ugly and a lot more reusable.
 Recall the |Autoquote| module developed in
 Sec.~\ref{sec:autoquote}; this can be used here, both as an
 illustration of the use of |Autoquote|, and to avoid code duplication,
@@ -1532,12 +1566,12 @@ the function |term2boolexpr'| which, for suitable |Term|s, gives us an expressio
 \begin{code}
 boolTable : Table BoolInter
 boolTable = (Atomic ,
-                  2 \# (quote _∧_  ) ↦ And
-            ∷     2 \# (quote _∨_  ) ↦ Or
-            ∷     1 \# (quote  ¬_  ) ↦ Not
-            ∷     0 \# (quote true ) ↦ Truth
-            ∷     0 \# (quote false) ↦ Falsehood
-            ∷     2 \# (quote _⇒_  ) ↦ Imp ∷ [])
+                  2 \# (quote _∧_      ) ↦ And
+            ∷     2 \# (quote _∨_      ) ↦ Or
+            ∷     1 \# (quote  ¬_      ) ↦ Not
+            ∷     0 \# (quote true     ) ↦ Truth
+            ∷     0 \# (quote false    ) ↦ Falsehood
+            ∷     2 \# (quote _⇒_      ) ↦ Imp ∷ [])
 
 term2boolexpr' : (t : Term) → {pf : convertManages boolTable t} → BoolInter
 term2boolexpr' t {pf} = doConvert boolTable t {pf}
