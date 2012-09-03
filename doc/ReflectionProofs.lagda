@@ -415,7 +415,7 @@ example:
 
 \begin{spec}
 exampleQuoteGoal : ℕ
-exampleQuoteGoal = quoteGoal e in {!!}
+exampleQuoteGoal = quoteGoal e in HOLE 0
 \end{spec}
 The |quoteGoal| keyword binds the variable |e| to the |Term|
 representing the type of the current goal. In this example, the value
@@ -650,10 +650,10 @@ numbers, variables (indexed by an Agda natural) and additions.
 
 \begin{code}
 data Expr : Set where
-  Variable      : ℕ               → Expr
-  Plus          : Expr → Expr     → Expr
-  Succ          : Expr            → Expr
-  Zero          :                   Expr
+  Variable      : ℕ               →     Expr
+  Plus          : Expr → Expr     →     Expr
+  Succ          : Expr            →     Expr
+  Zero          :                       Expr
 \end{code}
 
 We might concievably want to convert a piece of concrete syntax, such as $5 + x$, to this
