@@ -852,6 +852,11 @@ of writing a pair of functions in this style is the same as the ``usual'' way of
 function by hand, in that a compile-time error is generated if the function |doConvert| is 
 invoked on an argument with the wrong shape.
 
+The format of the translation |Table| required could most probably be made a little simpler,
+by not requiring the user to provide the arity of the function, but using the tools 
+explained in Sec.~\ref{sec:inspecting-definitions} (the section on inspecting data definitions,
+and specifically the function |constructors| in combination with |type|) to try and discover the arity of the various constructors.
+Because of time constraints, however, this is left as a suggestion for future work on the |Autoquote| library.
 
 The |BoolExpr| AST used in \ref{sec:boolean-tautologies} provides a
 good motivating example for using |Autoquote|, therefore a slightly
