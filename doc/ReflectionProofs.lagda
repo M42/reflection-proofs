@@ -254,7 +254,6 @@ falsity = falsity
 This is possible because it would take an infinite amount of evaluation time to discover that this function is
 in fact not making any progress. 
 
-
 Totality of functions, that is, being defined for all possible inputs, is also required. If this requirement were 
 dropped, a number of desirable properties for a logic would not hold any longer. The most obvious example is that
 all of a sudden, run-time exceptions are possible: if a function is not defined on a given input but that value
@@ -262,7 +261,8 @@ is, at some point, passed as an argument, bad things will happen (compare Haskel
 Because functions can also return types (which are just more values) and thus be used in type signatures, one would not want
 it to be possible for type-checking to break as a result of an incomplete function definition. 
 
-
+Finally, though, Agda allows us to define functions and proofs side-by-side, allowing concurrent development of
+programs and proofs of properties about those programs hand-in-hand. 
 
 
 
@@ -344,7 +344,7 @@ a proof witness of for example an input term being of the right shape), which is
 an argument is ambiguous, or worse, if it is a type with no inhabitants, the compiler won't fail
 with a type error, but merely with an unsolved meta warning (highlighting the piece of code yellow
 in the Emacs Agda mode). This is particularly unfortunate when we are using this technique
-to hide an inferrable proof of the soundness of a theorem, such as in the boolean tautology example (Sec.~\ref{sec:boolexpr}).
+to hide an inferrable proof of the soundness of a theorem, such as in the boolean tautology example (Sec.~\ref{sec:boolean-tautologies}).
 The thing is, we do not want a user to get away with being able to prove that something which is not a
 tautology, is a tautology. Since the proof that under all environments the theorem evaluates
 to true is an implicit argument in this style, one is merely left with an unsolved meta (with an uninhabitable type |⊥|, to be fair), which
@@ -393,7 +393,7 @@ example, the following unit test type checks:
 \begin{code}
 example₀   : quoteTerm (\ (x : Bool) -> x)
            ≡ lam visible (el _ (def (quote Bool) [])) (var 0 [])
-example₀ = refl
+example₀   = refl
 \end{code}
 
 Dissecting
@@ -406,8 +406,8 @@ the empty list.
 Furthermore, |quoteTerm| type checks and normalizes its term before
 returning the required |Term|, as the following example demonstrates:
 \begin{code}
-example₁ : quoteTerm ((\ x → x) 0) ≡ con (quote ℕ.zero) []
-example₁ = refl
+example₁   : quoteTerm ((\ x → x) 0) ≡ con (quote ℕ.zero) []
+example₁   = refl
 \end{code}
 
 The |quoteGoal| keyword is slightly different. It is best explained using an
