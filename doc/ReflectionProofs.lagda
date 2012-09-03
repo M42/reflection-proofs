@@ -176,89 +176,88 @@ The code and examples presented in this paper all compile using the
 latest version of Agda 2.3.0.1 and are available on
 github.\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}} %TODO this isn't true.
 
-\chapter{Related Work}
+\chapter{Introducing Agda}
 
-% TODO : Mention mcbride with ornaments; 
-
-
-% TODO : I would like to do something like this:
-% 
-% cs : (A : Set) → List Name -- give a list of constructors
-% cs type = ... quote type ...
-% 
-% but I can't, because type isn't a defined thing. if I try to use quoteTerm here, I just get
-% something like var 0 [], which of course also isn't useful. I would actually like the same as
-% `quote Col`, for example. i.e. a QName I can actually use.
-% 
-% The same sort of problem holds for unquote: I can't do `unquote (somethingreturningaTerm ...)`
-% because at compile-time it's not always clear that the function `somethingreturningaTerm`
-% will return a bunch of constructors of Term. What we need is delayed or lazy quoting, maybe.
+Besides being a common female name and referring to a certain hen in Swedish popular culture\footnote{See Cornelis Vreeswijk's rendition of a song about Agda the hen at \url{http://youtu.be/zPY42kkRADc}.}, %
+%
+%
+Agda is an implementation of Martin-L\"of's type theory, extended with records and modules, as a dependently typed programming language. Agda was and is developed at Chalmers\cite{norell:thesis}, and thanks to the Curry-Howard isomorphism, it is both a functional\footnote{Functional as in practically usable.} functional\footnote{Functional as in Haskell.} programming language and a framework for intuitionistic logic (compare Coquand's calculus of constructions). In
+Agda, one directly manipulates and constructs proof objects in the same language as is used to express computation, as opposed to other theorem proving systems, such as Coq, where one has tactics which automatically construct proofs, and a separate language for describing these tactics \cite{coquand2006emacs}.
 
 
-This project's main innovations are the novel combinations of existing
-techniques; therefore quite a number of subjects are relevant to mention
-here.
-
-As far as reflection in general goes, Demers and Malenfant \cite{demers1995reflection} wrote a nice historical overview on the topic.
-What we are referring to as reflection dates back to work by Brian Smith \cite{Smith:1984:RSL:800017.800513}
-and was initially presented in the Lisp family of languages in the 80's. Since then,
-many developments in the functional, logic as well as object-oriented programming worlds have 
-been inspired -- systems with varying power and scope.
 
 
-People sometimes jokingly say that the more advanced
-a given programming language becomes, the more it converges towards Lisp \cite{graham04}.
-The fact is, though, that it is becoming increasingly common to generate pieces of code 
-from a general recipe, giving rise to possibly a more efficient specific implementation, 
-or at the very least not having to reinvent the wheel. Reflection is becoming more common, to
-various extents, in industry-standard languages such as Java, Objective-C, as well as theoretically more interesting
-languages, such as Haskell \cite{DBLP:journals/lisp/Stump09}.
+\section{Implicit Record-type Arguments}\label{sec:implicit-unit}
 
-This would seem to be the inspiration for the current reflection system recently introduced
-in Agda, although we shall see that it is lacking in a number of fundamental capabilities.
-If we look at the taxonomy of reflective systems in programming language technology written up 
-by Sheard \cite{sheard-staged-programming}
-we see that we can make a few rough judgments about the metaprogramming facilities Agda currently 
-supports\footnote{Of course the current implementation is more a proof-of-concept, and is still far from
-being considered finished, so it would be unfair to judge the current implementation all too harshly. In
-fact, the author hopes that this work might motivate the Agda developers to include some more features, to
-make the system truly useful. 
-}. \todo{ is this not becoming more of a discussion / conclusion?}
+As has been noted before, if a particular argument is a record type,
+and it has only one possible inhabitant, Agda can
+automatically infer its value. Thus, it also need not be passed as an explicit argument
+at the call-site. The following code snippet (Fig. \ref{code:implicit-example}) illustrates
+how record type arguments having only one alternative can be automatically inferred.
 
-Agda's reflection API\ldots
-\begin{itemize}
-\item leans more towards analysis than generation
-\item supports encoding as an algebraic data type (as opposed to a string, for example)
-\item involves manual staging annotations (with keywords such as |quote| and |unquote|)
-\item is neither strictly static nor runtime, but compile-time. This behaves much like a 
-  static system (one which compiles an object program, as does for example YAcc%todo cite
-) would, but doesn't produce intermediate code which might be modified.
-  Note that this fact is essential for Agda to remain sound as a logical framework.
-\item is homogeneous, in that the object language lives inside the metalanguage (as a native
-  data type), but
-\item is only two-stage: we cannot as yet produce an object program which is itself a metaprogram. This is
-  because we rely on built-in keywords such as |quote|, which cannot themselves be quoted.
-\end{itemize}
+The function |foo| expects a value of type |⊤ × ⊤|, and returns a natural number.
+We know, however, that | _×_ | is a record and only has the constructor | _,_ : A → B → A × B| (this pair type
+is a special case of the dependent pair |Σ (A : Set) (B : A → Set) : Set|), therefore the only
+possible value is one using the constructor |_,_|. If we next look at the values for |A| and |B| here,
+namely the left and right-hand arguments' types, we see that in both cases they have type |⊤|. The
+unit type also is defined as a record with only one constructor, namely |tt|. This means that the 
+only value possible is |tt , tt|, which is why we can use the underscore-notation, meaning
+Agda should infer the argument for us.
+
+The fact that pairs and unit are defined as records in the standard library is pretty crucial here.
+The type system does some work for us in these cases: since eta-conversion is done on record types, which
+allows Agda to infer that there is exactly one inhabitant of a certain type. This eta reduction is not done
+on general data types, since this would increase the complexity of the work the compiler needs to do as
+well as potentially introduce unsound behaviour \cite{mcbride-motivation-eta-rules}.
+Also, it means that you can assert to Agda that your
+function that returns a certain type always produces an
+inhabited value. On the other hand, single-constructor data types may not be
+inhabited if their indices can't be satisfied (for example: |refl| and the equality
+type).
 
 
-\todo{idea: put the above in discussion, and just mention Sheard's taxonomy here.}
+\begin{figure}[h]
+\begin{code}
+foo : ⊤ × ⊤ → ℕ
+foo u = 5
 
+bar : ℕ
+bar = foo _
+\end{code}
+        \caption{Illustrating the automatic inference of record arguments.}
+        \label{code:implicit-example}
+    \end{figure}
+Since this inference is possible, we can also make this argument implicit, which effectively
+hides from the user that a value is being inferred and passed, as in Fig. \ref{fig:implicit0}.
+    
+    \begin{figure}[h]
+\begin{code}
+foo' : {u : ⊤ × ⊤} → ℕ
+foo' = 5
 
-Other related work includes the large body of publications in the
-domain of generic programming
-\cite{Rodriguez:2008:CLG:1543134.1411301,mcbride2010ornamental}, where we found the
-inspiration to try and implement some of the techniques in a
-dependently-typed setting.
+bar' : ℕ
+bar' = foo'
+\end{code}
+        \caption{Implicit (or hidden) arguments are inferred, if possible.}
+        \label{fig:implicit0}
+    \end{figure}
 
-Program transformations and their correctness (by various definitions) have long been a subject of research \cite{Partsch:1983:PTS:356914.356917},
-and given more advanced languages with more powerful generative programming techniques, this will likely prove a continuing trend.
-
-As far as the proof techniques used in the section on proof by reflection (Chapter~\ref{sec:proof-by-reflection}) is concerned,  
-Chlipala's work \cite{chlipala2011certified} proved an invaluable resource, both for inspiration and guidance. One motivating example
-for doing this in Agda was Wojciech Jedynak's ring solver \cite{ringsolver}, which was the first example of Agda's reflection
-API in use that came to our attention.
-
-
+%todo use the term "proof irrelevance"
+    
+This is possible, since the type |⊤ × ⊤| only has one inhabitant, namely |(tt , tt)|. If
+multiple values were valid, the above code would have resulted in an unsolved meta. That brings
+us to one of the drawbacks of this solution which has been used quite often (chiefly to ``hide''
+a proof witness of for example an input term being of the right shape), which is that if such
+an argument is ambiguous, or worse, if it is a type with no inhabitants, the compiler won't fail
+with a type error, but merely with an unsolved meta warning (highlighting the piece of code yellow
+in the Emacs Agda mode). This is particularly unfortunate when we are using this technique
+to hide an inferrable proof of the soundness of a theorem, such as in the boolean tautology example (Sec.~\ref{sec:boolexpr}).
+The thing is, we do not want a user to get away with being able to prove that something which is not a
+tautology, is a tautology. Since the proof that under all environments the theorem evaluates
+to true is an implicit argument in this style, one is merely left with an unsolved meta, which
+might seem a triviality if one doesn't read the compiler's output carefully. Luckily Agda disallows
+importing modules with unsolved metas, which means such a spurious proof will not be usable elsewhere
+in a real-life development. 
 
 
 \chapter{Reflection in Agda}
@@ -2357,81 +2356,6 @@ hullo
 
 Ornaments / containers?
 will we ever get here?
-
-\chapter{Miscellaneous}
-\section{Implicit Record-type Arguments}\label{sec:implicit-unit}
-
-As has been noted before, if a particular argument is a record type,
-and it has only one possible inhabitant, Agda can
-automatically infer its value. Thus, it also need not be passed as an explicit argument
-at the call-site. The following code snippet (Fig. \ref{code:implicit-example}) illustrates
-how record type arguments having only one alternative can be automatically inferred.
-
-The function |foo| expects a value of type |⊤ × ⊤|, and returns a natural number.
-We know, however, that | _×_ | is a record and only has the constructor | _,_ : A → B → A × B| (this pair type
-is a special case of the dependent pair |Σ (A : Set) (B : A → Set) : Set|), therefore the only
-possible value is one using the constructor |_,_|. If we next look at the values for |A| and |B| here,
-namely the left and right-hand arguments' types, we see that in both cases they have type |⊤|. The
-unit type also is defined as a record with only one constructor, namely |tt|. This means that the 
-only value possible is |tt , tt|, which is why we can use the underscore-notation, meaning
-Agda should infer the argument for us.
-
-The fact that pairs and unit are defined as records in the standard library is pretty crucial here.
-The type system does some work for us in these cases: since eta-conversion is done on record types, which
-allows Agda to infer that there is exactly one inhabitant of a certain type. This eta reduction is not done
-on general data types, since this would increase the complexity of the work the compiler needs to do as
-well as potentially introduce unsound behaviour \cite{mcbride-motivation-eta-rules}.
-Also, it means that you can assert to Agda that your
-function that returns a certain type always produces an
-inhabited value. On the other hand, single-constructor data types may not be
-inhabited if their indices can't be satisfied (for example: |refl| and the equality
-type).
-
-
-\begin{figure}[h]
-\begin{code}
-foo : ⊤ × ⊤ → ℕ
-foo u = 5
-
-bar : ℕ
-bar = foo _
-\end{code}
-        \caption{Illustrating the automatic inference of record arguments.}
-        \label{code:implicit-example}
-    \end{figure}
-Since this inference is possible, we can also make this argument implicit, which effectively
-hides from the user that a value is being inferred and passed, as in Fig. \ref{fig:implicit0}.
-    
-    \begin{figure}[h]
-\begin{code}
-foo' : {u : ⊤ × ⊤} → ℕ
-foo' = 5
-
-bar' : ℕ
-bar' = foo'
-\end{code}
-        \caption{Implicit (or hidden) arguments are inferred, if possible.}
-        \label{fig:implicit0}
-    \end{figure}
-
-%todo use the term "proof irrelevance"
-    
-This is possible, since the type |⊤ × ⊤| only has one inhabitant, namely |(tt , tt)|. If
-multiple values were valid, the above code would have resulted in an unsolved meta. That brings
-us to one of the drawbacks of this solution which has been used quite often (chiefly to ``hide''
-a proof witness of for example an input term being of the right shape), which is that if such
-an argument is ambiguous, or worse, if it is a type with no inhabitants, the compiler won't fail
-with a type error, but merely with an unsolved meta warning (highlighting the piece of code yellow
-in the Emacs Agda mode). This is particularly unfortunate when we are using this technique
-to hide an inferrable proof of the soundness of a theorem, such as in the boolean tautology example (Sec.~\ref{sec:boolexpr}).
-The thing is, we do not want a user to get away with being able to prove that something which is not a
-tautology, is a tautology. Since the proof that under all environments the theorem evaluates
-to true is an implicit argument in this style, one is merely left with an unsolved meta, which
-might seem a triviality if one doesn't read the compiler's output carefully. Luckily Agda disallows
-importing modules with unsolved metas, which means such a spurious proof will not be usable elsewhere
-in a real-life development. 
-
-
 \section{Reflection API Limitations}\label{sec:reflection-api-limitations}
 
 
@@ -2444,6 +2368,92 @@ in a real-life development.
 \end{itemize}
 
 \todo{mention that program transformation (i.e. automatic bove-capretta) is also difficult/impossible. this is something different from GP automatically}
+
+
+
+\chapter{Related Work}
+
+% TODO : Mention mcbride with ornaments; 
+
+
+% TODO : I would like to do something like this:
+% 
+% cs : (A : Set) → List Name -- give a list of constructors
+% cs type = ... quote type ...
+% 
+% but I can't, because type isn't a defined thing. if I try to use quoteTerm here, I just get
+% something like var 0 [], which of course also isn't useful. I would actually like the same as
+% `quote Col`, for example. i.e. a QName I can actually use.
+% 
+% The same sort of problem holds for unquote: I can't do `unquote (somethingreturningaTerm ...)`
+% because at compile-time it's not always clear that the function `somethingreturningaTerm`
+% will return a bunch of constructors of Term. What we need is delayed or lazy quoting, maybe.
+
+
+This project's main innovations are the novel combinations of existing
+techniques; therefore quite a number of subjects are relevant to mention
+here.
+
+As far as reflection in general goes, Demers and Malenfant \cite{demers1995reflection} wrote a nice historical overview on the topic.
+What we are referring to as reflection dates back to work by Brian Smith \cite{Smith:1984:RSL:800017.800513}
+and was initially presented in the Lisp family of languages in the 80's. Since then,
+many developments in the functional, logic as well as object-oriented programming worlds have 
+been inspired -- systems with varying power and scope.
+
+
+People sometimes jokingly say that the more advanced
+a given programming language becomes, the more it converges towards Lisp \cite{graham04}.
+The fact is, though, that it is becoming increasingly common to generate pieces of code 
+from a general recipe, giving rise to possibly a more efficient specific implementation, 
+or at the very least not having to reinvent the wheel. Reflection is becoming more common, to
+various extents, in industry-standard languages such as Java, Objective-C, as well as theoretically more interesting
+languages, such as Haskell \cite{DBLP:journals/lisp/Stump09}.
+
+This would seem to be the inspiration for the current reflection system recently introduced
+in Agda, although we shall see that it is lacking in a number of fundamental capabilities.
+If we look at the taxonomy of reflective systems in programming language technology written up 
+by Sheard \cite{sheard-staged-programming}
+we see that we can make a few rough judgments about the metaprogramming facilities Agda currently 
+supports\footnote{Of course the current implementation is more a proof-of-concept, and is still far from
+being considered finished, so it would be unfair to judge the current implementation all too harshly. In
+fact, the author hopes that this work might motivate the Agda developers to include some more features, to
+make the system truly useful. 
+}. \todo{ is this not becoming more of a discussion / conclusion?}
+
+Agda's reflection API\ldots
+\begin{itemize}
+\item leans more towards analysis than generation
+\item supports encoding as an algebraic data type (as opposed to a string, for example)
+\item involves manual staging annotations (with keywords such as |quote| and |unquote|)
+\item is neither strictly static nor runtime, but compile-time. This behaves much like a 
+  static system (one which compiles an object program, as does for example YAcc%todo cite
+) would, but doesn't produce intermediate code which might be modified.
+  Note that this fact is essential for Agda to remain sound as a logical framework.
+\item is homogeneous, in that the object language lives inside the metalanguage (as a native
+  data type), but
+\item is only two-stage: we cannot as yet produce an object program which is itself a metaprogram. This is
+  because we rely on built-in keywords such as |quote|, which cannot themselves be quoted.
+\end{itemize}
+
+
+\todo{idea: put the above in discussion, and just mention Sheard's taxonomy here.}
+
+
+Other related work includes the large body of publications in the
+domain of generic programming
+\cite{Rodriguez:2008:CLG:1543134.1411301,mcbride2010ornamental}, where we found the
+inspiration to try and implement some of the techniques in a
+dependently-typed setting.
+
+Program transformations and their correctness (by various definitions) have long been a subject of research \cite{Partsch:1983:PTS:356914.356917},
+and given more advanced languages with more powerful generative programming techniques, this will likely prove a continuing trend.
+
+As far as the proof techniques used in the section on proof by reflection (Chapter~\ref{sec:proof-by-reflection}) is concerned,  
+Chlipala's work \cite{chlipala2011certified} proved an invaluable resource, both for inspiration and guidance. One motivating example
+for doing this in Agda was Wojciech Jedynak's ring solver \cite{ringsolver}, which was the first example of Agda's reflection
+API in use that came to our attention.
+
+
 
 \chapter{Discussion}
 \label{sec:discussion}
@@ -2514,7 +2524,7 @@ insert darcs-diff here %TODO
 
 \section{Automatic Syntax Highlighting for Literate Agda}\label{sec:lhs-syntax}
 
-Talk about extension to compiler here, give example of use (as detailed as possible, i.e. with Makefile, the --lagda flag, etc.
+Talk about extension to compiler here, give example of use (as detailed as possible, i.e. with Makefile, the \texttt{-}\texttt{-lagda} flag, etc.
 
 
 
@@ -2541,11 +2551,11 @@ Talk about extension to compiler here, give example of use (as detailed as possi
 % \bibliographystyle{splncs}%this one doesn't sort automatically. :(
 
 
-% Gebruik geen contractions isn't, didn't etc.
 % Beperk je tot de essentie
 % Geef voorbeelden
 
 \end{document}
+
 %%% Local Variables:
 %%% mode: latex
 %%% TeX-master: t
