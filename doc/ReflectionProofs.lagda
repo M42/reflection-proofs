@@ -219,7 +219,7 @@ of foreign concepts are introduced. In this chapter, a few possible stumbling bl
 be highlighted, and a number of tricks, the utility or sense of which might not 
 at first be apparent, are explained.
 
-\section{Pattern-matching}
+\section{Pattern Matching}
 
 One of Haskell's selling points is the ability to do pattern matching, which makes writing
 structurally recursive functions both easy and the Natural Way of Doing Things\texttrademark. Agda shares this
@@ -246,7 +246,7 @@ Haskell. There, we are left to our own devices, and should be responsible enough
 matching failures might occur. In Sec.~\ref{sec:plandpa} we will see that this is a pivotal difference between Haskell and Agda, and that 
 this sort of feature makes Agda usable as a logical framework, not just a programming language.
 
-\section{Programming language \emph{and} proof assistant}\label{sec:plandpa}
+\section{A Programming Language \emph{and} Proof Assistant}\label{sec:plandpa}
 
 In the previous section, the necessity of defining total functions was mentioned. This is no arbitrary choice, for without 
 this property, Agda would not be a sound logical framework. All programs in Agda are required to be total and terminating, because
@@ -264,7 +264,7 @@ in fact not making any progress.
 Totality of functions, that is, being defined for all possible inputs, is also required. If this requirement were 
 dropped, a number of desirable properties for a logic would not hold any longer. The most obvious example is that
 all of a sudden, run-time exceptions are possible: if a function is not defined on a given input but that value
-is, at some point, passed as an argument, bad things will happen (compare Haskell and a run-time pattern-matching failure).
+is, at some point, passed as an argument, bad things will happen (compare Haskell and a run-time pattern matching failure).
 Because functions can also return types (which are just more values) and thus be used in type signatures, one would not want
 it to be possible for type-checking to break as a result of an incomplete function definition. 
 
@@ -2479,7 +2479,7 @@ will we ever get here?
 \item Cannot call |unquote| on non-constructor term. I.e. |unquote (lam2term t)|
 \item Impossible to introduce definitions
 \item Inspection of functions (e.g. clauses) not implemented
-\item ?? creation of pattern-matching functions not possible => bove capretta impossible (or maybe completely automatic GP impossible)
+\item ?? creation of pattern matching functions not possible => bove capretta impossible (or maybe completely automatic GP impossible)
 \item untyped terms are returned. this is solved.
 \end{itemize}
 
