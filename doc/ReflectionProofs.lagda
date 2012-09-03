@@ -77,8 +77,31 @@ open import Data.List hiding (_∷ʳ_)
 
 \begin{document}
 
-\maketitle
+%%% \maketitle
 %TODO make a fancy title page
+%? \frontmatter
+\begin{titlepage}
+%% Naar een voorbeeld in de LaTeX Companion Second Edition
+%% pagina 858
+\newcommand{\HRule}{\noindent\rule{\linewidth}{1.5pt}}
+\vspace*{\stretch{1}}
+\HRule
+\begin{flushright}
+%\fontencoding{T1}
+%\fontfamily{cap}
+
+%\selectfont
+\LARGE Paul van der Walt \& Wouter Swierstra \\[5mm]
+\Huge \textbf{Reflection in Agda}
+\end{flushright}
+\HRule
+\vspace*{\stretch{2}}
+\begin{center}
+%% if it's available, include the UU logo
+\IfFileExists{img/uusol-links.pdf}{\includegraphics[width=8cm]{img/uusol-links.pdf}}{\Large Utrecht University}
+\end{center}
+\end{titlepage}
+
 
 \clearpage
 \thispagestyle{empty}
