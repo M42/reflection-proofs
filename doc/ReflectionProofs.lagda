@@ -66,7 +66,8 @@ open import Data.List hiding (_∷ʳ_)
 
 \author{Paul van der Walt \and Wouter Swierstra}
 \date{\today}
-\title{Applications of Reflection in Agda}
+\newcommand{\mytitle}{Reflection in Agda}
+\title{\mytitle}
 %%\institute{
 %%\href{mailto:paul@@denknerd.org}{\nolinkurl{paul@@denknerd.org}}, \href{mailto:W.S.Swierstra@@uu.nl}{\nolinkurl{W.S.Swierstra@@uu.nl}}\\
 %%Department of Computer Science, Utrecht University
@@ -90,14 +91,20 @@ open import Data.List hiding (_∷ʳ_)
 %\fontfamily{cap}
 
 %\selectfont
-\LARGE Paul van der Walt \& Wouter Swierstra \\[5mm]
-\Huge \textbf{Reflection in Agda}
+\LARGE Paul van der Walt \\
+\LARGE \textsc{Supervisor:} Wouter Swierstra \\[5mm]
+\Huge \textbf{\mytitle}% Reflection in Agda}
+\\[2mm]
+\normalsize ICA-3120805\\
+\normalsize \today
 \end{flushright}
 \HRule
 \vspace*{\stretch{2}}
 \begin{center}
-%% if it's available, include the UU logo
 \IfFileExists{img/uusol-links.pdf}{\includegraphics[width=8cm]{img/uusol-links.pdf}}{\Large Utrecht University}
+\vskip 3mm
+{\large
+  Department of Computing Science}
 \end{center}
 \end{titlepage}
 
