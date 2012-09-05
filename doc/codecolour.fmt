@@ -44,6 +44,8 @@
 %format quoteGoal = "\keyword{quoteGoal}"
 %format quoteTerm = "\keyword{quoteTerm}"
 
+%format ↦ = "\ensuremath{\mapsto}"
+
 %format dollarn = "\defin{\ensuremath{\$^{n}}}"
 %format _dollarn_ = "\defin{\ensuremath{\_\$^{n}\_}}"
 %format _=>_ = "\ensuremath{\_\Rightarrow\_}"
