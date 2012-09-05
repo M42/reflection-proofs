@@ -1854,7 +1854,9 @@ the programmer to figure out how to solve the problem.
 In this section we will explore how one can leverage the power of
 dependent types when metaprogramming.
 
-\section{Preamble: de Bruijn indices}
+\section{Preamble}
+
+\subsection{De Bruijn indices}
 
 Since lambda calculus in general is considered common knowledge, only
 a short introduction will be given here regarding de Bruijn-indexed
@@ -1898,13 +1900,14 @@ terms are closed\footnote{A closed term means one which contains no free variabl
 ideal for combinators.
 In all of the developments presented in this paper, de Bruijn representation will be used.
 
+%TODO introduce our model of universes, U with => and O
 
-
-\section{Preliminaries: Modeling Well-typed $\lambda$-calculus}
+%TODO talk about the fact that WT [] is closed.
+\subsection{Modeling Well-typed $\lambda$-calculus}
 
 For the running example in this section, we will look at a
 simply-typed lambda calculus (STLC) with the usual type and scoping
-rules as defined in Fig.~\ref{fig:stlc-data}.  All the modules that
+rules, as defined in Fig.~\ref{fig:stlc-data}.  All the modules that
 deal with lambda expressions (everything in the
 |Metaprogramming| namespace of the project) work on this |WT| (which
 stands for well-typed) datatype.
@@ -1929,8 +1932,29 @@ data WT : (Γ : Ctx) → U' → ℕ → Set where
 \end{figure}
 
 The first thing to notice is that all terms in |WT| are annotated with
-a context (which is just a list of types), a type (the outer type of
+a context, a type (the outer type of
 the lambda expression), and a size. 
+
+The type annotations are elements of a universe U', which models base types and arrows.
+Contexts are simply lists of types, the position of elements of the list corresponding to
+their de Bruijn indices.
+
+\begin{code}
+data U' : Set where
+  O       : U             → U'
+  _=>_    : U'    → U'    → U'
+  Cont    : U'            → U'
+  
+Ctx : Set
+Ctx = List U'
+\end{code}
+
+The |O| constructor, which stands for base types, is parameterised by an argument of type |U|. This
+is the user-defined universe with which all the library modules in |Metaprogramming| are parameterised.
+This allows a user to instantiate for example the type checking module, |Metaprogramming.TypeCheck|, with a universe
+which has a representation of natural numbers, or booleans, or both. In the following code we will present the other
+helper functions a user needs to define on an on-demand basis, summarising finally what is necessary and why.
+%todo summarise what's necessary and why, in terms of helper functions.
 
 Looking at the data type constructor by constructor, we first encounter the |Var| constructor.
 This stands for variables in lambda abstractions. A variable only has one argument, namely a proof
@@ -2077,6 +2101,8 @@ testgoal1 = term2raw (quoteTerm λ (b : ℕ → ℕ) → (λ (x : ℕ) → b x))
 
 typedgoal1 : WT [] (typeOf testgoal1) _
 typedgoal1 = raw2wt testgoal1
+
+%TODO insert refl-view thing showing the WT term
 \end{code}
 
 What we now have, is an automatic quoting of lambda terms into well-typed |WT| terms. Note that we are required to annotate the binders
@@ -2231,13 +2257,8 @@ accept.
 %infixr 20 _=>_
 %infix 3 _∈'_
 %\end{code}
-%}
+% }
 %
-%Note that the argument to |Var| is not an integral index, as one might expect, but a proof
-%that the variable points to a reasonable spot in the context. This proof is encoded in the |_∈_|
-%data structure, and is a semantically-extended index, in that the value in the list that is being
-%pointed at is stored along with the pointer. Thus, an index is recoverable from this structure, which
-%is useful if one wants to cast back to a true de Bruijn representation of a given lambda term. 
 %
 %The |Ctx| type is simply our context for variables (mapping variables
 %to their type): it is defined as |List U'|, where the position in the list corresponds
@@ -2246,292 +2267,72 @@ accept.
 %variable to be bound at that point is consed onto the environment. This way, variables 
 %which are bound ``further away'' (in the de Bruijn-index sense) are nearer to the back of the list.
 %
-%The following illustration should make this idea clearer.
-%
-%... insert illustration here where variables are put on the ``stack''...
-%
-%Now that we have this well-typed, well-scoped lambda language defined in Agda,
-%we can construct terms by hand which are well-formed by construction. The idea, though,
-%is to be able to do this automatically, using |quoteTerm|. This implies that
-%we need to write a function which converts |Term|s into a value of type |WT .. ..|. 
-%Constructing this |WT| term requires annotating the elements with types, but 
-%as it stands at the time of this writing, Agda returns untyped
-%terms. Therefore, the Agda compiler had to be modified for this work
-%to be feasible, since without type annotations, 
-% type inference is necessary to determine the types of sub-expressions (especially of applications (e.g. |f ⟨ x ⟩ |), since we are basically 
-%free to introduce the type of the argument expression, $x$ in the example), which is why
-%unification of type variables is normally necessary. %TODO explain this properly
-%It is not impossible to implement a type inferencer in Agda (for example using Algorithm
-%W), %TODO reference algo W + possible implementations in Agda
-%but it is outside of the scope of this project. Additionally, this would require the
-%implementation of a type unification algorithm, and a total, structurally recursive (so as
-%to pass Agda's termination checker) unification algorithm is rather complex to implement \cite{mcbride2003first}.
-%
-%Therefore the Agda compiler was modified to extend the internal data structure representing
-%|Term|s with a field on lambda abstractions, representing the type of their arguments. The precise
-%modifications to the compiler are detailed in Appendix \ref{appendix:lambda-types}.
-%
-%Now that we have annotations in |Term|s, all that remains is to
-%type-check them and simultaneously convert them into |WT| terms. The
-%algorithm used here is inspired by the Agda tutorial written by Norell
-%\cite{Norell:2009:DTP:1481861.1481862}. The function |term2raw| first converts terms which are
-%actually lambda expressions (as opposed to, say, Boolean expressions)
-%into an intermediary datatype, |Raw|, which can express all lambda
-%terms.
-%
-%\begin{code}
-%data Raw : Set where
-%  Var  : ℕ              → Raw
-%  App  : Raw   → Raw    → Raw
-%  Lam  : U'    → Raw    → Raw
-%  Lit  : (x : U)   →  Uel x → Raw
-%\end{code}
-%
-%Next we define the erasure of types and a view on terms which tells us if a term is
-%well-typed or not, and if it is, gives us the representation in |WT|.
-%
-%
-%\ignore{
-%\begin{code}
-%
-%index : {A : Set} {x : A} {xs : List A} → x ∈' xs → ℕ
-%index   here    = zero
-%index (there h) = suc (index h)
-%
-%data Lookup {A : Set} (xs : List A) : ℕ → Set where
-%  inside   : (x : A) (p : x ∈' xs) → Lookup xs (index p)
-%  outside  : (m : ℕ) → Lookup xs (length xs + m)
-%
-%  
-%_!_ : {A : Set} (xs : List A) (n : ℕ) → Lookup xs n
-%[]        ! n      = outside n
-%(x ∷ x₁)  ! zero   = inside x here
-%(x ∷ x₁)  ! suc n with x₁ ! n
-%(x₂ ∷ x₁) ! suc .(index p)       | inside x p  = inside x (there p)
-%(x ∷ x₁)  ! suc .(length x₁ + m) | outside  m  = outside m
-%
-%_=?=_ : (σ τ : U') → Equal? σ τ
-%O x          =?= O  y       with (equal? x y)
-%O .y         =?= O y  | yes = yes
-%O x          =?= O y  | no  = no
-%-- O          =?= O        = yes
-%O x          =?= (_ => _)   = no
-%(σ => τ)     =?= O  y       = no
-%(σ₁ => τ₁)   =?= (σ₂ => τ₂) with σ₁ =?= σ₂ | τ₁ =?= τ₂
-%(.σ₂ => .τ₂) =?= (σ₂ => τ₂) | yes | yes = yes
-%(.σ₂ => τ₁)  =?= (σ₂ => τ₂) | yes | no  = no
-%(σ₁ => .τ₂)  =?= (σ₂ => τ₂) | no  | yes = no
-%(σ₁ => τ₁)   =?= (σ₂ => τ₂) | no  | no  = no
-%O x          =?= Cont b     = no
-%(a => a₁)    =?= Cont b     = no
-%Cont a       =?= O y        = no
-%Cont a       =?= (b => b₁)  = no
-%Cont a       =?= Cont b     with a =?= b
-%Cont .b      =?= Cont b     | yes = yes
-%Cont a       =?= Cont b     | no  = no
-%
-%\end{code}
-%}
-%
-%\begin{code}
-%erase : forall {Γ τ} → WT Γ τ → Raw
-%erase (Var inpf)      = Var (index inpf)
-%erase (t ⟨ t₁ ⟩)      = App (erase t) (erase t₁)
-%erase (Lam σ t)       = Lam σ (erase t)
-%erase (Lit {_}{σ} x)  = Lit σ x
-%
-%data Infer (Γ : Ctx) : Raw → Set where
-%  ok    : (τ : U') (t : WT Γ τ)  → Infer Γ (erase t)
-%  bad   : {e : Raw}              → Infer Γ e
-%\end{code}
-%
-%Using this, we can assemble the various parts. For brevity, the function |term2raw| is omitted, but
-%it is very much comparable to the function which converts a |Term| into a |BoolExpr| (see Sec.~\ref{sec:boolexpr}). One
-%might reasonably ask why then |Autoquote| was not used, but |Autoquote| is most suited to simple inductive
-%data types without abstractions (eg. the definition of a simple |List| in Haskell).
-%
-%Now we can write the actual type checking function, |infer|.  For variables and constants, the types are easy to deduce.
-%
-%
-%\begin{code}
-%infer : (Γ : Ctx)(e : Raw) → Infer Γ e
-%infer Γ (Lit ty x) = ok (O ty) (Lit {_}{ty} x)
-%infer Γ (Var x) with Γ ! x
-%infer Γ (Var .(index p))      | inside σ p = ok σ (Var p)
-%infer Γ (Var .(length Γ + m)) | outside m = bad
-%\end{code}
-%
-%The lambda case is also not so complicated: a type $\sigma$ is added to the 
-%environment-stack, where $\sigma$ is the type of the argument to the lambda, and the body is type-checked with this new environment,
-%and if the body correctly type-checks with type $\tau$, we can return $\sigma \Rightarrow \tau$ as the type of the 
-%expression.
-%
-%\begin{code}
-%infer Γ (Lam σ e) with infer (σ ∷ Γ) e
-%infer Γ (Lam σ .(erase t)) | ok τ t = ok (σ => τ) (Lam σ t)
-%infer Γ (Lam σ e) | bad = bad
-%\end{code}
-%
-%The case for an application is a little trickier, since we must first check that the LHS
-%has a function type, and if so, check the type of the RHS, and finally verify that the type
-%of the RHS matches the domain of the function type.  If all this holds,  we have a valid application.
-%\begin{code}
-%infer Γ (App e e₁) with infer Γ e
-%infer Γ (App .(erase t) e₁) | ok (Cont a) t = bad
-%infer Γ (App .(erase t) e₁) | ok (O x) t = bad
-%infer Γ (App .(erase t) e₁) | ok (τ => τ₁) t with infer Γ e₁
-%infer Γ (App .(erase t₁) .(erase t₂)) | ok (σ => τ) t₁   | ok σ' t₂ with σ =?= σ'
-%infer Γ (App .(erase t₁) .(erase t₂)) | ok (.σ' => τ) t₁ | ok σ' t₂ | yes = ok τ (t₁ ⟨ t₂ ⟩ )
-%infer Γ (App .(erase t₁) .(erase t₂)) | ok (σ => τ) t₁   | ok σ' t₂ | no = bad
-%infer Γ (App .(erase t) e₁) | ok (τ => τ₁) t | bad = bad
-%infer Γ (App e e₁) | bad = bad
-%\end{code}
-%
-%If all of this works, we know we have a term of type |WT Γ σ|, a term which is well-typed (with type |σ|) under the context |Γ|.
-%Note that a well-scoped term then has type |WT [] σ|, meaning it contains no references to variables which are not bound
-%in the term.  We can now get a |WT| term from concrete syntax with the following relatively painless invocation:
-%
-%
-%\ignore{
-%
-%\begin{code}
-%
-%
-%
-%
-%open import Relation.Nullary.Core
-%
-%-- we won't care about sorts here.
-%type2ty'  : Type → Maybe U'
-%type2ty' (el s (var x args)) = nothing
-%type2ty' (el s (con c args)) with type? c
-%type2ty' (el s (con c args)) | just x = just (O x)
-%type2ty' (el s (con c args)) | nothing = nothing
-%type2ty' (el s (def f args)) with type? f
-%type2ty' (el s (def f args)) | just x = just (O x)
-%type2ty' (el s (def f args)) | nothing = nothing
-%type2ty' (el s (lam v ty t)) = nothing -- type2ty ty => O {!!} -- err, we don't support types with lambdas (pi types)
-%--type2ty' (el s (pi (arg v r x) t₂)) = {!!} -- (type2ty x => type2ty t₂
-%type2ty' (el s (pi (arg v r x) t₂)) with type2ty' x | type2ty' t₂
-%type2ty' (el s (pi (arg v r x) t₂)) | just x₁ | just x₂ = just (x₁ => x₂)
-%type2ty' (el s (pi (arg v r x) t₂)) | just x₁ | nothing = nothing
-%type2ty' (el s (pi (arg v r x) t₂)) | nothing | b = nothing
-%type2ty' (el s (sort x)) = nothing
-%type2ty' (el s unknown) = nothing
-%-- if you get an incomplete
-%-- pattern matching here... this happens when a lambda wasn't
-%-- annotated. the Type is then `unknown', even though that's not a
-%-- constructor of type Type
-%
-%type2ty'just : Type → Set
-%type2ty'just t with type2ty' t
-%... | nothing = ⊥
-%... | just x  = ⊤
-%
-%type2ty : (t : Type) → type2ty'just t → U'
-%type2ty t pf with type2ty' t
-%type2ty t pf | just x = x
-%type2ty t () | nothing
-%
-%mutual
-%  isVarReasonable : ℕ → List (Arg Term) → Set
-%  isVarReasonable x  l         with length l ≟-Nat 0
-%  isVarReasonable x  []                | yes p = ⊤
-%  isVarReasonable x₁ (x ∷ l)           | yes ()
-%  isVarReasonable x  l                 | no ¬p with length l ≟-Nat 1
-%  isVarReasonable x  []                | no ¬p  | yes ()
-%  isVarReasonable x₁ (arg a b c ∷ [])  | no ¬p  | yes p = isLambdaQ' c
-%  isVarReasonable x₂ (x ∷ x₁ ∷ l)      | no ¬p  | yes ()
-%  isVarReasonable x ls | no ¬p₁ | no ¬p with length ls ≤? 2
-%  isVarReasonable x [] | no ¬p₁ | no ¬p | yes p = ⊥
-%  isVarReasonable x₁ (arg v r x ∷ []) | no ¬p₁ | no ¬p | yes p = ⊥
-%  isVarReasonable x₂ (x ∷ x₁ ∷ []) | no ¬p₁ | no ¬p | yes p = ⊥
-%  isVarReasonable x₃ (x ∷ x₁ ∷ x₂ ∷ ls) | no ¬p₁ | no ¬p | yes (s≤s (s≤s ()))
-%  isVarReasonable x [] | no ¬p₂ | no ¬p₁ | no ¬p = ⊥
-%  isVarReasonable x₁ (arg v r x ∷ ls) | no ¬p₂ | no ¬p₁ | no ¬p = ⊥
-%  
-%  isLambdaQ' : (t : Term) → Set
-%  isLambdaQ' (lam v sigma t) = type2ty'just sigma × isLambdaQ' t
-%  isLambdaQ' (var a b)       = isVarReasonable a b
-%  isLambdaQ' (def f args)    = ⊥
-%  isLambdaQ' (con c args)    with type? c
-%  isLambdaQ' (con c args) | just x = ⊤
-%  isLambdaQ' (con c args) | nothing = ⊥
-%  isLambdaQ' (pi t₁ t₂)      = ⊥
-%  isLambdaQ' (sort x)        = ⊥
-%  isLambdaQ' unknown         = ⊥
-%
-%
-%
-%term2raw :  (t : Term) →
-%            {pf : isLambdaQ' t} →
-%            Raw
-%term2raw (lam v sigma t)           {(pf₀ , pf)} = Lam (type2ty sigma pf₀) (term2raw t {pf})
-%term2raw (var x  l)                {pf}  with length l ≟-Nat 0
-%term2raw (var x  [])               {pf}        | yes p = Var x
-%term2raw (var x₁ (x ∷ l))          {pf}        | yes ()
-%term2raw (var x  l)                {pf}        | no ¬p with length l ≟-Nat 1
-%term2raw (var x  [])               {pf}        | no ¬p  | yes ()
-%term2raw (var x₁ (arg a b c ∷ [])) {pf} | no ¬p  | yes p = App (Var x₁) (term2raw c {pf})
-%term2raw (var x₂ (x ∷ x₁ ∷ l))     {pf} | no ¬p  | yes ()
-%term2raw (var x ls)                {pf} | no ¬p₁ | no ¬p with length ls ≤? 2
-%term2raw (var x [])                {()} | no ¬p₁ | no ¬p | yes p
-%term2raw (var x₁ (arg v r x ∷ [])) {pf} | no ¬p₁ | no ¬p | yes p = ⊥-elim (¬p refl)
-%term2raw (var x₂ (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) {()} | no ¬p₁ | no ¬p | yes p
-%term2raw (var x₃ (x ∷ x₁ ∷ x₂ ∷ ls)) {pf} | no ¬p₁ | no ¬p | yes (s≤s (s≤s ()))
-%term2raw (var x [])                 {()} | no ¬p₂ | no ¬p₁ | no ¬p
-%term2raw (var x₁ (arg v r x ∷ []))  {pf} | no ¬p₂ | no ¬p₁ | no ¬p = ⊥-elim (¬p₁ refl)
-%term2raw (var x₂ (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) {()} | no ¬p₂ | no ¬p₁ | no ¬p
-%term2raw (var x₃ (arg v r x ∷ arg v₁ r₁ x₁ ∷ x₂ ∷ ls)) {()} | no ¬p₂ | no ¬p₁ | no ¬p
-%term2raw (def f args)      {()}
-%term2raw (con c args)      {pf} with type? c
-%term2raw (con c args)      {pf} | just x = Lit x (quoteVal x (con c args))
-%term2raw (con c args)      {()} | nothing
-%term2raw (pi t₁ t₂)        {()}
-%term2raw (sort x)          {()}
-%term2raw unknown           {()}
-%
-%
-%typechecks : Raw → Set
-%typechecks r with infer [] r
-%typechecks .(erase t) | ok τ t   = ⊤
-%typechecks r          | bad      = ⊥
-%
-%
-%-- given a Raw lambda plus a proof (⊤) that it typechecks;
-%-- give the type of the expression.
-%typeOf : (r : Raw) → {pf : typechecks r} → U'
-%typeOf r {pf} with infer [] r
-%typeOf .(erase t) | ok τ t = τ
-%typeOf r {()}     | bad
-%
-%raw2wt : (r : Raw) → {pf : typechecks r} → WT [] (typeOf r {pf})
-%raw2wt r {pf} with infer [] r
-%raw2wt .(erase t) | ok τ t = t
-%raw2wt r {()}     | bad
-%
-%
-%\end{code}
-%}
-%
-%
-%\begin{code}
-%exampleTerm : WT []      (   typeOf (   term2raw (quoteTerm (\ (x : ℕ) → x))))
-%exampleTerm =                raw2wt (   term2raw (quoteTerm (\ (x : ℕ) → x)))
-%
-%explained      : typeOf (term2raw (quoteTerm (\ (x : ℕ) → x)))
-%               ≡ O Nat => O Nat
-%explained = refl
-%
-%explained₁ : exampleTerm ≡ Lam (O Nat) (Var here)
-%explained₁ = refl
-%\end{code}
 
 \subsection{Doing Something Useful with |WT|}
 
-Conversely, we can also construct a term in |WT| and use the |unquote| keyword to
-turn it back into concrete syntax.... . . . ..  %TODO explain this, also make a note about lack of APPLY construct, and the hack I do.
+Conversely, we would also like to construct a term in |WT| and use the |unquote| keyword to
+turn it back into concrete syntax, otherwise there would not be much practical use in being
+able to do transformations on |WT| terms.
 
+The interpretation function for |WT| terms is mostly unsurprising; it must take a |WT| and return a |Term|, Agda's abstract representation, which we
+can then |unquote|.
+The first few clauses are precisely what one would expect, except maybe for the |Lit| case. Here we see the first signs
+of the universe model which is implemented, namely a call to an undefined function |quoteBack|. The idea is that
+all the universe of types we are using (arrows and base types denoted with the constructor |O|) is parameterised by a user-defined
+universe $U$, which is used for the base types. We cannot know what types a user has modeled in their universe, so we have to require
+that they also provide a method which knows how to |unquote| values in their universe.
+
+The value |pleaseinfer| is simply set to |el unknown unknown|, which means an unknown sort and unknown type. In this case, Agda will just
+infer the type before splicing the term into the concrete code.
+
+\begin{code}
+lam2term : {σ : U'} {Γ : Ctx} {n : ℕ} → WT Γ σ n → Term
+lam2term (Lit {_}{σ} x)   = quoteBack σ x
+lam2term (Var x)          = var (index x) []
+lam2term (Lam σ t)        = lam visible pleaseinfer (lam2term t)
+\end{code}
+
+The application case on the other hand is curious. Unfortunately this is motivated by
+practical limitations. The |Term| AST only allows introduction of applications with the |var| and |def| constructors,
+which stand for variables or definitions applied to a list of variables, respectively. Therefore, we use a function
+|Apply|, which just applies its first argument to its second, which gives us the possibility of introducing a |def|, giving
+it the actual application-arguments in the expected list-format.
+
+
+\begin{code}
+lam2term (t₁ ⟨ t₂ ⟩)      = def (quote Apply)
+                     (        arg visible relevant (lam2term t₁) ∷
+                              arg visible relevant (lam2term t₂) ∷ [])
+\end{code}
+
+We also would like to be able to recover the type of the term in concrete Agda. We first reconstruct a term of type |Type|, Agda's
+representation of types. These functions are also unsurprising: arrows are translated to arrows, and for base types we must once again
+invoke a user-defined function which can interpret their universe values to Agda types. The |Cont| case should be ignored for now,
+since it has to do with the CPS transformation, which is introduced later.
+
+\begin{code}
+el' : U' → Set
+el' (O x) = Uel x
+el' (u => u₁) = el' u → el' u₁
+el' (Cont t) = ⊥
+
+lam2type : {σ : U'} {Γ : Ctx} {n : ℕ} → WT Γ σ n → Set
+lam2type {σ} t = el' σ
+\end{code}
+
+Once we have these functions, it is easy to introduce a concrete function from a |WT| term as follows, using |unquote| and |lam2term|.
+
+\begin{code}
+concrete :          lam2type typedgoal1
+concrete = unquote (lam2term typedgoal1)
+
+unittest : concrete ≡ (λ (a : ℕ → ℕ) → λ (b : ℕ) → a b)
+unittest = refl
+\end{code}
+
+Note that the types are also preserved, since, even though we drop the annotations on the lambda terms when interpreting, we do give |concrete| a
+type signature which reflects the intended type of the lambda term. Therefore, the unit test would have failed if we omitted the |ℕ| annotations on the
+variables, or changed them to another type. 
 
 
 \section{Example: CPS Transformation}
