@@ -27,7 +27,7 @@ testTerm = quoteTerm λ (n : ℕ → ℕ) → λ (m : ℕ) → n m
 -- using the functions exported by Metaprogramming.TypeCheck, we can
 -- obtain a well-typed, well-scoped lambda term, which is the equivalent
 -- of our testTerm.
-testTermWT : WT [] (typeOf (term2raw testTerm)) _
+testTermWT : Well-typed-closed (typeOf (term2raw testTerm)) _
 testTermWT = raw2wt (term2raw testTerm)
 
 -- we can now use the SKI-machinery and do an SKI transformation, as follows.
@@ -69,7 +69,7 @@ makesSense = refl
 const₄ : Term
 const₄ = quoteTerm (λ (x y z α β : ℕ) → β)
 
-const₄WT : WT [] (typeOf (term2raw const₄)) _
+const₄WT : Well-typed-closed (typeOf (term2raw const₄)) _
 const₄WT = raw2wt (term2raw const₄)
 
 sanity : const₄WT ≡ Lam (O Nat) (Lam (O Nat) (Lam (O Nat) (Lam (O Nat) (Lam (O Nat) (Var here)))))

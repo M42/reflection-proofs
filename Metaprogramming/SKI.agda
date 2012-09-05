@@ -79,7 +79,7 @@ compile Γ (σ => τ) (Lam .σ wt) = lambda (compile ( σ ∷ Γ) τ wt)
 -- results in a closed SKI combinator.
 -- this irrefutably means that no Vars will be present in the
 -- output, by construction of the Comb datatype.
-topCompile : {τ : U'} {n : ℕ} → WT [] τ n → Comb [] τ
+topCompile : {τ : U'} {n : ℕ} → Well-typed-closed τ n → Comb [] τ
 topCompile (Lit x) = Lit x
 topCompile (Var ())
 topCompile {τ}(nwt ⟨ nwt₁ ⟩)      = compile [] τ (nwt ⟨ nwt₁ ⟩)

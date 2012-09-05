@@ -173,7 +173,7 @@ sizeOf r {()} | bad
 
 -- convert a Raw to a WT, assuming type checking worked. This way we
 -- prevent needing to return a `bad`.
-raw2wt : (r : Raw) → {pf : typechecks r} → WT [] (typeOf r {pf}) (sizeOf r {pf})
+raw2wt : (r : Raw) → {pf : typechecks r} → Well-typed-closed (typeOf r {pf}) (sizeOf r {pf})
 raw2wt r {pf} with infer [] r
 raw2wt .(erase t) | ok n₁ τ t = t
 raw2wt r {()}     | bad

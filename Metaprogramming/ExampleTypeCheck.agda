@@ -6,6 +6,9 @@ open import Reflection
 
 open import Relation.Binary.PropositionalEquality
 open import Metaprogramming.ExampleUniverse
+
+-- TC and DT are the pre-parameterised versions of the modules Datatypes and TypeCheck, respectively.
+-- these "aliases" or shortcuts are defined in ExampleUniverse.
 open DT
 open TC
 
@@ -22,12 +25,12 @@ illustrate the use of the Metaprogramming.TypeCheck module.
 
 -- to get a feel for the WT datatype, here are some examples:
 -- an identity function:
-idrep : forall {σ} → WT [] (σ => σ) 2
+idrep : forall {σ} → Well-typed-closed (σ => σ) 2
 idrep {σ} = Lam σ (Var here) -- polymorphism!
 
 -- some function which, given an operation on naturals, and a natural,
 -- returns the result. can be seen as a specialisation of _$_ in haskell.
-f : WT [] ((O Nat => O Nat) => O Nat => O Nat) _
+f : Well-typed-closed ((O Nat => O Nat) => O Nat => O Nat) _
 f = Lam (O Nat => O Nat) (Lam (O Nat) (Var (there here) ⟨ Var here ⟩ ))
 
 -- quoting is done as follows. Note that the first result is a term of type
@@ -49,7 +52,7 @@ testgoal2 = term2raw (quoteTerm λ (b : ℕ) → (λ (x : ℕ) → b))
 -- here we convert the above quoted terms into WT's
 -- inspect with C-c C-n typedgoal0
 -- or C-c C-n show typedgoal0
-typedgoal0 : WT [] (typeOf testgoal0) _
+typedgoal0 : Well-typed-closed (typeOf testgoal0) _
 typedgoal0 = raw2wt testgoal0
 
 -- here is a nice helper to show you the WT lambda terms
@@ -57,10 +60,17 @@ typedgoal0 = raw2wt testgoal0
 open import Metaprogramming.Util.ExampleShow
 pretty = show typedgoal0
 
-typedgoal1 : WT [] (typeOf testgoal1) _
+typedgoal1 : Well-typed-closed (typeOf testgoal1) _
 typedgoal1 = raw2wt testgoal1
 
-typedgoal2 : WT [] (typeOf testgoal2) _
+-- let's see what that looks like.
+seeTypedgoal1 : typedgoal1 ≡
+       Lam      (O Nat => O Nat)
+                (Lam      (O Nat)
+                          (Var (there here) ⟨ Var here ⟩))
+seeTypedgoal1 = refl
+
+typedgoal2 : Well-typed-closed (typeOf testgoal2) _
 typedgoal2 = raw2wt testgoal2
 
 -- we can reflect this back to "concrete" Agda; the function

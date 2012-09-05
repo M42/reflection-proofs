@@ -27,7 +27,7 @@ data U : Set where
 -- we need to provide a function which gives back the name of any constructor in our universe.
 -- since this requires pattern matching, the library cannot do this without our help. (in the strict
 -- sense, such as here where we only have one constructor, we don't, in fact, need pattern matching,
--- but since something like `quote x` where x is the parameter in τ = (O x), in some WT [] τ n, returns
+-- but since something like `quote x` where x is the parameter in τ = (O x), in some Well-typed-closed τ n, returns
 -- "var 0 []" instead of the value of x quoted (see thesis for complete discussion), this is necessary.)
 ?type : U → Name
 ?type Nat = quote ℕ
@@ -107,7 +107,7 @@ a = term2raw (quoteTerm 7)
 test0 : Raw
 test0 = App g a
 
-typedtest0 : WT [] (typeOf test0) (sizeOf test0)
+typedtest0 : Well-typed-closed (typeOf test0) (sizeOf test0)
 typedtest0 = raw2wt test0
 
 viewTypedTest0 : typedtest0 ≡ Lam (O Nat) (Var here) ⟨ Lit 7 ⟩

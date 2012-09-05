@@ -41,7 +41,7 @@ open CPS'
 -- developed in Metaprogramming.CPS
 
 -- this term is equivalent to λ x → λ (y : ℕ) → x y
-testTerm : WT [] ((O Nat => O Nat) => O Nat => O Nat) 5
+testTerm : Well-typed-closed ((O Nat => O Nat) => O Nat => O Nat) 5
 testTerm = Lam (O Nat => O Nat) (Lam (O Nat) (Var (there here) ⟨ Var here ⟩ ))
 
 -- now we will perform a CPS transformation on testTerm. Since we
@@ -71,7 +71,7 @@ arg2 : WT ((
             ) ∷ []) ((O Nat => (O Nat => O Nat) => O Nat) => O Nat) _
 arg2 = Lam (O Nat => (O Nat => O Nat) => O Nat) (Var here ⟨ Lit 4 ⟩ ⟨ Lam _ (Var here) ⟩ )
 
-testCont : WT []
+testCont : Well-typed-closed
           (
             (
               (O Nat => (O Nat => O Nat) => O Nat)
@@ -90,7 +90,7 @@ testCont = Lam
             )
            (Var here ⟨ arg1 ⟩ ⟨ arg2 ⟩)
 
-testCPS : WT [] RT _
+testCPS : Well-typed-closed RT _
 testCPS = T testTerm testCont
 
 testCPSis : testCPS ≡ testCont 

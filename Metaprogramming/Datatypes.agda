@@ -81,6 +81,9 @@ data WT : (Γ : Ctx) → U' → ℕ → Set where
   _⟨_⟩  : ∀ {Γ} {σ τ} {n m}   → WT Γ (σ => τ) n → WT Γ σ m → WT Γ τ (suc n + m)
   Lam   : ∀ {Γ} σ {τ} {n}   → WT (σ ∷ Γ) τ n → WT Γ (σ => τ) (suc n)
   Lit   : ∀ {Γ} {x}      → Uel x → WT Γ (O x) 1 -- a constant
+  
+Well-typed-closed : U' → ℕ → Set
+Well-typed-closed = WT []
 
 -- an ugly little hack to make WT terms homogeneous (and thus
 -- comparable, for purposes of well-foundedness), even if they differ
