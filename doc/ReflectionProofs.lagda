@@ -1866,16 +1866,128 @@ stands for well-typed) datatype.
 \begin{figure}[h]
 \begin{code}
 data WT : (Γ : Ctx) → U' → ℕ → Set where
-  Var   : ∀ {Γ} {τ}      → τ ∈ Γ → WT Γ τ 1
-  _⟨_⟩  : ∀ {Γ} {σ τ} {n m}   → WT Γ (σ => τ) n → WT Γ σ m → WT Γ τ (suc n + m)
-  Lam   : ∀ {Γ} σ {τ} {n}   → WT (σ ∷ Γ) τ n → WT Γ (σ => τ) (suc n)
-  Lit   : ∀ {Γ} {x}      → Uel x → WT Γ (O x) 1 -- a constant
+  Var   : ∀ {Γ} {τ}
+                   → τ ∈ Γ
+                   → WT Γ τ 1
+  Lam   : ∀ {Γ} σ {τ} {n}
+                   → WT (σ ∷ Γ)     τ               n
+                   → WT Γ           (σ => τ)        (suc n)
+  _⟨_⟩  : ∀ {Γ} {σ τ} {n m}
+                   → WT Γ (σ => τ)        n
+                   → WT Γ σ               m
+                   → WT Γ τ               (suc n + m)
+  Lit   : ∀ {Γ} {x}
+                   → Uel x → WT Γ (O x) 1
 \end{code}
-\label{The simply-typed lambda calculus with de Bruijn indices.}\label{fig:stlc-data}
+\caption{The simply-typed lambda calculus with de Bruijn indices.}\label{fig:stlc-data}
 \end{figure}
 
+The first thing to notice is that all terms in |WT| are annotated with
+a context (which is just a list of types), a type (the outer type of
+the lambda expression), and a size. 
+
+Looking at the data type constructor by constructor, we first encounter the |Var| constructor.
+This stands for variables in lambda abstractions. A variable only has one argument, namely a proof
+that its index points to an entry in the context somewhere, having a value of |τ|. Contexts are defined as lists of
+types, therefore |τ| is the type of the |WT| expression constructed by |Var|. Note that in particular, a variable cannot
+occur on its own without a non-empty context, since otherwise a proof of the variable's index pointing to an entry
+in the list would be impossible.
 
 
+Next, we encounter  abstractions, modeled by the |Lam| constructor. Here we are introducing a new variable with type |σ| into the
+context by binding it. Since we always push type variables on top of the context whenever we enter the body of a lambda abstraction,
+the index of the types in the context in fact always corresponds to the de Bruijn-index of that variable. That is, intuitively, the deeper
+a variable in the list, the further away (in terms of lambda's) it is towards the outside of the expression, as seen from the point of view
+of the variable in question. Finally, a |Lam|'s second argument is its body, which is a well-typed term with type |τ|, given the abstraction's
+context extended with the type of the variable the lambda binds. This now produces a term of type |σ => τ|, since we bind something of type |σ| and
+return something with the body's type.
+
+The application constructor, |_⟨_⟩|, is next. It takes two arguments, namely well-typed terms which ``fit'' in terms of application. That is, if the
+second argument has type |σ|, then the first argument should have a type |σ => τ|, for any |τ|. This application then produces a term
+of type |τ|.
+
+There is also a |Lit| constructor, for introducing literal values (such as the number 5) into expressions. Among other things, this is useful for
+testing purposes. We will explain the other elements present in |Lit|, such as the |O|-constructor and the |Uel| function, later. %TODO pointer
+
+This way, terms of type |WT| can only be constructed if they are well-scoped (thanks to the proofs |τ ∈ Γ| in the variable constructors) and well-typed
+(thanks to all the terms being required to ``fit'' (for example in the outer types of lambda abstractions and applications).
+
+\subsection{Inferring Types}
+
+Because it sometimes is impractical to require direct construction of
+|WT| terms, we would like to also offer a way of translating from some
+weaker-constrained data type to |WT|, if possible. We use the data
+type |Raw|, given in Fig.~\ref{fig:raw}, for this, which is a model of
+lambda terms with de Bruijn indices that should look a lot more
+familiar to Haskell users, since most models of lambda expressions in
+Haskell-land are untyped (because of a lack of dependent types).
+
+\begin{figure}[h]
+\begin{code}
+data Raw : Set where
+  Var  : ℕ              → Raw
+  App  : Raw   → Raw    → Raw
+  Lam  : U'    → Raw    → Raw
+  Lit  : (x : U)   →  Uel x → Raw
+\end{code}
+\caption{The |Raw| data type, or a model of simply-typed lambda expressions without any constraints.}\label{fig:raw}
+\end{figure}
+
+We do include some typing information in |Raw|s, but it is
+unverified. We do require lambda terms and literals to be annotated
+with the type of their argument, because otherwise the type checker
+would become a type inferencer, which, however not impossible (Algorithm W would suffice), is a
+pain to implement, especially in a language where only structural
+recursion is allowed by default, since the unification algorithm typically used with Algorithm W makes
+use of general recursion. This is in fact an entire topic of research, and therefore outside the scope
+of this project \cite{}. %TODO cite mcbride unification
+
+We choose instead to use the relatively simple, structurally recursive, algorithm for type checking lambda terms
+presented in Norell's tutorial on Agda \cite{}. % todo cite norell
+The function |infer| -- defined in Fig.~\ref{fig:infer-function} --
+provides a view on |Raw| lambda terms showing whether they are
+well-typed or not. This view is aptly called |Infer|, and is defined
+in Fig.~\ref{fig:infer-datatype}.
+
+\begin{figure}[h]
+\begin{code}
+data Infer (Γ : Ctx) : Raw → Set where
+  ok    : (n : ℕ)(τ : U') (t : WT Γ τ n)  → Infer Γ (erase t)
+  bad   : {e : Raw}              → Infer Γ e
+\end{code}
+\caption{The view on |Raw| lambda terms denoting whether they are well-typed or not.}\label{fig:infer-datatype}
+\end{figure}
+\begin{figure}[h]
+\begin{code}
+infer : (Γ : Ctx)(e : Raw) → Infer Γ e
+infer Γ (Lit ty x) = ok 1 (O ty) (Lit {_}{ty} x)
+infer Γ (Var x) with Γ ! x
+infer Γ (Var .(index p))      | inside σ p = ok 1 σ (Var p)
+infer Γ (Var .(length Γ + m)) | outside m = bad
+infer Γ (App e e₁) with infer Γ e
+infer Γ (App .(erase t) e₁) | ok n (Cont a) t = bad
+infer Γ (App .(erase t) e₁) | ok n (O x) t = bad
+infer Γ (App .(erase t) e₁) | ok n (τ => τ₁) t with infer Γ e₁
+infer Γ (App .(erase t₁) .(erase t₂)) | ok n (σ => τ) t₁   | ok n₂ σ' t₂ with σ =?= σ'
+infer Γ (App .(erase t₁) .(erase t₂)) | ok n (.σ' => τ) t₁ | ok n₂ σ' t₂ | yes = ok _ τ (t₁ ⟨ t₂ ⟩ )
+infer Γ (App .(erase t₁) .(erase t₂)) | ok n (σ => τ) t₁   | ok n₂ σ' t₂ | no  = bad
+infer Γ (App .(erase t) e₁) | ok n (τ => τ₁) t | bad = bad
+infer Γ (App e e₁) | bad = bad
+infer Γ (Lam σ e) with infer (σ ∷ Γ) e
+infer Γ (Lam σ .(erase t)) | ok n τ t = ok _ (σ => τ) (Lam σ t)
+infer Γ (Lam σ e) | bad = bad
+\end{code}
+\caption{The type checking function |infer|.}\label{fig:infer-function}
+\end{figure}
+
+\subsection{Quoting to |Raw|}
+
+It is an outrageous coincidence %TODO cite mcbride again
+that the data type |Raw| closely matches the |Term| AST defined
+in the Agda compiler, so it is relatively simple to massage the output of |quoteTerm| into
+an element of |Raw|. The code which does this is to be found in |Metaprogramming.TypeCheck|. %TODO show the Term->Raw code.
+
+Once we have a 
 
 
 
