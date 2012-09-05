@@ -77,10 +77,10 @@ data _∈_ {A : Set} (x : A) : List A → Set where
 -- (notice the _∈_ used to force variables to point to some type
 -- in the type context Γ).
 data WT : (Γ : Ctx) → U' → ℕ → Set where
-  Var   : forall {Γ} {τ}      → τ ∈ Γ → WT Γ τ 1
-  _⟨_⟩  : forall {Γ} {σ τ} {n m}   → WT Γ (σ => τ) n → WT Γ σ m → WT Γ τ (suc n + m)
-  Lam   : forall {Γ} σ {τ} {n}   → WT (σ ∷ Γ) τ n → WT Γ (σ => τ) (suc n)
-  Lit   : forall {Γ} {x}      → Uel x → WT Γ (O x) 1 -- a constant
+  Var   : ∀ {Γ} {τ}      → τ ∈ Γ → WT Γ τ 1
+  _⟨_⟩  : ∀ {Γ} {σ τ} {n m}   → WT Γ (σ => τ) n → WT Γ σ m → WT Γ τ (suc n + m)
+  Lam   : ∀ {Γ} σ {τ} {n}   → WT (σ ∷ Γ) τ n → WT Γ (σ => τ) (suc n)
+  Lit   : ∀ {Γ} {x}      → Uel x → WT Γ (O x) 1 -- a constant
 
 -- an ugly little hack to make WT terms homogeneous (and thus
 -- comparable, for purposes of well-foundedness), even if they differ
@@ -143,7 +143,7 @@ _!_ : {A : Set} (xs : List A) (n : ℕ) → Lookup xs n
 (x ∷ x₁)  ! suc .(length x₁ + m) | outside  m  = outside m
 
 -- the way to get untyped terms back (`forget`, as it were)
-erase : forall {Γ τ n} → WT Γ τ n → Raw
+erase : ∀ {Γ τ n} → WT Γ τ n → Raw
 erase (Var inpf)      = Var (index inpf)
 erase (t ⟨ t₁ ⟩)      = App (erase t) (erase t₁)
 erase (Lam σ t)       = Lam σ (erase t)
