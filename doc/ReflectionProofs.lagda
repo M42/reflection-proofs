@@ -1854,6 +1854,50 @@ the programmer to figure out how to solve the problem.
 In this section we will explore how one can leverage the power of
 dependent types when metaprogramming.
 
+\section{Preamble: de Bruijn indices}
+
+Since lambda calculus in general is considered common knowledge, only
+a short introduction will be given here regarding de Bruijn-indexed
+lambda terms, as opposed to the ``usual'' named representation which
+is surprisingly enough still the standard for most textbooks on the
+subject.  Surprisingly, because named representation of lambda terms
+has all sorts of pitfalls such as unintentionally binding free
+variables after $\alpha$-conversion, and needing to generate fresh
+variable names when adding abstractions, to name a few. Algorithms for
+transforming and generating lambda terms are often riddled with
+``bookkeeping'' to prevent such unwanted behaviour. For example, whole
+libraries \cite{Weirich:2011:BU:2034574.2034818} have been developed
+to do these sort of operations generically and out-of-the-box. This
+discussion is, however tempting it may be to speak derisively about
+named lambda representation, rather outside the scope of this project,
+so we will restrict ourselves to a short presentation of the de Bruijn
+representation.
+
+Usually, lambda terms are denoted with abstractions binding some variables as fresh names,
+and the later, in their bodies, referring to the bound values by name. Not so with de Bruijn
+indices, where a variable is simply a natural number with the depth of the variable's usage with
+respect to its binding site, in terms of number of abstractions in between. This sounds rather
+strange, but the idea is simple, so we will illustrate the concept with some example translations in
+Table~\ref{tab:debruijn}.
+
+\begin{center}
+\begin{table}[h]
+  \begin{tabular}{c||c}
+    Named & de Bruijn \\
+    \hline
+    $\lambda x . x$ & $\lambda . 0$\\
+    $\lambda x . \lambda y . x y$ & $\lambda . \lambda . 1~0$\\
+    \end{tabular}
+  \caption{A few sample translations from named lambda terms to de Bruijn-indexed terms.}\label{tab:debruijn}
+  \end{table}
+\end{center}
+
+Obviously, $\lambda y . y$ and $\lambda x . x$ are essentially the same lambda term, but represented differently.
+This is a ``problem'' we do not encounter using de Bruijn indices, since lambda expressions have a canonical representation.
+
+
+
+
 \section{Preliminaries: Modeling Well-typed $\lambda$-calculus}
 
 For the running example in this section, we will look at a
@@ -1898,7 +1942,7 @@ Next, we encounter  abstractions, modeled by the |Lam| constructor. Here we are 
 context by binding it. Since we always push type variables on top of the context whenever we enter the body of a lambda abstraction,
 the index of the types in the context in fact always corresponds to the de Bruijn-index of that variable. That is, intuitively, the deeper
 a variable in the list, the further away (in terms of lambda's) it is towards the outside of the expression, as seen from the point of view
-of the variable in question. Finally, a |Lam|'s second argument is its body, which is a well-typed term with type |τ|, given the abstraction's
+of the variable in question. Finally, a |Lam|s second argument is its body, which is a well-typed term with type |τ|, given the abstraction's
 context extended with the type of the variable the lambda binds. This now produces a term of type |σ => τ|, since we bind something of type |σ| and
 return something with the body's type.
 
