@@ -1902,7 +1902,6 @@ In all of the developments presented in this paper, de Bruijn representation wil
 
 %TODO introduce our model of universes, U with => and O
 
-%TODO talk about the fact that WT [] is closed.
 \subsection{Modeling Well-typed $\lambda$-calculus}
 
 For the running example in this section, we will look at a
@@ -1955,6 +1954,16 @@ This allows a user to instantiate for example the type checking module, |Metapro
 which has a representation of natural numbers, or booleans, or both. In the following code we will present the other
 helper functions a user needs to define on an on-demand basis, summarising finally what is necessary and why.
 %todo summarise what's necessary and why, in terms of helper functions.
+
+It should be clear that a term in |WT []| is closed, since if the context of a term is empty and given that all |WT| terms
+are well-scoped, the only way to
+introduce variables (remembering that they require a proof of being in the context) is to first introduce an abstraction
+which extends the environment. This leads us to define the following alias for well-typed \emph{and} well-scoped terms.
+
+\begin{code}
+Well-typed-closed : U' → ℕ → Set
+Well-typed-closed = WT []
+\end{code}
 
 Looking at the data type constructor by constructor, we first encounter the |Var| constructor.
 This stands for variables in lambda abstractions. A variable only has one argument, namely a proof
@@ -2099,15 +2108,19 @@ Since we have a conversion function from |Term| to |Raw| at our disposal, as wel
 testgoal1 : Raw
 testgoal1 = term2raw (quoteTerm λ (b : ℕ → ℕ) → (λ (x : ℕ) → b x))
 
-typedgoal1 : WT [] (typeOf testgoal1) _
+typedgoal1 : Well-typed-closed (typeOf testgoal1) _
 typedgoal1 = raw2wt testgoal1
 
-%TODO insert refl-view thing showing the WT term
+seeTypedgoal1 : typedgoal1 ≡
+       Lam      (O Nat => O Nat)
+                (Lam      (O Nat)
+                          (Var (there here) ⟨ Var here ⟩))
+seeTypedgoal1 = refl
 \end{code}
 
 What we now have, is an automatic quoting of lambda terms into well-typed |WT| terms. Note that we are required to annotate the binders
 with types, because otherwise the |quoteTerm| keyword will return a lambda term with |unknown| as the type annotation, which our type checker will not
-accept.
+accept. In |seeTypedgoal1| we can inspect the resulting |WT| term.
 
 
 
@@ -2341,7 +2354,7 @@ Given the fact that we can now easily move from the world of concrete Agda synta
 the obvious next step is to do something with these well-typed terms. Doing anything with these terms constitutes
 a program transformation, since lambda terms represent simple programs. An additional bonus feature we now have at our
 disposal is the ability to do these transformations while ensuring that certain properties (notably the well-typedness of
-our terms) are not violated (preserved?).
+our terms) are preserved.
 
 The first case study in this area is that  of transforming lambda terms into continuation-passing style (CPS).
 The idea of CPS is not new; it is what happens when you take the primitive idea of computer programming, which
