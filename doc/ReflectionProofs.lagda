@@ -136,7 +136,7 @@ code is that of \emph{metaprogramming}, which, in vague terms, refers
 to the ability of a program to inspect (or \emph{reflect}) its own code
 and modify it. To the uninitiated, this sounds rather magical \cite{reflection-stackoverflow},
 but has long been a favourite
-feature of users of such languages as LISP~\cite{lisp-macros}, in many cases allowing
+feature of users of such languages as Lisp~\cite{lisp-macros}, in many cases allowing
 code to be a lot more concise and general, and thus reusable, than 
 usually is possible in simple imperative languages.
 
@@ -220,7 +220,7 @@ functional\footnote{Functional as in practically usable.}
 functional\footnote{Functional as in Haskell.} programming language
 and a framework for intuitionistic logic (compare Coquand's calculus
 of constructions, another intuitionistic logic framework, the one
-behind Coq, which is similarly a programming language and an
+behind Coq, which is similarly both a programming language and an
 intuitionistic logic framework). In Agda, one directly manipulates and
 constructs
 proof objects in the same language as is used to express computation,
@@ -231,7 +231,7 @@ language for describing these tactics \cite{coquand2006emacs}.
 Agda's syntax is inspired by Haskell, and users familiar with programming in
 Haskell (using GADTs) will probably be able to hit the ground running in Agda (in this report
 the assumption is made that the reader is fluent in GHC Haskell). The main difference between
-a dependently typed programming language and a ``simple'' one (for want of a better description. Traditional, perhaps?) is
+a dependently typed programming language and a ``simple'' one \todo{for want of a better description. Traditional, perhaps?} is
 that the arbitrary \todo{artificial? gekunstelde?} divide between the world of values and that of types is torn down. This
 allows such things as the textbook example of why DTP is the next best thing since sliced bread, namely not being able to ask for
 the head of an empty list (vector actually, which is a length-indexed counterpart of the concept list).
@@ -420,7 +420,7 @@ excellent tutorial on the same written by Ulf Norell
 Since version 2.2.8, Agda includes a reflection API, which allows converting
 parts of a program's code into abstact syntax, in other words a data structure
 in Agda itself, which can be inspected or modified like any other data structure.
-The idea of reflection is nothing new: already in the 1980's LISP included a similar
+The idea of reflection is nothing new: already in the 1980's Lisp included a similar
 feature, called quoting, which allowed run-time modification of a program's code, by
 the program itself. This gives rise to powerful techniques for reusing code and
 generating frequently needed but slightly different expressions automatically.
@@ -440,13 +440,15 @@ is detailed in Sec.~\ref{sec:inspecting-definitions}.
 \paragraph{Caveat} One rather serious word of precaution is to be made here.
 The code presented in this thesis does not, actually, work out of the box as advertised.
 For reasons which will be made clear in Chapter~\ref{sec:type-safe-metaprogramming}, the abstract 
-data type representing terms (the one in Fig.~\ref{fig:reflection}) needed to be extended with
+data type representing terms inside the Agda compiler (the one in Fig.~\ref{fig:reflection}) needed to be extended with
 an extra argument to the constructor representing a lambda abstraction, denoting 
 the type (or more accurately, a representation thereof in terms of |Type|) of the argument 
 bound in that abstraction. There is a high likelihood that the changes to the Agda reflection API detailed
 in Appendix~\ref{appendix:lambda-types} will be adopted in a future version of Agda,
-but at the time of writing a fork of the compiler was used.
-\par
+but at the time of writing a fork of the compiler was used\footnote{This fork, along with a version of the
+  Agda standard library with the modifications necessary to work with it, is available at \url{https://darcs.denknerd.org}.}.
+
+
 There are several new keywords that can be used to quote and unquote
 |Term| values: |quote|, |quoteTerm|, |quoteGoal|, and |unquote|. The
 |quote| keyword allows the user to access the internal representation of
@@ -899,8 +901,9 @@ doConvert tab t {man   }      | just x     = x
 doConvert tab t {()    }      | nothing
 \end{code}
 
-The module also exports the function |convertManages| and |doConvert|, which are to be used in the following
-way.
+The module also exports the functions |convertManages| and |doConvert|, displayed above, which are to be used as illustrated in Fig.~\ref{fig:test-autoquote}. Here
+another instance of the trick explained in Sec.~\ref{sec:implicit-unit} is applied, namely accepting as an implicit argument the proof that a given call to |doConvert| returns
+a |just| value.
 
 
 \begin{figure}[h]
@@ -1806,7 +1809,7 @@ extensive illustration of what is possible using |Autoquote|.
 Another area in which an application for the new reflection API was found is that
 of type-safe metaprogramming, taking advantage of Agda's very powerful type system.
 
-Metaprogramming is a technique which is already widely used, for example in the LISP
+Metaprogramming is a technique which is already widely used, for example in the Lisp
 community, and involves converting terms in the concrete syntax of a
 programming language into an abstract syntax tree which can be
 inspected and/or manipulated, and possibly be
@@ -1819,7 +1822,7 @@ include the complete typing system, a problem which doesn't exist in, for exampl
 Lisp, since it is dynamically typed, which makes run-time reflection possible. Here, therefore,
 a compromise of sorts is required.
 
-Reflection is well-supported and widely used in LISP and more
+Reflection is well-supported and widely used in Lisp and more
 recently in Haskell, using the Template Haskell compiler
 extension\cite{template-haskell}. It has enabled many time-saving
 automations of tasks otherwise requiring
@@ -1836,7 +1839,7 @@ limitation (or should we say, potential pitfall), namely that when one
 is developing a piece of Template Haskell code which
 should generate some function, it often happens that one ends up
 debugging type errors in the produced (machine-generated) code. This
-is a tedious and painful process, since typically generated code is
+is a tedious and painful process, since, typically, generated code is
 much less self-explanatory or readable than human-written code.
 
 Here we propose a new way of looking at metaprogramming, namely
@@ -1851,19 +1854,32 @@ the programmer to figure out how to solve the problem.
 In this section we will explore how one can leverage the power of
 dependent types when metaprogramming.
 
-\section{Example: Type-checking $\lambda$-calculus}
+\section{Preliminaries: Modeling Well-typed $\lambda$-calculus}
 
 For the running example in this section, we will look at a
-simply-typed lambda calculus (STLC) with type and scoping rules as
-in Fig. \ref{fig:lambda-rules}. 
-All the modules that deal with well-typed lambda expressions (everything in the |Metaprogramming| namespace
-of the repository) are parameterised with a number of elements. A user of this
-library should provide the following elements.
+simply-typed lambda calculus (STLC) with the usual type and scoping
+rules as defined in Fig.~\ref{fig:stlc-data}.  All the modules that
+deal with lambda expressions (everything in the
+|Metaprogramming| namespace of the project) work on this |WT| (which
+stands for well-typed) datatype.
 
+\begin{figure}[h]
 \begin{code}
-
-
+data WT : (Γ : Ctx) → U' → ℕ → Set where
+  Var   : ∀ {Γ} {τ}      → τ ∈ Γ → WT Γ τ 1
+  _⟨_⟩  : ∀ {Γ} {σ τ} {n m}   → WT Γ (σ => τ) n → WT Γ σ m → WT Γ τ (suc n + m)
+  Lam   : ∀ {Γ} σ {τ} {n}   → WT (σ ∷ Γ) τ n → WT Γ (σ => τ) (suc n)
+  Lit   : ∀ {Γ} {x}      → Uel x → WT Γ (O x) 1 -- a constant
 \end{code}
+\label{The simply-typed lambda calculus with de Bruijn indices.}\label{fig:stlc-data}
+\end{figure}
+
+
+
+
+
+
+
 
 \begin{itemize}
 \item |U : Set| A data type representing your own universe. It might have such elements as |Nat| and |Bl| which might stand for natural numbers and Boolean values.
@@ -2642,6 +2658,10 @@ API in use that came to our attention.
 
 \chapter{Discussion} % ... and Conclusion
 \label{sec:discussion}
+
+% TODO: Wouter says ``Ik vind het zelf soms
+% prettig om conclusions/related work/enz. in één hoofdstuk 'Discussion'
+% te bundelen, waar je de bredere context van je werk kan beschrijven.''
 
 This paper has presented two simple applications of proof by
 reflection. In the final version, we will show how
