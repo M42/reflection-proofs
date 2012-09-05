@@ -51,8 +51,8 @@ cpsvar (there v) = there (cpsvar v)
 -- variables that used to be in the environment are still there, modulo
 -- some shifting of indices
 weakvar : forall {τ Γ} → (τ' : U') → (Γ' : Ctx) → τ ∈ (Γ' ++ Γ) → τ ∈ (Γ' ++ (τ' ∷ Γ))
-weakvar t' [] x = there x
-weakvar t' (x ∷ env) here = here
+weakvar t' [] x                 = there x
+weakvar t' (x ∷ env) here       = here
 weakvar t' (x ∷ env) (there x₁) = there (weakvar t' env x₁)
 
 -- show that we can add a type variable somewhere in the middle of our
