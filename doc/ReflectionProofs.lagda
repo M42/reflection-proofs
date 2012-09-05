@@ -1880,8 +1880,8 @@ respect to its binding site, in terms of number of abstractions in between. This
 strange, but the idea is simple, so we will illustrate the concept with some example translations in
 Table~\ref{tab:debruijn}.
 
-\begin{center}
 \begin{table}[h]
+  \centering
   \begin{tabular}{c||c}
     Named & de Bruijn \\
     \hline
@@ -1890,11 +1890,13 @@ Table~\ref{tab:debruijn}.
     \end{tabular}
   \caption{A few sample translations from named lambda terms to de Bruijn-indexed terms.}\label{tab:debruijn}
   \end{table}
-\end{center}
 
 Obviously, $\lambda y . y$ and $\lambda x . x$ are essentially the same lambda term, but represented differently.
 This is a ``problem'' we do not encounter using de Bruijn indices, since lambda expressions have a canonical representation.
-
+Also, because of the fact that a variable's index may not be higher than its depth, it is trivial to check that
+terms are closed\footnote{A closed term means one which contains no free variables.}, which makes the de Bruijn representation
+ideal for combinators.
+In all of the developments presented in this paper, de Bruijn representation will be used.
 
 
 
@@ -1978,9 +1980,9 @@ data Raw : Set where
 \end{figure}
 
 We do include some typing information in |Raw|s, but it is
-unverified. We do require lambda terms and literals to be annotated
+unverified. We also require lambda terms and literals to be annotated
 with the type of their argument, because otherwise the type checker
-would become a type inferencer, which, however not impossible (Algorithm W would suffice), is a
+would become a type inferencer, which, while possible (Algorithm W would suffice), is a
 pain to implement, especially in a language where only structural
 recursion is allowed by default, since the unification algorithm typically used with Algorithm W makes
 use of general recursion. This is in fact an entire topic of research, and therefore outside the scope
@@ -2001,13 +2003,51 @@ data Infer (Γ : Ctx) : Raw → Set where
 \end{code}
 \caption{The view on |Raw| lambda terms denoting whether they are well-typed or not.}\label{fig:infer-datatype}
 \end{figure}
-\begin{figure}[h]
+
+The |Infer| view says that a term is either incorrectly typed
+(i.e. |bad|), which can be constructed using any term in |Raw|, or it
+is well-typed, which is shown using the |ok| constructor, which also
+requires on provides the corresponding (this correspondence is forced
+by giving the |Infer| view |erase t| as an argument, which is the
+erasure of a |WT| term and certainly not an arbitrary |Raw| term) term
+in |WT|, and we had already decided that if something was
+representable in |WT|, it must be both well-scoped and well-typed.
+
+The |infer| algorithm, which provides the |Infer| view and therefore generates
+|WT| terms corresponding to |Raw| terms, is presented here, in sections.
+
 \begin{code}
 infer : (Γ : Ctx)(e : Raw) → Infer Γ e
 infer Γ (Lit ty x) = ok 1 (O ty) (Lit {_}{ty} x)
+\end{code}
+
+Of course, a literal on its own is always well-typed, and corresponds to a |WT| with whatever type the literal has.
+A variable is similarly easy to type check, except that it should not point outside the context, that is, it should
+have a de Bruijn index smaller than or equal to its depth. Here we do a lookup of the variable and return whatever type the
+context says it has, or, if it is out-of-scope, we return |bad|.
+
+\begin{code}
 infer Γ (Var x) with Γ ! x
 infer Γ (Var .(index p))      | inside σ p = ok 1 σ (Var p)
 infer Γ (Var .(length Γ + m)) | outside m = bad
+\end{code}
+
+The case for abstractions is well-typed if the body of the lambda is well-typed, under a context extended with the
+type of the variable the lambda binds (indeed, binding a variable adds it to the context for the body of the abstraction,
+its index being 0, since it is the ``most recent'' binding). The type of the abstraction is, as argued above, a function from
+the type of the binding to the type of the body.
+
+\begin{code}
+infer Γ (Lam σ e) with infer (σ ∷ Γ) e
+infer Γ (Lam σ .(erase t)) | ok n τ t = ok _ (σ => τ) (Lam σ t)
+infer Γ (Lam σ e) | bad = bad
+\end{code}
+
+The application case is the most verbose, since we need to check the type of the applicand (called $e$ in the code), and assuming it
+has an arrow type (otherwise something is wrong), we then have to check that the argument (called $e_1$ in the code) has the same type as
+the left-hand side of the arrow. If all goes well, we are done.
+
+\begin{code}
 infer Γ (App e e₁) with infer Γ e
 infer Γ (App .(erase t) e₁) | ok n (Cont a) t = bad
 infer Γ (App .(erase t) e₁) | ok n (O x) t = bad
@@ -2017,12 +2057,9 @@ infer Γ (App .(erase t₁) .(erase t₂)) | ok n (.σ' => τ) t₁ | ok n₂ σ
 infer Γ (App .(erase t₁) .(erase t₂)) | ok n (σ => τ) t₁   | ok n₂ σ' t₂ | no  = bad
 infer Γ (App .(erase t) e₁) | ok n (τ => τ₁) t | bad = bad
 infer Γ (App e e₁) | bad = bad
-infer Γ (Lam σ e) with infer (σ ∷ Γ) e
-infer Γ (Lam σ .(erase t)) | ok n τ t = ok _ (σ => τ) (Lam σ t)
-infer Γ (Lam σ e) | bad = bad
 \end{code}
-\caption{The type checking function |infer|.}\label{fig:infer-function}
-\end{figure}
+
+The code which does all of this can be found in |Metaprogramming.TypeCheck|, the views and data type definitions are in |Metaprogramming.Datatypes|.
 
 \subsection{Quoting to |Raw|}
 
