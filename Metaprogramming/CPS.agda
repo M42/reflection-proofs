@@ -105,12 +105,12 @@ T' : {σ : U'} {Γ : Ctx} {n m : ℕ}       → (wt : WT Γ σ n) -- original ex
                                         → WT (map cpsType Γ) RT (sizeCPS n wt ta m) -- output function with new type & size
 T' {O σ}{Γ} .(Lit x) (TBaseLit {.Γ} {.σ} {x})                cont = cont ⟨ Lit x ⟩
 T' {σ}{Γ}   .(Var x) (TBaseVar {.Γ} {.σ} {x})                cont = cont ⟨ Var (cpsvar x) ⟩
-T' {t1 => t2} {Γ}{suc n}{m} (Lam .t1 expr)     (TLam pf)     cont = cont ⟨ (Lam (cpsType t1) (Lam (cpsType t2 => RT) (T' (shift1 (Cont t2) expr) pf (Var here)))) ⟩
+T' {t1 => t2} {Γ}{suc n}{m} (Lam .t1 expr)     (TLam pf)     cont = cont ⟨ Lam (cpsType t1) (Lam (cpsType (Cont t2)) (T' (shift1 (Cont t2) expr) pf (Var here))) ⟩
 T' .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂}{n}{m} f e)  (TApp pf pf2)    cont =
-  T' f pf (Lam (cpsType σ₁ => (cpsType σ₂ => RT) => RT)
+  T' f pf (Lam (cpsType (σ₁ => σ₂))
                            (T' (shift1 (σ₁ => σ₂) e) pf2 (Lam (cpsType σ₁)
                               ((Var (there here)) ⟨ Var here ⟩  
-                                  ⟨ shift1 (cpsType σ₁) (shift1 (cpsType σ₁ => (cpsType σ₂ => RT) => RT) cont) ⟩ ))))
+                                  ⟨ shift1 (cpsType σ₁) (shift1 (cpsType (σ₁ => σ₂)) cont) ⟩ ))))
                                   
 import Metaprogramming.WTWellfounded
 open module WTWf = Metaprogramming.WTWellfounded U equal? Uel type? quoteBack ReturnType
