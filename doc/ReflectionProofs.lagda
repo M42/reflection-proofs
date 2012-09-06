@@ -1863,6 +1863,8 @@ dependent types when metaprogramming.
 
 \section{Preamble}
 
+%TODO do we want to add the typing/scoping rules for lambda calculus? seems like overkill.
+
 \subsection{De Bruijn indices}
 
 Since lambda calculus in general is considered common knowledge, only
@@ -2067,9 +2069,9 @@ have a de Bruijn index smaller than or equal to its depth. Here we do a lookup o
 context says it has, or, if it is out-of-scope, we return |bad|.
 
 \begin{code}
-infer Γ (Var x) with Γ ! x
-infer Γ (Var .(index p))      | inside σ p = ok 1 σ (Var p)
-infer Γ (Var .(length Γ + m)) | outside m = bad
+infer Γ (Var x)                    with Γ ! x
+infer Γ (Var .(index p))           | inside σ p = ok 1 σ (Var p)
+infer Γ (Var .(length Γ + m))      | outside m = bad
 \end{code}
 
 The case for abstractions is well-typed if the body of the lambda is well-typed, under a context extended with the
@@ -2078,9 +2080,9 @@ its index being 0, since it is the ``most recent'' binding). The type of the abs
 the type of the binding to the type of the body.
 
 \begin{code}
-infer Γ (Lam σ e) with infer (σ ∷ Γ) e
-infer Γ (Lam σ .(erase t)) | ok n τ t = ok _ (σ => τ) (Lam σ t)
-infer Γ (Lam σ e) | bad = bad
+infer Γ (Lam σ e)              with infer (σ ∷ Γ) e
+infer Γ (Lam σ .(erase t))     | ok n τ t = ok _ (σ => τ) (Lam σ t)
+infer Γ (Lam σ e)              | bad = bad
 \end{code}
 
 The application case is the most verbose, since we need to check the type of the applicand (called $e$ in the code), and assuming it
@@ -2088,15 +2090,15 @@ has an arrow type (otherwise something is wrong), we then have to check that the
 the left-hand side of the arrow. If all goes well, we are done.
 
 \begin{code}
-infer Γ (App e e₁) with infer Γ e
-infer Γ (App .(erase t) e₁) | ok n (Cont a) t = bad
-infer Γ (App .(erase t) e₁) | ok n (O x) t = bad
-infer Γ (App .(erase t) e₁) | ok n (τ => τ₁) t with infer Γ e₁
-infer Γ (App .(erase t₁) .(erase t₂)) | ok n (σ => τ) t₁   | ok n₂ σ' t₂ with σ =?= σ'
-infer Γ (App .(erase t₁) .(erase t₂)) | ok n (.σ' => τ) t₁ | ok n₂ σ' t₂ | yes = ok _ τ (t₁ ⟨ t₂ ⟩ )
-infer Γ (App .(erase t₁) .(erase t₂)) | ok n (σ => τ) t₁   | ok n₂ σ' t₂ | no  = bad
-infer Γ (App .(erase t) e₁) | ok n (τ => τ₁) t | bad = bad
-infer Γ (App e e₁) | bad = bad
+infer Γ (App e e₁)                         with infer Γ e
+infer Γ (App .(erase t) e₁)                | ok n (Cont a) t       = bad
+infer Γ (App .(erase t) e₁)                | ok n (O x) t          = bad
+infer Γ (App .(erase t) e₁)                | ok n (τ => τ₁) t               with infer Γ e₁
+infer Γ (App .(erase t₁) .(erase t₂))      | ok n (σ => τ) t₁               | ok n₂ σ' t₂ with σ =?= σ'
+infer Γ (App .(erase t₁) .(erase t₂))      | ok n (.σ' => τ) t₁             | ok n₂ σ' t₂ | yes = ok _ τ (t₁ ⟨ t₂ ⟩ )
+infer Γ (App .(erase t₁) .(erase t₂))      | ok n (σ => τ) t₁               | ok n₂ σ' t₂ | no  = bad
+infer Γ (App .(erase t) e₁)                | ok n (τ => τ₁) t               | bad = bad
+infer Γ (App e e₁)                         | bad                   = bad
 \end{code}
 
 The code which does all of this can be found in |Metaprogramming.TypeCheck|, the views and data type definitions are in |Metaprogramming.Datatypes|.
