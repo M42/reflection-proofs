@@ -11,6 +11,7 @@
 %endif
 
 \usepackage{todonotes}
+\usepackage{subfigure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Font definitions.
@@ -60,6 +61,14 @@ open import Data.List hiding (_∷ʳ_)
 
 \usepackage{amsmath}
 
+\usepackage{semantic}
+\mathlig{->}{\to}
+\mathlig{||->}{\mapsto}
+\mathlig{||=>}{\Mapsto}
+\mathlig{=>}{\Rightarrow}
+\mathlig{||-}{\vdash}
+\mathlig{~>}{\leadsto}
+\mathlig{=/=}{\neq}
 
 \usepackage{hyperref}
 \usepackage{url}
@@ -1881,7 +1890,46 @@ dependent types when metaprogramming.
 
 \section{Preamble}
 
-%TODO do we want to add the typing/scoping rules for lambda calculus? seems like overkill.
+In this section about metaprogramming, the object language we will be studying is the simply typed lambda calculus (STLC).
+Although we assume that the rules and behaviour of STLC are well-known, we will briefly repeat the definitions and rules which will be
+relevant later on.
+
+We first introduce the idea of contexts. A context is simply a list of
+types, in which one can look up what type a variable is supposed to
+have. We have empty contexts, |[]|, and the possibility of adding a
+new type to the top of the context stack. We call this concatenation
+|_∷_|. There are also typing assumptions, of the form $x :
+\sigma$. This means $x$ has type $\sigma$. We also introduce the
+notion of a typing relation, or judgement, $\Gamma \vdash x : \sigma$,
+meaning that given some context $\Gamma$, we can judge the validity of
+the typing assumption $x : \sigma$.
+
+The typing rules are written using horizontal bars. Above the bar are
+the assumptions, and below the bar are conclusions we may draw if
+those assumptions hold.  The validity of a typing judgment is shown by
+providing a typing derivation, constructed using the typing rules.
+See Fig.~\ref{fig:stlc-rules} for the typing rules.
+
+\begin{figure}[h]
+  \centering
+  \subfigure{
+    \inference[var]{x : \sigma \in \Gamma}{\Gamma ||- x : \sigma}   %variable rule
+    }
+  \subfigure{
+    \inference[lit]{c~\textnormal{constant of type}~\sigma}{\Gamma ||- c : \sigma} %literal
+    }
+  \\
+  \subfigure{
+    \inference[lam]{x : \sigma :: \Gamma ||- e : \tau}{\Gamma ||- (\lambda x : \sigma . e) : \sigma -> \tau} %abstraction
+    }
+  \subfigure{
+    \inference[app]{\Gamma ||- e_1 : \sigma -> \tau \\ \Gamma ||- e_2 : \sigma}{\Gamma ||- e_1 e_2 : \tau} %application
+    }
+\caption{The typing rules for simply-typed lambda calculus.}\label{fig:stlc-rules}
+\end{figure}
+
+Here we have used named variables, but in the following section these will be replaced
+in favour of de Bruijn indices.
 
 \subsection{De Bruijn indices}
 
@@ -1936,7 +1984,9 @@ simply-typed lambda calculus (STLC) with the usual type and scoping
 rules, as defined in Fig.~\ref{fig:stlc-data}.  All the modules that
 deal with lambda expressions (everything in the
 |Metaprogramming| namespace of the project) work on this |WT| (which
-stands for well-typed) datatype.
+stands for well-typed) datatype. Notice how the constructors are basically
+a transliteration of the STLC typing rules introduced in Fig.~\ref{fig:stlc-rules}, except
+now including a size parameter.
 
 \begin{figure}[h]
 \begin{code}
@@ -2374,9 +2424,9 @@ by going from the CPS-transformed original return type to the result type |RT|.
 
 \begin{code}
 cpsType : Uu → Uu
-cpsType (O x)     = O x
-cpsType (t => t₁) = cpsType t => (cpsType t₁ => RT) => RT
-cpsType (Cont t)  = cpsType t => RT
+cpsType (O x)           = O x
+cpsType (t => t₁)       = cpsType t => (cpsType t₁ => RT) => RT
+cpsType (Cont t)        = cpsType t => RT
 \end{code}
 
 The type we would like our transformation function to have is something which takes
@@ -2421,14 +2471,15 @@ are rebuilding the original lambda term but assigning the argument a
 new type, namely |cpsType t1|.
 
 \begin{code}
-Tt {t1 => t2} (Lam .t1 expr)                  cont = cont     ⟨     (Lam     (cpsType t1)
-                                                                             (Lam    (cpsType (Cont t2))
-                                                                                     (Tt   (shift1 (Cont t2) expr)
-                                                                                           (Var here)
-                                                                                     )
-                                                                             )
-                                                                    )
-                                                              ⟩
+Tt {t1 => t2} (Lam .t1 expr)                  cont
+          = cont     ⟨     (Lam     (cpsType t1)
+                                    (Lam    (cpsType (Cont t2))
+                                            (Tt   (shift1 (Cont t2) expr)
+                                                  (Var here)
+                                            )
+                                    )
+                           )
+                     ⟩
 
 \end{code}
 
@@ -2492,7 +2543,7 @@ We can now add this |TAcc| argument to all the calls in |T|, and Agda now believ
 to prove that for all elements of |wt ∈ WT| we can construct a |TAcc wt|. The proof is as obvious as the data type was: we simply recurse
 on the arguments of the constructors.
 
-\begin{code} % formatting is okay here, even if OS X doesn't make it look so.
+\begin{code}
 allTsAcc : forall {Γ σ n} → (wt : WT Γ σ n) → TAcc wt
 allTsAcc (Var x)                     = TBaseVar
 allTsAcc (Lit x₁)                    = TBaseLit
@@ -2567,7 +2618,8 @@ and increase the de Bruijn indices by 1.
   _≼_ : Rel WTpack _
   x ≼ y = sz x < (1 + sz y)
 
-  shift-pack-size : ∀ {τ Γ Γ' σ n} → (x : WT (Γ' ++ Γ) σ n) → to (weak {Γ'}{σ}{Γ} x τ) ≼ to x
+  shift-pack-size : ∀ {τ Γ Γ' σ n}        → (x : WT (Γ' ++ Γ) σ n)
+                                          → to (weak {Γ'}{σ}{Γ} x τ) ≼ to x
   shift-pack-size = ...
 \end{spec}
 
@@ -2576,20 +2628,28 @@ the function that returns this proof itself also terminates. This leads to the f
 expressions and continuations to CPS-style expressions. Our |allTsAcc| function now looks like this, showing only the ``interesting'' clauses.
 
 \begin{code}
-  allTsAcc : forall {Γ σ n} → (wt : WT Γ σ n) → Acc _≺_ (to wt) → TAcc wt
+  allTsAcc : forall {Γ σ n}     → (wt : WT Γ σ n)
+                                → Acc _≺_ (to wt)
+                                → TAcc wt
   ...
-  allTsAcc {Γ} {τ => σ}{suc n} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ) wt) (x (to (shift1 (Cont σ) wt)) <-base))
-  allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁}{n}{m} wt wt₁) (acc x) = TApp (allTsAcc wt (x (to wt) triv))
-                                                         (allTsAcc (shift1 (σ => σ₁) wt₁) (x (to (shift1 (σ => σ₁) wt₁)) (triv2 {_}{n})) )
+  allTsAcc {_} {τ => σ} (Lam .τ wt)          (acc x) =
+                TLam      (allTsAcc (shift1 (Cont σ) wt)
+                                  (x (to (shift1 (Cont σ) wt)) <-base))
+  allTsAcc (_⟨_⟩ {_}{σ}{σ₁}{n}{m} wt wt₁)    (acc x) =
+                TApp      (allTsAcc wt
+                                  (x (to wt) triv))
+                          (allTsAcc (shift1 (σ => σ₁) wt₁)
+                                  (x (to (shift1 (σ => σ₁) wt₁)) (triv2 {_}{n})) )
 \end{code}
 
 We now can export the final |T| translation function as follows, so the user of the library need not worry about
 termination proofs. |T| terminates on all inputs anyway.
 
 \begin{code}
-T : {σ : Uu} {Γ : Ctx} {n m : ℕ}     → (wt : WT Γ σ n)
-                                     → (cont : WT (map cpsType Γ) (cpsType (Cont σ)) m)
-                                     → WT (map cpsType Γ) RT (sizeCPS n wt (allTsAcc wt (wf (to wt))) m)
+T : {σ : Uu} {Γ : Ctx} {n m : ℕ}
+       → (wt : WT Γ σ n)
+       → (cont : WT (map cpsType Γ) (cpsType (Cont σ)) m)
+       → WT (map cpsType Γ) RT (sizeCPS n wt (allTsAcc wt (wf (to wt))) m)
 T wt cont = Tt wt (allTsAcc wt (wf (to wt))) cont
 \end{code}
 
