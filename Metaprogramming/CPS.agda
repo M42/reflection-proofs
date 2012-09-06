@@ -99,11 +99,14 @@ sizeCPS (suc .0) (Lit x₁) acc cont = suc cont + 1
 --   continuation to a CPS-converted version of the expression. this function
 -- normally doesn't pass Agda's termination checker, which is why we provide the TAcc predicate.
 -- this does force us to prove ∀ wt → TAcc wt. This is done down below.
-T' : {σ : U'} {Γ : Ctx} {n m : ℕ} → (wt : WT Γ σ n) → (ta : TAcc wt) → (cont : WT (map cpsType Γ) (cpsType σ => RT) m) → WT (map cpsType Γ) RT (sizeCPS n wt ta m)
-T' {O σ}{Γ} .(Lit x) (TBaseLit {.Γ} {.σ} {x}) cont = cont ⟨ Lit x ⟩
-T' {σ}{Γ} .(Var x) (TBaseVar {.Γ} {.σ} {x}) cont = cont ⟨ Var (cpsvar x) ⟩
+T' : {σ : U'} {Γ : Ctx} {n m : ℕ}       → (wt : WT Γ σ n) -- original expression
+                                        → (ta : TAcc wt) -- termination predicate
+                                        → (cont : WT (map cpsType Γ) (cpsType (Cont σ)) m) -- continuation
+                                        → WT (map cpsType Γ) RT (sizeCPS n wt ta m) -- output function with new type & size
+T' {O σ}{Γ} .(Lit x) (TBaseLit {.Γ} {.σ} {x})                cont = cont ⟨ Lit x ⟩
+T' {σ}{Γ}   .(Var x) (TBaseVar {.Γ} {.σ} {x})                cont = cont ⟨ Var (cpsvar x) ⟩
 T' {t1 => t2} {Γ}{suc n}{m} (Lam .t1 expr)     (TLam pf)     cont = cont ⟨ (Lam (cpsType t1) (Lam (cpsType t2 => RT) (T' (shift1 (Cont t2) expr) pf (Var here)))) ⟩
-T' .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂}{n}{m} f e)  (TApp pf pf2) cont =
+T' .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂}{n}{m} f e)  (TApp pf pf2)    cont =
   T' f pf (Lam (cpsType σ₁ => (cpsType σ₂ => RT) => RT)
                            (T' (shift1 (σ₁ => σ₂) e) pf2 (Lam (cpsType σ₁)
                               ((Var (there here)) ⟨ Var here ⟩  
