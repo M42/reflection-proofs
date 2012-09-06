@@ -3013,6 +3013,7 @@ Answer the research question here.
 \vspace*{\stretch{1}}
 {\centering
 \textbf{Acknowledgements}\\[5mm]
+}
 
 Obviously, a formidable number of people deserve thanks here, but I will refrain
 from mentioning everyone. Foremost, I would like to thank Wouter for
@@ -3028,7 +3029,6 @@ near the end of my research period to catch up on all the wasted time
 spent drinking coffee and consuming calorific treats. 
 
 The rest of you know who you are.
-}
 \vspace*{\stretch{4}}
 }
 
@@ -3059,7 +3059,7 @@ the compiler was extended to output a list of formatting rules based on the curr
 
 
 
-\section{Annotating |λ| Expressions with Type}\label{appendix:lambda-types}
+\section{Annotating $\lambda$ Terms with Type}\label{appendix:lambda-types}
 
 As mentioned in Sec.~\ref{sec:...} it was necessary to slightly modify the
 representation of |Term|s that the reflection system returns to the user. What was
@@ -3071,14 +3071,18 @@ To avoid this, the |Term| data structure internal to the Agda compiler was augme
 optional field of type |Type|, which allowed two advantages. Firstly, it became possible to
 distinguish between, for example, |ℕ| and |Bool| variables in the same expression. Secondly, it
 allowed us to suffice with only providing a type checker, as opposed to a full type inferencing
-function along with the unification, which poses a problem to the termination checker.
+function along with a type unifier, which poses a problem to the termination checker.
 
-Here the changes required to the Agda compiler's source code are presented in Fig. \ref{fig:agda-lambda-diff}, in unified diff format \cite{unified-diff}.
+Here the changes required to the Agda compiler's source code are
+presented in Fig. \ref{fig:agda-lambda-diff}, in unified diff format
+\cite{unified-diff}.
 
 
 \begin{figure}[h]
 insert darcs-diff here %TODO
-\caption{The changes required to the Agda compiler to enable annotation of lambda abstractions with the type of their argument.}\label{fig:agda-lambda-diff}
+\caption{The changes required to the Agda compiler to enable
+  annotation of lambda abstractions with the type of their
+  argument.}\label{fig:agda-lambda-diff}
 \end{figure}
 
 
@@ -3090,13 +3094,11 @@ insert darcs-diff here %TODO
 Talk about extension to compiler here, give example of use (as detailed as possible, i.e. with Makefile, the \texttt{-}\texttt{-lagda} flag, etc.
 
 
+% TODO: explain somewhere how the distribution works. i.e. what module contains what, etc. and that this is a literate Agda file.
 
 
 
-% TODO: explain somewhere how the distribution works. i.e. `mk extract` for code extraction, what module contains what, etc.
-
-
-
+%todo weed out duplicate bibtex entries.
 
 %TODO in introduction: list motivating examples for using reflection? include bove-capretta, so we later can conclude reflection API isn't yet powerful enough?
 
@@ -3104,7 +3106,6 @@ Talk about extension to compiler here, give example of use (as detailed as possi
 
 %todo what are Patrick Bahr's tree automata?
 
-%TODO: Dependently typed LC is difficult to type check: Outrageous but Meaningful Coincidences -- McBride.
 
 
 
@@ -3120,6 +3121,9 @@ Insert source tree here?
 \bibliography{refs}{}
 \bibliographystyle{plain}
 % \bibliographystyle{splncs}%this one doesn't sort automatically. :(
+
+
+%todo consolidate Discussion and Related work into Discussion (also a subsection on Future Work, possibly)
 
 
 % Beperk je tot de essentie
