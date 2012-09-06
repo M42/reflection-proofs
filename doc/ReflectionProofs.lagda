@@ -1975,7 +1975,6 @@ terms are closed\footnote{A closed term means one which contains no free variabl
 ideal for combinators.
 In all of the developments presented in this paper, de Bruijn representation will be used.
 
-%TODO introduce our model of universes, U with => and O
 
 \subsection{Modeling Well-typed $\lambda$-calculus}
 
@@ -1993,16 +1992,17 @@ now including a size parameter.
 data WT : (Γ : Ctx) → Uu → ℕ → Set where
   Var   : ∀ {Γ} {τ}
                    → τ ∈ Γ
-                   → WT Γ τ 1
+                   → WT Γ           τ               1
   Lam   : ∀ {Γ} σ {τ} {n}
                    → WT (σ ∷ Γ)     τ               n
                    → WT Γ           (σ => τ)        (suc n)
   _⟨_⟩  : ∀ {Γ} {σ τ} {n m}
-                   → WT Γ (σ => τ)        n
-                   → WT Γ σ               m
-                   → WT Γ τ               (suc n + m)
+                   → WT Γ           (σ => τ)        n
+                   → WT Γ           σ               m
+                   → WT Γ           τ               (suc n + m)
   Lit   : ∀ {Γ} {x}
-                   → Uel x → WT Γ (O x) 1
+                   → Uel x
+                   → WT Γ           (O x)           1
 \end{code}
 \caption{The simply-typed lambda calculus with de Bruijn indices.}\label{fig:stlc-data}
 \end{figure}
