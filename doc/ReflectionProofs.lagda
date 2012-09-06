@@ -86,6 +86,7 @@ open import Data.List hiding (_∷ʳ_)
 %TODO add citations to everything which seems like an unfounded statement.
 
 \begin{document}
+\setcounter{tocdepth}{1}
 
 %%% \maketitle
 %TODO make a fancy title page
@@ -100,7 +101,7 @@ open import Data.List hiding (_∷ʳ_)
 %\fontfamily{cap}
 
 %\selectfont
-\LARGE Paul van der Walt \\
+\LARGE Paul van der Walt <\href{mailto:paul@@denknerd.org}{\nolinkurl{paul@@denknerd.org}}>\\
 \LARGE \textsc{Supervisor:} Wouter Swierstra \\
 \LARGE \textsc{2$^\textnormal{nd}$ reader:} Johan Jeuring \\[5mm]
 \Huge \textbf{\mytitle}
@@ -118,7 +119,6 @@ open import Data.List hiding (_∷ʳ_)
   Department of Computing Science}
 \end{center}
 \end{titlepage}
-
 
 \clearpage
 \thispagestyle{empty}
@@ -1905,8 +1905,8 @@ relevant later on.
 We first introduce the idea of contexts. A context is simply a list of
 types, in which one can look up what type a variable is supposed to
 have. We have empty contexts, |[]|, and the possibility of adding a
-new type to the top of the context stack. We call this concatenation
-|_∷_|. There are also typing assumptions, of the form $x :
+new type to the top of the context stack. We denote concatenation by
+|_∷_|, as in |x ∷ xs| meaning $x$ pushed on the context $xs$. There are also typing assumptions, of the form $x :
 \sigma$. This means $x$ has type $\sigma$. We also introduce the
 notion of a typing relation, or judgement, $\Gamma \vdash x : \sigma$,
 meaning that given some context $\Gamma$, we can judge the validity of
