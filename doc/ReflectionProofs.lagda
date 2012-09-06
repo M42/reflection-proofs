@@ -216,8 +216,6 @@ github\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}}. %TODO
 
 \chapter{Introducing Agda}
 
-%TODO mention dot-patterns in the LHS.
-
 Besides being a common Swedish female name and referring to a certain hen in
 Swedish folklore\footnote{See Cornelis Vreeswijk's rendition of
 a highly instructive song about Agda (the hen), at \mbox{\url{http://youtu.be/zPY42kkRADc}}.}, Agda
@@ -2192,119 +2190,6 @@ accept. In |seeTypedgoal1| we can inspect the resulting |WT| term.
 %as $\lambda . 0$.
 %
 %
-%\begin{code}
-%-- equality of types.
-%data Equal? {A : Set} : A → A → Set where
-%  yes  : forall {τ}     → Equal? τ τ
-%  no   : forall {σ τ}   → Equal? σ τ
-%
-%-- ugh, this may not be in a parameterised module. if it is, such as
-%-- where it was in CPS.Apply, if you import CPS as CPS' = CPS . . . e.g.
-%-- then there's a panic, since quote Apply returns CPS.Apply, and all of
-%-- a sudden the number of arguments is invalid (i.e. the module arguments
-%-- are missing). ugh.
-%Apply : {A B : Set} → (A → B) → A → B
-%Apply {A} {B} x y = x y
-%
-%\end{code}
-%
-%
-%
-%
-%For example, the arguments might look like this %todo less ugly wording
-%
-%\begin{code}
-%
-%---------
-%--- THIS STUFF may not be used other than as a parameter to the module.
-%
-%data U : Set where
-%  Nat : U
-%
-%
-%?type : U → Name
-%?type r = quote ℕ
-%
-%Uel : U → Set
-%Uel r = ℕ
-%
-%
-%quoteBack : (x : U) → Uel x → Term
-%quoteBack Nat zero    = con (quote ℕ.zero) []
-%quoteBack Nat (suc x) = con (quote ℕ.suc) (arg visible relevant (quoteBack Nat x) ∷ [])
-%
-%equal? : (x : U) → (y : U) → Equal? x y
-%equal? Nat Nat = yes
-%
-%ReturnType : U
-%ReturnType = Nat
-%
-%type? : Name → Maybe U
-%type? n with n ≟-Name (quote ℕ.suc)
-%type? n | yes p = just Nat
-%type? n | no ¬p with n ≟-Name (quote ℕ.zero)
-%type? n | no ¬p | yes p = just Nat
-%type? n | no ¬p₁ | no ¬p with n ≟-Name (quote ℕ)
-%type? n | no ¬p₁ | no ¬p | yes p = just Nat
-%type? n | no ¬p₂ | no ¬p₁ | no ¬p = nothing
-%
-%quoteVal : (x : U) → Term → Uel x
-%quoteVal Nat (var x args) = 0
-%quoteVal Nat (con c args) with c ≟-Name quote ℕ.zero
-%quoteVal Nat (con c args) | yes p = 0
-%quoteVal Nat (con c args) | no ¬p with c ≟-Name quote ℕ.suc
-%quoteVal Nat (con c []) | no ¬p | yes p = 0
-%quoteVal Nat (con c (arg v r x ∷ args)) | no ¬p | yes p = 1 + quoteVal Nat x
-%quoteVal Nat (con c args) | no ¬p₁ | no ¬p = 0
-%quoteVal Nat      _       = 0
-%
-%-- result type.
-%
-%-- end THIS STUFF
-%------------------------
-%
-%
-%\end{code}
-%
-%
-%
-%Another constraint expressed is that an application can only be
-%introduced if both sub-expressions have reasonable types. Reasonable
-%in this context means that the function being applied must take an
-%argument of the type of the to-be-applied sub-expression.
-%
-%
-%\begin{figure}[h]
-%\begin{code}
-%data Uu : Set where
-%  O       : U             → Uu
-%  _=>_    : Uu    → Uu    → Uu
-%  Cont    : Uu            → Uu
-%  
-%Ctx : Set
-%Ctx = List Uu
-%
-%data _∈'_ {A : Set} (x : A) : List A → Set where
-%  here    : {xs : List A}                        → x ∈' x ∷ xs
-%  there   : {xs : List A} {y : A} → x ∈' xs       → x ∈' y ∷ xs
-%  
-%data WT : (Γ : Ctx) → Uu -> Set where
-%  Var   : ∀ {Γ} {τ}     → τ ∈' Γ                      → WT Γ τ
-%  _⟨_⟩  : ∀ {Γ} {σ τ}   → WT Γ (σ => τ) → WT Γ σ      → WT Γ τ
-%  Lam   : ∀ {Γ} σ {τ}   → WT (σ ∷ Γ) τ                → WT Γ (σ => τ)
-%  Lit   : ∀ {Γ} {x}     → Uel x                       → WT Γ (O x)
-%\end{code}
-%\caption{The data type modeling well-typed, well-scoped lambda calculus.}\label{fig:stlc}
-%\end{figure}
-%\ignore{
-%\begin{code}
-%infixl 30 _⟨_⟩ 
-%infixr 20 _=>_
-%infix 3 _∈'_
-%\end{code}
-% }
-%
-%
 %The |Ctx| type is simply our context for variables (mapping variables
 %to their type): it is defined as |List Uu|, where the position in the list corresponds
 %to the de Bruijn-index of a variable. Since all terms are required to be well-scoped,
@@ -2376,7 +2261,7 @@ Once we have these functions, it is easy to introduce a concrete function from a
 concrete :          lam2type typedgoal1
 concrete = unquote (lam2term typedgoal1)
 
-unittest : concrete ≡ (λ (a : ℕ → ℕ) → λ (b : ℕ) → a b)
+unittest : concrete ≡ λ (a : ℕ → ℕ) → λ (b : ℕ) → a b
 unittest = refl
 \end{code}
 
@@ -2502,9 +2387,6 @@ function must not rely on any variables which are not in the scope of the to-be-
 and must produce a value of type |RT|.
 If these are then applied to each other, a value of type |RT| will be returned.
 
-%The term of type |TAcc wt| which is also included will be explained later, and has to do
-%with termination of the function.
-
 \begin{code}
 T : {σ : Uu} {Γ : Ctx}       → WT      Γ                      σ
                              → WT      (map cpsType Γ)        (cpsType (Cont σ))
@@ -2522,8 +2404,8 @@ transformed, will be in the same spot as the old type was. Therefore, a proof is
 environment |Γ|, then it will also be inside the new environment |map cpsType Γ| at the same index, but having value |cpsType σ|.
 
 \begin{code}
-T (Lit x)                                     cont = cont ⟨ Lit x ⟩
-T (Var inpf  )                                cont = cont ⟨ Var (cpsvar inpf) ⟩
+Tt (Lit x)                                     cont = cont ⟨ Lit x ⟩
+Tt (Var inpf  )                                cont = cont ⟨ Var (cpsvar inpf) ⟩
 \end{code}
 
 The case for lambdas is slightly more involved: When it sees a lambda
@@ -2539,10 +2421,10 @@ are rebuilding the original lambda term but assigning the argument a
 new type, namely |cpsType t1|.
 
 \begin{code}
-T {t1 => t2} (Lam .t1 expr)                   cont = cont     ⟨     (Lam     (cpsType t1)
+Tt {t1 => t2} (Lam .t1 expr)                  cont = cont     ⟨     (Lam     (cpsType t1)
                                                                              (Lam    (cpsType (Cont t2))
-                                                                                     (T (shift1 (Cont t2) expr)
-                                                                                        (Var here)
+                                                                                     (Tt   (shift1 (Cont t2) expr)
+                                                                                           (Var here)
                                                                                      )
                                                                              )
                                                                     )
@@ -2559,9 +2441,9 @@ continuations.
 
 
 \begin{code}
-T .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂} f e)     cont =
-  T f (Lam (cpsType (σ₁ => σ₂))
-                     (T (shift1 (σ₁ => σ₂) e) (Lam (cpsType σ₁)
+Tt .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂} f e)     cont =
+  Tt f (Lam (cpsType (σ₁ => σ₂))
+                     (Tt (shift1 (σ₁ => σ₂) e) (Lam (cpsType σ₁)
                         ((Var (there here)) ⟨ Var here ⟩  
                             ⟨ shift1 (cpsType σ₁) (shift1 (cpsType (σ₁ => σ₂)) cont) ⟩ ))))
 \end{code}
@@ -2591,7 +2473,7 @@ After inspecting the recursive structure of the algorithm |T| we come to the con
 would do the job just fine.
 
 \begin{code}
-data TAcc : {Γ : Ctx} {σ : U'} {n : ℕ} → WT Γ σ n → Set where
+data TAcc : {Γ : Ctx} {σ : Uu} {n : ℕ} → WT Γ σ n → Set where
   TBaseLit : forall {Γ σ x} → TAcc (Lit {Γ} {σ} x)
   TBaseVar : forall {Γ σ x} → TAcc (Var {Γ} {σ} x)
   TLam : forall {Γ t1 t2 n} {a : WT (t1 ∷ Γ) t2 n}
@@ -2620,29 +2502,100 @@ allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁} wt wt₁)    = TApp            (allTsAcc wt)
 \end{code}
 
 But, horror! Agda now is convinced that this function, |allTsAcc|, which is meant to give us the proof
-that |T| terminates given any |WT| term, itself does not terminate! We also cannot apply Bove and Capretta's trick
-another time, since that would give us a data type isomorphic to |TAcc|.
+that |T| terminates given any |WT| term, does not terminate either! We also cannot apply Bove and Capretta's trick
+again, since that would give us a data type isomorphic to |TAcc|.
 
 As it turns out, there is another trick
 up our sleeve: that of well-founded recursion. What we need to do is show that even though the recursion here is non
 structural, the terms do strictly decrease in size for some measure. Luckily we introduced a measure on |WT| long ago, the last argument
 of type |ℕ|. Following Mertens' example \cite{} %TODO cite mertens
 we can build a well-foundedness proof for |WT| in terms of our measure, which we can then add as an extra argument to the
-|allTsAcc| function. 
+|allTsAcc| function.  The first pitfall we encounter is that we want to define some |Rel A| which we will prove is well-founded
+on our data structure. The problem is that |Rel| is of type |Set -> Set₁| (not exactly, but for the purposes of argument), but |WT| is not
+of type |Set|, but |∁tx → Uu → ℕ → Set|. We can, however, circumvent this problem by defining a ``wrapper'' which is isomorphic to |WT|, but
+at the same time an element of |Set|. We will define this wrapper, |WTpack|, as follows.
 
-... at least that's what we thought -- we still needed to invent pack.
+\begin{code}
+WTpack : Set
+WTpack = Σ ℕ (λ n → Σ Uu (λ u → Σ Ctx (λ g → WT g u n)))
+\end{code}
 
-%TODO insert well-foundedness
+What is happening here is that we have defined a few nested dependent pairs, thus ``hiding'' the pi-type, which is what was causing us
+the headache. We will also need a function |to| to convert from |WT| into our wrapper type, but it is equally mundane.
+
+\begin{code}
+to : ∀ {Γ σ n} → WT Γ σ n → WTpack
+to {Γ}{σ}{n} wt = n , σ , Γ , wt
+\end{code}
+
+Now that we have this small bit of machinery, we can import the standard library's notion of well-foundedness and show that our measure,
+namely smaller than or equal to for |WT| elements, is well-founded.
+
+We begin by showing that smaller-than is a well-founded relation on naturals.
+
+\begin{code}
+<-ℕ-wf : Well-founded _<_
+<-ℕ-wf x = acc (aux x)
+  where
+    aux : ∀ x y → y < x → Acc _<_ y
+    aux zero y ()
+    aux (suc x₁) .x₁ <-base = <-ℕ-wf x₁
+    aux (suc x₁) y (<-step m) = aux x₁ y m
+\end{code}
+
+Now we use a lemma from the |Induction.WellFounded| standard library module which shows that
+if we have some measure on a carrier, and a way to map some new type to this carrier type, we have
+lifted the well-foundedness to the new type. We instantiate this lemma using our |WTpack| wrapper, less-than on
+naturals, and a function |sz| which simply reads the size-index which we already included in |WT| in Sec.~\ref{sec:wt}.
+
+\begin{code}
+module <-on-sz-Well-founded where
+  open Inverse-image {_} {WTpack} {ℕ} {_<_} sz public
+
+  _≺_ : Rel WTpack _
+  x ≺ y = sz x < sz y
+
+  wf : Well-founded _≺_
+  wf = well-founded <-ℕ-wf
+\end{code}
+
+Next we must show that recursing on smaller or equal arguments is also fine, and that shifting the de Bruijn indices does not change the
+ordering of two elements (|shift-pack-size|). Note that |weak| is a generalised weakening function, which |shift1| uses to add one type variable on top of the context stack
+and increase the de Bruijn indices by 1.
+
+\begin{spec}
+  _≼_ : Rel WTpack _
+  x ≼ y = sz x < (1 + sz y)
+
+  shift-pack-size : ∀ {τ Γ Γ' σ n} → (x : WT (Γ' ++ Γ) σ n) → to (weak {Γ'}{σ}{Γ} x τ) ≼ to x
+  shift-pack-size = ...
+\end{spec}
+
+Once we have these ingredients, we can assemble it all to show that all calls to |T| with any |WT| terminate, and that
+the function that returns this proof itself also terminates. This leads to the following definition of function |T| which maps
+expressions and continuations to CPS-style expressions. Our |allTsAcc| function now looks like this, showing only the ``interesting'' clauses.
+
+\begin{code}
+  allTsAcc : forall {Γ σ n} → (wt : WT Γ σ n) → Acc _≺_ (to wt) → TAcc wt
+  ...
+  allTsAcc {Γ} {τ => σ}{suc n} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ) wt) (x (to (shift1 (Cont σ) wt)) <-base))
+  allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁}{n}{m} wt wt₁) (acc x) = TApp (allTsAcc wt (x (to wt) triv))
+                                                         (allTsAcc (shift1 (σ => σ₁) wt₁) (x (to (shift1 (σ => σ₁) wt₁)) (triv2 {_}{n})) )
+\end{code}
+
+We now can export the final |T| translation function as follows, so the user of the library need not worry about
+termination proofs. |T| terminates on all inputs anyway.
+
+\begin{code}
+T : {σ : Uu} {Γ : Ctx} {n m : ℕ}     → (wt : WT Γ σ n)
+                                     → (cont : WT (map cpsType Γ) (cpsType (Cont σ)) m)
+                                     → WT (map cpsType Γ) RT (sizeCPS n wt (allTsAcc wt (wf (to wt))) m)
+T wt cont = Tt wt (allTsAcc wt (wf (to wt))) cont
+\end{code}
 
 
-
-
-
-
-
-
-% TODO how to strike a balance between just presenting what I have now without making
-% the difficulties clear, and writing an irrelevant logbook?
+The developments mentioned here, as well as termination proofs, can be found in
+|Metaprogramming.CPS| and |Metaprogramming.WTWellFounded|.
 
 
 \section{Example: Translation to SKI Combinators}

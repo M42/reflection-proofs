@@ -44,6 +44,7 @@
 %format quoteTerm = "\keyword{quoteTerm}"
 
 %format Uu = "\ensuremath{\id{U^\prime}}"
+%format Tt = "\ensuremath{\id{T^\prime}}"
 %format ↦ = "\ensuremath{\mapsto}"
 
 %format dollarn = "\defin{\ensuremath{\$^{n}}}"
