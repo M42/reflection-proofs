@@ -1928,8 +1928,14 @@ See Fig.~\ref{fig:stlc-rules} for the typing rules.
 \caption{The typing rules for simply-typed lambda calculus.}\label{fig:stlc-rules}
 \end{figure}
 
-Here we have used named variables, but in the following section these will be replaced
-in favour of de Bruijn indices.
+Of special interest are terms which we call \emph{closed}. Closed is
+defined as being typable under the empty context, |[]|. These terms do not refer
+to variables which were not introduced by lambda abstractions in that same term, and
+are also sometimes referred to as \emph{combinators}.
+
+Here we have
+used named variables, but in the following section these will be
+replaced in favour of de Bruijn indices.
 
 \subsection{De Bruijn indices}
 
@@ -2223,21 +2229,7 @@ accept. In |seeTypedgoal1| we can inspect the resulting |WT| term.
 %be explained in the section on continuation-passing style, Sec.~\ref{sec:cps}.
 %
 %
-%\todo{ insert typing derivations here.}
 %
-%
-%As usual, these typing judgments (or derivations) translate naturally into
-%Agda syntax. This translation has been done in Fig. \ref{fig:stlc}.
-%
-%The |WT| data type represents well-typed and closed (thus well-scoped)
-%simply-typed lambda calculus terms. Notice that type-incorrect terms cannot be instantiated, since
-%the dependent type signatures of the constructors allow us to express
-%constraints such as that a de Bruijn-indexed variable must be at most
-%$n$, with $n$ the depth of the current sub-expression, with depth
-%defined as the number of $\lambda$'s before one is at top-level
-%scope. We assume the reader to be familiar with nameless de Bruijn notation for 
-%lambda calculus (see \cite{de1972lambda}), i.e. the term $\lambda x . x$ is represented
-%as $\lambda . 0$.
 %
 %
 %The |Ctx| type is simply our context for variables (mapping variables
@@ -2246,7 +2238,6 @@ accept. In |seeTypedgoal1| we can inspect the resulting |WT| term.
 %this makes sense, since each time a lambda-abstraction is introduced, the type of the 
 %variable to be bound at that point is consed onto the environment. This way, variables 
 %which are bound ``further away'' (in the de Bruijn-index sense) are nearer to the back of the list.
-%
 
 \subsection{Doing Something Useful with |WT|}
 
