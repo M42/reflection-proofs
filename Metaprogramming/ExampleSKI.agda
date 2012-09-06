@@ -38,7 +38,7 @@ testSKI = topCompile testTermWT
 
 -- we can inspect the SKI term, and even though it's rather ugly, it does indeed
 -- normalise to what we'd expect for our testTerm
-unitTest1 : testSKI ≡ (S ⟨ (S ⟨ K ⟨ S ⟩ ⟩) ⟨ (S ⟨ K ⟨ K ⟩ ⟩) ⟨ I ⟩ ⟩ ⟩) ⟨ K ⟨ I ⟩ ⟩
+unitTest1 : testSKI ≡ S ⟨ S ⟨ K ⟨ S ⟩ ⟩ ⟨ S ⟨ K ⟨ K ⟩ ⟩ ⟨ I ⟩ ⟩ ⟩ ⟨ K ⟨ I ⟩ ⟩
 unitTest1 = refl
 
 -- what's the use of an SKI term if we cannot use it again, as a "real" Agda term?

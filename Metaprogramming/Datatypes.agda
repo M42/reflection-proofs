@@ -76,7 +76,7 @@ data _∈_ {A : Set} (x : A) : List A → Set where
 -- type arguments which have to "fit" sensibly) and well-scoped
 -- (notice the _∈_ used to force variables to point to some type
 -- in the type context Γ).
-data WT : (Γ : Ctx) → U' → ℕ → Set where
+data WT : Ctx → U' → ℕ → Set where
   Var   : ∀ {Γ} {τ}      → τ ∈ Γ → WT Γ τ 1
   _⟨_⟩  : ∀ {Γ} {σ τ} {n m}   → WT Γ (σ => τ) n → WT Γ σ m → WT Γ τ (suc n + m)
   Lam   : ∀ {Γ} σ {τ} {n}   → WT (σ ∷ Γ) τ n → WT Γ (σ => τ) (suc n)
