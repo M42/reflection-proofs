@@ -2597,6 +2597,9 @@ T wt cont = Tt wt (allTsAcc wt (wf (to wt))) cont
 The developments mentioned here, as well as termination proofs, can be found in
 |Metaprogramming.CPS| and |Metaprogramming.WTWellFounded|.
 
+%todo in contributions:
+%todo * structurally recursive CPS transform
+%todo * well-typed SKI transform for de Bruijn indexed LC (this is new) + it is structurally recursive
 
 \section{Example: Translation to SKI Combinators}
 
