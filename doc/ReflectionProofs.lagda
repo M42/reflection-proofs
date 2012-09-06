@@ -2594,10 +2594,10 @@ on the arguments of the constructors.
 
 \begin{code}
 allTsAcc : forall {Γ σ n} → (wt : WT Γ σ n) → TAcc wt
-allTsAcc (Var x)    = TBaseVar
-allTsAcc (Lit x₁)   = TBaseLit
-allTsAcc {Γ} {τ => σ}{suc n} (Lam .τ wt) = TLam (allTsAcc (shift1 (Cont σ) wt) )
-allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁}{n}{m} wt wt₁)  = TApp (allTsAcc wt)
+allTsAcc (Var x)                     = TBaseVar
+allTsAcc (Lit x₁)                    = TBaseLit
+allTsAcc {_} {τ => σ} (Lam .τ wt)    = TLam            (allTsAcc (shift1 (Cont σ) wt) )
+allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁} wt wt₁)    = TApp            (allTsAcc wt)
                                                        (allTsAcc (shift1 (σ => σ₁) wt₁))
 \end{code}
 
