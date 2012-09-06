@@ -30,7 +30,7 @@ open module TC = Metaprogramming.TypeCheck U equal? type? Uel quoteVal quoteBack
 -- note how the application constructor matches the function and
 -- argument types. The environments are necessary to ensure that
 -- closed terms stay closed.
-data Comb : (Γ : Ctx) → U' → Set where
+data Comb : Ctx → U' → Set where
   Var    : forall {Γ}        → (τ : U') → τ ∈ Γ → Comb Γ τ
   _⟨_⟩   : forall {Γ σ τ}    → Comb Γ (σ => τ) → Comb Γ σ → Comb Γ τ
   S      : forall {Γ A B C}  → Comb Γ ((A => B => C) => (A => B) => A => C)
@@ -67,11 +67,11 @@ lambda           I                = K ⟨ I ⟩
 -- compiled), only in the lambda-case does anything interesting
 -- happen. The body is compiled, the abstraction is removed, and the
 -- lambda function sorts out the aftermath. see above.
-compile : (Γ : Ctx) → (τ : U') → {n : ℕ} → WT Γ τ n → Comb Γ τ
-compile Γ (O σ) (Lit x) = Lit x
-compile Γ τ (Var  h) = Var τ  h
-compile Γ τ (_⟨_⟩ {.Γ}{σ} wt wt₁) = compile Γ (σ => τ) wt ⟨ compile Γ σ wt₁ ⟩
-compile Γ (σ => τ) (Lam .σ wt) = lambda (compile ( σ ∷ Γ) τ wt) 
+compile : {Γ : Ctx} {τ : U'} → {n : ℕ} → WT Γ τ n → Comb Γ τ
+compile {_}{O σ} (Lit x) = Lit x
+compile {_}{τ} (Var  h) = Var τ  h
+compile {_}{τ} (_⟨_⟩ {._}{σ} wt wt₁) = compile wt ⟨ compile wt₁ ⟩
+compile {_}{σ => τ} (Lam .σ wt) = lambda (compile wt) 
   
 
 -- a "helpful" wrapper which does nothing except show that we
@@ -82,8 +82,8 @@ compile Γ (σ => τ) (Lam .σ wt) = lambda (compile ( σ ∷ Γ) τ wt)
 topCompile : {τ : U'} {n : ℕ} → Well-typed-closed τ n → Comb [] τ
 topCompile (Lit x) = Lit x
 topCompile (Var ())
-topCompile {τ}(nwt ⟨ nwt₁ ⟩)      = compile [] τ (nwt ⟨ nwt₁ ⟩)
-topCompile {.σ => τ}(Lam σ nwt) = compile [] (σ => τ) (Lam σ nwt)
+topCompile {τ}(nwt ⟨ nwt₁ ⟩)      = compile (nwt ⟨ nwt₁ ⟩)
+topCompile {.σ => τ}(Lam σ nwt) = compile (Lam σ nwt)
 
   
 -- inspiration : http://code.haskell.org/~dolio/
@@ -157,10 +157,6 @@ combsz (Lit x₁) = 1
 
 -- convert a term in the combinator language back to WT. this
 -- is to be done so that the usual unquote for WT can be used.
--- below an unquote for combinator terms is also defined, redundantly,
--- but it does illustrate a more direct way of introducing applications
--- into concrete Agda, as opposed to the lam2term function, which uses
--- the "Apply" function for the same purpose. 
 ski2wt : {Γ : Ctx} {σ : U'} → (c : Comb Γ σ) → WT Γ σ (combsz c)
 ski2wt {Γ} {σ} (Var .σ h) = Var h
 ski2wt (c ⟨ c₁ ⟩)         = ski2wt c ⟨ ski2wt c₁ ⟩
