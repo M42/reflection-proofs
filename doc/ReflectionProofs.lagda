@@ -216,6 +216,8 @@ github\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}}. %TODO
 
 \chapter{Introducing Agda}
 
+%TODO mention dot-patterns in the LHS.
+
 Besides being a common Swedish female name and referring to a certain hen in
 Swedish folklore\footnote{See Cornelis Vreeswijk's rendition of
 a highly instructive song about Agda (the hen), at \mbox{\url{http://youtu.be/zPY42kkRADc}}.}, Agda
@@ -2516,31 +2518,38 @@ are rebuilding the original lambda term but assigning the argument a
 new type, namely |cpsType t1|.
 
 \begin{code}
-T {t1 => t2} (Lam .t1 expr)                   cont = cont ⟨ (Lam (cpsType t1)
-                                                                 (Lam (cpsType (Cont t2))
-                                                                      (T (shift1 (Cont t2) expr) pf
-                                                                         (Var here)
-                                                                      )
-                                                                 )
-                                                            )
-                                                          ⟩
+T {t1 => t2} (Lam .t1 expr)                   cont = cont     ⟨     (Lam     (cpsType t1)
+                                                                             (Lam    (cpsType (Cont t2))
+                                                                                     (T (shift1 (Cont t2) expr)
+                                                                                        (Var here)
+                                                                                     )
+                                                                             )
+                                                                    )
+                                                              ⟩
 
 \end{code}
 
-Finally, we have the application case.
+Finally, we have the application case. Here, the values of both the applicand and the argument have to be
+converted into CPS.
+
+The transform converts each with |T|, and then catches their results in
+newly-created continuations; note that both of the lambda abstractions are
+continuations.
+
 
 \begin{code}
-T .{σ₂} (_⟨_⟩ .{_}{σ₁}{σ₂} f e) (TApp pf pf2) cont =
-   T f pf (Lam (cpsType σ₁ => (cpsType σ₂ => RT) => RT)
-                           (T (shift1 (σ₁ => σ₂) e) pf2 (Lam (cpsType σ₁)
-                              (((Var (there here)) ⟨ (Var here) ⟩ ) 
-                                  ⟨ (shift1 (cpsType σ₁) (shift1 (cpsType σ₁ => ((cpsType σ₂ => RT) => RT)) cont)) ⟩ ))))
-
-
+T' .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂} f e)     cont =
+  T' f (Lam (cpsType (σ₁ => σ₂))
+                     (T' (shift1 (σ₁ => σ₂) e) (Lam (cpsType σ₁)
+                        ((Var (there here)) ⟨ Var here ⟩  
+                            ⟨ shift1 (cpsType σ₁) (shift1 (cpsType (σ₁ => σ₂)) cont) ⟩ ))))
 \end{code}
-\begin{code}
-
-\end{code}
+First |f|, the applicand, is transformed, with a new abstraction as the continuation. This abstraction
+must have a variable of the type of |f|, since it is the continuation which is to be invoked on |f|. The body
+of the abstraction is then the CPS transformation of |e| (after having shifted all the de Bruijn-indices up by 1
+to compensate for the new abstraction), with again a continuation, this time binding a variable of the type of the argument (albeit transformed)
+and applying the transformed |f| (bound to |Var 1|) to the transformed |e| (here |Var 0|). Finally the original continuation, the one which was the
+argument called |cont|, is applied to the new |f| and |e|, but only after two shifts, resulting from the two lambda abstractions we introduced.
 
 
 
