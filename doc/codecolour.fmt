@@ -3,7 +3,6 @@
 \usepackage{color}
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
 
-\colorlet{Hole}{Dandelion!25!white}
 \definecolor{bordeaux}{rgb}{0.8,0.02,0.27}
 \colorlet{darkbordeaux}{bordeaux!65!black}
 
@@ -51,13 +50,17 @@
 %format _dollarn_ = "\defin{\ensuremath{\_\$^{n}\_}}"
 %format _=>_ = "\ensuremath{\_\Rightarrow\_}"
 
-%%% we don't want all dots to become function composition. sometimes we're referring to inferrable arguments.
-%format .     = "{"                 "."   "\mkern-5mu"     "}"
-%format _∷_   = "{" _ "\mkern1mu"    ∷    "\mkern-1mu"   _ "}"
-
 
 
 
 %%% holes:
 
-%format HOLE x  = "\colorbox{Hole}{\ensuremath{\{~\}_{" x "}}}"
+\colorlet{Hole}{Dandelion!25!white}
+%format HOLE x  = "\colorbox{Hole}{\ensuremath{\{\,\,\}_{" x "}}}"
+
+
+
+%%% we don't want all dots to become function composition. sometimes we're referring to inferrable arguments.
+%format .     = "{"                 "."   "\mkern-5mu"     "}"
+%format _∷_   = "{" _ "\mkern1mu"    ∷    "\mkern-1mu"   _ "}"
+

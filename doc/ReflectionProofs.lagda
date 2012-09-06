@@ -303,6 +303,24 @@ Haskell. There, we are left to our own devices, and should be responsible enough
 matching failures might occur. In Sec.~\ref{sec:plandpa} we will see that this is a pivotal difference between Haskell and Agda, and that 
 this sort of feature makes Agda usable as a logical framework, not just a programming language.
 
+Another feature in Agda's pattern matching system is the ability to denote certain parameters as being inferrable or equal to others. Take
+the example of equality of natural numbers: here we first pattern match on whether some naturals are equal, and if so, we can use this information
+on the left-hand side of the equation too. Note how repeated variables on the left-hand side are allowed, if they are decidably equal.
+
+\begin{spec}
+something : ℕ → ℕ → Whatever
+something n             m          with n ≟ m
+something .0            0          | yes     refl  =    HOLE 0
+something .(suc m)      (suc m)    | yes     refl  =    HOLE 1
+something n             m          | no      ¬p    =    HOLE 2
+\end{spec}
+
+
+This will prove useful when type-safe metaprogramming may not alter the types of the terms between
+input and output.
+
+
+
 \section{A Programming Language \emph{and} Proof Assistant}\label{sec:plandpa}
 
 In the previous section, the necessity of defining total functions was mentioned. This is no arbitrary choice, for without 
@@ -668,8 +686,8 @@ Typically, this is useful for deciding which constructor is present in some expr
 \begin{spec}
 convert : Term → Something
 convert (def c args) with c ≟-Name quote foo
-...                   | yes p     = do_something -- foo applied to arguments
-...                   | no ¬p     = do_other_thing -- a function other than |foo|
+...                   | yes p     = HOLE 0 -- foo applied to arguments
+...                   | no ¬p     = HOLE 1 -- a function other than |foo|
 \end{spec}
 
 
