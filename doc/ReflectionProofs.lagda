@@ -2592,7 +2592,7 @@ We can now add this |TAcc| argument to all the calls in |T|, and Agda now believ
 to prove that for all elements of |wt ∈ WT| we can construct a |TAcc wt|. The proof is as obvious as the data type was: we simply recurse
 on the arguments of the constructors.
 
-\begin{code}
+\begin{code} % formatting is okay here, even if OS X doesn't make it look so.
 allTsAcc : forall {Γ σ n} → (wt : WT Γ σ n) → TAcc wt
 allTsAcc (Var x)                     = TBaseVar
 allTsAcc (Lit x₁)                    = TBaseLit
@@ -2612,6 +2612,7 @@ of type |ℕ|. Following Mertens' example \cite{} %TODO cite mertens
 we can build a well-foundedness proof for |WT| in terms of our measure, which we can then add as an extra argument to the
 |allTsAcc| function. 
 
+... at least that's what we thought -- we still needed to invent pack.
 
 %TODO insert well-foundedness
 
