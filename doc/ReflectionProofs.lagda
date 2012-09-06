@@ -1922,7 +1922,7 @@ stands for well-typed) datatype.
 
 \begin{figure}[h]
 \begin{code}
-data WT : (Γ : Ctx) → U' → ℕ → Set where
+data WT : (Γ : Ctx) → Uu → ℕ → Set where
   Var   : ∀ {Γ} {τ}
                    → τ ∈ Γ
                    → WT Γ τ 1
@@ -1943,22 +1943,23 @@ The first thing to notice is that all terms in |WT| are annotated with
 a context, a type (the outer type of
 the lambda expression), and a size. 
 
-The type annotations are elements of a universe U', which models base types and arrows.
+The type annotations are elements of a universe |Uu|, which models base types and arrows.
 Contexts are simply lists of types, the position of elements of the list corresponding to
 their de Bruijn indices.
 
 \begin{code}
-data U' : Set where
-  O       : U             → U'
-  _=>_    : U'    → U'    → U'
-  Cont    : U'            → U'
+data Uu : Set where
+  O       : U             → Uu
+  _=>_    : Uu    → Uu    → Uu
+  Cont    : Uu            → Uu
   
 Ctx : Set
-Ctx = List U'
+Ctx = List Uu
 \end{code}
 
 The |O| constructor, which stands for base types, is parameterised by an argument of type |U|. This
-is the user-defined universe with which all the library modules in |Metaprogramming| are parameterised.
+is the user-defined universe with which all the library modules in |Metaprogramming| are parameterised. Finally
+there is the |Cont| constructor, which will be used and explained later in Sec.~\ref{sec:cps}.
 This allows a user to instantiate for example the type checking module, |Metaprogramming.TypeCheck|, with a universe
 which has a representation of natural numbers, or booleans, or both. In the following code we will present the other
 helper functions a user needs to define on an on-demand basis, summarising finally what is necessary and why.
@@ -1970,7 +1971,7 @@ introduce variables (remembering that they require a proof of being in the conte
 which extends the environment. This leads us to define the following alias for well-typed \emph{and} well-scoped terms.
 
 \begin{code}
-Well-typed-closed : U' → ℕ → Set
+Well-typed-closed : Uu → ℕ → Set
 Well-typed-closed = WT []
 \end{code}
 
@@ -2013,10 +2014,10 @@ Haskell-land are untyped (because of a lack of dependent types).
 \begin{figure}[h]
 \begin{code}
 data Raw : Set where
-  Var  : ℕ              → Raw
-  App  : Raw   → Raw    → Raw
-  Lam  : U'    → Raw    → Raw
-  Lit  : (x : U)   →  Uel x → Raw
+  Var  : ℕ                           → Raw
+  App  : Raw       → Raw             → Raw
+  Lam  : Uu        → Raw             → Raw
+  Lit  : (x : U)   → Uel x           → Raw
 \end{code}
 \caption{The |Raw| data type, or a model of simply-typed lambda expressions without any constraints.}\label{fig:raw}
 \end{figure}
@@ -2028,7 +2029,7 @@ would become a type inferencer, which, while possible (Algorithm W would suffice
 pain to implement, especially in a language where only structural
 recursion is allowed by default, since the unification algorithm typically used with Algorithm W makes
 use of general recursion. This is in fact an entire topic of research, and therefore outside the scope
-of this project \cite{}. %TODO cite mcbride unification
+of this project \cite{}. %TODO cite mcbride first order unification by structural recursion
 
 We choose instead to use the relatively simple, structurally recursive, algorithm for type checking lambda terms
 presented in Norell's tutorial on Agda \cite{}. % todo cite norell
@@ -2040,7 +2041,7 @@ in Fig.~\ref{fig:infer-datatype}.
 \begin{figure}[h]
 \begin{code}
 data Infer (Γ : Ctx) : Raw → Set where
-  ok    : (n : ℕ)(τ : U') (t : WT Γ τ n)  → Infer Γ (erase t)
+  ok    : (n : ℕ)(τ : Uu) (t : WT Γ τ n)  → Infer Γ (erase t)
   bad   : {e : Raw}              → Infer Γ e
 \end{code}
 \caption{The view on |Raw| lambda terms denoting whether they are well-typed or not.}\label{fig:infer-datatype}
@@ -2109,7 +2110,7 @@ It is a fine coincidence
 that the data type |Raw| closely matches the |Term| AST defined
 in the Agda compiler limited to lambda-related constructors, so it is relatively simple to massage the output of |quoteTerm| into
 an element of |Raw|. The code which does this (mostly the function |term2raw|) is to be found in |Metaprogramming.TypeCheck|. Since the
-conversion code is uninteresting and quite similar to the code presented in Sec.~\ref{sec:introducing-autoquote}, it is omitted.
+conversion code is uninteresting and quite similar to the code presented in Sec.~\ref{sec:autoquote}, it is omitted.
 
 Since we have a conversion function from |Term| to |Raw| at our disposal, as well as a type checker, it is tempting to write something like the following.
 
@@ -2147,7 +2148,7 @@ accept. In |seeTypedgoal1| we can inspect the resulting |WT| term.
 %
 %
 %The universe (set of possible types) we
-%use is |U'|, which is made up of base types (|O|) and function types (|_=>_|). There
+%use is |Uu|, which is made up of base types (|O|) and function types (|_=>_|). There
 %is also an extra constructor |Cont| which stands for the type of a continuation. This will
 %be explained in the section on continuation-passing style, Sec.~\ref{sec:cps}.
 %
@@ -2253,19 +2254,19 @@ accept. In |seeTypedgoal1| we can inspect the resulting |WT| term.
 %
 %\begin{figure}[h]
 %\begin{code}
-%data U' : Set where
-%  O       : U             → U'
-%  _=>_    : U'    → U'    → U'
-%  Cont    : U'            → U'
+%data Uu : Set where
+%  O       : U             → Uu
+%  _=>_    : Uu    → Uu    → Uu
+%  Cont    : Uu            → Uu
 %  
 %Ctx : Set
-%Ctx = List U'
+%Ctx = List Uu
 %
 %data _∈'_ {A : Set} (x : A) : List A → Set where
 %  here    : {xs : List A}                        → x ∈' x ∷ xs
 %  there   : {xs : List A} {y : A} → x ∈' xs       → x ∈' y ∷ xs
 %  
-%data WT : (Γ : Ctx) → U' -> Set where
+%data WT : (Γ : Ctx) → Uu -> Set where
 %  Var   : ∀ {Γ} {τ}     → τ ∈' Γ                      → WT Γ τ
 %  _⟨_⟩  : ∀ {Γ} {σ τ}   → WT Γ (σ => τ) → WT Γ σ      → WT Γ τ
 %  Lam   : ∀ {Γ} σ {τ}   → WT (σ ∷ Γ) τ                → WT Γ (σ => τ)
@@ -2283,7 +2284,7 @@ accept. In |seeTypedgoal1| we can inspect the resulting |WT| term.
 %
 %
 %The |Ctx| type is simply our context for variables (mapping variables
-%to their type): it is defined as |List U'|, where the position in the list corresponds
+%to their type): it is defined as |List Uu|, where the position in the list corresponds
 %to the de Bruijn-index of a variable. Since all terms are required to be well-scoped,
 %this makes sense, since each time a lambda-abstraction is introduced, the type of the 
 %variable to be bound at that point is consed onto the environment. This way, variables 
@@ -2296,19 +2297,24 @@ Conversely, we would also like to construct a term in |WT| and use the |unquote|
 turn it back into concrete syntax, otherwise there would not be much practical use in being
 able to do transformations on |WT| terms.
 
-The interpretation function for |WT| terms is mostly unsurprising; it must take a |WT| and return a |Term|, Agda's abstract representation, which we
-can then |unquote|.
-The first few clauses are precisely what one would expect, except maybe for the |Lit| case. Here we see the first signs
-of the universe model which is implemented, namely a call to an undefined function |quoteBack|. The idea is that
-all the universe of types we are using (arrows and base types denoted with the constructor |O|) is parameterised by a user-defined
-universe $U$, which is used for the base types. We cannot know what types a user has modeled in their universe, so we have to require
+The interpretation function for |WT| terms is mostly unsurprising; it
+must take a |WT| and return a |Term|, Agda's abstract representation,
+which we can then |unquote|.  The first few clauses are precisely what
+one would expect, except maybe for the |Lit| case. Here we see the
+first signs of the universe model which is implemented, namely a call
+to an undefined function |quoteBack|. The idea is that all the
+universe of types we are using (arrows and base types denoted with the
+constructor |O|) is parameterised by a user-defined universe $U$,
+which is used for the base types. We cannot know what types a user has
+modeled in their universe, so we have to require
 that they also provide a method which knows how to |unquote| values in their universe.
 
-The value |pleaseinfer| is simply set to |el unknown unknown|, which means an unknown sort and unknown type. In this case, Agda will just
+The value |pleaseinfer| is simply set to |el unknown unknown|, which
+means an unknown sort and unknown type. In this case, Agda will just
 infer the type before splicing the term into the concrete code.
 
 \begin{code}
-lam2term : {σ : U'} {Γ : Ctx} {n : ℕ} → WT Γ σ n → Term
+lam2term : {σ : Uu} {Γ : Ctx} {n : ℕ} → WT Γ σ n → Term
 lam2term (Lit {_}{σ} x)   = quoteBack σ x
 lam2term (Var x)          = var (index x) []
 lam2term (Lam σ t)        = lam visible pleaseinfer (lam2term t)
@@ -2333,12 +2339,12 @@ invoke a user-defined function which can interpret their universe values to Agda
 since it has to do with the CPS transformation, which is introduced later.
 
 \begin{code}
-el' : U' → Set
+el' : Uu → Set
 el' (O x) = Uel x
 el' (u => u₁) = el' u → el' u₁
 el' (Cont t) = ⊥
 
-lam2type : {σ : U'} {Γ : Ctx} {n : ℕ} → WT Γ σ n → Set
+lam2type : {σ : Uu} {Γ : Ctx} {n : ℕ} → WT Γ σ n → Set
 lam2type {σ} t = el' σ
 \end{code}
 
@@ -2373,7 +2379,7 @@ This seems both profound and unusable, yet it turns out to be a useful
 paradigm for many applications \cite{krishnamurthi2007programming}.
 Consider the example where you want to print an integer, but before doing so, would like
 to call, on that number, the function which increases integers by 1. That might look something like
-this:
+this fictional code.
 
 \begin{spec}
 main = print (suc 5)
@@ -2417,9 +2423,8 @@ id : {A : Set}  → A → A
 id x = x
 open  import Relation.Binary.EqReasoning
 
-RT : U'
+RT : Uu
 RT = O ReturnType
-
 \end{code}
 }
 
@@ -2440,105 +2445,79 @@ This transformation can be done in a mechanical way, too. Also the type we
 expect the new function to have can be derived. This is discussed at length by
 Might \cite{might-cps}, whose implementation was also used as inspiration for this type-safe version.
 
-The type of a CPS-transformed function can be computed as follows, where |RT| stands
-for some return type.
+The type of a CPS-transformed function can be computed as follows,
+where |RT| stands for some return type. This |RT| is some base type, i.e. |O σ| for some $\sigma$,
+and is a user-defined parameter to the module |Metaprogramming.CPS| (as well as to the |Datatypes| module,
+but this parameter is automatically passed along to |Datatypes| in the |CPS| module).
+
+
+Here we see the |Cont|
+constructor again. It is a tag we use to mark a type as going from
+some |t => RT|, where the |cpsType| function will be called
+recursively on |t|. Without this tag, it is difficult to keep track of
+which side of the function arrow to transform.
+
+The types we get back from the |cpsType| function are to be interpreted as doing
+nothing in the base type case, since the CPS transformation of an atomic value will
+still be the atomic value, and in the arrow case, we transform the left of the arrow, then assume
+that the second argument will be a function from the original result type to our new result type,
+and finally dictate that the resulting function will also return a value in |RT| if given the correct
+first and second arguments. The |Cont| case stands for the type of a continuation function, which is obtained
+by going from the CPS-transformed original return type to the result type |RT|. 
 
 \begin{code}
-cpsType : U' → U'
+cpsType : Uu → Uu
 cpsType (O x)     = O x
-cpsType (t => t₁) = cpsType t => ((cpsType t₁ => RT) => RT)
+cpsType (t => t₁) = cpsType t => (cpsType t₁ => RT) => RT
 cpsType (Cont t)  = cpsType t => RT
 \end{code}
 
 The type we would like our transformation function to have is something which takes
 as input a term with some environment and type (|WT Γ σ|), a
-continuation (necessarily |WT (map cpsType Γ) (cpsType σ => RT)|) and returns a
-semantically equal term with type |WT (map cpsType Γ) RT|. In other words, the continuation
+continuation (necessarily |WT (map cpsType Γ) (cpsType (Cont σ))|, namely an updated type context and a continuation-function for $\sigma$) and returns a
+semantically equal term with type |WT (map cpsType Γ) RT|, the return type. In other words, the continuation
 function must not rely on any variables which are not in the scope of the to-be-transformed function,
-and must produce a value of type |RT|.%TODO maybe make this arbitrary...
-If these are then applied to each other, a value of type |RT| should be returned.
+and must produce a value of type |RT|.
+If these are then applied to each other, a value of type |RT| will be returned.
 
-The term of type |TAcc wt| which is also included will be explained later, and has to do
-with termination of the function.
+%The term of type |TAcc wt| which is also included will be explained later, and has to do
+%with termination of the function.
 
-\ignore{
 \begin{code}
-
-noApp : {σ : U'} {Γ : Ctx} → WT Γ σ → Set
-noApp (Var inpf)   = ⊤
-noApp (Lam σ wt)   = ⊤
-noApp (wt ⟨ wt₁ ⟩) = ⊥
-noApp (Lit x )     = ⊥
-
-
-cpsvar : forall {t g} → t ∈' g → (cpsType t) ∈' (map cpsType g)
-cpsvar   here    = here
-cpsvar (there v) = there (cpsvar v)
-
--- show that we can add more variables to our environment for free;
--- variables that used to be in the environment are still there 
-weakvar : forall {τ Γ} → (τ' : U') → (Γ' : Ctx) → τ ∈' (Γ' ++ Γ) → τ ∈' (Γ' ++ (τ' ∷ Γ))
-weakvar t' [] x = there x
-weakvar t' (x ∷ env) here = here
-weakvar t' (x ∷ env) (there x₁) = there (weakvar t' env x₁)
-
-
--- show that we can add a type variable somewhere in the middle of our
--- environment and stuff still is okay.
-weak : forall {Γ' τ Γ} → WT (Γ' ++ Γ) τ → (τ' : U') → WT (Γ' ++ (τ' ∷ Γ)) τ
-weak (Lit x) t = Lit x
-weak {Γ'} (Var x) t' = Var (weakvar t' Γ' x)
-weak {g'} {t => t1} (Lam .t e) t' = Lam t (weak { t ∷ g' } e t')
-weak {g'} {t2} {g} (_⟨_⟩ .{_}{t1}.{t2} e1 e2) t' =
-               (weak {g'} {t1 => t2} e1 t')
-               ⟨   (weak {g'} {t1} e2 t') ⟩
- 
--- increase all the de Bruijn indices by 1. Needs to have some
--- arbitrary type added to the front of the environment to keep
--- the lengths right. special case of weakening, but with empty prefix environment.
-shift1 : forall {Γ τ} → (τ' : U') → WT Γ τ → WT (τ' ∷ Γ) τ
-shift1 t' e = weak {[]} e t'
-
-
-data TAcc : {Γ : Ctx} {σ : U'} → WT Γ σ → Set where
-  TBaseLit : forall {Γ σ x} → TAcc (Lit {Γ} {σ} x)
-  TBaseVar : forall {Γ σ x} → TAcc (Var {Γ} {σ} x)
-  TLam : forall {Γ t1 t2} {a : WT (t1 ∷ Γ) t2}
-         --→ TAcc a
-         → TAcc (shift1 (Cont t2) a)
-         → TAcc {Γ} {t1 => t2} (Lam {Γ} t1 a)
-  TApp : forall {Γ σ σ₁} {a : WT Γ (σ => σ₁)} {b : WT Γ σ}
-         → TAcc {Γ} {σ => σ₁} a
-      --   → TAcc b
-         → TAcc (shift1 (σ => σ₁) b)
-         → TAcc (a ⟨ b ⟩)
-
-
-\end{code}
-}
-\begin{code}
-T : {σ : U'} {Γ : Ctx}       → (wt : WT Γ σ)
-                             → TAcc wt
-                             → WT (map cpsType Γ) (cpsType σ => RT)
-                             → WT (map cpsType Γ) RT
+T : {σ : Uu} {Γ : Ctx}       → WT      Γ                      σ
+                             → WT      (map cpsType Γ)        (cpsType (Cont σ))
+                             → WT      (map cpsType Γ)        RT
 \end{code}
 
 The case for literals and variables is, as usual, not very difficult. All that happens here is
-that the continuation function is applied to the original term, and in
-the case of variables, some housekeeping (a proof is given that if some variable with type |σ| is inside the
-environment |Γ|, then it will also be inside the new environment |map cpsType Γ|, but having type |cpsType σ|)  is done.
+that the continuation function is applied to the original term.
+
+Note that in
+the case of variables, some housekeeping needs to be done. We are actually changing all the values
+in the context (by applying |cpsType| to them), and we need to show that the same type, but CPS
+transformed, will be in the same spot as the old type was. Therefore, a proof is given that if some variable with type |σ| is inside the
+environment |Γ|, then it will also be inside the new environment |map cpsType Γ| at the same index, but having value |cpsType σ|.
 
 \begin{code}
-T (Lit x)             TBaseLit                    cont = cont ⟨ (Lit x) ⟩
-T (Var inpf  )        TBaseVar                    cont = cont ⟨ (Var (cpsvar inpf)) ⟩
+T (Lit x)                                     cont = cont ⟨ (Lit x) ⟩
+T (Var inpf  )                                cont = cont ⟨ (Var (cpsvar inpf)) ⟩
 \end{code}
 
-The case for lambdas is slightly more involved; the body is recursively CPS transformed, and a new abstraction is
-introduced ...
+The case for lambdas is slightly more involved: When it sees a lambda
+term, it adds a fresh continuation parameter, having type |Cont t2|,
+and then transforms the body of the lambda term into continuation
+passing style, asking it to invoke |Var 0| on the result, which is the
+newly-introduced continuation parameter. Variables are unchanged,
+except that their indices all need updating, since we have introduced
+a new lambda, so all the variables under that new lambda need an
+index-increase of 1. The function |shift1| does this. Note that even
+though we are introducing two abstractions, only one is new, since we
+are rebuilding the original lambda term but assigning the argument a
+new type, namely |cpsType t1|.
 
 \begin{code}
-T {t1 => t2} (Lam .t1 expr)     (TLam pf)     cont = cont ⟨ (Lam (cpsType t1)
-                                                                 (Lam (cpsType t2 => RT)
+T {t1 => t2} (Lam .t1 expr)                   cont = cont ⟨ (Lam (cpsType t1)
+                                                                 (Lam (cpsType (Cont t2))
                                                                       (T (shift1 (Cont t2) expr) pf
                                                                          (Var here)
                                                                       )
@@ -2552,7 +2531,7 @@ Finally, we have the application case.
 
 \begin{code}
 T .{σ₂} (_⟨_⟩ .{_}{σ₁}{σ₂} f e) (TApp pf pf2) cont =
-   T f pf (Lam (cpsType σ₁ => ((cpsType σ₂ => RT) => RT))
+   T f pf (Lam (cpsType σ₁ => (cpsType σ₂ => RT) => RT)
                            (T (shift1 (σ₁ => σ₂) e) pf2 (Lam (cpsType σ₁)
                               (((Var (there here)) ⟨ (Var here) ⟩ ) 
                                   ⟨ (shift1 (cpsType σ₁) (shift1 (cpsType σ₁ => ((cpsType σ₂ => RT) => RT)) cont)) ⟩ ))))
