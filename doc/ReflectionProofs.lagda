@@ -101,9 +101,11 @@ open import Data.List hiding (_∷ʳ_)
 
 %\selectfont
 \LARGE Paul van der Walt \\
-\LARGE \textsc{Supervisor:} Wouter Swierstra \\[5mm]
-\Huge \textbf{\mytitle}% Reflection in Agda}
+\LARGE \textsc{Supervisor:} Wouter Swierstra \\
+\LARGE \textsc{2$^\textnormal{nd}$ reader:} Johan Jeuring \\[5mm]
+\Huge \textbf{\mytitle}
 \\[2mm]
+\normalsize MSc thesis Computing Science\\
 \normalsize ICA-3120805\\
 \normalsize \today
 \end{flushright}
@@ -2980,6 +2982,34 @@ Agda's reflection API has several other applications.
 
 
 Answer the research question here.
+
+\ignore{
+\clearpage
+
+%todo acknowledgements
+
+\vspace*{\stretch{1}}
+{\centering
+\textbf{Acknowledgements}\\[5mm]
+
+Obviously, a number of people deserve thanks here, but I will refrain
+from mentioning everyone. Foremost, I would like to thank Wouter for
+his infinite patience in explaining things, giving sound and complete
+advice, and his generally pleasant way of doing things. Tim deserves
+ample thanks for noticing overworkedness and nipping it in the bud, taking
+me on an epic hike through the forest.  Justin did his bit by
+convincing me to go hitchhiking, which actually was surprisingly
+inspiring -- rather a large portion of this thesis was eventually
+written while in a foreign city.  The Friday pie day club is of course
+also worthy of mention, if only because of the added motivation I felt
+near the end of my research period to catch up on all the wasted time
+spent drinking coffee and consuming calorific treats. I forget what
+exactly Ruud did, but he's a smart guy and usually talks sense.
+
+The rest of you know who you are.
+}
+\vspace*{\stretch{4}}
+}
 
 \appendix
 
