@@ -67,7 +67,7 @@ lambda           I                = K ⟨ I ⟩
 -- compiled), only in the lambda-case does anything interesting
 -- happen. The body is compiled, the abstraction is removed, and the
 -- lambda function sorts out the aftermath. see above.
-compile : {Γ : Ctx} {τ : U'} → {n : ℕ} → WT Γ τ n → Comb Γ τ
+compile : {Γ : Ctx} {τ : U'} {n : ℕ} → WT Γ τ n → Comb Γ τ
 compile {_}{O σ} (Lit x) = Lit x
 compile {_}{τ} (Var  h) = Var τ  h
 compile {_}{τ} (_⟨_⟩ {._}{σ} wt wt₁) = compile wt ⟨ compile wt₁ ⟩
@@ -136,8 +136,6 @@ private
 Srep : ∀ {A B C Γ} → WT Γ ((A => B => C) => (A => B) => A => C) _
 Srep {A}{B}{C} = Lam (A => B => C) (Lam (A => B) (Lam A
                       ( Var (there (there here)) ⟨ Var here ⟩ ⟨ (Var (there here)) ⟨ (Var here) ⟩ ⟩ )))
--- TODO is it neater to do something like:
--- Srep = term2raw ... (λ ...)?? maybe not...
 
 Irep : ∀ {A Γ} → WT Γ (A => A) _
 Irep {A} = Lam A (Var here)

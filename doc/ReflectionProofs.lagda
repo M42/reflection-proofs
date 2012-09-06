@@ -2761,11 +2761,11 @@ does the swizzling of lambda abstractions and variable references, is in Fig.~\r
 
 \begin{figure}
 \begin{code}
-compile : {Γ : Ctx} {τ : U'} → {n : ℕ} → WT Γ τ n → Comb Γ τ
-compile {_}{O σ} (Lit x) = Lit x
-compile {_}{τ} (Var  h) = Var τ  h
-compile {_}{τ} (_⟨_⟩ {._}{σ} wt wt₁) = compile wt ⟨ compile wt₁ ⟩
-compile {_}{σ => τ} (Lam .σ wt) = lambda (compile wt) 
+compile : {Γ : Ctx} {τ : U'} {n : ℕ} → WT Γ τ n → Comb Γ τ
+compile {_}{O σ} (Lit x)              = Lit x
+compile {_}{τ} (Var  h)               = Var τ  h
+compile {_}{τ} (_⟨_⟩ {._}{σ} wt wt₁)  = compile wt ⟨ compile wt₁ ⟩
+compile {_}{σ => τ} (Lam .σ wt)       = lambda (compile wt) 
 \end{code}
 \caption{The proof that any |WT| term can be translated into the |Comb| language.}\label{fig:compile}
 \end{figure}
@@ -2827,9 +2827,7 @@ Since the SKI combinators are themselves defined in terms of lambda
 expressions, it is trivial to first encode them as |WT| values (see
 Fig.~\ref{fig:skirepresentations}), and then use those to assemble a
 traditional |WT| term from a value of type |Comb|.  The unsurprising
-code can be found in Fig.~\ref{fig:skitoWT}. Note that because |WT| is
-just as well-typed as the |Comb| type, we are not losing any type safety
-on the way.
+code, which is just a fold, can be found in Fig.~\ref{fig:skitoWT}. 
 
 \begin{figure}[h]
 \begin{code}
@@ -2849,16 +2847,21 @@ Krep {A}{B} = Lam A (Lam B (Var (there here)))
 \begin{figure}[h]
 \begin{code}
 ski2wt : {Γ : Ctx} {σ : U'} → (c : Comb Γ σ) → WT Γ σ (combsz c)
-ski2wt {Γ} {σ} (Var .σ h) = Var h
-ski2wt (c ⟨ c₁ ⟩)         = ski2wt c ⟨ ski2wt c₁ ⟩
-ski2wt S                  = Srep
-ski2wt K                  = Krep
-ski2wt I                  = Irep
-ski2wt (Lit x₁)           = Lit x₁
+ski2wt {Γ} {σ} (Var .σ h)      = Var h
+ski2wt (c ⟨ c₁ ⟩)              = ski2wt c ⟨ ski2wt c₁ ⟩
+ski2wt S                       = Srep
+ski2wt K                       = Krep
+ski2wt I                       = Irep
+ski2wt (Lit x₁)                = Lit x₁
 \end{code}
 \caption{Translating SKI calculus back to lambda terms in the |WT| type.}\label{fig:skitoWT}
 \end{figure}
 
+Note that because |WT| is
+just as well-typed as the |Comb| type, we are not losing any type safety
+on the way. The function |combsz| which can be seen in the |ski2wt| type signature
+simply calculates the natural representing the size of the final expression in |WT|. This
+is necessary because the value cannot be inferred.
 
 
 \chapter{Generic Programming}\label{sec:generic-programming}
