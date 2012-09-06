@@ -2648,13 +2648,72 @@ T wt cont = Tt wt (allTsAcc wt (wf (to wt))) cont
 The developments mentioned here, as well as termination proofs, can be found in
 |Metaprogramming.CPS| and |Metaprogramming.WTWellFounded|.
 
-%todo in contributions:
+%todo mention in contributions:
 %todo * structurally recursive CPS transform
 %todo * well-typed SKI transform for de Bruijn indexed LC (this is new) + it is structurally recursive
 
 \section{Example: Translation to SKI Combinators}
 
-hullo
+Another interesting application of our new well-typed program transformation framework is the proof
+of a rather old result in computer science, revisited. This result says that any closed lambda term
+%todo cite old ski-paper that says that all closed lambda terms can be translated into SKI
+(closed in the sense of being typable under the empty environment) can be translated to a simple
+combinator language, having only 3 primitives, plus application. That language is known as SKI combinator
+calculus, and the 3 combinators are presented in Fig.~\ref{fig:ski}.
+
+\begin{figure}[h]
+\begin{spec}
+s     : ∀ {a b c : Set} → (a → b → c) → (a → b) → a → c
+s     = \ f -> \ g -> \ x -> f x (g x)
+ 
+k     : ∀ {a b : Set} → a → b → a
+k     = \ c -> \ v -> c
+ 
+i     : ∀ {a : Set} → a → a
+i     = \ x -> x
+\end{spec}
+\caption{The three combinators which make up SKI combinator calculus.}\label{fig:ski}
+\end{figure}
+
+Note that each of these 3 combinators are just closed lambda terms, but they form the basic building blocks
+of the SKI language. Basically, the SKI language is the same as the simply-typed lambda calculus, except without
+the possibility of introducing new lambda abstractions, just the option to use one of these 3 predefined combinators.
+The fact that any closed lambda term can be translated to SKI may seem counterintuitive, but that is all the more
+reason to go ahead and, in the style of programs-as-proofs, prove that one can always translate a closed lambda term into
+SKI by defining this translation for all possible terms of type |Well-typed-closed|. Because this is a dependently typed
+language, we will have the guarantee that our function is total and terminating, and that the types of the terms are precisely
+preserved, which is a big advantage compared to the textbook implementations of SKI translation one finds written in Haskell,
+as there is nothing which says those functions cannot fail (except possibly for a proof on paper, but a machine-checked proof
+of the actual function at hand seems a lot more convincing to us).  
+
+We will first define a data type |Comb| in Fig.~\ref{fig:comb} which captures the SKI combinator language, extended with variables. One might be justified in starting
+to protest at this point, since we are introducing non-closedness into the language, but notice that, in the same way as the |WT| type, we
+require variables to point to valid entries in the context, so that if we have a term of type |Comb []|, we know it contains no variables
+and thus is closed. We need these variables for intermediate results from the translation algorithm.
+
+Note also that we have as much type safety in |Comb| as we have in |WT|, on account of the types of the arguments to the constructors
+needing to have sensible types.
+
+\begin{figure}[h]
+\begin{code}
+data Comb : (Γ : Ctx) → U' → Set where
+  Var    : forall {Γ}         → (τ : U') → τ ∈ Γ
+                                          → Comb Γ τ
+  _⟨_⟩   : forall {Γ σ τ}                 → Comb Γ (σ => τ) → Comb Γ σ → Comb Γ τ
+  S      : forall {Γ A B C}               → Comb Γ ((A => B => C) => (A => B) => A => C)
+  K      : forall {Γ A B}                 → Comb Γ (A => B => A)
+  I      : forall {Γ A}                   → Comb Γ (A => A)
+  Lit    : forall {Γ} {x}     → Uel x     → Comb Γ (O x)
+\end{code}
+\caption{The data type modeling SKI combinator calculus. The |Var| constructor is less dangerous than it may seem.}\label{fig:comb}
+\end{figure}
+
+
+
+
+
+
+
 
 \chapter{Generic Programming}\label{sec:generic-programming}
 
