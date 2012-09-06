@@ -2239,7 +2239,7 @@ accept. In |seeTypedgoal1| we can inspect the resulting |WT| term.
 %variable to be bound at that point is consed onto the environment. This way, variables 
 %which are bound ``further away'' (in the de Bruijn-index sense) are nearer to the back of the list.
 
-\subsection{Doing Something Useful with |WT|}
+\subsection{Doing Something Useful with |WT|}\label{sec:doing-something-useful}
 
 Conversely, we would also like to construct a term in |WT| and use the |unquote| keyword to
 turn it back into concrete syntax, otherwise there would not be much practical use in being
@@ -2751,8 +2751,8 @@ lambda x (ApplyC t u)                = ApplyC (ApplyC S (lambda x t)) (lambda x 
 We have the added complication of using de Bruijn indices, though. This means that each time we
 replace a lambda abstraction with some other construction, we are potentially breaking the variable
 references, since some of them (exactly those in the body of the destroyed lambda) will need decrementing.
-Also, it sounds difficult to do a check on variable name to see if we should introduce an |I| or |K| in
-the variable case, but we will see that it is actually not so bad, and the fact that the |Comb| language
+Also, it sounds difficult to do a check on the variable's name to see if we should introduce an |I| or |K| in
+the variable case, but we will see that it is actually not so involved, and that the fact that the |Comb| language
 also uses the same context as the |WT| language is in fact a useful property. The code for the |compile| function,
 which is pretty boring, is to be found in Fig.~\ref{fig:compile}, and the more interesting |lambda| function, which
 does the swizzling of lambda abstractions and variable references, is in Fig.~\ref{fig:lambda}.
@@ -2761,14 +2761,18 @@ does the swizzling of lambda abstractions and variable references, is in Fig.~\r
 
 \begin{figure}
 \begin{code}
-compile : (Γ : Ctx) → (τ : U') → {n : ℕ} → WT Γ τ n → Comb Γ τ
-compile Γ (O σ) (Lit x) = Lit x
-compile Γ τ (Var  h) = Var τ  h
-compile Γ τ (_⟨_⟩ {.Γ}{σ} wt wt₁) = compile Γ (σ => τ) wt ⟨ compile Γ σ wt₁ ⟩
-compile Γ (σ => τ) (Lam .σ wt) = lambda (compile ( σ ∷ Γ) τ wt) 
+compile : {Γ : Ctx} {τ : U'} → {n : ℕ} → WT Γ τ n → Comb Γ τ
+compile {_}{O σ} (Lit x) = Lit x
+compile {_}{τ} (Var  h) = Var τ  h
+compile {_}{τ} (_⟨_⟩ {._}{σ} wt wt₁) = compile wt ⟨ compile wt₁ ⟩
+compile {_}{σ => τ} (Lam .σ wt) = lambda (compile wt) 
 \end{code}
 \caption{The proof that any |WT| term can be translated into the |Comb| language.}\label{fig:compile}
 \end{figure}
+
+Notice in Fig.~\ref{fig:lambda} that when we encounter a variable as the only thing in the body
+of the lambda, and if it is not the variable which is bound by the lambda under consideration,
+that we decrement the de Bruijn index as promised, by peeling of a |there| constructor off the index-proof.
 
 
 \begin{figure}
@@ -2787,6 +2791,73 @@ lambda           I                = K ⟨ I ⟩
 \caption{The function we invoke whenever we encounter a lambda abstraction. }\label{fig:lambda}
 \end{figure}
 
+With this machinery in place, we can now successfully convert closed lambda expressions
+to SKI combinator calculus.
+
+\begin{spec}
+testTermWT : Well-typed-closed (typeOf (term2raw (quoteTerm λ (n : ℕ → ℕ) → λ (m : ℕ) → n m ))) _
+testTermWT = raw2wt (term2raw (quoteTerm λ (n : ℕ → ℕ) → λ (m : ℕ) → n m ))
+ 
+unitTest1 : compile testTermWT ≡ (S ⟨ (S ⟨ K ⟨ S ⟩ ⟩) ⟨ (S ⟨ K ⟨ K ⟩ ⟩) ⟨ I ⟩ ⟩ ⟩) ⟨ K ⟨ I ⟩ ⟩
+unitTest1 = refl
+\end{spec}
+
+Here we see how the existing lambda expression quoting system is used to read a
+concrete Agda lambda expression into a |WT| value, which is then |compile|d to
+produce an SKI term.
+
+The resulting terms are sometimes rather verbose, as is illustrated
+in the examples of use provided in the module |Metaprogramming.ExampleSKI|, but this is to be expected,
+since, while being a Turing complete language, the SKI calculus obviously is not very concise. If one wanted to
+make the resulting terms a little more readable, one might consider adding extra combinators (such as
+those defined in ...), %TODO examples of more powerful combinators
+but it is interesting to note that by the fact that all lambda expressions can be translated to expressions
+using only S, K and I, these new combinators would simply be aliases for various combinations of the
+already-defined combinators.
+
+
+\subsection{From SKI to Concrete Agda}
+
+Once we have converted some lambda term to SKI, we might want to use it as a function on concrete Agda values.
+This is slightly pointless, since we already had some term to SKI-convert, so we might as well use that directly,
+but for completeness we do provide a translation from SKI back to |WT|, which we know we can |unquote|, as shown
+in Sec.~\ref{sec:doing-something-useful}.
+
+Since the SKI combinators are themselves defined in terms of lambda
+expressions, it is trivial to first encode them as |WT| values (see
+Fig.~\ref{fig:skirepresentations}), and then use those to assemble a
+traditional |WT| term from a value of type |Comb|.  The unsurprising
+code can be found in Fig.~\ref{fig:skitoWT}. Note that because |WT| is
+just as well-typed as the |Comb| type, we are not losing any type safety
+on the way.
+
+\begin{figure}[h]
+\begin{code}
+Srep : ∀ {A B C Γ} → WT Γ ((A => B => C) => (A => B) => A => C) _
+Srep {A}{B}{C} = Lam (A => B => C) (Lam (A => B) (Lam A
+                      ( Var (there (there here)) ⟨ Var here ⟩ ⟨ Var (there here) ⟨ Var here ⟩ ⟩ )))
+
+Irep : ∀ {A Γ} → WT Γ (A => A) _
+Irep {A} = Lam A (Var here)
+
+Krep : ∀ {A B Γ} → WT Γ (A => B => A) _
+Krep {A}{B} = Lam A (Lam B (Var (there here)))
+\end{code}
+\caption{The SKI combinators as represented in the |WT| domain.}\label{fig:skirepresentations}
+\end{figure}
+
+\begin{figure}[h]
+\begin{code}
+ski2wt : {Γ : Ctx} {σ : U'} → (c : Comb Γ σ) → WT Γ σ (combsz c)
+ski2wt {Γ} {σ} (Var .σ h) = Var h
+ski2wt (c ⟨ c₁ ⟩)         = ski2wt c ⟨ ski2wt c₁ ⟩
+ski2wt S                  = Srep
+ski2wt K                  = Krep
+ski2wt I                  = Irep
+ski2wt (Lit x₁)           = Lit x₁
+\end{code}
+\caption{Translating SKI calculus back to lambda terms in the |WT| type.}\label{fig:skitoWT}
+\end{figure}
 
 
 
