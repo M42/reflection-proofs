@@ -109,7 +109,7 @@ T' {t1 => t2} {Γ}{suc n}{m} (Lam .t1 expr)     (TLam pf)     cont = cont ⟨ La
 T' .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂}{n}{m} f e)  (TApp pf pf2)    cont =
   T' f pf (Lam (cpsType (σ₁ => σ₂))
                            (T' (shift1 (σ₁ => σ₂) e) pf2 (Lam (cpsType σ₁)
-                              ((Var (there here)) ⟨ Var here ⟩  
+                              (Var (there here) ⟨ Var here ⟩  
                                   ⟨ shift1 (cpsType σ₁) (shift1 (cpsType (σ₁ => σ₂)) cont) ⟩ ))))
                                   
 import Metaprogramming.WTWellfounded

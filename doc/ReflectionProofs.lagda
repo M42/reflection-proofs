@@ -676,12 +676,12 @@ The |definition| function returns the definition of a given identifier. The type
 
 \begin{spec}
 data Definition : Set where
-  function     : Function  → Definition
-  data-type    : Data-type → Definition
-  record′      : Record    → Definition
-  constructor′ : Definition
-  axiom        : Definition
-  primitive′   : Definition
+  function          : Function  → Definition
+  data-type         : Data-type → Definition
+  record′           : Record    → Definition
+  constructor′      : Definition
+  axiom             : Definition
+  primitive′        : Definition
 \end{spec}
 
 At the time of writing the only constructor we can do anything with is |data-type|: using
@@ -819,8 +819,8 @@ lookupName : {a : Set}      → List     (ConstructorMapping a)
                             → Maybe    (ConstructorMapping a)
 lookupName [] name = nothing
 lookupName (arity \# x ↦ x₁ ∷ tab) name with name ≟-Name x
-lookupName (arity \# x ↦ x₁ ∷ tab) name | yes p = just (arity \# x ↦ x₁)
-lookupName (arity \# x ↦ x₁ ∷ tab) name | no ¬p = lookupName tab name
+... | yes p = just (arity \# x ↦ x₁)
+... | no ¬p = lookupName tab name
 \end{code}
 
 With the above ingredients we can now define the function |convert| below, which, given a mapping of
@@ -875,10 +875,10 @@ suc m ≟-ℕ suc n = ≟-Nat-cong m n (m ≟-ℕ n)
 \begin{code}
 mutual
   convert : {a : Set} → Table a → Term → Maybe a
-  convert (vc , tab) (var x args) = just (vc x)
-  convert (vc , tab) (con c args) = appCons (vc , tab) c args
-  convert (vc , tab) (def f args) = appCons (vc , tab) f args
-  convert (vc , tab)     _        = nothing
+  convert (vc , tab) (var x args)       = just (vc x)
+  convert (vc , tab) (con c args)       = appCons (vc , tab) c args
+  convert (vc , tab) (def f args)       = appCons (vc , tab) f args
+  convert (vc , tab)     _              = nothing
 \end{code}
 
 
@@ -901,20 +901,20 @@ these new arguments.
 -- mutual continues...
   appCons : {a : Set} → Table a → Name → List (Arg Term) → Maybe a
   appCons (vc , tab) name args with lookupName tab name
-  appCons (vc , tab) name args | just (arity       \# x  ↦ x₁)   with convertArgs (vc , tab) args
-  appCons (vc , tab) name args | just (arity       \# x₁ ↦ x₂)   | just x with length x ≟-ℕ arity
-  appCons (vc , tab) name args | just (.(length x) \# x₁ ↦ x₂)   | just x | yes = just (x₂ dollarn fromList x)
-  appCons (vc , tab) name args | just (arity       \# x₁ ↦ x₂)   | just x | no  = nothing
-  appCons (vc , tab) name args | just (arity       \# x  ↦ x₁)   | nothing = nothing
-  appCons (vc , tab) name args | nothing = nothing
+  ... | just (arity       \# x  ↦ x₁)   with convertArgs (vc , tab) args
+  ... | just (arity       \# x₁ ↦ x₂)   | just x       with length x ≟-ℕ arity
+  ... | just (.(length x) \# x₁ ↦ x₂)   | just x       | yes     = just (x₂ dollarn fromList x)
+  ... | just (arity       \# x₁ ↦ x₂)   | just x       | no      = nothing
+  ... | just (arity       \# x  ↦ x₁)   | nothing      = nothing
+  ... | nothing = nothing
 
   convertArgs : {a : Set} → Table a → List (Arg Term) → Maybe (List a)
-  convertArgs tab [] = just []
-  convertArgs tab (arg v r x ∷ ls) with convert tab x
-  convertArgs tab (arg v r x ∷ ls) | just x₁ with convertArgs tab ls
-  convertArgs tab (arg v r x ∷ ls) | just x₂ | just x₁ = just (x₂ ∷ x₁)
-  convertArgs tab (arg v r x ∷ ls) | just x₁ | nothing = nothing
-  convertArgs tab (arg v r x ∷ ls) | nothing = nothing
+  convertArgs tab []                   = just []
+  convertArgs tab (arg v r x ∷ ls)     with convert tab x
+  ... | just x₁      with convertArgs tab ls
+  ... | just x₂      | just x₁     = just (x₂ ∷ x₁)
+  ... | just x₁      | nothing     = nothing
+  ... | nothing      = nothing
 \end{code}
 
 |appCons| and |convertArgs| just check to see if the desired |Name| is present in the provided
@@ -944,8 +944,11 @@ a |just| value.
 
 \begin{figure}[h]
 \begin{code}
-something : {x y : ℕ}    → doConvert exprTable (quoteTerm ((1 + x + 2) + y))
-                         ≡ Succ (Plus (Plus (Variable 1) (Succ (Succ Zero))) (Variable 0))
+something : {x y : ℕ}    → doConvert    exprTable
+                                        (quoteTerm ((1 + x + 2) + y))
+                         ≡ Succ (Plus       (Plus     (Variable 1)
+                                                      (Succ (Succ Zero)))
+                                            (Variable 0))
 something = refl
 \end{code}
 \caption{Examples of |Autoquote| in use. See Fig.~\ref{fig:exprTable} for the definition of |exprTable|, a typical |Name|/constructor mapping.}\label{fig:test-autoquote}
@@ -1543,7 +1546,7 @@ case.
 \subsection{Why Not Enumerate Environments?}\label{sec:no-enumerate-environments}
 
 
-One of the reasons for not enumerating environments (|∀ (e : Env n) → P( someprop )|) is that
+One of the reasons for not enumerating environments (for exampke, something like |∀ (e : Env n) → P someprop |) is that
 referring to variables becomes a bit of a problem. One would have to introduce some new syntax, such as a constructor
 |Var : Fin n → Bool| which could be used to refer to an element of the environment by number. This is 
 rather less elegant than the current implementation, where one simply brings a few Boolean variables into scope in
@@ -1664,6 +1667,7 @@ freeVars (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = 1 + (
 freeVars    _         = 0
 \end{code}
 }
+% TODO use proofObligation and proofObligation' here, not proofObligation 0 ...
 \begin{code}
 proveTautology :    (t     : Term) →
                     {pf    : isSoExprQ (stripPi t)} →
@@ -1758,7 +1762,9 @@ boolTable = (Atomic ,
             ∷     0 \# (quote false    ) ↦ Falsehood
             ∷     2 \# (quote _⇒_      ) ↦ Imp ∷ [])
 
-term2boolexpr' : (t : Term) → {pf : convertManages boolTable t} → BoolInter
+term2boolexpr'     : (t : Term)
+                   → {pf : convertManages boolTable t}
+                   → BoolInter
 term2boolexpr' t {pf} = doConvert boolTable t {pf}
 \end{code}
 
@@ -1997,7 +2003,7 @@ now including a size parameter.
 
 \begin{figure}[h]
 \begin{code}
-data WT : (Γ : Ctx) → Uu → ℕ → Set where
+data WT : Ctx → Uu → ℕ → Set where
   Var   : ∀ {Γ} {τ}
                    → τ ∈ Γ
                    → WT Γ           τ               1
@@ -2119,8 +2125,8 @@ in Fig.~\ref{fig:infer-datatype}.
 \begin{figure}[h]
 \begin{code}
 data Infer (Γ : Ctx) : Raw → Set where
-  ok    : (n : ℕ)(τ : Uu) (t : WT Γ τ n)  → Infer Γ (erase t)
-  bad   : {e : Raw}              → Infer Γ e
+  ok    : (n : ℕ) (τ : Uu) (t : WT Γ τ n)       → Infer Γ (erase t)
+  bad   : {e : Raw}                             → Infer Γ e
 \end{code}
 \caption{The view on |Raw| lambda terms denoting whether they are well-typed or not.}\label{fig:infer-datatype}
 \end{figure}
@@ -2139,7 +2145,7 @@ The |infer| algorithm, which provides the |Infer| view and therefore generates
 
 \begin{code}
 infer : (Γ : Ctx)(e : Raw) → Infer Γ e
-infer Γ (Lit ty x) = ok 1 (O ty) (Lit {_}{ty} x)
+infer Γ (Lit ty x) = ok 1 (O ty) (Lit {σ = ty} x)
 \end{code}
 
 Of course, a literal on its own is always well-typed, and corresponds to a |WT| with whatever type the literal has.
@@ -2160,8 +2166,8 @@ the type of the binding to the type of the body.
 
 \begin{code}
 infer Γ (Lam σ e)              with infer (σ ∷ Γ) e
-infer Γ (Lam σ .(erase t))     | ok n τ t = ok _ (σ => τ) (Lam σ t)
-infer Γ (Lam σ e)              | bad = bad
+infer Γ (Lam σ .(erase t))     | ok n τ t    = ok _ (σ => τ) (Lam σ t)
+infer Γ (Lam σ e)              | bad         = bad
 \end{code}
 
 The application case is the most verbose, since we need to check the type of the applicand (called $e$ in the code), and assuming it
@@ -2464,14 +2470,13 @@ are rebuilding the original lambda term but assigning the argument a
 new type, namely |cpsType t1|.
 
 \begin{code}
-Tt {t1 => t2} (Lam .t1 expr)                  cont
-          = cont     ⟨     (Lam     (cpsType t1)
+Tt {t1 => t2} (Lam .t1 expr) cont
+          = cont     ⟨     Lam      (cpsType t1)
                                     (Lam    (cpsType (Cont t2))
                                             (Tt   (shift1 (Cont t2) expr)
                                                   (Var here)
                                             )
                                     )
-                           )
                      ⟩
 
 \end{code}
@@ -2488,7 +2493,7 @@ continuations.
 Tt .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂} f e)     cont =
   Tt f (Lam (cpsType (σ₁ => σ₂))
                      (Tt (shift1 (σ₁ => σ₂) e) (Lam (cpsType σ₁)
-                        ((Var (there here)) ⟨ Var here ⟩  
+                        (Var (there here) ⟨ Var here ⟩  
                             ⟨ shift1 (cpsType σ₁) (shift1 (cpsType (σ₁ => σ₂)) cont) ⟩ ))))
 \end{code}
 First |f|, the applicand, is transformed, with a new abstraction as the continuation. This abstraction
@@ -2518,12 +2523,14 @@ would do the job just fine.
 
 \begin{code}
 data TAcc : {Γ : Ctx} {σ : Uu} {n : ℕ} → WT Γ σ n → Set where
-  TBaseLit : forall {Γ σ x} → TAcc (Lit {Γ} {σ} x)
-  TBaseVar : forall {Γ σ x} → TAcc (Var {Γ} {σ} x)
-  TLam : forall {Γ t1 t2 n} {a : WT (t1 ∷ Γ) t2 n}
+  TBaseLit      : forall {Γ σ x} → TAcc (Lit {Γ} {σ} x)
+  TBaseVar      : forall {Γ σ x} → TAcc (Var {Γ} {σ} x)
+  TLam          : forall     {Γ t1 t2 n} {a : WT (t1 ∷ Γ) t2 n}
          → TAcc (shift1 (Cont t2) a)
          → TAcc {Γ} {t1 => t2} (Lam {Γ} t1 a)
-  TApp : forall {Γ σ σ₁ sza szb} {a : WT Γ (σ => σ₁) sza} {b : WT Γ σ szb}
+  TApp          : forall    {Γ σ σ₁ sza szb}
+                            {a : WT Γ (σ => σ₁) sza}
+                            {b : WT Γ σ szb}
          → TAcc {Γ} {σ => σ₁} a
          → TAcc (shift1 (σ => σ₁) b)
          → TAcc (a ⟨ b ⟩)
@@ -2540,9 +2547,11 @@ on the arguments of the constructors.
 allTsAcc : forall {Γ σ n} → (wt : WT Γ σ n) → TAcc wt
 allTsAcc (Var x)                     = TBaseVar
 allTsAcc (Lit x₁)                    = TBaseLit
-allTsAcc {_} {τ => σ} (Lam .τ wt)    = TLam            (allTsAcc (shift1 (Cont σ) wt) )
-allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁} wt wt₁)    = TApp            (allTsAcc wt)
-                                                       (allTsAcc (shift1 (σ => σ₁) wt₁))
+allTsAcc {_} {τ => σ} (Lam .τ wt)    =
+          TLam            (allTsAcc (shift1 (Cont σ) wt) )
+allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁} wt wt₁)    =
+          TApp            (allTsAcc wt)
+                          (allTsAcc (shift1 (σ => σ₁) wt₁))
 \end{code}
 
 But, horror! Agda now is convinced that this function, |allTsAcc|, which is meant to give us the proof
@@ -2556,7 +2565,10 @@ of type |ℕ|. Following Mertens' example \cite{} %TODO cite mertens
 we can build a well-foundedness proof for |WT| in terms of our measure, which we can then add as an extra argument to the
 |allTsAcc| function.  The first pitfall we encounter is that we want to define some |Rel A| which we will prove is well-founded
 on our data structure. The problem is that |Rel| is of type |Set -> Set₁| (not exactly, but for the purposes of argument), but |WT| is not
-of type |Set|, but |∁tx → Uu → ℕ → Set|. We can, however, circumvent this problem by defining a ``wrapper'' which is isomorphic to |WT|, but
+of type |Set|, but |∁tx → Uu → ℕ → Set|. If we try to define something like |\ {Γ σ n} → Rel (WT Γ σ n)|, things also become sticky rather
+quickly.
+
+We can, however, circumvent this problem by defining a ``wrapper'' which is isomorphic to |WT|, but
 at the same time an element of |Set|. We will define this wrapper, |WTpack|, as follows.
 
 \begin{code}
@@ -2800,7 +2812,7 @@ to SKI combinator calculus.
 testTermWT : Well-typed-closed (typeOf (term2raw (quoteTerm λ (n : ℕ → ℕ) → λ (m : ℕ) → n m ))) _
 testTermWT = raw2wt (term2raw (quoteTerm λ (n : ℕ → ℕ) → λ (m : ℕ) → n m ))
  
-unitTest1 : compile testTermWT ≡ (S ⟨ (S ⟨ K ⟨ S ⟩ ⟩) ⟨ (S ⟨ K ⟨ K ⟩ ⟩) ⟨ I ⟩ ⟩ ⟩) ⟨ K ⟨ I ⟩ ⟩
+unitTest1 : compile testTermWT ≡ S ⟨ S ⟨ K ⟨ S ⟩ ⟩ ⟨ S ⟨ K ⟨ K ⟩ ⟩ ⟨ I ⟩ ⟩ ⟩ ⟨ K ⟨ I ⟩ ⟩
 unitTest1 = refl
 \end{spec}
 
@@ -2983,16 +2995,16 @@ Agda's reflection API has several other applications.
 
 Answer the research question here.
 
+%todo acknowledgements
 \ignore{
 \clearpage
 
-%todo acknowledgements
 
 \vspace*{\stretch{1}}
 {\centering
 \textbf{Acknowledgements}\\[5mm]
 
-Obviously, a number of people deserve thanks here, but I will refrain
+Obviously, a formidable number of people deserve thanks here, but I will refrain
 from mentioning everyone. Foremost, I would like to thank Wouter for
 his infinite patience in explaining things, giving sound and complete
 advice, and his generally pleasant way of doing things. Tim deserves
@@ -3003,8 +3015,7 @@ inspiring -- rather a large portion of this thesis was eventually
 written while in a foreign city.  The Friday pie day club is of course
 also worthy of mention, if only because of the added motivation I felt
 near the end of my research period to catch up on all the wasted time
-spent drinking coffee and consuming calorific treats. I forget what
-exactly Ruud did, but he's a smart guy and usually talks sense.
+spent drinking coffee and consuming calorific treats. 
 
 The rest of you know who you are.
 }
