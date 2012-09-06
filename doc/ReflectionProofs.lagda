@@ -469,7 +469,7 @@ Agda's reflection API defines several data types which represent terms,
 types, and sorts. These definitions take into account various
 features, including hidden arguments and computationally irrelevant
 terms. An overview of the core data types involved has been
-included in Figure~\ref{fig:reflection}. In addition to these data
+included in Fig.~\ref{fig:reflection}. In addition to these data
 types that represent \emph{terms}, there is limited support for
 reflecting \emph{definitions} as opposed to terms. Inspection of definitions
 is detailed in Sec.~\ref{sec:inspecting-definitions}.
@@ -1359,7 +1359,7 @@ means to be a tautology. We quantify over a few Boolean variables, and
 wrap the formula in our |P| decision function. If the resulting type is
 inhabited, the argument to |P| is a tautology, i.e., for each
 assignment of the free variables the entire equation still evaluates
-to |true|. An example encoding of such a theorem is Figure \ref{fig:exampletheorem}.
+to |true|. An example encoding of such a theorem is Fig.~\ref{fig:exampletheorem}.
 
 One might wonder why propositions are not encoded in the slightly more 
 intuitive propositional equality style, for example |(b : Bool) → b ∨ ¬ b ≡ true|, since
@@ -1377,7 +1377,7 @@ exampletheorem = (p1 q1 p2 q2 : Bool)   →   P  (         (p1 ∨ q1) ∧ (p2 �
 
 Here a complication arises, though. We are quantifying over a list of Boolean values \emph{outside}
 of the decision function |P|, so proving |P| to be sound will not suffice. We just defined a decision function (|⟦_⊢_⟧|)
-to take an environment, an expression, and return a Boolean. In Figure \ref{fig:exampletheorem}, though,
+to take an environment, an expression, and return a Boolean. In Fig.~\ref{fig:exampletheorem}, though,
 we effectively quantified over all possible environments. We are going to need a way
 to lift our decision function to arbitrary environments.
 
@@ -2175,16 +2175,18 @@ has an arrow type (otherwise something is wrong), we then have to check that the
 the left-hand side of the arrow. If all goes well, we are done.
 
 \begin{code}
-infer Γ (App e e₁)                         with infer Γ e
-infer Γ (App .(erase t) e₁)                | ok n (Cont a) t       = bad
-infer Γ (App .(erase t) e₁)                | ok n (O x) t          = bad
-infer Γ (App .(erase t) e₁)                | ok n (τ => τ₁) t               with infer Γ e₁
-infer Γ (App .(erase t₁) .(erase t₂))      | ok n (σ => τ) t₁               | ok n₂ σ' t₂ with σ =?= σ'
-infer Γ (App .(erase t₁) .(erase t₂))      | ok n (.σ' => τ) t₁             | ok n₂ σ' t₂ | yes = ok _ τ (t₁ ⟨ t₂ ⟩ )
-infer Γ (App .(erase t₁) .(erase t₂))      | ok n (σ => τ) t₁               | ok n₂ σ' t₂ | no  = bad
-infer Γ (App .(erase t) e₁)                | ok n (τ => τ₁) t               | bad = bad
-infer Γ (App e e₁)                         | bad                   = bad
+infer Γ (App e               e₁)               with infer Γ e
+infer Γ (App .(erase t)      e₁)               | ok n (Cont a    )   t          = bad
+infer Γ (App .(erase t)      e₁)               | ok n (O x       )   t          = bad
+infer Γ (App .(erase t)      e₁)               | ok n (τ => τ₁   )   t          with infer Γ e₁
+infer Γ (App .(erase t₁)     .(erase t₂))      | ok n (σ => τ    )   t₂         | ok n₂ σ' t₂ with σ =?= σ'
+infer Γ (App .(erase t₁)     .(erase t₂))      | ok n (.σ' => τ  )   t₁         | ok n₂ σ' t₂ | yes = ok _ τ (t₁ ⟨ t₂ ⟩ )
+infer Γ (App .(erase t₁)     .(erase t₂))      | ok n (σ => τ    )   t₁         | ok n₂ σ' t₂ | no  = bad
+infer Γ (App .(erase t)      e₁)               | ok n (τ => τ₁   )   t          | bad         = bad
+infer Γ (App e               e₁)               | bad                            = bad
 \end{code}
+
+%todo make sure all the parameters to the CPS etc modules are handled. summarise, possibly.
 
 The code which does all of this can be found in |Metaprogramming.TypeCheck|, the views and data type definitions are in |Metaprogramming.Datatypes|.
 
@@ -2267,7 +2269,8 @@ that they also provide a method which knows how to |unquote| values in their uni
 
 The value |pleaseinfer| is simply set to |el unknown unknown|, which
 means an unknown sort and unknown type. In this case, Agda will just
-infer the type before splicing the term into the concrete code.
+infer the type before splicing the term into the concrete code. We know
+this will succeed, since |WT| terms are well-typed.
 
 \begin{code}
 lam2term : {σ : Uu} {Γ : Ctx} {n : ℕ} → WT Γ σ n → Term
@@ -2711,18 +2714,14 @@ needing to have sensible types.
 \begin{figure}[h]
 \begin{code}
 data Comb : (Γ : Ctx) → U' → Set where
-  Var    : forall {Γ}
-         → (τ : U') → τ ∈ Γ              → Comb Γ τ
+  Var    : forall {Γ} → (τ : U') → τ ∈ Γ    → Comb Γ τ
   _⟨_⟩   : forall {Γ σ τ}
-         → Comb Γ (σ => τ) → Comb Γ σ    → Comb Γ τ
+         → Comb Γ (σ => τ) → Comb Γ σ       → Comb Γ τ
   S      : forall {Γ A B C}
          → Comb Γ ((A => B => C) => (A => B) => A => C)
-  K      : forall {Γ A B}
-         → Comb Γ (A => B => A)
-  I      : forall {Γ A}
-         → Comb Γ (A => A)
-  Lit    : forall {Γ} {x}
-         → Uel x                         → Comb Γ (O x)
+  K      : forall {Γ A B}                   → Comb Γ (A => B => A)
+  I      : forall {Γ A}                     → Comb Γ (A => A)
+  Lit    : forall {Γ} {x}    → Uel x        → Comb Γ (O x)
 \end{code}
 \caption{The data type modeling SKI combinator calculus. The |Var| constructor is less dangerous than it may seem.}\label{fig:comb}
 \end{figure}
@@ -2748,7 +2747,7 @@ doesn't depend on the abstraction. In case we encounter an application
 as the body, we should recursively do the lambda-modification on the
 applicand and argument, then apply them both to the |S| combinator,
 since that will restore the analogue of the $\lambda x
-. \textnormal{App} y z$ (bearing in mind that initially $y$ and $z$
+. \textnormal{App}~y~z$ (bearing in mind that initially $y$ and $z$
 might depend on $x$), since |S ⟨ y ⟩ ⟨ z ⟩ | indeed evaluates to |\ f
 -> \ g -> \ x -> f x (g x)| applied to $y$ then $z$, which gives |\ x
 -> y x (z x)| which precisely reflects that we want $y$ applied to
@@ -2802,13 +2801,13 @@ lambda : {σ τ : U'}{Γ : Ctx}    → (c : Comb (σ ∷ Γ) τ)
                                 → Comb Γ (σ => τ)
 lambda {σ}     (Var .σ   here)    = I
 lambda {σ} {τ} (Var .τ (there i)) = K ⟨ Var τ i ⟩
-lambda  (t ⟨ t₁ ⟩) = let l1 = lambda  t
-                         l2 = lambda  t₁
-                      in S ⟨ l1 ⟩ ⟨ l2 ⟩
-lambda           (Lit l)          = K ⟨ Lit l ⟩
-lambda           S                = K ⟨ S ⟩
-lambda           K                = K ⟨ K ⟩
-lambda           I                = K ⟨ I ⟩
+lambda  (t ⟨ t₁ ⟩) =     let    l1    = lambda  t
+                                l2    = lambda  t₁
+                         in     S ⟨ l1 ⟩ ⟨ l2 ⟩
+lambda           (Lit l)          = K ⟨ Lit l     ⟩
+lambda           S                = K ⟨ S         ⟩
+lambda           K                = K ⟨ K         ⟩
+lambda           I                = K ⟨ I         ⟩
 \end{code}
 \caption{The function we invoke whenever we encounter a lambda abstraction. }\label{fig:lambda}
 \end{figure}
@@ -2817,10 +2816,13 @@ With this machinery in place, we can now successfully convert closed lambda expr
 to SKI combinator calculus.
 
 \begin{spec}
-testTermWT : Well-typed-closed (typeOf (term2raw (quoteTerm λ (n : ℕ → ℕ) → λ (m : ℕ) → n m ))) _
-testTermWT = raw2wt (term2raw (quoteTerm λ (n : ℕ → ℕ) → λ (m : ℕ) → n m ))
+testTermWT : Well-typed-closed (typeOf (
+         term2raw (quoteTerm λ (n : ℕ → ℕ) → λ (m : ℕ) → n m ))) _
+testTermWT = raw2wt (
+         term2raw (quoteTerm λ (n : ℕ → ℕ) → λ (m : ℕ) → n m ))
  
-unitTest1 : compile testTermWT ≡ S ⟨ S ⟨ K ⟨ S ⟩ ⟩ ⟨ S ⟨ K ⟨ K ⟩ ⟩ ⟨ I ⟩ ⟩ ⟩ ⟨ K ⟨ I ⟩ ⟩
+unitTest1 : compile testTermWT ≡
+    S ⟨ S ⟨ K ⟨ S ⟩ ⟩ ⟨ S ⟨ K ⟨ K ⟩ ⟩ ⟨ I ⟩ ⟩ ⟩ ⟨ K ⟨ I ⟩ ⟩
 unitTest1 = refl
 \end{spec}
 
@@ -3124,7 +3126,7 @@ Insert source tree here?
 % Geef voorbeelden
 
 
-%TODO: right at the end, check if references to sections and chapters are called Sec. and Chap. accordingly.
+%TODO: right at the end, check if references to sections and chapters are called Sec. and Fig. accordingly.
 
 \end{document}
 
