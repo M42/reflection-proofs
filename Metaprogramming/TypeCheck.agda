@@ -132,7 +132,7 @@ term2raw unknown           {()}
 -- it fails, in which case we return a `bad`.
 -- see thesis for detailed explanation.
 infer : (Γ : Ctx)(e : Raw) → Infer Γ e
-infer Γ (Lit ty x) = ok 1 (O ty) (Lit {_}{ty} x)
+infer Γ (Lit ty x) = ok 1 (O ty) (Lit {σ = ty} x)
 infer Γ (Var x) with Γ ! x
 infer Γ (Var .(index p))      | inside σ p = ok 1 σ (Var p)
 infer Γ (Var .(length Γ + m)) | outside m = bad
