@@ -48,7 +48,7 @@ data Comb : (Γ : Ctx) → U' → Set where
 -- abstraction between it and its binding site. in other cases,
 -- i.e. if the body isn't a variable, we can safely replace the lambda
 -- + body with a K-combinator applied to the body.
-lambda : {σ τ : U'}{Γ : Ctx} → (c : Comb (σ ∷ Γ) τ) → (Comb Γ (σ => τ))
+lambda : {σ τ : U'}{Γ : Ctx} → (c : Comb (σ ∷ Γ) τ) → Comb Γ (σ => τ)
 lambda {σ}     (Var .σ   here)    = I
 lambda {σ} {τ} (Var .τ (there i)) = K ⟨ Var τ i ⟩
 lambda  (t ⟨ t₁ ⟩) = let l1 = lambda  t
@@ -67,7 +67,7 @@ lambda           I                = K ⟨ I ⟩
 -- compiled), only in the lambda-case does anything interesting
 -- happen. The body is compiled, the abstraction is removed, and the
 -- lambda function sorts out the aftermath. see above.
-compile : (Γ : Ctx) → (τ : U') → {n : ℕ} → WT Γ τ n → (Comb Γ τ)
+compile : (Γ : Ctx) → (τ : U') → {n : ℕ} → WT Γ τ n → Comb Γ τ
 compile Γ (O σ) (Lit x) = Lit x
 compile Γ τ (Var  h) = Var τ  h
 compile Γ τ (_⟨_⟩ {.Γ}{σ} wt wt₁) = compile Γ (σ => τ) wt ⟨ compile Γ σ wt₁ ⟩
@@ -136,6 +136,8 @@ private
 Srep : ∀ {A B C Γ} → WT Γ ((A => B => C) => (A => B) => A => C) _
 Srep {A}{B}{C} = Lam (A => B => C) (Lam (A => B) (Lam A
                       ( Var (there (there here)) ⟨ Var here ⟩ ⟨ (Var (there here)) ⟨ (Var here) ⟩ ⟩ )))
+-- TODO is it neater to do something like:
+-- Srep = term2raw ... (λ ...)?? maybe not...
 
 Irep : ∀ {A Γ} → WT Γ (A => A) _
 Irep {A} = Lam A (Var here)

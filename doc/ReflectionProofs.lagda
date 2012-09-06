@@ -2708,9 +2708,84 @@ data Comb : (Γ : Ctx) → U' → Set where
 \caption{The data type modeling SKI combinator calculus. The |Var| constructor is less dangerous than it may seem.}\label{fig:comb}
 \end{figure}
 
+%todo first introduce the algorithm in pseudo-code, then show our real agda. 
+
+Translation of lambda terms into SKI is actually surprisingly (that is, if you are used to spending days grappling
+with the Agda compiler to get something seemingly trivial proven) straightforward. Since literals, variables and applications are
+supported, those can just be translated into the |Comb| equivalents without a problem, preserving the input context and type.
+The more complicated case occurs when we encounter a lambda abstraction.
+
+If we were using named representation of STLC, we could write a
+function, call it |lambda|, to be invoked with its corresponding
+variable name and the SKI-translated body, whenever we encountered an
+abstraction. What we would like it to do is pattern match on this new
+translated body, and if it encounters a |Var| constructor, check if
+the variable has the same name. If it does, we evidently have
+encountered a $\lambda x . x$ somewhere in the expression, which
+should just translate to the |I| combinator. If the variable has
+another name, apply the variable to a |K| combinator, since we have
+encountered a $\lambda x . y$, and if $y$ is just a variable, then it
+doesn't depend on the abstraction. In case we encounter an application
+as the body, we should recursively do the lambda-modification on the
+applicand and argument, then apply them both to the |S| combinator,
+since that will restore the analogue of the $\lambda x
+. \textnormal{App} y z$ (bearing in mind that initially $y$ and $z$
+might depend on $x$), since |S ⟨ y ⟩ ⟨ z ⟩ | indeed evaluates to |\ f
+-> \ g -> \ x -> f x (g x)| applied to $y$ then $z$, which gives |\ x
+-> y x (z x)| which precisely reflects that we want $y$ applied to
+$z$, and that they each might depend upon $x$.
+
+Translating this fuzzy description into pseudo-Haskell, we get something like the following.
+\begin{spec}
+compile : Lambda -> Combinatory
+compile (Var x)        = VarC x
+compile (Apply t u)    = ApplyC      (compile t) (compile u)
+compile (Lambda x t)   = lambda x    (compile t)
+
+lambda : String -> Combinatory -> Combinatory
+lambda x t            | x ∉ vars t   = ApplyC K t
+lambda x (VarC y)     | x == y       = I
+lambda x (ApplyC t u)                = ApplyC (ApplyC S (lambda x t)) (lambda x u)
+\end{spec}
+
+We have the added complication of using de Bruijn indices, though. This means that each time we
+replace a lambda abstraction with some other construction, we are potentially breaking the variable
+references, since some of them (exactly those in the body of the destroyed lambda) will need decrementing.
+Also, it sounds difficult to do a check on variable name to see if we should introduce an |I| or |K| in
+the variable case, but we will see that it is actually not so bad, and the fact that the |Comb| language
+also uses the same context as the |WT| language is in fact a useful property. The code for the |compile| function,
+which is pretty boring, is to be found in Fig.~\ref{fig:compile}, and the more interesting |lambda| function, which
+does the swizzling of lambda abstractions and variable references, is in Fig.~\ref{fig:lambda}.
 
 
 
+\begin{figure}
+\begin{code}
+compile : (Γ : Ctx) → (τ : U') → {n : ℕ} → WT Γ τ n → Comb Γ τ
+compile Γ (O σ) (Lit x) = Lit x
+compile Γ τ (Var  h) = Var τ  h
+compile Γ τ (_⟨_⟩ {.Γ}{σ} wt wt₁) = compile Γ (σ => τ) wt ⟨ compile Γ σ wt₁ ⟩
+compile Γ (σ => τ) (Lam .σ wt) = lambda (compile ( σ ∷ Γ) τ wt) 
+\end{code}
+\caption{The proof that any |WT| term can be translated into the |Comb| language.}\label{fig:compile}
+\end{figure}
+
+
+\begin{figure}
+\begin{code}
+lambda : {σ τ : U'}{Γ : Ctx} → (c : Comb (σ ∷ Γ) τ) → Comb Γ (σ => τ)
+lambda {σ}     (Var .σ   here)    = I
+lambda {σ} {τ} (Var .τ (there i)) = K ⟨ Var τ i ⟩
+lambda  (t ⟨ t₁ ⟩) = let l1 = lambda  t
+                         l2 = lambda  t₁
+                      in S ⟨ l1 ⟩ ⟨ l2 ⟩
+lambda           (Lit l)          = K ⟨ Lit l ⟩
+lambda           S                = K ⟨ S ⟩
+lambda           K                = K ⟨ K ⟩
+lambda           I                = K ⟨ I ⟩
+\end{code}
+\caption{The function we invoke whenever we encounter a lambda abstraction. }\label{fig:lambda}
+\end{figure}
 
 
 
