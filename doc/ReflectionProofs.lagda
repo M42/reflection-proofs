@@ -2677,13 +2677,13 @@ calculus, and the 3 combinators are presented in Fig.~\ref{fig:ski}.
 
 \begin{figure}[h]
 \begin{spec}
-s     : ∀ {a b c : Set} → (a → b → c) → (a → b) → a → c
+s     : ∀ {a b c : Set}      → (a → b → c) → (a → b) → a → c
 s     = \ f -> \ g -> \ x -> f x (g x)
  
-k     : ∀ {a b : Set} → a → b → a
+k     : ∀ {a b : Set}        → a → b → a
 k     = \ c -> \ v -> c
  
-i     : ∀ {a : Set} → a → a
+i     : ∀ {a : Set}          → a → a
 i     = \ x -> x
 \end{spec}
 \caption{The three combinators which make up SKI combinator calculus.}\label{fig:ski}
@@ -2711,13 +2711,18 @@ needing to have sensible types.
 \begin{figure}[h]
 \begin{code}
 data Comb : (Γ : Ctx) → U' → Set where
-  Var    : forall {Γ}         → (τ : U') → τ ∈ Γ
-                                          → Comb Γ τ
-  _⟨_⟩   : forall {Γ σ τ}                 → Comb Γ (σ => τ) → Comb Γ σ → Comb Γ τ
-  S      : forall {Γ A B C}               → Comb Γ ((A => B => C) => (A => B) => A => C)
-  K      : forall {Γ A B}                 → Comb Γ (A => B => A)
-  I      : forall {Γ A}                   → Comb Γ (A => A)
-  Lit    : forall {Γ} {x}     → Uel x     → Comb Γ (O x)
+  Var    : forall {Γ}
+         → (τ : U') → τ ∈ Γ              → Comb Γ τ
+  _⟨_⟩   : forall {Γ σ τ}
+         → Comb Γ (σ => τ) → Comb Γ σ    → Comb Γ τ
+  S      : forall {Γ A B C}
+         → Comb Γ ((A => B => C) => (A => B) => A => C)
+  K      : forall {Γ A B}
+         → Comb Γ (A => B => A)
+  I      : forall {Γ A}
+         → Comb Γ (A => A)
+  Lit    : forall {Γ} {x}
+         → Uel x                         → Comb Γ (O x)
 \end{code}
 \caption{The data type modeling SKI combinator calculus. The |Var| constructor is less dangerous than it may seem.}\label{fig:comb}
 \end{figure}
@@ -2759,7 +2764,9 @@ compile (Lambda x t)   = lambda x    (compile t)
 lambda : String -> Combinatory -> Combinatory
 lambda x t            | x ∉ vars t   = ApplyC K t
 lambda x (VarC y)     | x == y       = I
-lambda x (ApplyC t u)                = ApplyC (ApplyC S (lambda x t)) (lambda x u)
+lambda x (ApplyC t u)                = ApplyC     (ApplyC  S
+                                                           (lambda x t))
+                                                  (lambda x u)
 \end{spec}
 
 We have the added complication of using de Bruijn indices, though. This means that each time we
@@ -2791,7 +2798,8 @@ that we decrement the de Bruijn index as promised, by peeling of a |there| const
 
 \begin{figure}
 \begin{code}
-lambda : {σ τ : U'}{Γ : Ctx} → (c : Comb (σ ∷ Γ) τ) → Comb Γ (σ => τ)
+lambda : {σ τ : U'}{Γ : Ctx}    → (c : Comb (σ ∷ Γ) τ)
+                                → Comb Γ (σ => τ)
 lambda {σ}     (Var .σ   here)    = I
 lambda {σ} {τ} (Var .τ (there i)) = K ⟨ Var τ i ⟩
 lambda  (t ⟨ t₁ ⟩) = let l1 = lambda  t
