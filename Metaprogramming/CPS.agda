@@ -78,11 +78,11 @@ data TAcc : {Γ : Ctx} {σ : U'} {n : ℕ} → WT Γ σ n → Set where
   TBaseVar : forall {Γ σ x} → TAcc (Var {Γ} {σ} x)
   TLam : forall {Γ t1 t2 n} {a : WT (t1 ∷ Γ) t2 n}
          → TAcc (shift1 (Cont t2) a)
-         → TAcc {Γ} {t1 => t2}{suc n} (Lam {Γ} t1 a)
+         → TAcc {Γ} {t1 => t2} (Lam {Γ} t1 a)
   TApp : forall {Γ σ σ₁ sza szb} {a : WT Γ (σ => σ₁) sza} {b : WT Γ σ szb}
-         → TAcc {Γ} {σ => σ₁}{sza} a
-         → TAcc {_}{_}{szb}(shift1 (σ => σ₁) b)
-         → TAcc {_}{_}{suc sza + szb} (_⟨_⟩ {_}{_}{_}{sza}{szb} a b)
+         → TAcc {Γ} {σ => σ₁} a
+         → TAcc (shift1 (σ => σ₁) b)
+         → TAcc (a ⟨ b ⟩)
 
 -- since the sizes of expressions change rather radically in lambda and application
 -- cases after a CPS transform, we have this helper which tells us how big an expression

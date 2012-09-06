@@ -1943,7 +1943,9 @@ data WT : (Γ : Ctx) → Uu → ℕ → Set where
 
 The first thing to notice is that all terms in |WT| are annotated with
 a context, a type (the outer type of
-the lambda expression), and a size. 
+the lambda expression), and a size.  The size is an arbitrary measure which should be strictly increasing
+for terms which are structurally larger. This will become useful later, when we need to show that certain functions
+preserve the size of terms, but other than that the size has no interesting meaning.
 
 The type annotations are elements of a universe |Uu|, which models base types and arrows.
 Contexts are simply lists of types, the position of elements of the list corresponding to
@@ -2492,7 +2494,8 @@ T : {σ : Uu} {Γ : Ctx}       → WT      Γ                      σ
 \end{code}
 
 The case for literals and variables is, as usual, not very difficult. All that happens here is
-that the continuation function is applied to the original term.
+that the continuation function is applied to the original term. The size arguments to |WT| have been omitted
+for brevity and the reader is assured that nothing exciting happens there.
 
 Note that in
 the case of variables, some housekeeping needs to be done. We are actually changing all the values
@@ -2501,8 +2504,8 @@ transformed, will be in the same spot as the old type was. Therefore, a proof is
 environment |Γ|, then it will also be inside the new environment |map cpsType Γ| at the same index, but having value |cpsType σ|.
 
 \begin{code}
-T (Lit x)                                     cont = cont ⟨ (Lit x) ⟩
-T (Var inpf  )                                cont = cont ⟨ (Var (cpsvar inpf)) ⟩
+T (Lit x)                                     cont = cont ⟨ Lit x ⟩
+T (Var inpf  )                                cont = cont ⟨ Var (cpsvar inpf) ⟩
 \end{code}
 
 The case for lambdas is slightly more involved: When it sees a lambda
@@ -2538,9 +2541,9 @@ continuations.
 
 
 \begin{code}
-T' .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂} f e)     cont =
-  T' f (Lam (cpsType (σ₁ => σ₂))
-                     (T' (shift1 (σ₁ => σ₂) e) (Lam (cpsType σ₁)
+T .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂} f e)     cont =
+  T f (Lam (cpsType (σ₁ => σ₂))
+                     (T (shift1 (σ₁ => σ₂) e) (Lam (cpsType σ₁)
                         ((Var (there here)) ⟨ Var here ⟩  
                             ⟨ shift1 (cpsType σ₁) (shift1 (cpsType (σ₁ => σ₂)) cont) ⟩ ))))
 \end{code}
@@ -2551,6 +2554,66 @@ to compensate for the new abstraction), with again a continuation, this time bin
 and applying the transformed |f| (bound to |Var 1|) to the transformed |e| (here |Var 0|). Finally the original continuation, the one which was the
 argument called |cont|, is applied to the new |f| and |e|, but only after two shifts, resulting from the two lambda abstractions we introduced.
 
+That wraps up the CPS algorithm. The full transformation algorithm can be seen in |Metaprogramming.CPS|, and examples of use, including a user-defined
+universe, are to be found in |Metaprogramming.ExampleCPS|.
+
+\subsection{Termination Bliss}
+
+Unfortunately, as the observant reader might have noticed, the algorithm |T| as presented in Sec.~\ref{sec:cps} is not structurally recursive,
+since in the recursive calls to |T| in the abstraction and application cases, we are applying |shift1| to the constituent components of the input first.
+We can trivially see that the |shift1| function does nothing to the size of the expression, but Agda's termination checker does not possess such
+intuition.
+
+Luckily, Bove and Capretta \cite{} %TODO cite
+come to the rescue. Their method for mechanically taking a non-structurally recursive algorithm and producing an auxiliary data type
+on which the algorithm is structurally recursive (a call graph, basically) along which also serves as a proof obligation that the
+algorithm terminates on whatever input the user would like to call it on, is perfectly suited to this sort of situation.
+
+After inspecting the recursive structure of the algorithm |T| we come to the conclusion that the data type |TAcc| presented below
+would do the job just fine.
+
+\begin{code}
+data TAcc : {Γ : Ctx} {σ : U'} {n : ℕ} → WT Γ σ n → Set where
+  TBaseLit : forall {Γ σ x} → TAcc (Lit {Γ} {σ} x)
+  TBaseVar : forall {Γ σ x} → TAcc (Var {Γ} {σ} x)
+  TLam : forall {Γ t1 t2 n} {a : WT (t1 ∷ Γ) t2 n}
+         → TAcc (shift1 (Cont t2) a)
+         → TAcc {Γ} {t1 => t2} (Lam {Γ} t1 a)
+  TApp : forall {Γ σ σ₁ sza szb} {a : WT Γ (σ => σ₁) sza} {b : WT Γ σ szb}
+         → TAcc {Γ} {σ => σ₁} a
+         → TAcc (shift1 (σ => σ₁) b)
+         → TAcc (a ⟨ b ⟩)
+\end{code}
+
+In |TAcc|, each constructor of |WT| finds its analogue, and these proof terms are built having as arguments
+the proofs that |TAcc| can be constructed from the similar proofs on the arguments.
+
+We can now add this |TAcc| argument to all the calls in |T|, and Agda now believes the function terminates. All that is left is
+to prove that for all elements of |wt ∈ WT| we can construct a |TAcc wt|. The proof is as obvious as the data type was: we simply recurse
+on the arguments of the constructors.
+
+\begin{code}
+allTsAcc : forall {Γ σ n} → (wt : WT Γ σ n) → TAcc wt
+allTsAcc (Var x)    = TBaseVar
+allTsAcc (Lit x₁)   = TBaseLit
+allTsAcc {Γ} {τ => σ}{suc n} (Lam .τ wt) = TLam (allTsAcc (shift1 (Cont σ) wt) )
+allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁}{n}{m} wt wt₁)  = TApp (allTsAcc wt)
+                                                       (allTsAcc (shift1 (σ => σ₁) wt₁))
+\end{code}
+
+But, horror! Agda now is convinced that this function, |allTsAcc|, which is meant to give us the proof
+that |T| terminates given any |WT| term, itself does not terminate! We also cannot apply Bove and Capretta's trick
+another time, since that would give us a data type isomorphic to |TAcc|.
+
+As it turns out, there is another trick
+up our sleeve: that of well-founded recursion. What we need to do is show that even though the recursion here is non
+structural, the terms do strictly decrease in size for some measure. Luckily we introduced a measure on |WT| long ago, the last argument
+of type |ℕ|. Following Mertens' example \cite{} %TODO cite mertens
+we can build a well-foundedness proof for |WT| in terms of our measure, which we can then add as an extra argument to the
+|allTsAcc| function. 
+
+
+%TODO insert well-foundedness
 
 
 
@@ -2558,12 +2621,10 @@ argument called |cont|, is applied to the new |f| and |e|, but only after two sh
 
 
 
-Maybe we can give a Bove-Capretta example here, too, since |T| uses general recursion.
 
 % TODO how to strike a balance between just presenting what I have now without making
 % the difficulties clear, and writing an irrelevant logbook?
 
-Could be an idea to prove correctness by normalisation and translation back into lambda calculus.
 
 \section{Example: Translation to SKI Combinators}
 
