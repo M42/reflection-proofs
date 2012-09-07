@@ -84,12 +84,11 @@ open import Data.List hiding (_∷ʳ_)
 %%}
 
 
-%TODO add citations to everything which seems like an unfounded statement.
 
 \begin{document}
+\todo{add citations to everything which seems like an unfounded statement.}
 \setcounter{tocdepth}{1}
 
-%%% \maketitle
 %TODO make a fancy title page
 %? \frontmatter %% only available in book-like classes.
 \begin{titlepage}
@@ -224,7 +223,9 @@ by a type-safe translation of closed lambda terms into SKI combinator calculus (
 
 The code and examples presented in this paper all compile using the
 latest development version of Agda (currently 2.3.1) and are available on
-github\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}}. %TODO this isn't true.
+github\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}}. \todo{this isn't true.}
+This thesis is also a Literate Agda file, which means the code snippets can be compiled 
+and played around with.
 
 \chapter{Introducing Agda}
 
@@ -354,7 +355,11 @@ Because functions can also return types (which are just more values) and thus be
 it to be possible for type-checking to break as a result of an incomplete function definition. 
 
 Finally, though, Agda allows us to define functions and proofs side-by-side, allowing concurrent development of
-programs and proofs of properties about those programs hand-in-hand. 
+programs and proofs of properties about those programs hand-in-hand.  The Emacs mode which is typically used
+to interactively develop proofs and programs has a concept of \emph{holes} -- one is free to place a question mark (?)
+anywhere in the file, and compile. This question mark turns into something which looks a bit like |(HOLE n)|, and when the
+cursor is placed inside the goal, queries such as the  type of the value expected there or the objects in the environment at 
+that point are available. 
 
 
 
@@ -462,7 +467,6 @@ feature, called quoting, which allowed run-time modification of a program's code
 the program itself. This gives rise to powerful techniques for reusing code and
 generating frequently needed but slightly different expressions automatically.
 
-%TODO give more of an intro to the idea of reflection here. idea: wikipedia has short article on reflection.
 
 \section{The Basics}
 
@@ -524,7 +528,7 @@ example:
 
 \begin{spec}
 exampleQuoteGoal : ℕ
-exampleQuoteGoal = quoteGoal e in HOLE 0
+exampleQuoteGoal = quoteGoal e in (HOLE 0)
 \end{spec}
 The |quoteGoal| keyword binds the variable |e| to the |Term|
 representing the type of the current goal. In this example, the value
@@ -534,9 +538,9 @@ the type |ℕ|.
 Another keyword which deals with types is the aptly-named |type| function. Given
 a |Name|, such as the result of |quote identifier|, |type| returns the |Type| representing the
 type of that identifier. This indeed implies one cannot ask the type of an arbitrary
-|Term|, since one would need to introduce it as a defition first, to be able to get its |Name|.
+|Term|, since one would need to introduce it as a definition first, to be able to get its |Name|.
 In |example₂| we see what |type| returns when asked about the successor function (a function with
-type |ℕ → ℕ|, and in |example₃| we illustrate that the term shown is in fact the same as a
+type |ℕ → ℕ|), and in |example₃| we illustrate that the term shown is in fact the same as a
 function type from naturals to naturals.
 
 \begin{code}
@@ -696,8 +700,8 @@ Typically, this is useful for deciding which constructor is present in some expr
 \begin{spec}
 convert : Term → Something
 convert (def c args) with c ≟-Name quote foo
-...                   | yes p     = HOLE 0 -- foo applied to arguments
-...                   | no ¬p     = HOLE 1 -- a function other than |foo|
+...                   | yes p     = (HOLE 0) -- |foo| applied to arguments
+...                   | no ¬p     = (HOLE 1) -- a function other than |foo|
 \end{spec}
 
 
@@ -799,12 +803,12 @@ constructor in the AST we would like to cast the |Term| to.
 
 \begin{code}
 N-ary : (n : ℕ) → Set → Set → Set
-N-ary zero    A B = B
-N-ary (suc n) A B = A → N-ary n A B
+N-ary zero       A B = B
+N-ary (suc n)    A B = A → N-ary n A B
 
 _dollarn_ : ∀ {n} {A : Set} {B : Set} → N-ary n A B → (Vec A n → B)
-f dollarn []       = f
-f dollarn (x ∷ xs) = f x dollarn xs
+f dollarn []           = f
+f dollarn (x ∷ xs)     = f x dollarn xs
 
 data ConstructorMapping (astType : Set) : Set₁ where
   _\#_↦_       : (arity : ℕ)
@@ -813,15 +817,15 @@ data ConstructorMapping (astType : Set) : Set₁ where
                → ConstructorMapping astType
 
 Table : Set → Set₁
-Table a = ((ℕ → a) × List (ConstructorMapping a))
+Table a = (ℕ → a) × List (ConstructorMapping a)
 
 lookupName : {a : Set}      → List     (ConstructorMapping a)
                             → Name
                             → Maybe    (ConstructorMapping a)
 lookupName [] name = nothing
 lookupName (arity \# x ↦ x₁ ∷ tab) name with name ≟-Name x
-... | yes p = just (arity \# x ↦ x₁)
-... | no ¬p = lookupName tab name
+... | yes p      = just (arity \# x ↦ x₁)
+... | no ¬p      = lookupName tab name
 \end{code}
 
 With the above ingredients we can now define the function |convert| below, which, given a mapping of
@@ -1668,7 +1672,6 @@ freeVars (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = 1 + (
 freeVars    _         = 0
 \end{code}
 }
-% TODO use proofObligation and proofObligation' here, not proofObligation 0 ...
 \begin{code}
 proveTautology :    (t     : Term) →
                     {pf    : isSoExprQ (stripPi t)} →
@@ -1809,12 +1812,12 @@ bool2finCheck n (Atomic x)   | yes p    = ⊤
 bool2finCheck n (Atomic x)   | no ¬p    = ⊥
 
 bool2fin : (n : ℕ) → (t : BoolInter) → (bool2finCheck n t) → BoolExpr n
-bool2fin n Truth       pf = Truth
-bool2fin n (And t t₁) (p₁ , p₂) = And (bool2fin n t p₁) (bool2fin n t₁ p₂)
+bool2fin n Truth        pf                 = Truth
+bool2fin n (And t t₁)   (p₁ , p₂)          = And (bool2fin n t p₁) (bool2fin n t₁ p₂)
 ...
-bool2fin n (Atomic x)  p₁ with suc x ≤? n
-bool2fin n (Atomic x)  p₁ | yes p = Atomic (fromℕ≤ {x} p)
-bool2fin n (Atomic x)  () | no ¬p
+bool2fin n (Atomic x)  p₁       with suc x ≤? n
+bool2fin n (Atomic x)  p₁       | yes p    = Atomic (fromℕ≤ {x} p)
+bool2fin n (Atomic x)  ()       | no ¬p
 \end{spec}
 
 With these ingredients, our |concrete2abstract| function presented in Sec.~\ref{sec:addrefl}
@@ -2048,7 +2051,7 @@ there is the |Cont| constructor, which will be used and explained later in Sec.~
 This allows a user to instantiate for example the type checking module, |Metaprogramming.TypeCheck|, with a universe
 which has a representation of natural numbers, or booleans, or both. In the following code we will present the other
 helper functions a user needs to define on an on-demand basis, summarising finally what is necessary and why.
-%todo summarise what's necessary and why, in terms of helper functions.
+\todo{summarise what's necessary and why, in terms of helper functions.}
 
 It should be clear that a term in |WT []| is closed, since if the context of a term is empty and given that all |WT| terms
 are well-scoped, the only way to
@@ -2081,7 +2084,7 @@ second argument has type |σ|, then the first argument should have a type |σ =>
 of type |τ|.
 
 There is also a |Lit| constructor, for introducing literal values (such as the number 5) into expressions. Among other things, this is useful for
-testing purposes. We will explain the other elements present in |Lit|, such as the |O|-constructor and the |Uel| function, later. %TODO pointer
+testing purposes. We will explain the other elements present in |Lit|, such as the |O|-constructor and the |Uel| function, later. \todo{reference explanation of O, =>, universe}
 
 This way, terms of type |WT| can only be constructed if they are well-scoped (thanks to the proofs |τ ∈ Γ| in the variable constructors) and well-typed
 (thanks to all the terms being required to ``fit'' (for example in the outer types of lambda abstractions and applications).
@@ -2114,10 +2117,10 @@ would become a type inferencer, which, while possible (Algorithm W would suffice
 pain to implement, especially in a language where only structural
 recursion is allowed by default, since the unification algorithm typically used with Algorithm W makes
 use of general recursion. This is in fact an entire topic of research, and therefore outside the scope
-of this project \cite{}. %TODO cite mcbride first order unification by structural recursion
+of this project \cite{DBLP:journals/jfp/McBride03}.
 
 We choose instead to use the relatively simple, structurally recursive, algorithm for type checking lambda terms
-presented in Norell's tutorial on Agda \cite{}. % todo cite norell
+presented in Norell's tutorial on Agda \cite{Norell:2009:DTP:1481861.1481862}.
 The function |infer| -- defined in Fig.~\ref{fig:infer-function} --
 provides a view on |Raw| lambda terms showing whether they are
 well-typed or not. This view is aptly called |Infer|, and is defined
@@ -2187,7 +2190,7 @@ infer Γ (App .(erase t)      e₁)               | ok n (τ => τ₁   )   t   
 infer Γ (App e               e₁)               | bad                            = bad
 \end{code}
 
-%todo make sure all the parameters to the CPS etc modules are handled. summarise, possibly.
+\todo{make sure all the parameters to the CPS etc modules are mentioned and explained. summarise, possibly.}
 
 The code which does all of this can be found in |Metaprogramming.TypeCheck|, the views and data type definitions are in |Metaprogramming.Datatypes|.
 
@@ -2517,7 +2520,7 @@ since in the recursive calls to |T| in the abstraction and application cases, we
 We can trivially see that the |shift1| function does nothing to the size of the expression, but Agda's termination checker does not possess such
 intuition.
 
-Luckily, Bove and Capretta \cite{} %TODO cite
+Luckily, Bove and Capretta \cite{bove2005modelling}
 come to the rescue. Their method for mechanically taking a non-structurally recursive algorithm and producing an auxiliary data type
 on which the algorithm is structurally recursive (a call graph, basically) along which also serves as a proof obligation that the
 algorithm terminates on whatever input the user would like to call it on, is perfectly suited to this sort of situation.
@@ -2565,7 +2568,7 @@ again, since that would give us a data type isomorphic to |TAcc|.
 As it turns out, there is another trick
 up our sleeve: that of well-founded recursion. What we need to do is show that even though the recursion here is non
 structural, the terms do strictly decrease in size for some measure. Luckily we introduced a measure on |WT| long ago, the last argument
-of type |ℕ|. Following Mertens' example \cite{} %TODO cite mertens
+of type |ℕ|. Following Mertens' example \cite{mertens2010wellfoundedrecursion}
 we can build a well-foundedness proof for |WT| in terms of our measure, which we can then add as an extra argument to the
 |allTsAcc| function.  The first pitfall we encounter is that we want to define some |Rel A| which we will prove is well-founded
 on our data structure. The problem is that |Rel| is of type |Set -> Set₁| (not exactly, but for the purposes of argument), but |WT| is not
@@ -2666,15 +2669,12 @@ T wt cont = Tt wt (allTsAcc wt (wf (to wt))) cont
 The developments mentioned here, as well as termination proofs, can be found in
 |Metaprogramming.CPS| and |Metaprogramming.WTWellFounded|.
 
-%todo mention in contributions:
-%todo * structurally recursive CPS transform
-%todo * well-typed SKI transform for de Bruijn indexed LC (this is new) + it is structurally recursive
 
 \section{Example: Translation to SKI Combinators}
 
 Another interesting application of our new well-typed program transformation framework is the proof
 of a rather old result in computer science, revisited. This result says that any closed lambda term
-%todo cite old ski-paper that says that all closed lambda terms can be translated into SKI
+\todo{cite old ski-paper that says that all closed lambda terms can be translated into SKI}
 (closed in the sense of being typable under the empty environment) can be translated to a simple
 combinator language, having only 3 primitives, plus application. That language is known as SKI combinator
 calculus, and the 3 combinators are presented in Fig.~\ref{fig:ski}.
@@ -2727,7 +2727,6 @@ data Comb : (Γ : Ctx) → U' → Set where
 \caption{The data type modeling SKI combinator calculus. The |Var| constructor is less dangerous than it may seem.}\label{fig:comb}
 \end{figure}
 
-%todo first introduce the algorithm in pseudo-code, then show our real agda. 
 
 Translation of lambda terms into SKI is actually surprisingly (that is, if you are used to spending days grappling
 with the Agda compiler to get something seemingly trivial proven) straightforward. Since literals, variables and applications are
@@ -2835,7 +2834,7 @@ The resulting terms are sometimes rather verbose, as is illustrated
 in the examples of use provided in the module |Metaprogramming.ExampleSKI|, but this is to be expected,
 since, while being a Turing complete language, the SKI calculus obviously is not very concise. If one wanted to
 make the resulting terms a little more readable, one might consider adding extra combinators (such as
-those defined in ...), %TODO examples of more powerful combinators
+those defined in ...), \todo{examples of more powerful combinators}
 but it is interesting to note that by the fact that all lambda expressions can be translated to expressions
 using only S, K and I, these new combinators would simply be aliases for various combinations of the
 already-defined combinators.
@@ -2910,7 +2909,7 @@ will we ever get here?
 
 \chapter{Related Work}
 
-% TODO : Mention mcbride with ornaments; 
+\todo{Mention mcbride with ornaments}
 
 
 % TODO : I would like to do something like this:
@@ -2963,7 +2962,7 @@ Agda's reflection API\ldots
 \item supports encoding as an algebraic data type (as opposed to a string, for example)
 \item involves manual staging annotations (with keywords such as |quote| and |unquote|)
 \item is neither strictly static nor runtime, but compile-time. This behaves much like a 
-  static system (one which compiles an object program, as does for example YAcc%todo cite
+  static system (one which compiles an object program, as does for example YAcc\todo{cite}
 ) would, but doesn't produce intermediate code which might be modified.
   Note that this fact is essential for Agda to remain sound as a logical framework.
 \item is homogeneous, in that the object language lives inside the metalanguage (as a native
@@ -2973,7 +2972,6 @@ Agda's reflection API\ldots
 \end{itemize}
 
 
-\todo{idea: put the above in discussion, and just mention Sheard's taxonomy here.}
 
 
 Other related work includes the large body of publications in the
@@ -2998,6 +2996,13 @@ API in use that came to our attention.
 % TODO: Wouter says ``Ik vind het zelf soms
 % prettig om conclusions/related work/enz. in één hoofdstuk 'Discussion'
 % te bundelen, waar je de bredere context van je werk kan beschrijven.''
+
+\todo{right at the end, check if references to sections and figures are called Sec. and Fig. accordingly.}
+\todo{consolidate Discussion and Related work into Discussion (also a subsection on Future Work, possibly)}
+\todo{mention in contributions:
+ * structurally recursive CPS transform
+ * well-typed SKI transform for de Bruijn indexed LC (this is new) + it is structurally recursive
+ }
 
 This paper has presented two simple applications of proof by
 reflection. In the final version, we will show how
@@ -3080,7 +3085,7 @@ presented in Fig. \ref{fig:agda-lambda-diff}, in unified diff format
 
 
 \begin{figure}[h]
-insert darcs-diff here %TODO
+insert darcs-diff here %todo
 \caption{The changes required to the Agda compiler to enable
   annotation of lambda abstractions with the type of their
   argument.}\label{fig:agda-lambda-diff}
@@ -3095,20 +3100,15 @@ insert darcs-diff here %TODO
 Talk about extension to compiler here, give example of use (as detailed as possible, i.e. with Makefile, the \texttt{-}\texttt{-lagda} flag, etc.
 
 
-% TODO: explain somewhere how the distribution works. i.e. what module contains what, etc. and that this is a literate Agda file.
 
+\todo{in introduction: list motivating examples for using reflection? include bove-capretta, so we later can conclude reflection API isn't yet powerful enough?}
 
-
-%todo weed out duplicate bibtex entries.
-
-%TODO in introduction: list motivating examples for using reflection? include bove-capretta, so we later can conclude reflection API isn't yet powerful enough?
-
-%TODO compare the tauto-solver to tactics, note how this is embedded in agda and not some sub-language of coq (for in the discussion, perhaps)
+\todo{compare the tauto-solver to tactics, note how this is embedded in agda and not some sub-language of coq (for in the discussion, perhaps)}
 
 %todo what are Patrick Bahr's tree automata?
 
 
-
+test test
 
 \chapter{Guide to Source Code}
 
@@ -3121,17 +3121,17 @@ Insert source tree here?
 
 \bibliography{refs}{}
 \bibliographystyle{plain}
+% for LNCS bibliography:
 % \bibliographystyle{splncs}%this one doesn't sort automatically. :(
 
 
-%todo consolidate Discussion and Related work into Discussion (also a subsection on Future Work, possibly)
 
 
+% For IFL paper:
 % Beperk je tot de essentie
 % Geef voorbeelden
 
 
-%TODO: right at the end, check if references to sections and chapters are called Sec. and Fig. accordingly.
 
 \end{document}
 
