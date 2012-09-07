@@ -2551,12 +2551,12 @@ would do the job just fine.
 
 \begin{spec}
 data TAcc : {Γ : Ctx} {σ : Uu} {n : ℕ} → WT' Γ σ n → Set where
-  TBaseLit      : forall {Γ σ x} → TAcc (Lit {Γ} {σ} x)
-  TBaseVar      : forall {Γ σ x} → TAcc (Var {Γ} {σ} x)
-  TLam          : forall     {Γ t1 t2 n} {a : WT' (t1 ∷ Γ) t2 n}
+  TBaseLit      : ∀     {Γ σ x} → TAcc (Lit {Γ} {σ} x)
+  TBaseVar      : ∀     {Γ σ x} → TAcc (Var {Γ} {σ} x)
+  TLam          : ∀     {Γ t1 t2 n} {a : WT' (t1 ∷ Γ) t2 n}
          → TAcc (shift1 (Cont t2) a)
          → TAcc {Γ} {t1 => t2} (Lam {Γ} t1 a)
-  TApp          : forall    {Γ σ σ₁ sza szb}
+  TApp          : ∀         {Γ σ σ₁ sza szb}
                             {a : WT' Γ (σ => σ₁) sza}
                             {b : WT' Γ σ szb}
          → TAcc {Γ} {σ => σ₁} a
@@ -2572,7 +2572,7 @@ to prove that for all elements of |wt ∈ WT'| we can construct a |TAcc wt|. The
 on the arguments of the constructors.
 
 \begin{spec}
-allTsAcc : forall {Γ σ n} → (wt : WT' Γ σ n) → TAcc wt
+allTsAcc : ∀ {Γ σ n} → (wt : WT' Γ σ n) → TAcc wt
 allTsAcc (Var x)                     = TBaseVar
 allTsAcc (Lit x₁)                    = TBaseLit
 allTsAcc {_} {τ => σ} (Lam .τ wt)    =
@@ -2666,7 +2666,7 @@ the function that returns this proof itself also terminates. This leads to the f
 expressions and continuations to CPS-style expressions. Our |allTsAcc| function now looks like this, showing only the ``interesting'' clauses.
 
 \begin{spec}
-  allTsAcc : forall {Γ σ n}     → (wt : WT' Γ σ n)
+  allTsAcc : ∀ {Γ σ n}          → (wt : WT' Γ σ n)
                                 → Acc _≺_ (to wt)
                                 → TAcc wt
   ...
@@ -2753,14 +2753,14 @@ open SKI' hiding (compile ; lambda ; Srep ; Irep ; Krep ; ski2wt )
 \begin{figure}[h]
 \begin{spec}
 data Comb : (Γ : Ctx) → Uu → Set where
-  Var    : forall {Γ} → (τ : Uu) → τ ∈ Γ    → Comb Γ τ
-  _⟨_⟩   : forall {Γ σ τ}
+  Var    : ∀ {Γ} → (τ : Uu) → τ ∈ Γ         → Comb Γ τ
+  _⟨_⟩   : ∀ {Γ σ τ}
          → Comb Γ (σ => τ) → Comb Γ σ       → Comb Γ τ
-  S      : forall {Γ A B C}
+  S      : ∀ {Γ A B C}
          → Comb Γ ((A => B => C) => (A => B) => A => C)
-  K      : forall {Γ A B}                   → Comb Γ (A => B => A)
-  I      : forall {Γ A}                     → Comb Γ (A => A)
-  Lit    : forall {Γ} {x}    → Uel x        → Comb Γ (O x)
+  K      : ∀ {Γ A B}                        → Comb Γ (A => B => A)
+  I      : ∀ {Γ A}                          → Comb Γ (A => A)
+  Lit    : ∀ {Γ} {x}    → Uel x             → Comb Γ (O x)
 \end{spec}
 \caption{The data type modeling SKI combinator calculus. The |Var| constructor is less dangerous than it may seem.}\label{fig:comb}
 \end{figure}
