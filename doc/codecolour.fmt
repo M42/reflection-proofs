@@ -55,9 +55,40 @@
 
 
 %%% holes:
+%Define a reference depth. 
+%You can choose either relative or absolute.
+%--------------------------
+\newlength{\DepthReference}
+\settodepth{\DepthReference}{g}%relative to a depth of a letter.
+%\setlength{\DepthReference}{6pt}%absolute value.
+
+%Define a reference Height. 
+%You can choose either relative or absolute.
+%--------------------------
+\newlength{\HeightReference}
+\settoheight{\HeightReference}{T}
+%\setlength{\HeightReference}{6pt}
+
+
+%--------------------------
+\newlength{\Width}%
+
+\newcommand{\MyColorBox}[2][red]%
+{%
+    \settowidth{\Width}{#2}%
+    %\setlength{\fboxsep}{0pt}%
+    \colorbox{#1}%
+    {%      
+        \raisebox{-\DepthReference}%
+        {%
+                \parbox[b][\HeightReference+\DepthReference][c]{\Width}{\centering#2}%
+        }%
+    }%
+}
+
 
 \colorlet{Hole}{Dandelion!25!white}
-%format (HOLE x)  = "\colorbox{Hole}{\ensuremath{\{\,\,\}_{" x "}}}"
+%format (HOLE x)  = "\MyColorBox[Hole]{\ensuremath{\{\,\,\}_{" x "}}}"
 
 
 
