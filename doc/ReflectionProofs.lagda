@@ -15,8 +15,9 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Font definitions.
-\usepackage{tgpagella}
+\usepackage{tgpagella}                  %% looks a little like palatino
 \usepackage[T1]{fontenc}
+\renewcommand{\ttdefault}{lmtt}         %% Latin Modern for teletype
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \newcommand{\ignore}[1]{}
