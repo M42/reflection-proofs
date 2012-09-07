@@ -10,6 +10,7 @@
 %include codecolour.fmt
 %endif
 
+
 \usepackage{todonotes}
 \usepackage{subfigure}
 
@@ -28,7 +29,7 @@
 
 \ignore{
 \begin{code}
-module ReflectionProofs where
+module doc.ReflectionProofs where
 \end{code}
 
 
@@ -37,7 +38,7 @@ module ReflectionProofs where
 open import Relation.Binary.PropositionalEquality
 open import Data.Maybe using (Maybe ; just ; nothing)
 open import Data.Bool hiding (T) renaming (not to ¬_) 
-open import Data.Nat renaming (_≟_ to _≟-Nat_)
+open import Data.Nat hiding (_<_) renaming (_≟_ to _≟-Nat_)
 \end{code}
 }
 
@@ -50,7 +51,7 @@ open import Data.Product hiding (map)
 open import Relation.Binary hiding (_⇒_)
 open import Reflection
 
-open import Data.Fin hiding (_+_; pred )
+open import Data.Fin hiding (_+_; pred; _<_; _≺_)
 open import Data.Vec renaming (reverse to vreverse ; map to vmap; foldr to vfoldr; _++_ to _v++_ ; _∈_ to _vecin_)
 open import Data.Unit hiding (_≤?_)
 open import Data.Empty
@@ -756,6 +757,11 @@ This capability is exploited in Sec.~\ref{sec:generic-programming}.
 
 
 \section{Introducing |Autoquote|}\label{sec:autoquote} \todo{move this to after boolexpr? or?}
+\ignore{
+\begin{code}
+open import Metaprogramming.Autoquote hiding (convertManages ; doConvert) renaming (_#_↦_ to _\#_↦_)
+\end{code}
+}
 
 Imagine we have some AST, for example |Expr|, which is presented below.
 This is a rather simple data structure representing terms which can contain Peano style natural
@@ -801,7 +807,7 @@ Using this |N-ary| we can now define an entry in our mapping |Table| as having a
 a |Name| (which is Agda's internal representation of an identifier, see Fig.~\ref{fig:reflection}) to a
 constructor in the AST we would like to cast the |Term| to.
 
-\begin{code}
+\begin{spec}
 N-ary : (n : ℕ) → Set → Set → Set
 N-ary zero       A B = B
 N-ary (suc n)    A B = A → N-ary n A B
@@ -826,7 +832,7 @@ lookupName [] name = nothing
 lookupName (arity \# x ↦ x₁ ∷ tab) name with name ≟-Name x
 ... | yes p      = just (arity \# x ↦ x₁)
 ... | no ¬p      = lookupName tab name
-\end{code}
+\end{spec}
 
 With the above ingredients we can now define the function |convert| below, which, given a mapping of
 type |Table a|, where $a$ is the type we would like to cast to, for example |Expr|, and a
@@ -877,14 +883,14 @@ suc m ≟-ℕ suc n = ≟-Nat-cong m n (m ≟-ℕ n)
 
 \end{code}
 }
-\begin{code}
+\begin{spec}
 mutual
   convert : {a : Set} → Table a → Term → Maybe a
   convert (vc , tab) (var x args)       = just (vc x)
   convert (vc , tab) (con c args)       = appCons (vc , tab) c args
   convert (vc , tab) (def f args)       = appCons (vc , tab) f args
   convert (vc , tab)     _              = nothing
-\end{code}
+\end{spec}
 
 
 If it encounters a variable, it just uses the constructor which stands for variables. Note that
@@ -902,7 +908,7 @@ these new arguments.
 
 % the comment at the top of this code block fixes the indentation.
 % indentation is forgotten between code blocks, it seems.
-\begin{code}
+\begin{spec}
 -- mutual continues...
   appCons : {a : Set} → Table a → Name → List (Arg Term) → Maybe a
   appCons (vc , tab) name args with lookupName tab name
@@ -911,7 +917,7 @@ these new arguments.
   ... | just (.(length x) \# x₁ ↦ x₂)   | just x       | yes     = just (x₂ dollarn fromList x)
   ... | just (arity       \# x₁ ↦ x₂)   | just x       | no      = nothing
   ... | just (arity       \# x  ↦ x₁)   | nothing      = nothing
-  ... | nothing = nothing
+  ... | nothing                         = nothing
 
   convertArgs : {a : Set} → Table a → List (Arg Term) → Maybe (List a)
   convertArgs tab []                   = just []
@@ -920,12 +926,13 @@ these new arguments.
   ... | just x₂      | just x₁     = just (x₂ ∷ x₁)
   ... | just x₁      | nothing     = nothing
   ... | nothing      = nothing
-\end{code}
+\end{spec}
 
 |appCons| and |convertArgs| just check to see if the desired |Name| is present in the provided
 mapping, and if all the arguments, provided they are of the right number, also convert successfully. If
 all this is true, the converted |Term| is returned as a |just e|, where $e$ is the new, converted member
 of the AST. For example, see the unit tests in Fig. \ref{fig:test-autoquote}.
+
 
 \begin{code}
 convertManages : {a : Set} → Table a → Term → Set
@@ -2000,32 +2007,39 @@ For the running example in this section, we will look at a
 simply-typed lambda calculus (STLC) with the usual type and scoping
 rules, as defined in Fig.~\ref{fig:stlc-data}.  All the modules that
 deal with lambda expressions (everything in the
-|Metaprogramming| namespace of the project) work on this |WT| (which
+|Metaprogramming| namespace of the project) work on this |WT'| (which
 stands for well-typed) datatype. Notice how the constructors are basically
 a transliteration of the STLC typing rules introduced in Fig.~\ref{fig:stlc-rules}, except
 now including a size parameter.
 
+\ignore{
+\begin{code}
+open import Metaprogramming.ExampleUniverse
+open DT renaming (U' to Uu)
+open import Metaprogramming.Util.Equal
+\end{code}
+}
 \begin{figure}[h]
 \begin{code}
-data WT : Ctx → Uu → ℕ → Set where
+data WT' : Ctx → Uu → ℕ → Set where
   Var   : ∀ {Γ} {τ}
                    → τ ∈ Γ
-                   → WT Γ           τ               1
+                   → WT' Γ           τ               1
   Lam   : ∀ {Γ} σ {τ} {n}
-                   → WT (σ ∷ Γ)     τ               n
-                   → WT Γ           (σ => τ)        (suc n)
+                   → WT' (σ ∷ Γ)     τ               n
+                   → WT' Γ           (σ => τ)        (suc n)
   _⟨_⟩  : ∀ {Γ} {σ τ} {n m}
-                   → WT Γ           (σ => τ)        n
-                   → WT Γ           σ               m
-                   → WT Γ           τ               (suc n + m)
+                   → WT' Γ           (σ => τ)        n
+                   → WT' Γ           σ               m
+                   → WT' Γ           τ               (suc n + m)
   Lit   : ∀ {Γ} {x}
                    → Uel x
-                   → WT Γ           (O x)           1
+                   → WT' Γ           (O x)           1
 \end{code}
 \caption{The simply-typed lambda calculus with de Bruijn indices.}\label{fig:stlc-data}
 \end{figure}
 
-The first thing to notice is that all terms in |WT| are annotated with
+The first thing to notice is that all terms in |WT'| are annotated with
 a context, a type (the outer type of
 the lambda expression), and a size.  The size is an arbitrary measure which should be strictly increasing
 for terms which are structurally larger. This will become useful later, when we need to show that certain functions
@@ -2035,7 +2049,7 @@ The type annotations are elements of a universe |Uu|, which models base types an
 Contexts are simply lists of types, the position of elements of the list corresponding to
 their de Bruijn indices.
 
-\begin{code}
+\begin{spec}
 data Uu : Set where
   O       : U             → Uu
   _=>_    : Uu    → Uu    → Uu
@@ -2043,7 +2057,7 @@ data Uu : Set where
   
 Ctx : Set
 Ctx = List Uu
-\end{code}
+\end{spec}
 
 The |O| constructor, which stands for base types, is parameterised by an argument of type |U|. This
 is the user-defined universe with which all the library modules in |Metaprogramming| are parameterised. Finally
@@ -2053,20 +2067,20 @@ which has a representation of natural numbers, or booleans, or both. In the foll
 helper functions a user needs to define on an on-demand basis, summarising finally what is necessary and why.
 \todo{summarise what's necessary and why, in terms of helper functions.}
 
-It should be clear that a term in |WT []| is closed, since if the context of a term is empty and given that all |WT| terms
+It should be clear that a term in |WT' []| is closed, since if the context of a term is empty and given that all |WT'| terms
 are well-scoped, the only way to
 introduce variables (remembering that they require a proof of being in the context) is to first introduce an abstraction
 which extends the environment. This leads us to define the following alias for well-typed \emph{and} well-scoped terms.
 
-\begin{code}
+\begin{spec}
 Well-typed-closed : Uu → ℕ → Set
-Well-typed-closed = WT []
-\end{code}
+Well-typed-closed = WT' []
+\end{spec}
 
 Looking at the data type constructor by constructor, we first encounter the |Var| constructor.
 This stands for variables in lambda abstractions. A variable only has one argument, namely a proof
 that its index points to an entry in the context somewhere, having a value of |τ|. Contexts are defined as lists of
-types, therefore |τ| is the type of the |WT| expression constructed by |Var|. Note that in particular, a variable cannot
+types, therefore |τ| is the type of the |WT'| expression constructed by |Var|. Note that in particular, a variable cannot
 occur on its own without a non-empty context, since otherwise a proof of the variable's index pointing to an entry
 in the list would be impossible.
 
@@ -2086,27 +2100,27 @@ of type |τ|.
 There is also a |Lit| constructor, for introducing literal values (such as the number 5) into expressions. Among other things, this is useful for
 testing purposes. We will explain the other elements present in |Lit|, such as the |O|-constructor and the |Uel| function, later. \todo{reference explanation of O, =>, universe}
 
-This way, terms of type |WT| can only be constructed if they are well-scoped (thanks to the proofs |τ ∈ Γ| in the variable constructors) and well-typed
+This way, terms of type |WT'| can only be constructed if they are well-scoped (thanks to the proofs |τ ∈ Γ| in the variable constructors) and well-typed
 (thanks to all the terms being required to ``fit'' (for example in the outer types of lambda abstractions and applications).
 
 \subsection{Inferring Types}
 
 Because it sometimes is impractical to require direct construction of
-|WT| terms, we would like to also offer a way of translating from some
-weaker-constrained data type to |WT|, if possible. We use the data
-type |Raw|, given in Fig.~\ref{fig:raw}, for this, which is a model of
+|WT'| terms, we would like to also offer a way of translating from some
+weaker-constrained data type to |WT'|, if possible. We use the data
+type |Raw'|, given in Fig.~\ref{fig:raw}, for this, which is a model of
 lambda terms with de Bruijn indices that should look a lot more
 familiar to Haskell users, since most models of lambda expressions in
 Haskell-land are untyped (because of a lack of dependent types).
 
 \begin{figure}[h]
-\begin{code}
-data Raw : Set where
+\begin{spec}
+data Raw' : Set where
   Var  : ℕ                           → Raw
   App  : Raw       → Raw             → Raw
   Lam  : Uu        → Raw             → Raw
   Lit  : (x : U)   → Uel x           → Raw
-\end{code}
+\end{spec}
 \caption{The |Raw| data type, or a model of simply-typed lambda expressions without any constraints.}\label{fig:raw}
 \end{figure}
 
@@ -2127,11 +2141,11 @@ well-typed or not. This view is aptly called |Infer|, and is defined
 in Fig.~\ref{fig:infer-datatype}.
 
 \begin{figure}[h]
-\begin{code}
+\begin{spec}
 data Infer (Γ : Ctx) : Raw → Set where
-  ok    : (n : ℕ) (τ : Uu) (t : WT Γ τ n)       → Infer Γ (erase t)
+  ok    : (n : ℕ) (τ : Uu) (t : WT' Γ τ n)       → Infer Γ (erase t)
   bad   : {e : Raw}                             → Infer Γ e
-\end{code}
+\end{spec}
 \caption{The view on |Raw| lambda terms denoting whether they are well-typed or not.}\label{fig:infer-datatype}
 \end{figure}
 
@@ -2140,19 +2154,19 @@ The |Infer| view says that a term is either incorrectly typed
 is well-typed, which is shown using the |ok| constructor, which also
 requires on provides the corresponding (this correspondence is forced
 by giving the |Infer| view |erase t| as an argument, which is the
-erasure of a |WT| term and certainly not an arbitrary |Raw| term) term
-in |WT|, and we had already decided that if something was
-representable in |WT|, it must be both well-scoped and well-typed.
+erasure of a |WT'| term and certainly not an arbitrary |Raw| term) term
+in |WT'|, and we had already decided that if something was
+representable in |WT'|, it must be both well-scoped and well-typed.
 
 The |infer| algorithm, which provides the |Infer| view and therefore generates
-|WT| terms corresponding to |Raw| terms, is presented here, in sections.
+|WT'| terms corresponding to |Raw| terms, is presented here, in sections.
 
 \begin{code}
 infer : (Γ : Ctx)(e : Raw) → Infer Γ e
-infer Γ (Lit ty x) = ok 1 (O ty) (Lit {σ = ty} x)
+infer Γ (Lit ty x) = ok 1 (O ty) (Lit {x = ty} x)
 \end{code}
 
-Of course, a literal on its own is always well-typed, and corresponds to a |WT| with whatever type the literal has.
+Of course, a literal on its own is always well-typed, and corresponds to a |WT'| with whatever type the literal has.
 A variable is similarly easy to type check, except that it should not point outside the context, that is, it should
 have a de Bruijn index smaller than or equal to its depth. Here we do a lookup of the variable and return whatever type the
 context says it has, or, if it is out-of-scope, we return |bad|.
@@ -2179,15 +2193,15 @@ has an arrow type (otherwise something is wrong), we then have to check that the
 the left-hand side of the arrow. If all goes well, we are done.
 
 \begin{code}
-infer Γ (App e               e₁)               with infer Γ e
-infer Γ (App .(erase t)      e₁)               | ok n (Cont a    )   t          = bad
-infer Γ (App .(erase t)      e₁)               | ok n (O x       )   t          = bad
-infer Γ (App .(erase t)      e₁)               | ok n (τ => τ₁   )   t          with infer Γ e₁
-infer Γ (App .(erase t₁)     .(erase t₂))      | ok n (σ => τ    )   t₂         | ok n₂ σ' t₂ with σ =?= σ'
-infer Γ (App .(erase t₁)     .(erase t₂))      | ok n (.σ' => τ  )   t₁         | ok n₂ σ' t₂ | yes = ok _ τ (t₁ ⟨ t₂ ⟩ )
-infer Γ (App .(erase t₁)     .(erase t₂))      | ok n (σ => τ    )   t₁         | ok n₂ σ' t₂ | no  = bad
-infer Γ (App .(erase t)      e₁)               | ok n (τ => τ₁   )   t          | bad         = bad
-infer Γ (App e               e₁)               | bad                            = bad
+infer Γ (App e e₁) with infer Γ e
+infer Γ (App .(erase t) e₁) | ok n (Cont a) t = bad
+infer Γ (App .(erase t) e₁) | ok n (O x) t = bad
+infer Γ (App .(erase t) e₁) | ok n (τ => τ₁) t with infer Γ e₁
+infer Γ (App .(erase t₁) .(erase t₂)) | ok n (σ => τ) t₁   | ok n₂ σ' t₂ with σ =?= σ'
+infer Γ (App .(erase t₁) .(erase t₂)) | ok n (.σ' => τ) t₁ | ok n₂ σ' t₂ | yes = ok _ τ (t₁ ⟨ t₂ ⟩ )
+infer Γ (App .(erase t₁) .(erase t₂)) | ok n (σ => τ) t₁   | ok n₂ σ' t₂ | no  = bad
+infer Γ (App .(erase t) e₁) | ok n (τ => τ₁) t | bad = bad
+infer Γ (App e e₁) | bad = bad
 \end{code}
 
 \todo{make sure all the parameters to the CPS etc modules are mentioned and explained. summarise, possibly.}
@@ -2204,6 +2218,11 @@ conversion code is uninteresting and quite similar to the code presented in Sec.
 
 Since we have a conversion function from |Term| to |Raw| at our disposal, as well as a type checker, it is tempting to write something like the following.
 
+\ignore{
+\begin{code}
+open TC
+\end{code}
+}
 \begin{code}
 testgoal1 : Raw
 testgoal1 = term2raw (quoteTerm λ (b : ℕ → ℕ) → (λ (x : ℕ) → b x))
@@ -2218,9 +2237,9 @@ seeTypedgoal1 : typedgoal1 ≡
 seeTypedgoal1 = refl
 \end{code}
 
-What we now have, is an automatic quoting of lambda terms into well-typed |WT| terms. Note that we are required to annotate the binders
+What we now have, is an automatic quoting of lambda terms into well-typed |WT'| terms. Note that we are required to annotate the binders
 with types, because otherwise the |quoteTerm| keyword will return a lambda term with |unknown| as the type annotation, which our type checker will not
-accept. In |seeTypedgoal1| we can inspect the resulting |WT| term.
+accept. In |seeTypedgoal1| we can inspect the resulting |WT'| term.
 
 
 
@@ -2253,14 +2272,14 @@ accept. In |seeTypedgoal1| we can inspect the resulting |WT| term.
 %variable to be bound at that point is consed onto the environment. This way, variables 
 %which are bound ``further away'' (in the de Bruijn-index sense) are nearer to the back of the list.
 
-\subsection{Doing Something Useful with |WT|}\label{sec:doing-something-useful}
+\subsection{Doing Something Useful with |WT'|}\label{sec:doing-something-useful}
 
-Conversely, we would also like to construct a term in |WT| and use the |unquote| keyword to
+Conversely, we would also like to construct a term in |WT'| and use the |unquote| keyword to
 turn it back into concrete syntax, otherwise there would not be much practical use in being
-able to do transformations on |WT| terms.
+able to do transformations on |WT'| terms.
 
-The interpretation function for |WT| terms is mostly unsurprising; it
-must take a |WT| and return a |Term|, Agda's abstract representation,
+The interpretation function for |WT'| terms is mostly unsurprising; it
+must take a |WT'| and return a |Term|, Agda's abstract representation,
 which we can then |unquote|.  The first few clauses are precisely what
 one would expect, except maybe for the |Lit| case. Here we see the
 first signs of the universe model which is implemented, namely a call
@@ -2274,14 +2293,14 @@ that they also provide a method which knows how to |unquote| values in their uni
 The value |pleaseinfer| is simply set to |el unknown unknown|, which
 means an unknown sort and unknown type. In this case, Agda will just
 infer the type before splicing the term into the concrete code. We know
-this will succeed, since |WT| terms are well-typed.
+this will succeed, since |WT'| terms are well-typed.
 
-\begin{code}
-lam2term : {σ : Uu} {Γ : Ctx} {n : ℕ} → WT Γ σ n → Term
+\begin{spec}
+lam2term : {σ : Uu} {Γ : Ctx} {n : ℕ} → WT' Γ σ n → Term
 lam2term (Lit {_}{σ} x)   = quoteBack σ x
 lam2term (Var x)          = var (index x) []
 lam2term (Lam σ t)        = lam visible pleaseinfer (lam2term t)
-\end{code}
+\end{spec}
 
 The application case on the other hand is curious. Unfortunately this is motivated by
 practical limitations. The |Term| AST only allows introduction of applications with the |var| and |def| constructors,
@@ -2290,28 +2309,28 @@ which stand for variables or definitions applied to a list of variables, respect
 it the actual application-arguments in the expected list-format.
 
 
-\begin{code}
+\begin{spec}
 lam2term (t₁ ⟨ t₂ ⟩)      = def (quote Apply)
                      (        arg visible relevant (lam2term t₁) ∷
                               arg visible relevant (lam2term t₂) ∷ [])
-\end{code}
+\end{spec}
 
 We also would like to be able to recover the type of the term in concrete Agda. We first reconstruct a term of type |Type|, Agda's
 representation of types. These functions are also unsurprising: arrows are translated to arrows, and for base types we must once again
 invoke a user-defined function which can interpret their universe values to Agda types. The |Cont| case should be ignored for now,
 since it has to do with the CPS transformation, which is introduced later.
 
-\begin{code}
+\begin{spec}
 el' : Uu → Set
 el' (O x) = Uel x
 el' (u => u₁) = el' u → el' u₁
 el' (Cont t) = ⊥
 
-lam2type : {σ : Uu} {Γ : Ctx} {n : ℕ} → WT Γ σ n → Set
+lam2type : {σ : Uu} {Γ : Ctx} {n : ℕ} → WT' Γ σ n → Set
 lam2type {σ} t = el' σ
-\end{code}
+\end{spec}
 
-Once we have these functions, it is easy to introduce a concrete function from a |WT| term as follows, using |unquote| and |lam2term|.
+Once we have these functions, it is easy to introduce a concrete function from a |WT'| term as follows, using |unquote| and |lam2term|.
 
 \begin{code}
 concrete :          lam2type typedgoal1
@@ -2385,9 +2404,6 @@ is necessarily different from the original function.
 id : {A : Set}  → A → A
 id x = x
 open  import Relation.Binary.EqReasoning
-
-RT : Uu
-RT = O ReturnType
 \end{code}
 }
 
@@ -2427,6 +2443,11 @@ that the second argument will be a function from the original result type to our
 and finally dictate that the resulting function will also return a value in |RT| if given the correct
 first and second arguments. The |Cont| case stands for the type of a continuation function, which is obtained
 by going from the CPS-transformed original return type to the result type |RT|. 
+\ignore{
+\begin{code}
+open CPS' hiding (cpsType ; T)
+\end{code}
+}
 
 \begin{code}
 cpsType : Uu → Uu
@@ -2436,21 +2457,21 @@ cpsType (Cont t)        = cpsType t => RT
 \end{code}
 
 The type we would like our transformation function to have is something which takes
-as input a term with some environment and type (|WT Γ σ|), a
-continuation (necessarily |WT (map cpsType Γ) (cpsType (Cont σ))|, namely an updated type context and a continuation-function for $\sigma$) and returns a
-semantically equal term with type |WT (map cpsType Γ) RT|, the return type. In other words, the continuation
+as input a term with some environment and type (|WT' Γ σ|), a
+continuation (necessarily |WT' (map cpsType Γ) (cpsType (Cont σ))|, namely an updated type context and a continuation-function for $\sigma$) and returns a
+semantically equal term with type |WT' (map cpsType Γ) RT|, the return type. In other words, the continuation
 function must not rely on any variables which are not in the scope of the to-be-transformed function,
 and must produce a value of type |RT|.
 If these are then applied to each other, a value of type |RT| will be returned.
 
-\begin{code}
-T : {σ : Uu} {Γ : Ctx}       → WT      Γ                      σ
-                             → WT      (map cpsType Γ)        (cpsType (Cont σ))
-                             → WT      (map cpsType Γ)        RT
-\end{code}
+\begin{spec}
+Tt : {σ : Uu} {Γ : Ctx}      → WT'      Γ                      σ
+                             → WT'      (map cpsType Γ)        (cpsType (Cont σ))
+                             → WT'      (map cpsType Γ)        RT
+\end{spec}
 
 The case for literals and variables is, as usual, not very difficult. All that happens here is
-that the continuation function is applied to the original term. The size arguments to |WT| have been omitted
+that the continuation function is applied to the original term. The size arguments to |WT'| have been omitted
 for brevity and the reader is assured that nothing exciting happens there.
 
 Note that in
@@ -2459,10 +2480,10 @@ in the context (by applying |cpsType| to them), and we need to show that the sam
 transformed, will be in the same spot as the old type was. Therefore, a proof is given that if some variable with type |σ| is inside the
 environment |Γ|, then it will also be inside the new environment |map cpsType Γ| at the same index, but having value |cpsType σ|.
 
-\begin{code}
+\begin{spec}
 Tt (Lit x)                                     cont = cont ⟨ Lit x ⟩
 Tt (Var inpf  )                                cont = cont ⟨ Var (cpsvar inpf) ⟩
-\end{code}
+\end{spec}
 
 The case for lambdas is slightly more involved: When it sees a lambda
 term, it adds a fresh continuation parameter, having type |Cont t2|,
@@ -2476,7 +2497,7 @@ though we are introducing two abstractions, only one is new, since we
 are rebuilding the original lambda term but assigning the argument a
 new type, namely |cpsType t1|.
 
-\begin{code}
+\begin{spec}
 Tt {t1 => t2} (Lam .t1 expr) cont
           = cont     ⟨     Lam      (cpsType t1)
                                     (Lam    (cpsType (Cont t2))
@@ -2486,7 +2507,7 @@ Tt {t1 => t2} (Lam .t1 expr) cont
                                     )
                      ⟩
 
-\end{code}
+\end{spec}
 
 Finally, we have the application case. Here, the values of both the applicand and the argument have to be
 converted into CPS.
@@ -2496,13 +2517,13 @@ newly-created continuations; note that both of the lambda abstractions are
 continuations.
 
 
-\begin{code}
+\begin{spec}
 Tt .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂} f e)     cont =
   Tt f (Lam (cpsType (σ₁ => σ₂))
                      (Tt (shift1 (σ₁ => σ₂) e) (Lam (cpsType σ₁)
                         (Var (there here) ⟨ Var here ⟩  
                             ⟨ shift1 (cpsType σ₁) (shift1 (cpsType (σ₁ => σ₂)) cont) ⟩ ))))
-\end{code}
+\end{spec}
 First |f|, the applicand, is transformed, with a new abstraction as the continuation. This abstraction
 must have a variable of the type of |f|, since it is the continuation which is to be invoked on |f|. The body
 of the abstraction is then the CPS transformation of |e| (after having shifted all the de Bruijn-indices up by 1
@@ -2528,30 +2549,30 @@ algorithm terminates on whatever input the user would like to call it on, is per
 After inspecting the recursive structure of the algorithm |T| we come to the conclusion that the data type |TAcc| presented below
 would do the job just fine.
 
-\begin{code}
-data TAcc : {Γ : Ctx} {σ : Uu} {n : ℕ} → WT Γ σ n → Set where
+\begin{spec}
+data TAcc : {Γ : Ctx} {σ : Uu} {n : ℕ} → WT' Γ σ n → Set where
   TBaseLit      : forall {Γ σ x} → TAcc (Lit {Γ} {σ} x)
   TBaseVar      : forall {Γ σ x} → TAcc (Var {Γ} {σ} x)
-  TLam          : forall     {Γ t1 t2 n} {a : WT (t1 ∷ Γ) t2 n}
+  TLam          : forall     {Γ t1 t2 n} {a : WT' (t1 ∷ Γ) t2 n}
          → TAcc (shift1 (Cont t2) a)
          → TAcc {Γ} {t1 => t2} (Lam {Γ} t1 a)
   TApp          : forall    {Γ σ σ₁ sza szb}
-                            {a : WT Γ (σ => σ₁) sza}
-                            {b : WT Γ σ szb}
+                            {a : WT' Γ (σ => σ₁) sza}
+                            {b : WT' Γ σ szb}
          → TAcc {Γ} {σ => σ₁} a
          → TAcc (shift1 (σ => σ₁) b)
          → TAcc (a ⟨ b ⟩)
-\end{code}
+\end{spec}
 
-In |TAcc|, each constructor of |WT| finds its analogue, and these proof terms are built having as arguments
+In |TAcc|, each constructor of |WT'| finds its analogue, and these proof terms are built having as arguments
 the proofs that |TAcc| can be constructed from the similar proofs on the arguments.
 
 We can now add this |TAcc| argument to all the calls in |T|, and Agda now believes the function terminates. All that is left is
-to prove that for all elements of |wt ∈ WT| we can construct a |TAcc wt|. The proof is as obvious as the data type was: we simply recurse
+to prove that for all elements of |wt ∈ WT'| we can construct a |TAcc wt|. The proof is as obvious as the data type was: we simply recurse
 on the arguments of the constructors.
 
-\begin{code}
-allTsAcc : forall {Γ σ n} → (wt : WT Γ σ n) → TAcc wt
+\begin{spec}
+allTsAcc : forall {Γ σ n} → (wt : WT' Γ σ n) → TAcc wt
 allTsAcc (Var x)                     = TBaseVar
 allTsAcc (Lit x₁)                    = TBaseLit
 allTsAcc {_} {τ => σ} (Lam .τ wt)    =
@@ -2559,43 +2580,48 @@ allTsAcc {_} {τ => σ} (Lam .τ wt)    =
 allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁} wt wt₁)    =
           TApp            (allTsAcc wt)
                           (allTsAcc (shift1 (σ => σ₁) wt₁))
-\end{code}
+\end{spec}
 
 But, horror! Agda now is convinced that this function, |allTsAcc|, which is meant to give us the proof
-that |T| terminates given any |WT| term, does not terminate either! We also cannot apply Bove and Capretta's trick
+that |T| terminates given any |WT'| term, does not terminate either! We also cannot apply Bove and Capretta's trick
 again, since that would give us a data type isomorphic to |TAcc|.
 
 As it turns out, there is another trick
 up our sleeve: that of well-founded recursion. What we need to do is show that even though the recursion here is non
-structural, the terms do strictly decrease in size for some measure. Luckily we introduced a measure on |WT| long ago, the last argument
+structural, the terms do strictly decrease in size for some measure. Luckily we introduced a measure on |WT'| long ago, the last argument
 of type |ℕ|. Following Mertens' example \cite{mertens2010wellfoundedrecursion}
-we can build a well-foundedness proof for |WT| in terms of our measure, which we can then add as an extra argument to the
+we can build a well-foundedness proof for |WT'| in terms of our measure, which we can then add as an extra argument to the
 |allTsAcc| function.  The first pitfall we encounter is that we want to define some |Rel A| which we will prove is well-founded
-on our data structure. The problem is that |Rel| is of type |Set -> Set₁| (not exactly, but for the purposes of argument), but |WT| is not
-of type |Set|, but |∁tx → Uu → ℕ → Set|. If we try to define something like |\ {Γ σ n} → Rel (WT Γ σ n)|, things also become sticky rather
+on our data structure. The problem is that |Rel| is of type |Set -> Set₁| (not exactly, but for the purposes of argument), but |WT'| is not
+of type |Set|, but |∁tx → Uu → ℕ → Set|. If we try to define something like |\ {Γ σ n} → Rel (WT' Γ σ n)|, things also become sticky rather
 quickly.
 
-We can, however, circumvent this problem by defining a ``wrapper'' which is isomorphic to |WT|, but
-at the same time an element of |Set|. We will define this wrapper, |WTpack|, as follows.
+We can, however, circumvent this problem by defining a ``wrapper'' which is isomorphic to |WT'|, but
+at the same time an element of |Set|. We will define this wrapper, |WTwrap|, as follows.
 
 \begin{code}
-WTpack : Set
-WTpack = Σ ℕ (λ n → Σ Uu (λ u → Σ Ctx (λ g → WT g u n)))
+WTwrap : Set
+WTwrap = Σ ℕ (λ n → Σ Uu (λ u → Σ Ctx (λ g → WT' g u n)))
 \end{code}
 
 What is happening here is that we have defined a few nested dependent pairs, thus ``hiding'' the pi-type, which is what was causing us
-the headache. We will also need a function |to| to convert from |WT| into our wrapper type, but it is equally mundane.
+the headache. We will also need a function |to| to convert from |WT'| into our wrapper type, but it is equally mundane.
 
 \begin{code}
-to : ∀ {Γ σ n} → WT Γ σ n → WTpack
-to {Γ}{σ}{n} wt = n , σ , Γ , wt
+to' : ∀ {Γ σ n} → WT' Γ σ n → WTwrap
+to' {Γ}{σ}{n} wt = n , σ , Γ , wt
 \end{code}
 
 Now that we have this small bit of machinery, we can import the standard library's notion of well-foundedness and show that our measure,
-namely smaller than or equal to for |WT| elements, is well-founded.
+namely smaller than or equal to for |WT'| elements, is well-founded.
 
 We begin by showing that smaller-than is a well-founded relation on naturals.
 
+\ignore{
+\begin{code}
+open import Induction.WellFounded
+\end{code}
+}
 \begin{code}
 <-ℕ-wf : Well-founded _<_
 <-ℕ-wf x = acc (aux x)
@@ -2608,39 +2634,39 @@ We begin by showing that smaller-than is a well-founded relation on naturals.
 
 Now we use a lemma from the |Induction.WellFounded| standard library module which shows that
 if we have some measure on a carrier, and a way to map some new type to this carrier type, we have
-lifted the well-foundedness to the new type. We instantiate this lemma using our |WTpack| wrapper, less-than on
-naturals, and a function |sz| which simply reads the size-index which we already included in |WT| in Sec.~\ref{sec:wt}.
+lifted the well-foundedness to the new type. We instantiate this lemma using our |WTwrap| wrapper, less-than on
+naturals, and a function |sz| which simply reads the size-index which we already included in |WT'| in Sec.~\ref{sec:wt}.
 
-\begin{code}
+\begin{spec}
 module <-on-sz-Well-founded where
-  open Inverse-image {_} {WTpack} {ℕ} {_<_} sz public
+  open Inverse-image {_} {WTwrap} {ℕ} {_<_} sz public
 
-  _≺_ : Rel WTpack _
+  _≺_ : Rel WTwrap _
   x ≺ y = sz x < sz y
 
   wf : Well-founded _≺_
   wf = well-founded <-ℕ-wf
-\end{code}
+\end{spec}
 
 Next we must show that recursing on smaller or equal arguments is also fine, and that shifting the de Bruijn indices does not change the
 ordering of two elements (|shift-pack-size|). Note that |weak| is a generalised weakening function, which |shift1| uses to add one type variable on top of the context stack
 and increase the de Bruijn indices by 1.
 
 \begin{spec}
-  _≼_ : Rel WTpack _
+  _≼_ : Rel WTwrap _
   x ≼ y = sz x < (1 + sz y)
 
-  shift-pack-size : ∀ {τ Γ Γ' σ n}        → (x : WT (Γ' ++ Γ) σ n)
+  shift-pack-size : ∀ {τ Γ Γ' σ n}        → (x : WT' (Γ' ++ Γ) σ n)
                                           → to (weak {Γ'}{σ}{Γ} x τ) ≼ to x
   shift-pack-size = ...
 \end{spec}
 
-Once we have these ingredients, we can assemble it all to show that all calls to |T| with any |WT| terminate, and that
+Once we have these ingredients, we can assemble it all to show that all calls to |T| with any |WT'| terminate, and that
 the function that returns this proof itself also terminates. This leads to the following definition of function |T| which maps
 expressions and continuations to CPS-style expressions. Our |allTsAcc| function now looks like this, showing only the ``interesting'' clauses.
 
-\begin{code}
-  allTsAcc : forall {Γ σ n}     → (wt : WT Γ σ n)
+\begin{spec}
+  allTsAcc : forall {Γ σ n}     → (wt : WT' Γ σ n)
                                 → Acc _≺_ (to wt)
                                 → TAcc wt
   ...
@@ -2649,21 +2675,28 @@ expressions and continuations to CPS-style expressions. Our |allTsAcc| function 
                                   (x (to (shift1 (Cont σ) wt)) <-base))
   allTsAcc (_⟨_⟩ {_}{σ}{σ₁}{n}{m} wt wt₁)    (acc x) =
                 TApp      (allTsAcc wt
-                                  (x (to wt) triv))
+                                  (x (to wt) n<1+n+m))
                           (allTsAcc (shift1 (σ => σ₁) wt₁)
-                                  (x (to (shift1 (σ => σ₁) wt₁)) (triv2 {_}{n})) )
-\end{code}
+                                  (x (to (shift1 (σ => σ₁) wt₁)) (n<1+m+n {_}{n})) )
+\end{spec}
 
 We now can export the final |T| translation function as follows, so the user of the library need not worry about
 termination proofs. |T| terminates on all inputs anyway.
 
+\ignore{
 \begin{code}
-T : {σ : Uu} {Γ : Ctx} {n m : ℕ}
-       → (wt : WT Γ σ n)
-       → (cont : WT (map cpsType Γ) (cpsType (Cont σ)) m)
-       → WT (map cpsType Γ) RT (sizeCPS n wt (allTsAcc wt (wf (to wt))) m)
-T wt cont = Tt wt (allTsAcc wt (wf (to wt))) cont
+open import Metaprogramming.WTWellfounded
+open <-on-sz-Well-founded ; open TLemma
 \end{code}
+}
+
+\begin{spec}
+T : {σ : Uu} {Γ : Ctx} {n m : ℕ}
+       → (wt : WT' Γ σ n)
+       → (cont : WT' (map cpsType Γ) (cpsType (Cont σ)) m)
+       → WT' (map cpsType Γ) RT (sizeCPS n wt (allTsAcc wt (wf (to wt))) m)
+T wt cont = T' wt (allTsAcc wt (wf (to wt))) cont
+\end{spec}
 
 
 The developments mentioned here, as well as termination proofs, can be found in
@@ -2705,17 +2738,22 @@ as there is nothing which says those functions cannot fail (except possibly for 
 of the actual function at hand seems a lot more convincing to us).  
 
 We will first define a data type |Comb| in Fig.~\ref{fig:comb} which captures the SKI combinator language, extended with variables. One might be justified in starting
-to protest at this point, since we are introducing non-closedness into the language, but notice that, in the same way as the |WT| type, we
+to protest at this point, since we are introducing non-closedness into the language, but notice that, in the same way as the |WT'| type, we
 require variables to point to valid entries in the context, so that if we have a term of type |Comb []|, we know it contains no variables
 and thus is closed. We need these variables for intermediate results from the translation algorithm.
 
-Note also that we have as much type safety in |Comb| as we have in |WT|, on account of the types of the arguments to the constructors
+Note also that we have as much type safety in |Comb| as we have in |WT'|, on account of the types of the arguments to the constructors
 needing to have sensible types.
+\ignore{
+\begin{code}
+open SKI' hiding (compile ; lambda ; Srep ; Irep ; Krep ; ski2wt )
+\end{code}
+}
 
 \begin{figure}[h]
-\begin{code}
-data Comb : (Γ : Ctx) → U' → Set where
-  Var    : forall {Γ} → (τ : U') → τ ∈ Γ    → Comb Γ τ
+\begin{spec}
+data Comb : (Γ : Ctx) → Uu → Set where
+  Var    : forall {Γ} → (τ : Uu) → τ ∈ Γ    → Comb Γ τ
   _⟨_⟩   : forall {Γ σ τ}
          → Comb Γ (σ => τ) → Comb Γ σ       → Comb Γ τ
   S      : forall {Γ A B C}
@@ -2723,7 +2761,7 @@ data Comb : (Γ : Ctx) → U' → Set where
   K      : forall {Γ A B}                   → Comb Γ (A => B => A)
   I      : forall {Γ A}                     → Comb Γ (A => A)
   Lit    : forall {Γ} {x}    → Uel x        → Comb Γ (O x)
-\end{code}
+\end{spec}
 \caption{The data type modeling SKI combinator calculus. The |Var| constructor is less dangerous than it may seem.}\label{fig:comb}
 \end{figure}
 
@@ -2773,21 +2811,26 @@ replace a lambda abstraction with some other construction, we are potentially br
 references, since some of them (exactly those in the body of the destroyed lambda) will need decrementing.
 Also, it sounds difficult to do a check on the variable's name to see if we should introduce an |I| or |K| in
 the variable case, but we will see that it is actually not so involved, and that the fact that the |Comb| language
-also uses the same context as the |WT| language is in fact a useful property. The code for the |compile| function,
+also uses the same context as the |WT'| language is in fact a useful property. The code for the |compile| function,
 which is pretty boring, is to be found in Fig.~\ref{fig:compile}, and the more interesting |lambda| function, which
 does the swizzling of lambda abstractions and variable references, is in Fig.~\ref{fig:lambda}.
 
 
+\ignore{
+\begin{code}
+mutual
+\end{code}
+}
 
 \begin{figure}
 \begin{code}
-compile : {Γ : Ctx} {τ : U'} {n : ℕ} → WT Γ τ n → Comb Γ τ
-compile {_}{O σ} (Lit x)              = Lit x
-compile {_}{τ} (Var  h)               = Var τ  h
-compile {_}{τ} (_⟨_⟩ {._}{σ} wt wt₁)  = compile wt ⟨ compile wt₁ ⟩
-compile {_}{σ => τ} (Lam .σ wt)       = lambda (compile wt) 
+  compile : {Γ : Ctx} {τ : Uu} {n : ℕ} → WT' Γ τ n → Comb Γ τ
+  compile {_}{O σ} (Lit x)              = Lit x
+  compile {_}{τ} (Var  h)               = Var τ  h
+  compile {_}{τ} (_⟨_⟩ {._}{σ} wt wt₁)  = compile wt ⟨ compile wt₁ ⟩
+  compile {_}{σ => τ} (Lam .σ wt)       = lambda (compile wt) 
 \end{code}
-\caption{The proof that any |WT| term can be translated into the |Comb| language.}\label{fig:compile}
+\caption{The proof that any |WT'| term can be translated into the |Comb| language.}\label{fig:compile}
 \end{figure}
 
 Notice in Fig.~\ref{fig:lambda} that when we encounter a variable as the only thing in the body
@@ -2797,17 +2840,17 @@ that we decrement the de Bruijn index as promised, by peeling of a |there| const
 
 \begin{figure}
 \begin{code}
-lambda : {σ τ : U'}{Γ : Ctx}    → (c : Comb (σ ∷ Γ) τ)
-                                → Comb Γ (σ => τ)
-lambda {σ}     (Var .σ   here)    = I
-lambda {σ} {τ} (Var .τ (there i)) = K ⟨ Var τ i ⟩
-lambda  (t ⟨ t₁ ⟩) =     let    l1    = lambda  t
-                                l2    = lambda  t₁
-                         in     S ⟨ l1 ⟩ ⟨ l2 ⟩
-lambda           (Lit l)          = K ⟨ Lit l     ⟩
-lambda           S                = K ⟨ S         ⟩
-lambda           K                = K ⟨ K         ⟩
-lambda           I                = K ⟨ I         ⟩
+  lambda : {σ τ : Uu}{Γ : Ctx}    → (c : Comb (σ ∷ Γ) τ)
+                                  → Comb Γ (σ => τ)
+  lambda {σ}     (Var .σ   here)    = I
+  lambda {σ} {τ} (Var .τ (there i)) = K ⟨ Var τ i ⟩
+  lambda  (t ⟨ t₁ ⟩) =     let    l1    = lambda  t
+                                  l2    = lambda  t₁
+                           in     S ⟨ l1 ⟩ ⟨ l2 ⟩
+  lambda           (Lit l)          = K ⟨ Lit l     ⟩
+  lambda           S                = K ⟨ S         ⟩
+  lambda           K                = K ⟨ K         ⟩
+  lambda           I                = K ⟨ I         ⟩
 \end{code}
 \caption{The function we invoke whenever we encounter a lambda abstraction. }\label{fig:lambda}
 \end{figure}
@@ -2816,18 +2859,18 @@ With this machinery in place, we can now successfully convert closed lambda expr
 to SKI combinator calculus.
 
 \begin{spec}
-testTermWT : Well-typed-closed (typeOf (
+testTermWT' : Well-typed-closed (typeOf (
          term2raw (quoteTerm λ (n : ℕ → ℕ) → λ (m : ℕ) → n m ))) _
-testTermWT = raw2wt (
+testTermWT' = raw2wt (
          term2raw (quoteTerm λ (n : ℕ → ℕ) → λ (m : ℕ) → n m ))
  
-unitTest1 : compile testTermWT ≡
+unitTest1 : compile testTermWT' ≡
     S ⟨ S ⟨ K ⟨ S ⟩ ⟩ ⟨ S ⟨ K ⟨ K ⟩ ⟩ ⟨ I ⟩ ⟩ ⟩ ⟨ K ⟨ I ⟩ ⟩
 unitTest1 = refl
 \end{spec}
 
 Here we see how the existing lambda expression quoting system is used to read a
-concrete Agda lambda expression into a |WT| value, which is then |compile|d to
+concrete Agda lambda expression into a |WT'| value, which is then |compile|d to
 produce an SKI term.
 
 The resulting terms are sometimes rather verbose, as is illustrated
@@ -2844,33 +2887,33 @@ already-defined combinators.
 
 Once we have converted some lambda term to SKI, we might want to use it as a function on concrete Agda values.
 This is slightly pointless, since we already had some term to SKI-convert, so we might as well use that directly,
-but for completeness we do provide a translation from SKI back to |WT|, which we know we can |unquote|, as shown
+but for completeness we do provide a translation from SKI back to |WT'|, which we know we can |unquote|, as shown
 in Sec.~\ref{sec:doing-something-useful}.
 
 Since the SKI combinators are themselves defined in terms of lambda
-expressions, it is trivial to first encode them as |WT| values (see
+expressions, it is trivial to first encode them as |WT'| values (see
 Fig.~\ref{fig:skirepresentations}), and then use those to assemble a
-traditional |WT| term from a value of type |Comb|.  The unsurprising
+traditional |WT'| term from a value of type |Comb|.  The unsurprising
 code, which is just a fold, can be found in Fig.~\ref{fig:skitoWT}. 
 
 \begin{figure}[h]
 \begin{code}
-Srep : ∀ {A B C Γ} → WT Γ ((A => B => C) => (A => B) => A => C) _
+Srep : ∀ {A B C Γ} → WT' Γ ((A => B => C) => (A => B) => A => C) _
 Srep {A}{B}{C} = Lam (A => B => C) (Lam (A => B) (Lam A
                       ( Var (there (there here)) ⟨ Var here ⟩ ⟨ Var (there here) ⟨ Var here ⟩ ⟩ )))
 
-Irep : ∀ {A Γ} → WT Γ (A => A) _
+Irep : ∀ {A Γ} → WT' Γ (A => A) _
 Irep {A} = Lam A (Var here)
 
-Krep : ∀ {A B Γ} → WT Γ (A => B => A) _
+Krep : ∀ {A B Γ} → WT' Γ (A => B => A) _
 Krep {A}{B} = Lam A (Lam B (Var (there here)))
 \end{code}
-\caption{The SKI combinators as represented in the |WT| domain.}\label{fig:skirepresentations}
+\caption{The SKI combinators as represented in the |WT'| domain.}\label{fig:skirepresentations}
 \end{figure}
 
 \begin{figure}[h]
 \begin{code}
-ski2wt : {Γ : Ctx} {σ : U'} → (c : Comb Γ σ) → WT Γ σ (combsz c)
+ski2wt : {Γ : Ctx} {σ : Uu} → (c : Comb Γ σ) → WT' Γ σ (combsz c)
 ski2wt {Γ} {σ} (Var .σ h)      = Var h
 ski2wt (c ⟨ c₁ ⟩)              = ski2wt c ⟨ ski2wt c₁ ⟩
 ski2wt S                       = Srep
@@ -2878,13 +2921,13 @@ ski2wt K                       = Krep
 ski2wt I                       = Irep
 ski2wt (Lit x₁)                = Lit x₁
 \end{code}
-\caption{Translating SKI calculus back to lambda terms in the |WT| type.}\label{fig:skitoWT}
+\caption{Translating SKI calculus back to lambda terms in the |WT'| type.}\label{fig:skitoWT}
 \end{figure}
 
-Note that because |WT| is
+Note that because |WT'| is
 just as well-typed as the |Comb| type, we are not losing any type safety
 on the way. The function |combsz| which can be seen in the |ski2wt| type signature
-simply calculates the natural representing the size of the final expression in |WT|. This
+simply calculates the natural representing the size of the final expression in |WT'|. This
 is necessary because the value cannot be inferred.
 
 
@@ -3105,10 +3148,7 @@ Talk about extension to compiler here, give example of use (as detailed as possi
 
 \todo{compare the tauto-solver to tactics, note how this is embedded in agda and not some sub-language of coq (for in the discussion, perhaps)}
 
-%todo what are Patrick Bahr's tree automata?
-
-
-test test
+%todo mention Patrick Bahr's tree automata?
 
 \chapter{Guide to Source Code}
 

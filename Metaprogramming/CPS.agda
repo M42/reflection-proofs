@@ -149,29 +149,28 @@ module TLemma where
 -- two trivial lemmas which are necessary because Agda
 -- doesn't believe they're trivial.
 private
-  triv : ∀ {n m} → n < suc (n + m)
-  triv {zero} {zero} = <-base
-  triv {zero} {suc m} = <-step triv
-  triv {suc n} {m} = s<s triv
+  n<1+n+m : ∀ {n m} → n < suc (n + m)
+  n<1+n+m {zero} {zero} = <-base
+  n<1+n+m {zero} {suc m} = <-step n<1+n+m
+  n<1+n+m {suc n} {m} = s<s n<1+n+m
   
-  triv2 : ∀ {n m} → n < suc (m + n)
-  triv2 {n} {zero} = <-base
-  triv2 {n} {suc m} = <-step (triv2 {n}{m})
+  n<1+m+n : ∀ {n m} → n < suc (m + n)
+  n<1+m+n {n} {zero} = <-base
+  n<1+m+n {n} {suc m} = <-step (n<1+m+n {n}{m})
 
 open <-on-sz-Well-founded ; open TLemma
 
-private
 {-
   finally we can get around to proving that all WT terms lead to a reasonable
   accessibility predicate TAcc wt; now this function also terminates, which is
   shown by the well-foundedness argument Acc.
   -}
-  allTsAcc : forall {Γ σ n} → (wt : WT Γ σ n) → Acc _≺_ (to wt) → TAcc wt
-  allTsAcc (Var x) _ = TBaseVar
-  allTsAcc (Lit x₁) _ = TBaseLit
-  allTsAcc {Γ} {τ => σ}{suc n} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ) wt) (x (to (shift1 (Cont σ) wt)) <-base))
-  allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁}{n}{m} wt wt₁) (acc x) = TApp (allTsAcc wt (x (to wt) triv))
-                                                         (allTsAcc (shift1 (σ => σ₁) wt₁) (x (to (shift1 (σ => σ₁) wt₁)) (triv2 {_}{n})) )
+allTsAcc : forall {Γ σ n} → (wt : WT Γ σ n) → Acc _≺_ (to wt) → TAcc wt
+allTsAcc (Var x) _ = TBaseVar
+allTsAcc (Lit x₁) _ = TBaseLit
+allTsAcc {Γ} {τ => σ}{suc n} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ) wt) (x (to (shift1 (Cont σ) wt)) <-base))
+allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁}{n}{m} wt wt₁) (acc x) = TApp (allTsAcc wt (x (to wt) n<1+n+m))
+                                                       (allTsAcc (shift1 (σ => σ₁) wt₁) (x (to (shift1 (σ => σ₁) wt₁)) (n<1+m+n {_}{n})) )
 
 -- this is the function we finally export as the CPS API. We get a term wt and cont,
 -- and generate the termination/accessibility proof using allTsAcc, passing in the
