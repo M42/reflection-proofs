@@ -27,6 +27,6 @@ pdfshow: $(PDF)
 
 symbols:
 	-rm -fv *.agdai # this is a terrible hack. module loading is broken :(
-	agda --lagda $(LHSFILE) --include-path=. --include-path=$(AGDA_SRC) > generated-colour.fmt
+	cd .. ; agda --lagda doc/$(LHSFILE) --include-path=. --include-path=$(AGDA_SRC) > doc/generated-colour.fmt
 
 .PHONY: clean pdfshow symbols $(PDF)
