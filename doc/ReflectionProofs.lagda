@@ -320,9 +320,9 @@ on the left-hand side of the equation too. Note how repeated variables on the le
 \begin{spec}
 something : ℕ → ℕ → Whatever
 something n             m          with n ≟ m
-something .0            0          | yes     refl  =    HOLE 0
-something .(suc m)      (suc m)    | yes     refl  =    HOLE 1
-something n             m          | no      ¬p    =    HOLE 2
+something .0            0          | yes     refl  =    (HOLE 0)
+something .(suc m)      (suc m)    | yes     refl  =    (HOLE 1)
+something n             m          | no      ¬p    =    (HOLE 2)
 \end{spec}
 
 

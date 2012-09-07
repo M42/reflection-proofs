@@ -57,7 +57,7 @@
 %%% holes:
 
 \colorlet{Hole}{Dandelion!25!white}
-%format HOLE x  = "\colorbox{Hole}{\ensuremath{\{\,\,\}_{" x "}}}"
+%format (HOLE x)  = "\colorbox{Hole}{\ensuremath{\{\,\,\}_{" x "}}}"
 
 
 
