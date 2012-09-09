@@ -1,4 +1,4 @@
-module Metaprogramming.GP-things where
+module Metaprogramming.GP where
 
 
 open import Reflection
