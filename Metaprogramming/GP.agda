@@ -16,7 +16,7 @@ open import Function
 
 data Col : Set where
   R G B : Col
-  -- Bleen : ℕ → Col
+  Bleen : ℕ → Col
 
 
 isDT : Definition → Set
@@ -32,20 +32,20 @@ dt axiom         ()
 dt primitive′    ()
 
 -- this tells us if a (constructor's) type is "simple"
-isUnit : Type → Set
-isUnit (el s (var x args)) = ⊥
-isUnit (el s (con c args)) = ⊥
-isUnit (el s (def f [])) = ⊤
-isUnit (el s (def f (x ∷ args))) = ⊥
-isUnit (el s (lam v ty t)) = ⊥
-isUnit (el s (pi t₁ t₂)) = ⊥
-isUnit (el s (sort x)) = ⊥
-isUnit (el s unknown) = ⊥
+noArgs : Type → Set
+noArgs (el s (var x args)) = ⊥
+noArgs (el s (con c args)) = ⊥
+noArgs (el s (def f [])) = ⊤
+noArgs (el s (def f (x ∷ args))) = ⊥
+noArgs (el s (lam v ty t)) = ⊥
+noArgs (el s (pi t₁ t₂)) = ⊥
+noArgs (el s (sort x)) = ⊥
+noArgs (el s unknown) = ⊥
 
 
 allConsUnit : List Name → Set
 allConsUnit [] = ⊤
-allConsUnit (x ∷ xs) =  isUnit (type x) × allConsUnit xs
+allConsUnit (x ∷ xs) =  noArgs (type x) × allConsUnit xs
 
   
 isomorphicDT : (n : Name) → {isdt : isDT (definition n)} → Set
@@ -93,6 +93,7 @@ cons2name : (c : Col) → Name
 cons2name R = quote R
 cons2name G = quote G
 cons2name B = quote B
+cons2name _ = ?
 
 -- this is something we need to do because the unquote keyword cannot
 -- handle terms, just constructors. kind-of logical since the process isn't
