@@ -419,7 +419,11 @@ foo u = 5
 bar : ℕ
 bar = foo _
 \end{code}
-        \caption{Illustrating the automatic inference of record arguments. Note that one could replace $u$ on the LHS of |foo| with the irrefutable pattern |u₁ , u₂|, since, as has been mentioned before, this is the only valid constructor for the type |_×_|.}
+        \caption[Illustrating the automatic inference of record type
+arguments.]{Illustrating the automatic inference of record type
+arguments. Note that one could replace $u$ on the LHS of |foo| with
+the irrefutable pattern |u₁ , u₂|, since, as has been mentioned
+before, this is the only valid constructor for the type |_×_|.}
         \label{code:implicit-example}
     \end{figure}
 Since this inference is possible, we can also make this argument implicit, which effectively
@@ -855,7 +859,7 @@ exprTable = (Variable ,
              0   \# (quote ℕ.zero)   ↦ Zero ∷
              1   \# (quote ℕ.suc )   ↦ Succ ∷ [])
 \end{code}
-\caption{The mapping for converting to the imaginary |Expr| AST. }\label{fig:exprTable}
+\caption{The mapping table for converting to the imaginary |Expr| AST. }\label{fig:exprTable}
 \end{figure}
 
 Here, we are saying that any variables encountered should be stored as |Variable| elements,
@@ -967,7 +971,7 @@ something : {x y : ℕ}    → doConvert    exprTable
                                             (Variable 0))
 something = refl
 \end{code}
-\caption{Examples of |Autoquote| in use. See Fig.~\ref{fig:exprTable} for the definition of |exprTable|, a typical |Name|/constructor mapping.}\label{fig:test-autoquote}
+\caption{Examples of |Autoquote| in use. See Fig.~\ref{fig:exprTable} for the definition of |exprTable|, a typical |Name|-to-constructor mapping.}\label{fig:test-autoquote}
 \end{figure}
 
 Note the type signature of the |doConvert| function: we are implicitly assuming
@@ -1388,7 +1392,7 @@ exampletheorem : Set
 exampletheorem = (p1 q1 p2 q2 : Bool)   →   P  (         (p1 ∨ q1) ∧ (p2 ∨ q2)
                                                    ⇒     (q1 ∨ p1) ∧ (q2 ∨ p2))
 \end{code}
-\caption{Example encoding of a tautology.}
+\caption{Encoding of an example tautology.}
 \end{figure}
 
 Here a complication arises, though. We are quantifying over a list of Boolean values \emph{outside}
@@ -1603,7 +1607,7 @@ data Diff : ℕ → ℕ → Set where
   Base : ∀ {n}   → Diff n n
   Step : ∀ {n m} → Diff (suc n) m → Diff n m
 \end{spec}
-\caption{The definition of |Diff|}\label{fig:diff-datatype}
+\caption{The definition of the |Diff| data type.}\label{fig:diff-datatype}
 \end{figure}
 
 The |Diff| data type is defined as in Fig.~\ref{fig:diff-datatype}, and was necessary 
@@ -1669,7 +1673,7 @@ term2boolexpr n (def f (arg v r x ∷ [])) pf | yes p = Not (term2boolexpr n x p
 term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) pf | no ¬p with f ≟-Name quote _∧_
 ...
 \end{spec}
-\caption{An illustration of converting a |Term| into a |BoolExpr|.}\label{fig:concrete2abstract}
+\caption{Illustrating the conversion of a |Term| into a |BoolExpr n|.}\label{fig:concrete2abstract}
 \end{figure}
 
 
@@ -1759,7 +1763,7 @@ data BoolInter : Set where
   Imp          : BoolInter     → BoolInter    →   BoolInter
   Atomic       : ℕ                            →   BoolInter
 \end{code}
-\caption{An intermediary data type, which is a simplified (constraint-free) version of |BoolExpr|.}\label{fig:boolinter}
+\caption{An intermediary data type, which is a simplified (constraint-free) version of |BoolExpr n|.}\label{fig:boolinter}
 \end{figure}
 
 The mapping needed for |Autoquote| is as follows: we mention which constructor represents
@@ -2125,7 +2129,7 @@ data Raw' : Set where
   Lam  : Uu        → Raw             → Raw
   Lit  : (x : U)   → Uel x           → Raw
 \end{spec}
-\caption{The |Raw| data type, or a model of simply-typed lambda expressions without any constraints.}\label{fig:raw}
+\caption{The |Raw| data type, or a model of simply-typed lambda expressions without any typing or scoping constraints.}\label{fig:raw}
 \end{figure}
 
 We do include some typing information in |Raw|s, but it is
@@ -2772,7 +2776,9 @@ data Comb : Ctx → Uu → Set where
   I      : ∀ {Γ A}                          → Comb Γ (A => A)
   Lit    : ∀ {Γ} {x}    → Uel x             → Comb Γ (O x)
 \end{spec}
-\caption{The data type modeling SKI combinator calculus. The |Var| constructor is less dangerous than it may seem.}\label{fig:comb}
+\caption[The data type |Comb|, modeling SKI combinator calculus.]{The
+data type |Comb|, modeling SKI combinator calculus. The |Var|
+constructor is less dangerous than it may seem.}\label{fig:comb}
 \end{figure}
 
 
@@ -2795,13 +2801,14 @@ doesn't depend on the abstraction. In case we encounter an application
 as the body, we should recursively do the lambda-modification on the
 applicand and argument, then apply them both to the |S| combinator,
 since that will restore the analogue of the $\lambda x
-. \textnormal{App}~y~z$ (bearing in mind that initially $y$ and $z$
+. \text{App}~y~z$ (bearing in mind that initially $y$ and $z$
 might depend on $x$), since |S ⟨ y ⟩ ⟨ z ⟩ | indeed evaluates to |\ f
 -> \ g -> \ x -> f x (g x)| applied to $y$ then $z$, which gives |\ x
 -> y x (z x)| which precisely reflects that we want $y$ applied to
 $z$, and that they each might depend upon $x$.
 
-Translating this fuzzy description into pseudo-Haskell, we get something like the following.
+Translating this fuzzy description into pseudo-Haskell, we get something like the code presented in Fig.~\ref{fig:pseudo-haskell-ski}.
+\begin{figure}[h]
 \begin{spec}
 compile : Lambda -> Combinatory
 compile (Var x)        = VarC x
@@ -2815,6 +2822,8 @@ lambda x (ApplyC t u)                = ApplyC     (ApplyC  S
                                                            (lambda x t))
                                                   (lambda x u)
 \end{spec}
+\caption{A pseudo-Haskell implementation of conversion from lambda terms to SKI calculus, using named variables.}\label{fig:pseudo-haskell-ski}.
+\end{figure}
 
 We have the added complication of using de Bruijn indices, though. This means that each time we
 replace a lambda abstraction with some other construction, we are potentially breaking the variable
@@ -2866,7 +2875,7 @@ combinator.
   lambda           K                            =    K ⟨ K         ⟩
   lambda           I                            =    K ⟨ I         ⟩
 \end{code}
-\caption{The function we invoke whenever we encounter a lambda abstraction. }\label{fig:lambda}
+\caption{The function we invoke whenever we encounter a lambda abstraction during translation to SKI calculus.}\label{fig:lambda}
 \end{figure}
 
 With this machinery in place, we can now successfully convert closed lambda expressions
@@ -2923,7 +2932,7 @@ Irep {A} = Lam A (Var here)
 Krep : ∀ {A B Γ} → WT' Γ (A => B => A) _
 Krep {A}{B} = Lam A (Lam B (Var (there here)))
 \end{code}
-\caption{The SKI combinators as represented in the |WT'| domain.}\label{fig:skirepresentations}
+\caption{The SKI combinators as represented in the |WT'| data type.}\label{fig:skirepresentations}
 \end{figure}
 
 \begin{figure}[h]
@@ -2945,6 +2954,14 @@ on the way. The function |combsz| which can be seen in the |ski2wt| type signatu
 simply calculates the natural representing the size of the final expression in |WT'|. This
 is necessary because the value cannot be inferred.
 
+We have now defined a round-trip, automatic translation from concrete Agda lambda terms, to well-typed
+lambda terms in our |WT'| representation, to SKI combinators as another data structure but preserving the type
+and scope guarantees provided by |WT'|, back into concrete Agda terms, which are the semantic equivalent
+of the original terms.
+
+These developments can be found in the module |Metaprogramming.SKI|, and a few example 
+translated terms as well as a guide to how to use the provided code as a library, are to be found 
+in |Metaprogramming.ExampleSKI|. 
 
 \chapter{Generic Programming}\label{sec:generic-programming}
 
@@ -3174,6 +3191,8 @@ Here I would like to put an explanation of what's what and where.
 \begin{verbatim}
 Insert source tree here?
 \end{verbatim}
+
+\listoffigures
 
 \bibliography{refs}{}
 \bibliographystyle{plain}
