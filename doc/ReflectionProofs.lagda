@@ -2847,22 +2847,24 @@ mutual
 
 Notice in Fig.~\ref{fig:lambda} that when we encounter a variable as the only thing in the body
 of the lambda, and if it is not the variable which is bound by the lambda under consideration,
-that we decrement the de Bruijn index as promised, by peeling of a |there| constructor off the index-proof.
+that we decrement the de Bruijn index as promised, by peeling off a |there| constructor off the index-proof.
+If it is the variable bound by the lambda in question, we can replace the whole lambda expression with the identity
+combinator. 
 
 
 \begin{figure}
 \begin{code}
   lambda : {σ τ : Uu}{Γ : Ctx}    → Comb (σ ∷ Γ) τ
                                   → Comb Γ (σ => τ)
-  lambda {σ}     (Var .σ   here)    = I
-  lambda {σ} {τ} (Var .τ (there i)) = K ⟨ Var τ i ⟩
-  lambda  (t ⟨ t₁ ⟩) =     let    l1    = lambda  t
-                                  l2    = lambda  t₁
-                           in     S ⟨ l1 ⟩ ⟨ l2 ⟩
-  lambda           (Lit l)          = K ⟨ Lit l     ⟩
-  lambda           S                = K ⟨ S         ⟩
-  lambda           K                = K ⟨ K         ⟩
-  lambda           I                = K ⟨ I         ⟩
+  lambda {σ}     (Var .σ   here)                =    I
+  lambda {σ} {τ} (Var .τ (there i))             =    K ⟨ Var τ i ⟩
+  lambda  (t ⟨ t₁ ⟩) =     let  l1    = lambda  t
+                                l2    = lambda  t₁
+                           in                        S ⟨ l1 ⟩ ⟨ l2 ⟩
+  lambda           (Lit l)                      =    K ⟨ Lit l     ⟩
+  lambda           S                            =    K ⟨ S         ⟩
+  lambda           K                            =    K ⟨ K         ⟩
+  lambda           I                            =    K ⟨ I         ⟩
 \end{code}
 \caption{The function we invoke whenever we encounter a lambda abstraction. }\label{fig:lambda}
 \end{figure}
