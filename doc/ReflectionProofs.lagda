@@ -459,6 +459,8 @@ excellent tutorial on the same written by Ulf Norell
 \cite{Norell:2009:DTP:1481861.1481862}.
 
 
+\todo{clearly state non-workingness of my code and suggest that sometime stuff will be implemented by the 
+devs}
 \chapter{Reflection in Agda}
 \label{sec:reflection}
 
@@ -2348,6 +2350,7 @@ variables, or changed them to another type.
 
 
 \section{Example: CPS Transformation}
+\todo{give examples of CPS transformed terms. from Wouter's BG reading?}
 
 Given the fact that we can now easily move from the world of concrete Agda syntax to a well-typed lambda calculus and back,
 the obvious next step is to do something with these well-typed terms. Doing anything with these terms constitutes
@@ -2584,6 +2587,8 @@ allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁} wt wt₁)    =
                           (allTsAcc (shift1 (σ => σ₁) wt₁))
 \end{spec}
 
+\todo{emphasize that adding the size to WT was important for proving WF, since otherwise the measure itself
+would be a fold and not a projection as is currently the case.}
 But, horror! Agda now is convinced that this function, |allTsAcc|, which is meant to give us the proof
 that |T| terminates given any |WT'| term, does not terminate either! We also cannot apply Bove and Capretta's trick
 again, since that would give us a data type isomorphic to |TAcc|.
@@ -2629,12 +2634,12 @@ open import Induction.WellFounded
 <-ℕ-wf x = acc (aux x)
   where
     aux : ∀ x y → y < x → Acc _<_ y
-    aux zero y ()
-    aux (suc x₁) .x₁ <-base = <-ℕ-wf x₁
-    aux (suc x₁) y (<-step m) = aux x₁ y m
+    aux zero         y          ()
+    aux (suc x₁)     .x₁        <-base          = <-ℕ-wf x₁
+    aux (suc x₁)     y          (<-step m)      = aux x₁ y m
 \end{code}
 
-Now we use a lemma from the |Induction.WellFounded| standard library module which shows that
+Now we use a lemma\todo{which one? inverse-image} from the |Induction.WellFounded| standard library module which shows that
 if we have some measure on a carrier, and a way to map some new type to this carrier type, we have
 lifted the well-foundedness to the new type. We instantiate this lemma using our |WTwrap| wrapper, less-than on
 naturals, and a function |sz| which simply reads the size-index which we already included in |WT'| in Sec.~\ref{sec:wt}.
@@ -2682,6 +2687,7 @@ expressions and continuations to CPS-style expressions. Our |allTsAcc| function 
                                   (x (to (shift1 (σ => σ₁) wt₁)) (n<1+m+n {_}{n})) )
 \end{spec}
 
+\todo{make sure lemmas have proper names like n<m}
 We now can export the final |T| translation function as follows, so the user of the library need not worry about
 termination proofs. |T| terminates on all inputs anyway.
 
@@ -2819,7 +2825,9 @@ also uses the same context as the |WT'| language is in fact a useful property. T
 which is pretty boring, is to be found in Fig.~\ref{fig:compile}, and the more interesting |lambda| function, which
 does the swizzling of lambda abstractions and variable references, is in Fig.~\ref{fig:lambda}.
 
-
+\todo{clearly mention that ctx and $\in$ were the trick for SKI, otherwise closedness cannot be guaranteed}
+\todo{note that another problem with formalising a named representation is that you must guarantee 
+presence and unicity of a variable in the context, something which deBruijn gives you for free.}
 \ignore{
 \begin{code}
 mutual
@@ -2872,6 +2880,7 @@ unitTest1 : compile testTermWT' ≡
     S ⟨ S ⟨ K ⟨ S ⟩ ⟩ ⟨ S ⟨ K ⟨ K ⟩ ⟩ ⟨ I ⟩ ⟩ ⟩ ⟨ K ⟨ I ⟩ ⟩
 unitTest1 = refl
 \end{spec}
+\todo{mention how supercombinators could make the term smaller, but nobody cares. give an example of a supercombinator.}
 
 Here we see how the existing lambda expression quoting system is used to read a
 concrete Agda lambda expression into a |WT'| value, which is then |compile|d to
