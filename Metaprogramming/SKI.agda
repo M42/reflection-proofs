@@ -31,12 +31,12 @@ open module TC = Metaprogramming.TypeCheck U equal? type? Uel quoteVal quoteBack
 -- argument types. The environments are necessary to ensure that
 -- closed terms stay closed.
 data Comb : Ctx → U' → Set where
-  Var    : forall {Γ}        → (τ : U') → τ ∈ Γ → Comb Γ τ
-  _⟨_⟩   : forall {Γ σ τ}    → Comb Γ (σ => τ) → Comb Γ σ → Comb Γ τ
-  S      : forall {Γ A B C}  → Comb Γ ((A => B => C) => (A => B) => A => C)
-  K      : forall {Γ A B}    → Comb Γ (A => B => A)
-  I      : forall {Γ A}      → Comb Γ (A => A)
-  Lit    : forall {Γ} {x} → Uel x → Comb Γ (O x) -- a constant
+  Var    : ∀ {Γ}        → (τ : U') → τ ∈ Γ → Comb Γ τ
+  _⟨_⟩   : ∀ {Γ σ τ}    → Comb Γ (σ => τ) → Comb Γ σ → Comb Γ τ
+  S      : ∀ {Γ A B C}  → Comb Γ ((A => B => C) => (A => B) => A => C)
+  K      : ∀ {Γ A B}    → Comb Γ (A => B => A)
+  I      : ∀ {Γ A}      → Comb Γ (A => A)
+  Lit    : ∀ {Γ} {x} → Uel x → Comb Γ (O x) -- a constant
 
 -- this function essentially is used whenever a lambda abstraction is
 -- encountered.  the abstraction is removed, the body is compiled
@@ -48,7 +48,7 @@ data Comb : Ctx → U' → Set where
 -- abstraction between it and its binding site. in other cases,
 -- i.e. if the body isn't a variable, we can safely replace the lambda
 -- + body with a K-combinator applied to the body.
-lambda : {σ τ : U'}{Γ : Ctx} → (c : Comb (σ ∷ Γ) τ) → Comb Γ (σ => τ)
+lambda : {σ τ : U'}{Γ : Ctx} → Comb (σ ∷ Γ) τ → Comb Γ (σ => τ)
 lambda {σ}     (Var .σ   here)    = I
 lambda {σ} {τ} (Var .τ (there i)) = K ⟨ Var τ i ⟩
 lambda  (t ⟨ t₁ ⟩) = let l1 = lambda  t

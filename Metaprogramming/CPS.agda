@@ -43,21 +43,21 @@ cpsType (t => t₁) = cpsType t => ((cpsType t₁ => RT) => RT)
 cpsType (Cont t)  = cpsType t => RT
 
 -- translate the _∈_ objects to an environment where all the types have been transformed.
-cpsvar : forall {t g} → t ∈ g → (cpsType t) ∈ (map cpsType g)
+cpsvar : ∀ {t g} → t ∈ g → (cpsType t) ∈ (map cpsType g)
 cpsvar   here    = here
 cpsvar (there v) = there (cpsvar v)
 
 -- show that we can add more variables to our environment for free;
 -- variables that used to be in the environment are still there, modulo
 -- some shifting of indices
-weakvar : forall {τ Γ} → (τ' : U') → (Γ' : Ctx) → τ ∈ (Γ' ++ Γ) → τ ∈ (Γ' ++ (τ' ∷ Γ))
+weakvar : ∀ {τ Γ} → (τ' : U') → (Γ' : Ctx) → τ ∈ (Γ' ++ Γ) → τ ∈ (Γ' ++ (τ' ∷ Γ))
 weakvar t' [] x                 = there x
 weakvar t' (x ∷ env) here       = here
 weakvar t' (x ∷ env) (there x₁) = there (weakvar t' env x₁)
 
 -- show that we can add a type variable somewhere in the middle of our
 -- environment and stuff still is okay.
-weak : forall {Γ' τ Γ n} → WT (Γ' ++ Γ) τ n → (τ' : U') → WT (Γ' ++ (τ' ∷ Γ)) τ n
+weak : ∀ {Γ' τ Γ n} → WT (Γ' ++ Γ) τ n → (τ' : U') → WT (Γ' ++ (τ' ∷ Γ)) τ n
 weak (Lit x) t                    = Lit x
 weak {Γ'} (Var x) t'              = Var (weakvar t' Γ' x)
 weak {g'} {t => t1} (Lam .t e) t' = Lam t (weak { t ∷ g' } e t')
@@ -68,18 +68,18 @@ weak {g'} {t2} {g} (_⟨_⟩ .{_}{t1}.{t2} e1 e2) t' =
 -- increase all the de Bruijn indices by 1. Needs to have some
 -- arbitrary type added to the front of the environment to keep
 -- the lengths right. special case of weakening, but with empty prefix environment.
-shift1 : forall {Γ τ n} → (τ' : U') → WT Γ τ n → WT (τ' ∷ Γ) τ n
+shift1 : ∀ {Γ τ n} → (τ' : U') → WT Γ τ n → WT (τ' ∷ Γ) τ n
 shift1 t' e = weak {[]} e t'
 
 -- this data type represents the result of a Bove-Capretta termination/accessibility
 -- predicate. See the thesis for more information on how this was made.
 data TAcc : {Γ : Ctx} {σ : U'} {n : ℕ} → WT Γ σ n → Set where
-  TBaseLit : forall {Γ σ x} → TAcc (Lit {Γ} {σ} x)
-  TBaseVar : forall {Γ σ x} → TAcc (Var {Γ} {σ} x)
-  TLam : forall {Γ t1 t2 n} {a : WT (t1 ∷ Γ) t2 n}
+  TBaseLit : ∀ {Γ σ x} → TAcc (Lit {Γ} {σ} x)
+  TBaseVar : ∀ {Γ σ x} → TAcc (Var {Γ} {σ} x)
+  TLam : ∀ {Γ t1 t2 n} {a : WT (t1 ∷ Γ) t2 n}
          → TAcc (shift1 (Cont t2) a)
          → TAcc {Γ} {t1 => t2} (Lam {Γ} t1 a)
-  TApp : forall {Γ σ σ₁ sza szb} {a : WT Γ (σ => σ₁) sza} {b : WT Γ σ szb}
+  TApp : ∀ {Γ σ σ₁ sza szb} {a : WT Γ (σ => σ₁) sza} {b : WT Γ σ szb}
          → TAcc {Γ} {σ => σ₁} a
          → TAcc (shift1 (σ => σ₁) b)
          → TAcc (a ⟨ b ⟩)
@@ -165,7 +165,7 @@ open <-on-sz-Well-founded ; open TLemma
   accessibility predicate TAcc wt; now this function also terminates, which is
   shown by the well-foundedness argument Acc.
   -}
-allTsAcc : forall {Γ σ n} → (wt : WT Γ σ n) → Acc _≺_ (to wt) → TAcc wt
+allTsAcc : ∀ {Γ σ n} → (wt : WT Γ σ n) → Acc _≺_ (to wt) → TAcc wt
 allTsAcc (Var x) _ = TBaseVar
 allTsAcc (Lit x₁) _ = TBaseLit
 allTsAcc {Γ} {τ => σ}{suc n} (Lam .τ wt) (acc x) = TLam (allTsAcc (shift1 (Cont σ) wt) (x (to (shift1 (Cont σ) wt)) <-base))

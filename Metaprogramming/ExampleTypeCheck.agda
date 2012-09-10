@@ -25,7 +25,7 @@ illustrate the use of the Metaprogramming.TypeCheck module.
 
 -- to get a feel for the WT datatype, here are some examples:
 -- an identity function:
-idrep : forall {σ} → Well-typed-closed (σ => σ) 2
+idrep : ∀ {σ} → Well-typed-closed (σ => σ) 2
 idrep {σ} = Lam σ (Var here) -- polymorphism!
 
 -- some function which, given an operation on naturals, and a natural,

@@ -4,6 +4,6 @@ module Metaprogramming.Util.Equal where
 -- the equivalent definition in Relation.Binary.Core, except
 -- this allows dot-patterns after decidable equality in Metaprogramming.TypeCheck.
 data Equal? {A : Set} : A → A → Set where
-  yes  : forall {τ}     → Equal? τ τ
-  no   : forall {σ τ}   → Equal? σ τ
+  yes  : ∀ {τ}     → Equal? τ τ
+  no   : ∀ {σ τ}   → Equal? σ τ
 
