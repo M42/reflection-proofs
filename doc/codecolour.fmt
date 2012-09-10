@@ -94,5 +94,8 @@
 
 %%% we don't want all dots to become function composition. sometimes we're referring to inferrable arguments.
 %format .     = "{"                 "."   "\mkern-5mu"     "}"
+%format Well-typed-closed     = "\id{Well\text{-}typed\text{-}closed}"
+%format Data-type     = "\id{Data\text{-}type}"
+%format data-type     = "\con{data\text{-}type}"
 %format _∷_   = "{" _ "\mkern1mu"    ∷    "\mkern-1mu"   _ "}"
 
