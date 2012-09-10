@@ -156,7 +156,7 @@ combsz (Lit x₁) = 1
 -- convert a term in the combinator language back to WT. this
 -- is to be done so that the usual unquote for WT can be used.
 ski2wt : {Γ : Ctx} {σ : U'} → (c : Comb Γ σ) → WT Γ σ (combsz c)
-ski2wt {Γ} {σ} (Var .σ h) = Var h
+ski2wt (Var σ h)          = Var h
 ski2wt (c ⟨ c₁ ⟩)         = ski2wt c ⟨ ski2wt c₁ ⟩
 ski2wt S                  = Srep
 ski2wt K                  = Krep

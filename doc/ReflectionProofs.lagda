@@ -2929,7 +2929,7 @@ Krep {A}{B} = Lam A (Lam B (Var (there here)))
 \begin{figure}[h]
 \begin{code}
 ski2wt : {Γ : Ctx} {σ : Uu} → (c : Comb Γ σ) → WT' Γ σ (combsz c)
-ski2wt {Γ} {σ} (Var .σ h)      = Var h
+ski2wt (Var  σ h)              = Var h
 ski2wt (c ⟨ c₁ ⟩)              = ski2wt c ⟨ ski2wt c₁ ⟩
 ski2wt S                       = Srep
 ski2wt K                       = Krep
