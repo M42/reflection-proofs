@@ -63,6 +63,7 @@ open import Data.List hiding (_∷ʳ_)
 
 \usepackage{amsmath}
 
+%%%% the semantic package, for the nice type rules.
 \usepackage{semantic}
 \mathlig{->}{\to}
 \mathlig{||->}{\mapsto}
@@ -71,6 +72,7 @@ open import Data.List hiding (_∷ʳ_)
 \mathlig{||-}{\vdash}
 \mathlig{~>}{\leadsto}
 \mathlig{=/=}{\neq}
+%%%% end semantic package stuff.
 
 \usepackage{hyperref}
 \usepackage{url}
@@ -2705,6 +2707,8 @@ The developments mentioned here, as well as termination proofs, can be found in
 
 \section{Example: Translation to SKI Combinators}
 
+\todo{bash the original, direct debruijn -> ski translation for having weird intermediate types. -> unsafe }
+
 Another interesting application of our new well-typed program transformation framework is the proof
 of a rather old result in computer science, revisited. This result says that any closed lambda term
 \todo{cite old ski-paper that says that all closed lambda terms can be translated into SKI}
@@ -2752,7 +2756,7 @@ open SKI' hiding (compile ; lambda ; Srep ; Irep ; Krep ; ski2wt )
 
 \begin{figure}[h]
 \begin{spec}
-data Comb : (Γ : Ctx) → Uu → Set where
+data Comb : Ctx → Uu → Set where
   Var    : ∀ {Γ} → (τ : Uu) → τ ∈ Γ         → Comb Γ τ
   _⟨_⟩   : ∀ {Γ σ τ}
          → Comb Γ (σ => τ) → Comb Γ σ       → Comb Γ τ
@@ -2840,7 +2844,7 @@ that we decrement the de Bruijn index as promised, by peeling of a |there| const
 
 \begin{figure}
 \begin{code}
-  lambda : {σ τ : Uu}{Γ : Ctx}    → (c : Comb (σ ∷ Γ) τ)
+  lambda : {σ τ : Uu}{Γ : Ctx}    → Comb (σ ∷ Γ) τ
                                   → Comb Γ (σ => τ)
   lambda {σ}     (Var .σ   here)    = I
   lambda {σ} {τ} (Var .τ (there i)) = K ⟨ Var τ i ⟩
