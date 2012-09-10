@@ -2946,24 +2946,15 @@ is necessary because the value cannot be inferred.
 
 \chapter{Generic Programming}\label{sec:generic-programming}
 
-Ornaments / containers?
-will we ever get here?
-\section{Reflection API Limitations}\label{sec:reflection-api-limitations}
-
-
-\begin{itemize}
-\item Cannot call |unquote| on non-constructor term. I.e. |unquote (lam2term t)|
-\item Impossible to introduce definitions
-\item Inspection of functions (e.g. clauses) not implemented
-\item ?? creation of pattern matching functions not possible => bove capretta impossible (or maybe completely automatic GP impossible)
-\item untyped terms are returned. this is solved.
-\end{itemize}
-
-\todo{mention that program transformation (i.e. automatic bove-capretta) is also difficult/impossible. this is something different from GP automatically}
 
 
 
-\chapter{Related Work}
+\todo{say something about Ornaments - probably make comparison to Epigram and say something like 
+real reflection wouldn't be necessary - welcome to a lispy world}
+
+
+\chapter{Discussion} % ... and Conclusion and Related Work and Reflection API Limitations
+\label{sec:discussion}
 
 \todo{Mention mcbride with ornaments}
 
@@ -3046,8 +3037,6 @@ API in use that came to our attention.
 
 
 
-\chapter{Discussion} % ... and Conclusion
-\label{sec:discussion}
 
 % TODO: Wouter says ``Ik vind het zelf soms
 % prettig om conclusions/related work/enz. in één hoofdstuk 'Discussion'
@@ -3066,6 +3055,18 @@ Agda's reflection API has several other applications.
 
 
 Answer the research question here.
+
+Reflection API limitations:
+\begin{itemize}
+\item Cannot call |unquote| on non-constructor term. I.e. |unquote (lam2term t)|
+\item Impossible to introduce definitions
+\item Inspection of functions (e.g. clauses) not implemented
+\item ?? creation of pattern matching functions not possible => bove capretta impossible (or maybe completely automatic GP impossible)
+\item untyped terms are returned. this is solved.
+\end{itemize}
+
+\todo{mention that program transformation (i.e. automatic bove-capretta) is also difficult/impossible. this is something different from GP automatically}
+
 
 %todo acknowledgements
 \ignore{
