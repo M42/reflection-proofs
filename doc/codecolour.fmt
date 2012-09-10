@@ -99,3 +99,5 @@
 %format data-type     = "\con{data\text{-}type}"
 %format _∷_   = "{" _ "\mkern1mu"    ∷    "\mkern-1mu"   _ "}"
 
+
+%format WT' = "\defin{WT}"
