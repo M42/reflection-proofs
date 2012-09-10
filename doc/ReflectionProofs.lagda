@@ -105,8 +105,8 @@ open import Data.List hiding (_∷ʳ_)
 
 %\selectfont
 \LARGE Paul van der Walt <\href{mailto:paul@@denknerd.org}{\nolinkurl{paul@@denknerd.org}}>\\
-\LARGE \textsc{Supervisor:} Wouter Swierstra \\
-\LARGE \textsc{2$^\textnormal{nd}$ reader:} Johan Jeuring \\[5mm]
+\Large \textsc{Supervisors:} Wouter Swierstra and Johan Jeuring \\[5mm]
+%% \LARGE \textsc{2$^\textnormal{nd}$ reader:} Johan Jeuring \\[5mm]
 \Huge \textbf{\mytitle}
 \\[2mm]
 \normalsize MSc thesis Computing Science\\

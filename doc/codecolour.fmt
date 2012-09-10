@@ -1,5 +1,6 @@
 %%% needed packages.
 
+\usepackage{bm}
 \usepackage{color}
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
 
@@ -26,7 +27,8 @@
 \newcommand{\fld}[1]{{\color{Maroon}\mathsf{#1}}}
 % keywords:
 \newcommand{\keyword}[1]{{\color{darkbordeaux}\mathsf{#1}}}
-%\newcommand{\keyword}[1]{{\color{Sepia}\mathsf{#1}}}
+%%% black bold keywords: (like let, in, where, data)
+\newcommand{\bkw}[1]{\ensuremath{\bm{\mathsf{#1}}}}
 
 \newcommand{\textsigma}{\ensuremath{\sigma}}
 
@@ -42,6 +44,13 @@
 %format unquote = "\keyword{unquote}"
 %format quoteGoal = "\keyword{quoteGoal}"
 %format quoteTerm = "\keyword{quoteTerm}"
+
+%format postulate = "\bkw{postulate}"
+%format mutual = "\bkw{mutual}"
+%format data = "\bkw{data}"
+%format where = "\bkw{where}"
+%format let = "\bkw{let}"
+%format in = "\bkw{in}"
 
 %format Uu = "\ensuremath{\id{U^\prime}}"
 %format Tt = "\ensuremath{\id{T^\prime}}"
@@ -101,3 +110,5 @@
 
 
 %format WT' = "\defin{WT}"
+%format falsity = "\defin{falsity}"
+%format exampleQuoteGoal = "\defin{exampleQuoteGoal}"
