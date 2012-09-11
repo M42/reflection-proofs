@@ -479,7 +479,7 @@ the program itself. This gives rise to powerful techniques for reusing code and
 generating frequently needed but slightly different expressions automatically.
 
 
-\section{The Basics}
+\section{The Basics}\label{sec:thebasics}
 
 Agda's reflection API defines several data types which represent terms,
 types, and sorts. These definitions take into account various
@@ -3021,6 +3021,11 @@ related to generic programming.
 \label{sec:discussion}
 
 \todo{Mention mcbride with ornaments}
+\todo{in introduction: list motivating examples for using reflection? include bove-capretta, so we later can conclude reflection API isn't yet powerful enough?}
+
+\todo{compare the tauto-solver to tactics, note how this is embedded in agda and not some sub-language of coq (for in the discussion, perhaps)}
+
+%todo mention Patrick Bahr's tree automata?
 
 
 % TODO : I would like to do something like this:
@@ -3181,14 +3186,14 @@ The modifications made are the following.
 \item The output of the reflection system (in other words the |Term| data type)
 was modified to include type annotations on lambda abstractions. See Sec.~\ref{appendix:lambda-types}.
 \item For convenience of producing syntax-highlighted documents from Literate Agda,
-the compiler was extended to output a list of formatting rules based on the currently in-scope identifiers. See Sec.~\ref{sec:lhs-syntax}.
+the compiler was extended to output a list of formatting rules based on the currently in-scope identifiers. See Sec.~\ref{appendix:lhs-syntax}.
 \end{itemize}
 
 
 
-\section{Annotating $\lambda$ Terms with Type}\label{appendix:lambda-types}
+\section{Annotating $\lambda$ Abstractions with Type}\label{appendix:lambda-types}
 
-As mentioned in Sec.~\ref{sec:...} it was necessary to slightly modify the
+As mentioned in Sec.~\ref{sec:thebasics} it was necessary to slightly modify the
 representation of |Term|s that the reflection system returns to the user. What was
 needed was to annotate lambda abstractions with the type of their argument, since without
 this, type inferencing would be necessary. However possible, this would introduce unneeded complexity
@@ -3200,34 +3205,51 @@ distinguish between, for example, |ℕ| and |Bool| variables in the same express
 allowed us to suffice with only providing a type checker, as opposed to a full type inferencing
 function along with a type unifier, which poses a problem to the termination checker.
 
-Here the changes required to the Agda compiler's source code are
-presented in Fig. \ref{fig:agda-lambda-diff}, in unified diff format
-\cite{unified-diff}.
 
+The changes required to the Agda compiler were rather small; the main thing that was needed was to extend
+the |Term| data type with a |Maybe Type| field to hold the extra parameter, and at most points where pattern 
+matching of generation of such terms was done, an extra field needed to be added. Only the |checkExpr| function, 
+which does type checking when a concrete Agda lambda term is encountered, needed to be adjusted, so that
+the inferred type of the argument to the lambda would be attached to the abstract syntax tree.
 
-\begin{figure}[h]
-insert darcs-diff here %todo
-\caption{The changes required to the Agda compiler to enable
-  annotation of lambda abstractions with the type of their
-  argument.}\label{fig:agda-lambda-diff}
-\end{figure}
-
-
-
-
-
-\section{Automatic Syntax Highlighting for Literate Agda}\label{sec:lhs-syntax}
-
-Talk about extension to compiler here, give example of use (as detailed as possible, i.e. with Makefile, the \texttt{-}\texttt{-lagda} flag, etc.
+The actual code changes can be browsed on \url{https://darcs.denknerd.org}\footnote{Specifically the following changesets
+are interesting as far as typed lambda expressions go: from \href{https://darcs.denknerd.org/darcsweb.cgi?r=Agda;a=commit;h=20120724095751-a1717-7409480a0680c0e9b220070a0265970cb403c87e.gz}{20120724095751-a1717-7409480a0680c0e9b220070a0265970cb403c87e.gz}
+to \href{https://darcs.denknerd.org/darcsweb.cgi?r=Agda;a=commit;h=20120802164956-a1717-213a839b6a17498d7fb0da67ea64c9603ca5409c.gz}{20120802164956-a1717-213a839b6a17498d7fb0da67ea64c9603ca5409c.gz}.}, but is not included here for brevity. One can also 
+clone the complete modified compiler fork from there.
 
 
 
-\todo{in introduction: list motivating examples for using reflection? include bove-capretta, so we later can conclude reflection API isn't yet powerful enough?}
+\section{Automatic Syntax Highlighting for Literate Agda}\label{appendix:lhs-syntax}
 
-\todo{compare the tauto-solver to tactics, note how this is embedded in agda and not some sub-language of coq (for in the discussion, perhaps)}
 
-%todo mention Patrick Bahr's tree automata?
+Highlighting Agda source code is something which as yet only works after a module has been loaded,
+since then the role of various identifiers is known -- be it constructor, function or type. Because
+of this, L\"oh's great LHS2\TeX\ system \cite{lhs2tex} does not support automatic highlighting of Agda code, but
+the documentation suggests using the idiomatic \texttt{\%format x = "\textbackslash{}something\{x\}"} rules, which are
+basically \LaTeX\ preprocessing macros. 
 
+A small modification to the Agda compiler added an extension,
+available via the \texttt{-}\texttt{-lagda} flag, which first loads
+the desired module, then if the module passes type checking, outputs a
+list of identifiers which are in scope, as a list of LHS2\TeX\ format
+rules. The output of such a command, invoked using the usual
+parameters plus the \texttt{-}\texttt{-lagda} flag can be piped into
+some file and then included in the main \texttt{lagda} file, as is
+done for this paper. The user is expected to define a number of
+\LaTeX\ commands, though, which specify how the various source code
+tokens are to be formatted. The required commands are:
+
+\begin{description}
+\item[\textbackslash{}defin] the formatting for a definition like a function name,
+\item[\textbackslash{}id] the formatting for an identifier,
+\item[\textbackslash{}fld] the formatting for a field name, such as |proj₁|,
+\item[\textbackslash{}con, \textbackslash{}consym, \textbackslash{}consymop]   formatting of a constructor or constructor operator, such as |suc| or |_,_|, and
+\item[\textbackslash{}ty] the formatting rule for a type.
+\end{description}
+
+Once again, the actual code changes can be browsed on \url{https://darcs.denknerd.org}\footnote{Specifically the following changesets
+are interesting as far as highlighting goes: from \href{https://darcs.denknerd.org/darcsweb.cgi?r=Agda;a=darcs_commitdiff;h=20120621153102-a1717-bcec6bef23583acfb7fd06e3291a57e90d1b4c0b.gz;}{20120621153102-a1717-bcec6bef23583acfb7fd06e3291a57e90d1b4c0b.gz}
+to \href{https://darcs.denknerd.org/darcsweb.cgi?r=Agda;a=darcs_commitdiff;h=20120625101400-a1717-6363a79683af6ad0752729ee24250e87d7af066b.gz;}{20120625101400-a1717-6363a79683af6ad0752729ee24250e87d7af066b.gz}.}.
 \chapter{Guide to Source Code}
 
 This project is currently hosted at github\footnote{\ghurl}. There, a 
@@ -3310,7 +3332,7 @@ uninteresting lemmas and alias definitions.
 
 
 
-% For IFL paper:
+% Voor IFL paper:
 % Beperk je tot de essentie
 % Geef voorbeelden
 
