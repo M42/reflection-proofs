@@ -3007,12 +3007,14 @@ data Col : Set where
 Obviously, this data type is isomorphic to |Fin 3|, the usual data type of bounded natural numbers
 indexed by an upper bound. It would be nice if we had a function which could, given the definition 
 of |Col|, or at least a pointer to that definition, return the data type (if any) which is isomorphic
-to the user's type. For now we will assume we have such a function -- we will call it |isoDT|.
+to the user's type. For now we will assume we have such a function -- we will call it |isoDT|. It is definable using
+the current reflection machinery, but because it is not used eventually, we will omit it as being an exercise
+to the reader to fill in.
 
-\begin{code}
+\begin{spec}
 isoDT : Name -> Set
-isoDT = ?
-\end{code}
+isoDT = (HOLE 0)
+\end{spec}
 
 The next logical move would be to write some function, which, given the pointer to |Col|'s definition, and a 
 value in |Col|, automatically returns a corresponding value in the isomorphic data type. This should be 
@@ -3022,16 +3024,48 @@ could return the element in |Fin n| which corresponds to the index of the given 
 Note that this would only work for very trivial enumeration data types without parameters or indices. 
 However, even this simple idea quickly gets stuck. Let us try and write down a type signature for |to|.
 
+What we want is, given the |Name| of a type (which, in this case, is obtained with |quote Col|), a function
+from that type to the generic type which is isomorphic to it. 
+This means that |to (quote Col)| yields a function with type |Col -> Fin 3|, assuming that |Fin 3| is the isomorphic 
+generic counterpart to |Col|. 
+
+Our first attempt might be as follows.
 \begin{spec}
+to : (n : Name) → unquote (def n []) → isoDT n
+to nm s x = (HOLE 0)
 \end{spec}
 
+The problem here, though, is that even though |Col| is indeed a definition taking no arguments,
+ we cannot unquote |def n []|, since at compile time $n$ is unknown, or as the Agda compiler aptly
+puts it, \texttt{n not a literal qname value}.
+
+Another attempt might be the following, where we are not unquoting things at compile-time, but rather
+ask the user to provide both the reference to the data type in question and its concrete Agda representation.
 
 \begin{spec}
+to : (n : Name) → (s : Set) → quote s ≡ def n [] → s → isoDT n
+to nm s pf x = (HOLE 0)
 \end{spec}
 
+Here we run into another problem: we are not allowed to call |quote s|, since at compile time $s$
+is not a defined name, but some parameter. A final attempt seems to work a little better, and at least
+compiles, although we are clutching at straws.
 
 \begin{spec}
+to : (n : Name) → (s : Set) → quoteTerm s ≡ def n [] → s → isoDT n
+to nm s pf x = (HOLE 0)
+
+testValue = to (quote Col) Col (HOLE 1)
 \end{spec}
+
+Here the problem is that |quoteTerm| indeed manages at compile time, but since, for the same reason
+that the last attempt failed, produces a useless term, namely |var 0 []|, or a reference to the nearest-bound
+variable, which results in a proof obligation |var 0 [] ≡ def Col []| in hole 1 which we of course cannot fulfil. 
+
+We are now forced to conclude that, even though certain elements necessary for generation of
+embedding-projection functions are attainable, we are blocked relatively early in the development
+process by such minor issues as arguments to quoting functions having to be known at compile time,
+which almost immediately precludes generic functions parameterised by a data type.
 
 
 
