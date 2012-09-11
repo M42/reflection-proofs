@@ -434,7 +434,7 @@ hides from the user that a value is being inferred and passed, as in Fig. \ref{f
     \begin{figure}[h]
 \begin{code}
 foo' : {u : ⊤ × ⊤} → ℕ
-foo' = 5
+foo' {tt  , tt} = 5
 
 bar' : ℕ
 bar' = foo'
