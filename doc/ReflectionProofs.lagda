@@ -2995,20 +2995,51 @@ would not even be necessary, since, like in Lisp, the data and functions are exp
 idea has not been investigated in Agda, but some of the necessary components are available, and a few shortcomings as well as
 ideas for future work are outlined in Sec.~\ref{sec:ornamentation}.
 
-\section{Example: Embedding-projection Pairs}\label{sec:ep-pairs}
+\section{Embedding-projection Pairs}\label{sec:ep-pairs}
+
+Let us start with an example. Imagine a user has the following definition for a data type |Col|.
+
+\begin{code}
+data Col : Set where
+  R G B : Col
+\end{code}
+
+Obviously, this data type is isomorphic to |Fin 3|, the usual data type of bounded natural numbers
+indexed by an upper bound. It would be nice if we had a function which could, given the definition 
+of |Col|, or at least a pointer to that definition, return the data type (if any) which is isomorphic
+to the user's type. For now we will assume we have such a function -- we will call it |isoDT|.
+
+\begin{code}
+isoDT : Name -> Set
+isoDT = ?
+\end{code}
+
+The next logical move would be to write some function, which, given the pointer to |Col|'s definition, and a 
+value in |Col|, automatically returns a corresponding value in the isomorphic data type. This should be 
+possible, since we have shown in Sec.~\ref{sec:inspecting-definitions} that we can get a list of the
+constructors of a data type. At the very least, a naive implementation of this function, which we will call |to|,
+could return the element in |Fin n| which corresponds to the index of the given constructor in the list of constructors.
+Note that this would only work for very trivial enumeration data types without parameters or indices. 
+However, even this simple idea quickly gets stuck. Let us try and write down a type signature for |to|.
+
+\begin{spec}
+\end{spec}
 
 
+\begin{spec}
+\end{spec}
 
 
-\todo{say something about Ornaments - probably make comparison to Epigram and say something like 
-real reflection wouldn't be necessary - welcome to a lispy world}
-
+\begin{spec}
+\end{spec}
 
 
 
 \section{Ornamentation and Generic Representation}\label{sec:ornamentation}
 
 Talk about stuff here.
+\todo{say something about Ornaments - probably make comparison to Epigram and say something like 
+real reflection wouldn't be necessary - welcome to a lispy world}
 
 
 
