@@ -106,9 +106,18 @@
 %format Well-typed-closed     = "\id{Well\text{-}typed\text{-}closed}"
 %format Data-type     = "\id{Data\text{-}type}"
 %format data-type     = "\con{data\text{-}type}"
+%format Well-founded  = "\id{Well\text{-}founded}"
+%format well-founded  = "\id{well\text{-}founded}"
+%format N-ary  = "\id{N\text{-}ary}"
+%format shift-pack-size  = "\id{shift\text{-}pack\text{-}size}"
 %format _∷_   = "{" _ "\mkern1mu"    ∷    "\mkern-1mu"   _ "}"
 
 
 %format WT' = "\defin{WT}"
 %format falsity = "\defin{falsity}"
 %format exampleQuoteGoal = "\defin{exampleQuoteGoal}"
+
+\newcommand{\lhsLE}{\ensuremath{<\mkern-5mu{}\text{-}}}
+%format <-base = "\con{\lhsLE{}base}"
+%format <-step = "\con{\lhsLE{}step}"
+%format <-ℕ-wf = "\id{\lhsLE{}" ℕ "\text{-}wf}"
