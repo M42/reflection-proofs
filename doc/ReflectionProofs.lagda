@@ -3271,14 +3271,31 @@ the directory tree presented in Fig.~\ref{fig:dir}.
 \end{figure}
 
 
-The \texttt{doc} directory contains the sources for this paper, which compile using the Emacs mode for Agda. The
-paper can also be generated again by running \texttt{make} in the \texttt{doc} directory. 
+The \texttt{doc} directory contains the sources for this paper, which
+compile using the Emacs mode for Agda. The paper can also be generated
+again by running \texttt{make} in the \texttt{doc} directory.  The
+file \texttt{ReflectionProofs.lagda} is the main \LaTeX\ file used to
+generate this paper.
 
-The \texttt{Metaprogramming} directory contains all the code relating to metaprogramming, namely the modules for CPS transformation,
-SKI translation, quoting and type checking, all in the appropriately-named files. Examples of use for all the relevant modules are also
-provided, in the \texttt{Example*} modules. 
+The \texttt{Metaprogramming} directory contains all the code relating
+to metaprogramming, namely the modules for CPS (\texttt{CPS.agda})
+transformation, SKI translation (\texttt{SKI.agda}), quoting and type
+checking (\texttt{Autoquote.agda} and \texttt{TypeCheck.agda},
+respectively), all in the appropriately-named files. Examples of use
+for all the relevant modules are also provided, in the
+\texttt{Example*} modules. The \texttt{Util} folder contains a few
+helper functions. In \texttt{WTWellfounded.agda}, finally, the
+well-foundedness of the |WT'| data type, under the natural measure, is
+proven.
 
-The file \texttt{ReflectionProofs.lagda} is the main \LaTeX\ file used to generate this paper. 
+The \texttt{Proofs} directory contains the proof by reflection
+experiments. \texttt{IsEven.agda} is where one can find the first
+example implementation of the even natural numbers proof generator,
+explained in Sec.~\ref{sec:evenness}. The file
+\texttt{TautologyProver.agda} implements the system described in
+Sec.~\ref{sec:Boolean-tautologies} for quoting and proving Boolean
+tautologies. The \texttt{Util} folder contains some file with
+uninteresting lemmas and alias definitions.
 
 \newpage
 \phantomsection \label{listoffig}
@@ -3303,6 +3320,7 @@ The file \texttt{ReflectionProofs.lagda} is the main \LaTeX\ file used to genera
 
 %%% Local Variables:
 %%% mode: latex
+%%% TeX-parse-self: t
 %%% TeX-master: t
 %%% TeX-command-default: "lagda2pdf"
 %%% End: 
