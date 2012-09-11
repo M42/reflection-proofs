@@ -2975,7 +2975,7 @@ Considering that Haskell and Agda, on the surface at least, seem like
 similar languages, it is not surprising that one of the inspirations
 for this project came from the (Template) Haskell world. Template
 Haskell is, as has been mentioned before, a GHC compiler extension,
-first described by Sheard and {Peyton Jones} \cite{template-haskell},
+first described by Sheard and Peyton~Jones \cite{template-haskell},
 that allows compile-time metaprogramming, not unlike Agda's recent
 reflection API. One of the many useful applications of Template
 Haskell has been the automatic generation of embedding-projection
@@ -2986,7 +2986,7 @@ structure to some generic universe
 Unfortunately, as we will see in Sec.~\ref{sec:ep-pairs}, the reflection API in Agda is not yet
 powerful enough, in a number of ways, to be able to provide similar tools.
 
-Another source of inspiration for an application of the reflection API
+Another source of inspiration for an application of the reflection API\todo{maybe I shouldn't bang on about ornamentation so much}
 comes from Epigram, and McBride's idea of ornamentation of data structures \cite{mcbride2010ornamental}.
 This idea, which is to be implemented in a future version of Epigram, can
 be summarised as arguing that data type definitions are something one does not want
@@ -3072,7 +3072,27 @@ which almost immediately precludes generic functions parameterised by a data typ
 
 
 
-\section{Ornamentation and Generic Representation}\label{sec:ornamentation}
+\section{Ornamentation, Levitation and Generic Representation}\label{sec:ornamentation}
+
+In work by Chapman, Dagand, McBride and Morris \cite{Chapman:2010:GAL:1863543.1863547}, an idea
+is presented where a canonical data type of data types is defined, which has a number of advantages.
+The |data| keyword as we know it becomes syntactic sugar for defining an element of this data type, 
+and generic programming can be done directly on this data type, as opposed to some type isomorphic to the
+declared types. Having such a method of defining data types would also make it easier to ornament \cite{mcbride2010ornamental}
+data structures, since data type declarations are simply values in the object language. This reflection,
+which we actually would get for free in such a system, reminds us a lot of Lisp, where data and functions are
+first-class citizens, except for the fact that Lisp has little notion of types. 
+
+This formed the inspiration to try to define some similar type-of-types in Agda, and use the 
+reflection API to automatically convert data type definitions which already had been declared by
+the user, to values of this type-of-types. The expectation is that this should be possible, since one
+can relatively easily inspect the constructors of data types, and that the use of |unquote| should be limited,
+since the type-of-types values are just Agda values. If one would like to have embedding and projection pairs, however,
+the same problem outlined in the previous section would arise: unquoting is not properly usable.
+
+...
+
+
 
 Talk about stuff here.
 \todo{say something about Ornaments - probably make comparison to Epigram and say something like 
