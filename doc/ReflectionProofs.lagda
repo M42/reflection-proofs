@@ -12,6 +12,7 @@
 
 
 \usepackage{todonotes}
+\usepackage{dirtree}
 \usepackage{subfigure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -25,6 +26,7 @@
 
 \newcommand{\pref}[1]{~\ref{#1} on page~\pageref{#1}}
 
+\newcommand{\ghurl}{\url{https://github.com/toothbrush/reflection-proofs}}
 \def\CC{{C\nolinebreak[4]\hspace{ -.05em}\raisebox{.4ex}{\tiny\bf ++}}}
 
 \ignore{
@@ -226,7 +228,7 @@ by a type-safe translation of closed lambda terms into SKI combinator calculus (
 
 The code and examples presented in this paper all compile using the
 latest development version of Agda (currently 2.3.1) and are available on
-github\footnote{\url{http://www.github.com/toothbrush/reflection-proofs}}. \todo{this isn't true.}
+github\footnote{\ghurl}. \todo{this isn't true.}
 This thesis is also a Literate Agda file, which means the code snippets can be compiled 
 and played around with.
 
@@ -2966,10 +2968,53 @@ in |Metaprogramming.ExampleSKI|.
 \chapter{Generic Programming}\label{sec:generic-programming}
 
 
+Considering that Haskell and Agda, on the surface at least, seem like
+similar languages, it is not surprising that one of the inspirations
+for this project came from the (Template) Haskell world. Template
+Haskell is, as has been mentioned before, a GHC compiler extension,
+first described by Sheard and {Peyton Jones} \cite{template-haskell},
+that allows compile-time metaprogramming, not unlike Agda's recent
+reflection API. One of the many useful applications of Template
+Haskell has been the automatic generation of embedding-projection
+function pairs for generic programming, saving a certain amount of
+boilerplate code whenever a programmer wants to lift a new data
+structure to some generic universe
+\cite{DBLP:conf/mpc/HoldermansJLR06}.
+Unfortunately, as we will see in Sec.~\ref{sec:ep-pairs}, the reflection API in Agda is not yet
+powerful enough, in a number of ways, to be able to provide similar tools.
+
+Another source of inspiration for an application of the reflection API
+comes from Epigram, and McBride's idea of ornamentation of data structures \cite{mcbride2010ornamental}.
+This idea, which is to be implemented in a future version of Epigram, can
+be summarised as arguing that data type definitions are something one does not want
+to allow in a language, since they seem to drop out of the sky \cite{DBLP:conf/icfp/McBride10}, and that actually,
+the distinction between data and functions is an artificial one. Ideally, there would only be 
+one canonical data type definition, which expresses all possible inductive data types, and the |data| keyword we are
+used to would only be syntactic sugar for a new value in this canonical data type. This way, reflection
+would not even be necessary, since, like in Lisp, the data and functions are expressed in the same object language. This
+idea has not been investigated in Agda, but some of the necessary components are available, and a few shortcomings as well as
+ideas for future work are outlined in Sec.~\ref{sec:ornamentation}.
+
+\section{Example: Embedding-projection Pairs}\label{sec:ep-pairs}
+
+
 
 
 \todo{say something about Ornaments - probably make comparison to Epigram and say something like 
 real reflection wouldn't be necessary - welcome to a lispy world}
+
+
+
+
+\section{Ornamentation and Generic Representation}\label{sec:ornamentation}
+
+Talk about stuff here.
+
+
+
+Because the findings in this chapter were negative, and no functional or usable
+pieces of code were developed, the source distribution does not include any code
+related to generic programming. 
 
 
 \chapter{Discussion} % ... and Conclusion and Related Work and Reflection API Limitations
@@ -3148,7 +3193,7 @@ representation of |Term|s that the reflection system returns to the user. What w
 needed was to annotate lambda abstractions with the type of their argument, since without
 this, type inferencing would be necessary. However possible, this would introduce unneeded complexity
 and open the can of worms that is type unification. As it turns out, the termination of
-type unification algorithms is something rather nontrivial to prove, as pointed out by McBride \cite{mcbride2003first}.
+type unification algorithms is something rather nontrivial to prove, as pointed out by McBride \cite{DBLP:journals/jfp/McBride03}.
 To avoid this, the |Term| data structure internal to the Agda compiler was augmented with an
 optional field of type |Type|, which allowed two advantages. Firstly, it became possible to
 distinguish between, for example, |ℕ| and |Bool| variables in the same expression. Secondly, it
@@ -3185,13 +3230,59 @@ Talk about extension to compiler here, give example of use (as detailed as possi
 
 \chapter{Guide to Source Code}
 
-Here I would like to put an explanation of what's what and where.
+This project is currently hosted at github\footnote{\ghurl}. There, a 
+few files containing Agda code, the implementations of the presented algorithms, as well as the source for this
+paper, which is itself Literate Agda, can be found. Here a short summary is given of what each source file contains, see
+the directory tree presented in Fig.~\ref{fig:dir}.
+
+\begin{figure}[h]
+\dirtree{%
+.1 /.
+.2 \color{Blue}doc.
+.3 ReflectionProofs.lagda.
+.2 \color{Blue}Metaprogramming.
+.3 Autoquote.agda.
+.3 CPS.agda.
+.3 Datatypes.agda.
+.3 ExampleAutoquote.agda.
+.3 ExampleCPS.agda.
+.3 ExampleSKI.agda.
+.3 ExampleTypeCheck.agda.
+.3 ExampleUniverse.agda.
+.3 SKI.agda.
+.3 TypeCheck.agda.
+.3 \color{Blue}Util.
+.4 Apply.agda.
+.4 ConcreteSKI.agda.
+.4 Equal.agda.
+.4 ExampleShow.agda.
+.4 PropEqNat.agda.
+.3 WTWellfounded.agda.
+.2 \color{Blue}Proofs.
+.3 ExampleTautologies.agda.
+.3 IsEven.agda.
+.3 TautologyProver.agda.
+.3 \color{Blue}Util.
+.4 Handy.agda.
+.4 Lemmas.agda.
+.4 Types.agda.
+}
+\caption{Directory listing of the source distribution for this project.}\label{fig:dir}
+\end{figure}
 
 
-\begin{verbatim}
-Insert source tree here?
-\end{verbatim}
+The \texttt{doc} directory contains the sources for this paper, which compile using the Emacs mode for Agda. The
+paper can also be generated again by running \texttt{make} in the \texttt{doc} directory. 
 
+The \texttt{Metaprogramming} directory contains all the code relating to metaprogramming, namely the modules for CPS transformation,
+SKI translation, quoting and type checking, all in the appropriately-named files. Examples of use for all the relevant modules are also
+provided, in the \texttt{Example*} modules. 
+
+The file \texttt{ReflectionProofs.lagda} is the main \LaTeX\ file used to generate this paper. 
+
+\newpage
+\phantomsection \label{listoffig}
+\addcontentsline{toc}{chapter}{List of Figures}
 \listoffigures
 
 \bibliography{refs}{}
