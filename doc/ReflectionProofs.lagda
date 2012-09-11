@@ -1942,17 +1942,17 @@ See Fig.~\ref{fig:stlc-rules} for the typing rules.
 \begin{figure}[h]
   \centering
   \subfigure{
-    \inference[var]{x : \sigma \in \Gamma}{\Gamma ||- x : \sigma}   %variable rule
+    \inference[{[}var{]}]{x : \sigma \in \Gamma}{\Gamma ||- x : \sigma}   %variable rule
     }
   \subfigure{
-    \inference[lit]{c~\textnormal{constant of type}~\sigma}{\Gamma ||- c : \sigma} %literal
+    \inference[{[}lit{]}]{c~\textnormal{constant of type}~\sigma}{\Gamma ||- c : \sigma} %literal
     }
   \\
   \subfigure{
-    \inference[lam]{x : \sigma :: \Gamma ||- e : \tau}{\Gamma ||- (\lambda x : \sigma . e) : \sigma -> \tau} %abstraction
+    \inference[{[}lam{]}]{x : \sigma :: \Gamma ||- e : \tau}{\Gamma ||- (\lambda x : \sigma . e) : \sigma -> \tau} %abstraction
     }
   \subfigure{
-    \inference[app]{\Gamma ||- e_1 : \sigma -> \tau \\ \Gamma ||- e_2 : \sigma}{\Gamma ||- e_1 e_2 : \tau} %application
+    \inference[{[}app{]}]{\Gamma ||- e_1 : \sigma -> \tau \\ \Gamma ||- e_2 : \sigma}{\Gamma ||- e_1 e_2 : \tau} %application
     }
 \caption{The typing rules for simply-typed lambda calculus.}\label{fig:stlc-rules}
 \end{figure}
