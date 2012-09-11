@@ -2593,8 +2593,6 @@ allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁} wt wt₁)    =
                           (allTsAcc (shift1 (σ => σ₁) wt₁))
 \end{spec}
 
-\todo{emphasize that adding the size to WT was important for proving WF, since otherwise the measure itself
-would be a fold and not a projection as is currently the case.}
 But, horror! Agda now is convinced that this function, |allTsAcc|, which is meant to give us the proof
 that |T| terminates given any |WT'| term, does not terminate either! We also cannot apply Bove and Capretta's trick
 again, since that would give us a data type isomorphic to |TAcc|.
@@ -2645,9 +2643,9 @@ open import Induction.WellFounded
     aux (suc x₁)     y          (<-step m)      = aux x₁ y m
 \end{code}
 
-Now we use a lemma\todo{which one? inverse-image} from the |Induction.WellFounded| standard library module which shows that
-if we have some measure on a carrier, and a way to map some new type to this carrier type, we have
-lifted the well-foundedness to the new type. We instantiate this lemma using our |WTwrap| wrapper, less-than on
+Now we use a lemma called Inverse-image from the |Induction.WellFounded| standard library module which shows that
+if we have some measure on a carrier, and a way to map some new type to this carrier type, we can
+lift the well-foundedness to the new type. We instantiate this lemma using our |WTwrap| wrapper, less-than on
 naturals, and a function |sz| which simply reads the size-index which we already included in |WT'| in Sec.~\ref{sec:wt}.
 
 \begin{spec}
@@ -2674,6 +2672,11 @@ and increase the de Bruijn indices by 1.
   shift-pack-size = ...
 \end{spec}
 
+Note that for this to work, the natural number parameter to |WT'|, which stands for a measure of expression size, is
+necessary, since if this was missing we would have to define a fold on |WT'| resulting in size instead of the simple projection
+which the measure currently is, and that would make our
+well-foundedness proofs rather more involved (and possibly non-terminating again, bringing the problem full-circle). This 
+is the motivation for adding such a |ℕ| parameter to |WT'|.
 Once we have these ingredients, we can assemble it all to show that all calls to |T| with any |WT'| terminate, and that
 the function that returns this proof itself also terminates. This leads to the following definition of function |T| which maps
 expressions and continuations to CPS-style expressions. Our |allTsAcc| function now looks like this, showing only the ``interesting'' clauses.
