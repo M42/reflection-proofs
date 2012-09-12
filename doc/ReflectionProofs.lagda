@@ -91,7 +91,7 @@ open import Data.List hiding (_∷ʳ_)
 
 
 \begin{document}
-\todo{add citations to everything which seems like an unfounded statement.}
+%todo add citations to everything which seems like an unfounded statement.
 \setcounter{tocdepth}{1}
 
 %TODO make a fancy title page
@@ -253,8 +253,8 @@ language for describing these tactics \cite{coquand2006emacs}.
 Agda's syntax is inspired by Haskell, and users familiar with programming in
 Haskell (using GADTs) will probably be able to hit the ground running in Agda (in this report
 the assumption is made that the reader is fluent in GHC Haskell). The main difference between
-a dependently typed programming language and a ``simple'' one \todo{for want of a better description. Traditional, perhaps?} is
-that the arbitrary \todo{artificial? gekunstelde?} divide between the world of values and that of types is torn down. This
+a dependently typed programming language and a traditional one is
+that the unnatural divide between the world of values and that of types is torn down. This
 allows such things as the textbook example of why DTP is the next best thing since sliced bread, namely not being able to ask for
 the head of an empty list (vector actually, which is a length-indexed counterpart of the concept list).
 
@@ -264,7 +264,7 @@ head (x ∷ xs) = x
 \end{spec}
 
 A number of things are happening here in the type system which deserve a little elaboration if one is coming 
-from \todo{awkward wording} a Haskell-like language background. Note for example how a natural number is the 
+from a Hindley-Milner language background. Note for example how a natural number is the 
 first argument, but that the argument is being bound in the type signature (called a pi type; a lambda abstraction in
 types) and later on used as an argument (a.k.a. index) to the type |Vec|, the list-type which is indexed by 
 a type (just like the |List| type in Haskell is) but also by a value of type |ℕ| corresponding to the length of the
