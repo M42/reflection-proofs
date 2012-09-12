@@ -2909,7 +2909,7 @@ The resulting terms are sometimes rather verbose, as is illustrated
 in the examples of use provided in the module |Metaprogramming.ExampleSKI|, but this is to be expected,
 since, while being a Turing complete language, the SKI calculus obviously is not very concise. If one wanted to
 make the resulting terms a little more readable, one might consider adding extra combinators, called supercombinators, such as, for example,
-the |o| combinator, defined as follows.
+the |o| combinator, defined as follows \cite{dolio}.
 
 \begin{code}
 o : ∀ {A B C} → Combinator ((B => C) => (A => B) => A => C)
