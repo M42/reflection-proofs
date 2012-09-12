@@ -124,6 +124,9 @@
 
 %format isoDT = "\id{isoDT}"
 %format T = "\id{T}"
+%format s = "\id{s}"
+%format k = "\id{k}"
+%format i = "\id{i}"
 
 %%% spacing:
 %format fromℕ≤ = "\defin{fromℕ" "\mkern-8mu" "≤}"
