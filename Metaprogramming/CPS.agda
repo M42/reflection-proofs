@@ -130,13 +130,13 @@ module TLemma where
 
   -- sz extracts the size n from a WT Γ σ n term,
   -- and this relation compares two terms for size.
-  -- the WTpack datatype simply is a dependent pair
+  -- the WTwrap datatype simply is a dependent pair
   -- of size, environment, type and the WT term with those
   -- values as arguments. Without this encapsulation, we would
   -- have to prove heterogeneous well-foundedness, which is a pain
   -- to say the least. once again, refer to the thesis for a detailed
   -- account of what's going on here.
-  _≼_ : Rel WTpack _
+  _≼_ : Rel WTwrap _
   x ≼ y = sz x < (1 + sz y)
 
   -- lemma showing that weakening doesn't increase the size of terms.

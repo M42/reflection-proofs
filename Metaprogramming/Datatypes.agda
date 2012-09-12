@@ -88,33 +88,33 @@ Well-typed-closed = WT []
 -- an ugly little hack to make WT terms homogeneous (and thus
 -- comparable, for purposes of well-foundedness), even if they differ
 -- in type, context or size.
-WTpack = Σ ℕ (λ n → Σ U' (λ u → Σ Ctx (λ g → WT g u n)))
+WTwrap = Σ Ctx (λ Γ → Σ U' (λ σ → Σ ℕ (λ n → WT Γ σ n)))
 
--- helper functions to extract the type parameters for WT from a WTpack value.
-getEnv : WTpack → Ctx
-getEnv (proj₁ , proj₂ , proj₃ , proj₄) = proj₃
-getType : WTpack → U'
+-- helper functions to extract the type parameters for WT from a WTwrap value.
+getEnv : WTwrap → Ctx
+getEnv (proj₁ , proj₂ , proj₃ , proj₄) = proj₁
+getType : WTwrap → U'
 getType (proj₁ , proj₂ , proj₃ , proj₄) = proj₂
-sz : WTpack → ℕ
-sz (proj₁ , proj₂ , proj₃ , proj₄) = proj₁
+sz : WTwrap → ℕ
+sz (proj₁ , proj₂ , proj₃ , proj₄) = proj₃
 
--- embedding into WTpack. pretty trivial.
-to : ∀ {Γ σ n} → WT Γ σ n → WTpack
-to {Γ}{σ}{n} wt = n , σ , Γ , wt
+-- embedding into WTwrap. pretty trivial.
+to : ∀ {Γ σ n} → WT Γ σ n → WTwrap
+to {Γ}{σ}{n} wt = Γ , σ , n , wt
 
 private
   -- showing that we have a valid isomorphism between
-  -- WT and WTpack
-  fromWT : (p : WTpack) → WT (getEnv p) (getType p) (sz p)
+  -- WT and WTwrap
+  fromWT : (p : WTwrap) → WT (getEnv p) (getType p) (sz p)
   fromWT (p1 , p2 , p3 , p4 ) = p4
   
   from-toWT : ∀ {Γ σ n} → {x : WT Γ σ n} → fromWT (to x) ≡ x
   from-toWT = refl
   
-  to-fromWT : ∀ {x : WTpack} → to (fromWT x) ≡ x
+  to-fromWT : ∀ {x : WTwrap} → to (fromWT x) ≡ x
   to-fromWT = refl
 
-  -- we would like to build a value of type Iso WTpack (WT _ _ _) but
+  -- we would like to build a value of type Iso WTwrap (WT _ _ _) but
   -- cannot, for the same reason we could not prove well-foundedness
   -- using WT types directly. The user will just have to believe us on
   -- this one, since we have the to, from, tofrom, fromto proofs lying

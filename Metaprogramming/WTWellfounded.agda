@@ -27,9 +27,9 @@ open import Induction.WellFounded
     aux (suc x₁) y (<-step m) = aux x₁ y m
 
 module <-on-sz-Well-founded where
-  open Inverse-image {_} {WTpack} {ℕ} {_<_} sz public
+  open Inverse-image {_} {WTwrap} {ℕ} {_<_} sz public
 
-  _≺_ : Rel WTpack _
+  _≺_ : Rel WTwrap _
   x ≺ y = sz x < sz y
 
   wf : Well-founded _≺_
