@@ -403,8 +403,8 @@ allows Agda to infer that there is exactly one inhabitant of a certain
 type. This eta reduction is not done on general data types, since this
 would increase the complexity of the work the compiler needs to do as
 well as potentially introduce unsound behaviour
-\cite{mcbride-motivation-eta-rules}.  Also, it means that you can
-assert to Agda that your function that returns a certain type always
+\cite{mcbride-motivation-eta-rules}.  Also, it means that one can
+assert to Agda that a function that returns a certain type always
 produces an inhabited value. On the other hand, single-constructor
 data types may not be inhabited if their indices can't be satisfied
 (for example: |refl| and the equality type).
@@ -995,7 +995,7 @@ Sec.~\ref{sec:autoquote-example}.
 
 Finally, a reference should be made to the implementation of the |Autoquote| library, and the module |Metaprogramming.ExampleAutoquote| where
 a few instructive examples can be found regarding the real-world use of Agda's reflection API. The module |Metaprogramming.Autoquote| contains
-what should be able to serve as a basis for a system for quoting concrete Agda into your own AST, and even if not, it should at the very least
+what should be able to serve as a basis for a system for quoting concrete Agda into a user-defined AST, and even if not, it should at the very least
 be didactically interesting to see how the various aspects of reflection can be used. 
 
 Should the |Autoquote| library prove powerful enough for a user's particular needs, the |ExampleAutoquote| module should be clear enough
@@ -1650,7 +1650,7 @@ The |concrete2abstract| function is rather verbose, and is mostly omitted.
 A representative snippet is given in Fig. \pref{fig:concrete2abstract}. The attentive reader will notice that
 the function in the referenced figure is called |term2boolexpr|; this is because we also unwrap the outermost call to |P| 
 and the telescope quantifying over (introducing) the variables before doing the conversion, since these elements are unnecessary in the |BoolExpr| representation. 
-This can be seen as a helper function to |concrete2abstract| where the ``interesting'' (if you happen to be a flagellant) work happens.
+This can be seen as a helper function to |concrete2abstract| where the ``interesting'' (if the reader happens to be a flagellant) work happens.
 The functions |isBoolExprQ|
 and |isSoExprQ| simply traverse the |Term| to see if it fulfills the requirements of
 being a Boolean expression preceded by a series of universally quantified Boolean variables, enclosed in a
@@ -2050,7 +2050,7 @@ the lambda expression), and a size.  The size is an arbitrary measure which shou
 for terms which are structurally larger. This will become useful later, when we need to show that certain functions
 preserve the size of terms, but other than that the size has no interesting meaning.
 
-The type annotations are elements of a universe |Uu|, which models base types and arrows.
+The type annotations are elements of a |Uu|, which models base types and arrows.
 Contexts are simply lists of types, the position of elements of the list corresponding to
 their de Bruijn indices.
 
@@ -2068,9 +2068,8 @@ The |O| constructor, which stands for base types, is parameterised by an argumen
 is the user-defined universe with which all the library modules in |Metaprogramming| are parameterised. Finally
 there is the |Cont| constructor, which will be used and explained later in Sec.~\ref{sec:cps}.
 This allows a user to instantiate for example the type checking module, |Metaprogramming.TypeCheck|, with a universe
-which has a representation of natural numbers, or booleans, or both. In the following code we will present the other
-helper functions a user needs to define on an on-demand basis, summarising finally what is necessary and why.
-\todo{summarise what's necessary and why, in terms of helper functions.}
+which has a representation of natural numbers, or booleans, or both. In the following snippets of code we will present the other
+helper functions a user needs to define on an on-demand basis, summarising finally what is necessary and why in Sec.~\ref{sec:universe-parameters}.
 
 Finally there are the arguments of type |τ ∈ Γ| to the |Var| constructor. These are evidence that the variable identifier
 in question points to a valid entry in the context, |Γ|. Values of this type are basically annotated naturals corresponding to the
@@ -2229,7 +2228,6 @@ infer Γ (App .(erase t) e₁)    | ok n (τ => τ₁) t      | bad            =
 infer Γ (App e e₁)             | bad                   = bad
 \end{code}
 
-\todo{make sure all the parameters to the CPS etc modules are mentioned and explained. summarise, possibly.}
 
 The code which does all of this can be found in |Metaprogramming.TypeCheck|, the views and data type definitions are in |Metaprogramming.Datatypes|.
 
@@ -2267,35 +2265,6 @@ with types, because otherwise the |quoteTerm| keyword will return a lambda term 
 accept. In |seeTypedgoal1| we can inspect the resulting |WT'| term.
 
 
-
-
-%\begin{itemize}
-%\item |U : Set| A data type representing your own universe. It might have such elements as |Nat| and |Bl| which might stand for natural numbers and Boolean values.
-%\item |?type : U → Name| A function which, given an element of your universe, gives back the concrete Agda identifier which it stands for, such as |quote ℕ|.
-%\item |Uel : U → Set| An interpretation function, which returns the Agda type corresponding to some element of your universe.
-%\item |quoteBack : (x : U) → Uel x → Term| A function which can turn a value in your universe into an Agda |Term|
-%\item |equal? : (x : U) → (y : U) → Equal? x y| A function which implements decidable equality between elements of your universe.
-%\item |returnType : U| The return type for a CPS transformed function. Will be detailed in Sec.~\ref{sec:cps}.
-%\item |type? : Name → Maybe U| A function which translates Agda identifiers into elements of your universe |U|.
-%\item |quoteVal : (x : U) → Term → Uel x| Finally, a function which, given an Agda term, translates it into your universe.
-%\end{itemize}
-%
-%
-%The universe (set of possible types) we
-%use is |Uu|, which is made up of base types (|O|) and function types (|_=>_|). There
-%is also an extra constructor |Cont| which stands for the type of a continuation. This will
-%be explained in the section on continuation-passing style, Sec.~\ref{sec:cps}.
-%
-%
-%
-%
-%
-%The |Ctx| type is simply our context for variables (mapping variables
-%to their type): it is defined as |List Uu|, where the position in the list corresponds
-%to the de Bruijn-index of a variable. Since all terms are required to be well-scoped,
-%this makes sense, since each time a lambda-abstraction is introduced, the type of the 
-%variable to be bound at that point is consed onto the environment. This way, variables 
-%which are bound ``further away'' (in the de Bruijn-index sense) are nearer to the back of the list.
 
 \subsection{Doing Something Useful with |WT'|}\label{sec:doing-something-useful}
 
@@ -2387,13 +2356,13 @@ disposal is the ability to do these transformations while ensuring that certain 
 our terms) are preserved.
 
 The first case study in this area is that  of transforming lambda terms into continuation-passing style (CPS).
-The idea of CPS is not new; it is what happens when you take the primitive idea of computer programming, which
+The idea of CPS is not new; it is what happens when one takes the primitive idea of computer programming, which
 essentially involves calling functions and returning values after their completion, and remove the notion
 of returning \cite{asai2011introduction}.
 This seems both profound and unusable, since how will we get an answer from a function 
 which is not allowed to return? Yet, it turns out to be a useful
 paradigm for many applications \cite{krishnamurthi2007programming}:
-consider the example where you want to print an integer, but before doing so, would like
+consider the example where one wants to print an integer, but before doing so, would like
 to call, on that number, the function which increases integers by 1. That might look something like
 this fictional functional code.
 
@@ -2812,7 +2781,7 @@ constructor is less dangerous than it may seem.}\label{fig:comb}
 \end{figure}
 
 
-Translation of lambda terms into SKI is actually surprisingly (that is, if you are used to spending days grappling
+Translation of lambda terms into SKI is actually surprisingly (that is, if one is used to spending days grappling
 with the Agda compiler to get something seemingly trivial proven) straightforward. Since literals, variables and applications are
 supported, those can just be translated into the |Comb| equivalents without a problem, preserving the input context and type.
 The more complicated case occurs when we encounter a lambda abstraction.
@@ -3017,6 +2986,39 @@ of the original terms.
 These developments can be found in the module |Metaprogramming.SKI|, and a few example 
 translated terms as well as a guide to how to use the provided code as a library, are to be found 
 in |Metaprogramming.ExampleSKI|. 
+
+\section{Parameters to Modules}\label{sec:universe-parameters}
+
+As promised, we provide here a summary of the parameters to the modules |Datatypes|, |TypeCheck|, |SKI| and |CPS|, because 
+these are designed to work with a user-defined universe. Aside from the universe, though, the user is also required to 
+provide a few easy-to-define helper functions. These functions are necessary because invariably, they rely on pattern matching,
+which is something which is only possible if the to-be-used universe \emph{and all of its constructors} are in-scope.
+
+The following list describes all the necessary parameters to the modules (note that not all modules require all parameters).
+
+\begin{description}
+\item[|U : Set|] 
+A data type representing the universe. It might have such elements as |Nat| and |Bl| which might stand for natural numbers and Boolean values.
+\item[|returnType : U|] 
+The return type for a CPS transformed function, detailed in Sec.~\ref{sec:cps}.
+\item[|?type : U → Name|] 
+A function which, given an element of the universe, gives back the concrete Agda identifier which it stands for, such as |quote ℕ|.
+\item[|Uel : U → Set|] 
+An interpretation function, which returns the Agda type corresponding to some element of the universe.
+\item[|equal? : (x : U) → (y : U) → Equal? x y|] 
+A function which implements decidable equality between elements of the universe.
+\item[|type? : Name → Maybe U|]
+ A function which translates Agda identifiers into elements of the universe. Since failure is possible (the quoted term may be of some invalid shape), a |Maybe U| is expected.
+\item[|quoteBack : (x : U) → Uel x → Term|]
+ A function which can turn a value in the universe into an Agda |Term|.
+\item[|quoteVal : (x : U) → Term → Uel x|] 
+Finally, a function which, given an Agda term standing for a basic value, such as a natural, translates it into the universe.
+\end{description}
+
+ An
+example of implementing such functions and instantiating the parameterised modules is found in |Metaprogramming.ExampleUniverse|. 
+Defining an arbitrary universe should be straight-forward after looking at this example. 
+
 
 \chapter{Generic Programming}\label{sec:generic-programming}
 
@@ -3450,7 +3452,7 @@ tautologies. The \texttt{Util} folder contains some file with
 uninteresting lemmas and alias definitions.
 
 \newpage
-\phantomsection \label{listoffig}
+\phantomsection \label{listoffig}\todo{is the list of figures useful?}
 \addcontentsline{toc}{chapter}{List of Figures}
 \listoffigures
 
