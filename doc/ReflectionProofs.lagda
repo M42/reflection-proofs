@@ -227,8 +227,8 @@ by a type-safe translation of closed lambda terms into SKI combinator calculus (
 \end{itemize}
 
 The code and examples presented in this paper all compile using the
-latest development version of Agda (currently 2.3.1) and are available on
-github\footnote{\ghurl}. \todo{this isn't true.}
+latest development version of Agda (currently 2.3.1), with some minor modifications to the compiler (see Sec.~\ref{appendix:lambda-types}), and are available on
+github\footnote{\ghurl}.
 This thesis is also a Literate Agda file, which means the code snippets can be compiled 
 and played around with.
 
