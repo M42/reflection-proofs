@@ -3109,8 +3109,6 @@ the same problem outlined in the previous section would arise: unquoting is not 
 
 
 
-\todo{say something about Ornaments/levitation - probably make comparison to Epigram and say something like 
-real reflection wouldn't be necessary there - welcome to a lispy world}
 
 
 
