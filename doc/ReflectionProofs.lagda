@@ -760,7 +760,7 @@ This capability is exploited in Sec.~\ref{sec:generic-programming}.
 
 
 
-\section{Introducing |Autoquote|}\label{sec:autoquote} \todo{move this to after boolexpr? or?}
+\section{Introducing |Autoquote|}\label{sec:autoquote}
 \ignore{
 \begin{code}
 open import Metaprogramming.Autoquote hiding (convertManages ; doConvert) renaming (_#_↦_ to _\#_↦_)
@@ -1959,7 +1959,8 @@ Here we have
 used named variables, but in the following section these will be
 replaced in favour of de Bruijn indices.
 
-\subsection{De Bruijn indices}\label{ssec:de-bruijn-indices}
+\subsection{De Bruijn Indices}\label{ssec:de-bruijn-indices}
+
 
 Since lambda calculus in general is considered common knowledge, only
 a short introduction will be given here regarding de Bruijn-indexed
@@ -2364,18 +2365,19 @@ our terms) are preserved.
 The first case study in this area is that  of transforming lambda terms into continuation-passing style (CPS).
 The idea of CPS is not new; it is what happens when you take the primitive idea of computer programming, which
 essentially involves calling functions and returning values after their completion, and remove the notion
-of returning \cite{asai2011introduction}.\todo{elaborate}
-This seems both profound and unusable, yet it turns out to be a useful
-paradigm for many applications \cite{krishnamurthi2007programming}.
-Consider the example where you want to print an integer, but before doing so, would like
+of returning \cite{asai2011introduction}.
+This seems both profound and unusable, since how will we get an answer from a function 
+which is not allowed to return? Yet, it turns out to be a useful
+paradigm for many applications \cite{krishnamurthi2007programming}:
+consider the example where you want to print an integer, but before doing so, would like
 to call, on that number, the function which increases integers by 1. That might look something like
-this fictional code.
+this fictional functional code.
 
 \begin{spec}
 main = print (suc 5)
 \end{spec}
 
-If the idea of \emph{returning} values is forbidden, how then must one \emph{continue}? The answer is
+If the idea of \emph{returning} values is forbidden, how then must one use the result of |suc|? The answer is
 to do a transformation on the code; a continuation-passing style transformation. This name refers
 to the fact that functions which would normally do something analogue to issueing a \texttt{return} statement,
 are passed, as an additional parameter, a function to call on the result, instead of \texttt{return}.
@@ -2609,7 +2611,7 @@ at the same time an element of |Set|. We will define this wrapper, |WTwrap|, as 
 
 \begin{code}
 WTwrap : Set
-WTwrap = Σ ℕ (λ n → Σ Uu (λ u → Σ Ctx (λ g → WT' g u n)))
+WTwrap = Σ ℕ (λ n → Σ Uu (λ σ → Σ Ctx (λ Γ → WT' Γ σ n)))
 \end{code}
 
 What is happening here is that we have defined a few nested dependent pairs, thus ``hiding'' the pi-type, which is what was causing us
@@ -2777,10 +2779,9 @@ data Comb : Ctx → Uu → Set where
   K      : ∀ {Γ A B}                        → Comb Γ (A => B => A)
   I      : ∀ {Γ A}                          → Comb Γ (A => A)
   Lit    : ∀ {Γ} {x}    → Uel x             → Comb Γ (O x)
-\end{spec}
-\begin{code}
+  
 Combinator = Comb []
-\end{code}
+\end{spec}
 \caption[The data type |Comb|, modeling SKI combinator calculus.]{The
 data type |Comb|, modeling SKI combinator calculus. The |Var|
 constructor is less dangerous than it may seem.}\label{fig:comb}
