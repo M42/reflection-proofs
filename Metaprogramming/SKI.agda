@@ -73,10 +73,10 @@ lambda           I                = K ⟨ I ⟩
 -- happen. The body is compiled, the abstraction is removed, and the
 -- lambda function sorts out the aftermath. see above.
 compile : {Γ : Ctx} {τ : U'} {n : ℕ} → WT Γ τ n → Comb Γ τ
-compile {_}{O σ} (Lit x) = Lit x
+compile (Lit x) = Lit x
 compile {_}{τ} (Var  h) = Var τ  h
-compile {_}{τ} (_⟨_⟩ {._}{σ} wt wt₁) = compile wt ⟨ compile wt₁ ⟩
-compile {_}{σ => τ} (Lam .σ wt) = lambda (compile wt) 
+compile (_⟨_⟩ wt wt₁) = compile wt ⟨ compile wt₁ ⟩
+compile (Lam σ wt) = lambda (compile wt) 
   
 
 -- a "helpful" wrapper which does nothing except show that we
