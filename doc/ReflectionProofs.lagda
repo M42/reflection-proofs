@@ -3241,7 +3241,7 @@ API in use that came to our attention.
 % prettig om conclusions/related work/enz. in één hoofdstuk 'Discussion'
 % te bundelen, waar je de bredere context van je werk kan beschrijven.''
  
-\todo{right at the end, check if references to sections and figures are called Sec. and Fig. accordingly.}
+%todo right at the end, check if references to sections and figures are called Sec. and Fig. accordingly.
 mention in contributions:
 \begin{itemize}
  \item structurally recursive CPS transform
