@@ -145,7 +145,7 @@ open import Data.List hiding (_∷ʳ_)
 %  arise in dependently typed programming.
 %\end{abstract}
 
-\chapter{Introduction}
+\chapter{Introduction}\label{chap:introduction}
 
 Since the inception of computer programming, the aim has often been to
 write as concise code as possible, while achieving the most powerful effect.
@@ -232,7 +232,7 @@ github\footnote{\ghurl}. \todo{this isn't true.}
 This thesis is also a Literate Agda file, which means the code snippets can be compiled 
 and played around with.
 
-\chapter{Introducing Agda}
+\chapter{Introducing Agda}\label{chap:introducing-agda}
 
 Besides being a common Swedish female name and referring to a certain hen in
 Swedish folklore\footnote{See Cornelis Vreeswijk's rendition of
@@ -467,8 +467,7 @@ excellent tutorial on the same written by Ulf Norell
 
 \todo{clearly state non-workingness of my code and suggest that sometime stuff will be implemented by the 
 devs}
-\chapter{Reflection in Agda}
-\label{sec:reflection}
+\chapter{Reflection in Agda}\label{sec:reflection}
 
 Since version 2.2.8, Agda includes a reflection API, which allows converting
 parts of a program's code into abstact syntax, in other words a data structure
@@ -489,7 +488,7 @@ included in Fig.~\ref{fig:reflection}. In addition to these data
 types that represent \emph{terms}, there is limited support for
 reflecting \emph{definitions} as opposed to terms. Inspection of definitions
 is detailed in Sec.~\ref{sec:inspecting-definitions}.
-\paragraph{Caveat} One rather serious word of precaution is to be made here.
+\paragraph{Caveat}\label{para:caveat} One rather serious word of precaution is to be made here.
 The code presented in this thesis does not, actually, work out of the box as advertised.
 For reasons which will be made clear in Chapter~\ref{sec:type-safe-metaprogramming}, the abstract 
 data type representing terms inside the Agda compiler (the one in Fig.~\ref{fig:reflection}) needed to be extended with
@@ -652,7 +651,7 @@ into some AST type, if a mapping is provided from concrete Agda
 in Sec.~\ref{sec:autoquote}, and an example use-case is given in \ref{sec:autoquote-example}.
 
 
-\section{List of Functions Exported by |Reflection|}
+\section{List of Functions Exported by |Reflection|}\label{sec:list-of-functions-reflection}
 
 The |Reflection| module of the Agda standard library (version 0.6 was used here) exports a number of
 functions. Here we will provide a list of them (see Fig. \ref{fig:reflection-functions}) along with
@@ -997,7 +996,7 @@ good motivating example for using |Autoquote|, therefore a slightly
 more real-world example of |Autoquote| in use can be found in
 Sec.~\ref{sec:autoquote-example}.
 
-\section{Real-world Quoting}
+\section{Real-world Quoting}\label{sec:real-world-quoting}
 
 Finally, a reference should be made to the implementation of the |Autoquote| library, and the module |Metaprogramming.ExampleAutoquote| where
 a few instructive examples can be found regarding the real-world use of Agda's reflection API. The module |Metaprogramming.Autoquote| contains
@@ -1007,8 +1006,7 @@ be didactically interesting to see how the various aspects of reflection can be 
 Should the |Autoquote| library prove powerful enough for a user's particular needs, the |ExampleAutoquote| module should be clear enough
 to distill a copy-and-paste ready solution from.
 
-\chapter{Proof by Reflection}
-\label{sec:proof-by-reflection}
+\chapter{Proof by Reflection}\label{sec:proof-by-reflection}
 
 The idea behind proof by reflection is simple: given that type theory
 is both a programming language and a proof system, it is possible to
@@ -1916,7 +1914,8 @@ the programmer to figure out how to solve the problem.
 In this section we will explore how one can leverage the power of
 dependent types when metaprogramming.
 
-\section{Preamble}
+\section{Preamble}\label{sec:preamble}
+
 
 In this section about metaprogramming, the object language we will be studying is the simply typed lambda calculus (STLC).
 Although we assume that the rules and behaviour of STLC are well-known, we will briefly repeat the definitions and rules which will be
@@ -1965,7 +1964,7 @@ Here we have
 used named variables, but in the following section these will be
 replaced in favour of de Bruijn indices.
 
-\subsection{De Bruijn indices}
+\subsection{De Bruijn indices}\label{ssec:de-bruijn-indices}
 
 Since lambda calculus in general is considered common knowledge, only
 a short introduction will be given here regarding de Bruijn-indexed
@@ -2010,7 +2009,7 @@ ideal for combinators.
 In all of the developments presented in this paper, de Bruijn representation will be used.
 
 
-\subsection{Modeling Well-typed $\lambda$-calculus}
+\subsection{Modeling Well-typed $\lambda$-calculus}\label{ssec:modeling-wtlambda}
 
 For the running example in this section, we will look at a
 simply-typed lambda calculus (STLC) with the usual type and scoping
@@ -2108,12 +2107,12 @@ second argument has type |σ|, then the first argument should have a type |σ =>
 of type |τ|.
 
 There is also a |Lit| constructor, for introducing literal values (such as the number 5) into expressions. Among other things, this is useful for
-testing purposes. We will explain the other elements present in |Lit|, such as the |O|-constructor and the |Uel| function, later. \todo{reference explanation of O, =>, universe}
+testing purposes. We will explain the other elements present in |Lit|, such as the |O|-constructor and the |Uel| function, in Sec.~\ref{sec:doing-something-useful}.
 
 This way, terms of type |WT'| can only be constructed if they are well-scoped (thanks to the proofs |τ ∈ Γ| in the variable constructors) and well-typed
 (thanks to all the terms being required to ``fit'' (for example in the outer types of lambda abstractions and applications).
 
-\subsection{Inferring Types}
+\subsection{Inferring Types}\label{ssec:inferring-types}
 
 Because it sometimes is impractical to require direct construction of
 |WT'| terms, we would like to also offer a way of translating from some
@@ -2125,7 +2124,7 @@ Haskell-land are untyped (because of a lack of dependent types).
 
 \begin{figure}[h]
 \begin{spec}
-data Raw' : Set where
+data Raw : Set where
   Var  : ℕ                           → Raw
   App  : Raw       → Raw             → Raw
   Lam  : Uu        → Raw             → Raw
@@ -2154,7 +2153,7 @@ in Fig.~\ref{fig:infer-datatype}.
 \begin{spec}
 data Infer (Γ : Ctx) : Raw → Set where
   ok    : (n : ℕ) (τ : Uu) (t : WT' Γ τ n)       → Infer Γ (erase t)
-  bad   : {e : Raw}                             → Infer Γ e
+  bad   : {e : Raw}                              → Infer Γ e
 \end{spec}
 \caption{The view on |Raw| lambda terms denoting whether they are well-typed or not.}\label{fig:infer-datatype}
 \end{figure}
@@ -2221,7 +2220,7 @@ infer Γ (App e e₁)             | bad                   = bad
 
 The code which does all of this can be found in |Metaprogramming.TypeCheck|, the views and data type definitions are in |Metaprogramming.Datatypes|.
 
-\subsection{Quoting to |Raw|}
+\subsection{Quoting to |Raw|}\label{ssec:quoting-to-raw}
 
 It is a fine coincidence
 that the data type |Raw| closely matches the |Term| AST defined
@@ -2331,7 +2330,7 @@ lam2term (t₁ ⟨ t₂ ⟩)      = def (quote Apply)
 We also would like to be able to recover the type of the term in concrete Agda. We first reconstruct a term of type |Type|, Agda's
 representation of types. These functions are also unsurprising: arrows are translated to arrows, and for base types we must once again
 invoke a user-defined function which can interpret their universe values to Agda types. The |Cont| case should be ignored for now,
-since it has to do with the CPS transformation, which is introduced later.
+since it has to do with the CPS transformation, which is introduced in Sec.~\ref{sec:cps}.
 
 \begin{spec}
 el' : Uu → Set
@@ -2358,7 +2357,7 @@ type signature which reflects the intended type of the lambda term. Therefore, t
 variables, or changed them to another type. 
 
 
-\section{Example: CPS Transformation}
+\section{Example: CPS Transformation}\label{sec:cps}
 \todo{give examples of CPS transformed terms. from Wouter's BG reading?}
 
 Given the fact that we can now easily move from the world of concrete Agda syntax to a well-typed lambda calculus and back,
@@ -2526,7 +2525,7 @@ Tt {t1 => t2} (Lam .t1 expr) cont
 Finally, we have the application case. Here, the values of both the applicand and the argument have to be
 converted into CPS.
 
-The transform converts each with |T|, and then catches their results in
+The transform converts each with |Tt|, and then catches their results in
 newly-created continuations; note that both of the lambda abstractions are
 continuations.
 
@@ -2548,10 +2547,10 @@ argument called |cont|, is applied to the new |f| and |e|, but only after two sh
 That wraps up the CPS algorithm. The full transformation algorithm can be seen in |Metaprogramming.CPS|, and examples of use, including a user-defined
 universe, are to be found in |Metaprogramming.ExampleCPS|.
 
-\subsection{Termination Bliss}
+\subsection{Termination Bliss}\label{ssec:termination-bliss}
 
-Unfortunately, as the observant reader might have noticed, the algorithm |T| as presented in Sec.~\ref{sec:cps} is not structurally recursive,
-since in the recursive calls to |T| in the abstraction and application cases, we are applying |shift1| to the constituent components of the input first.
+Unfortunately, as the observant reader might have noticed, the algorithm |Tt| as presented in Sec.~\ref{sec:cps} is not structurally recursive,
+since in the recursive calls to |Tt| in the abstraction and application cases, we are applying |shift1| to the constituent components of the input first.
 We can trivially see that the |shift1| function does nothing to the size of the expression, but Agda's termination checker does not possess such
 intuition.
 
@@ -2560,7 +2559,7 @@ come to the rescue. Their method for mechanically taking a non-structurally recu
 on which the algorithm is structurally recursive (a call graph, basically) along which also serves as a proof obligation that the
 algorithm terminates on whatever input the user would like to call it on, is perfectly suited to this sort of situation.
 
-After inspecting the recursive structure of the algorithm |T| we come to the conclusion that the data type |TAcc| presented below
+After inspecting the recursive structure of the algorithm |Tt| we come to the conclusion that the data type |TAcc| presented below
 would do the job just fine.
 
 \begin{spec}
@@ -2581,7 +2580,7 @@ data TAcc : {Γ : Ctx} {σ : Uu} {n : ℕ} → WT' Γ σ n → Set where
 In |TAcc|, each constructor of |WT'| finds its analogue, and these proof terms are built having as arguments
 the proofs that |TAcc| can be constructed from the similar proofs on the arguments.
 
-We can now add this |TAcc| argument to all the calls in |T|, and Agda now believes the function terminates. All that is left is
+We can now add this |TAcc| argument to all the calls in |Tt|, and Agda now believes the function terminates. All that is left is
 to prove that for all elements of |wt ∈ WT'| we can construct a |TAcc wt|. The proof is as obvious as the data type was: we simply recurse
 on the arguments of the constructors.
 
@@ -2597,7 +2596,7 @@ allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁} wt wt₁)    =
 \end{spec}
 
 But, horror! Agda now is convinced that this function, |allTsAcc|, which is meant to give us the proof
-that |T| terminates given any |WT'| term, does not terminate either! We also cannot apply Bove and Capretta's trick
+that |Tt| terminates given any |WT'| term, does not terminate either! We also cannot apply Bove and Capretta's trick
 again, since that would give us a data type isomorphic to |TAcc|.
 
 As it turns out, there is another trick
@@ -2680,8 +2679,8 @@ necessary, since if this was missing we would have to define a fold on |WT'| res
 which the measure currently is, and that would make our
 well-foundedness proofs rather more involved (and possibly non-terminating again, bringing the problem full-circle). This 
 is the motivation for adding such a |ℕ| parameter to |WT'|.
-Once we have these ingredients, we can assemble it all to show that all calls to |T| with any |WT'| terminate, and that
-the function that returns this proof itself also terminates. This leads to the following definition of function |T| which maps
+Once we have these ingredients, we can assemble it all to show that all calls to |Tt| with any |WT'| terminate, and that
+the function that returns this proof itself also terminates. This leads to the following definition of function |Tt| which maps
 expressions and continuations to CPS-style expressions. Our |allTsAcc| function now looks like this, showing only the ``interesting'' clauses.
 
 \begin{spec}
@@ -2699,9 +2698,8 @@ expressions and continuations to CPS-style expressions. Our |allTsAcc| function 
                                   (x (to (shift1 (σ => σ₁) wt₁)) (n<1+m+n {_}{n})) )
 \end{spec}
 
-\todo{make sure lemmas have proper names like n<m}
-We now can export the final |T| translation function as follows, so the user of the library need not worry about
-termination proofs. |T| terminates on all inputs anyway.
+We now can export the final |Tt| translation function as follows, so the user of the library need not worry about
+termination proofs. |Tt| terminates on all inputs anyway.
 
 \ignore{
 \begin{code}
@@ -2715,7 +2713,7 @@ T : {σ : Uu} {Γ : Ctx} {n m : ℕ}
        → (wt : WT' Γ σ n)
        → (cont : WT' (map cpsType Γ) (cpsType (Cont σ)) m)
        → WT' (map cpsType Γ) RT (sizeCPS n wt (allTsAcc wt (wf (to wt))) m)
-T wt cont = T' wt (allTsAcc wt (wf (to wt))) cont
+T wt cont = Tt wt (allTsAcc wt (wf (to wt))) cont
 \end{spec}
 
 
@@ -2723,7 +2721,7 @@ The developments mentioned here, as well as termination proofs, can be found in
 |Metaprogramming.CPS| and |Metaprogramming.WTWellFounded|.
 
 
-\section{Example: Translation to SKI Combinators}
+\section{Example: Translation to SKI Combinators}\label{sec:ski}
 
 
 Another interesting application of our new well-typed program transformation framework is the proof
@@ -2944,7 +2942,7 @@ using only S, K and I, these new supercombinators would simply be aliases
 for various combinations of the already-defined combinators.
 
 
-\subsection{From SKI to Concrete Agda}
+\subsection{From SKI to Concrete Agda}\label{ssec:ski-to-cagda}
 
 Once we have converted some lambda term to SKI, we might want to use it as a function on concrete Agda values.
 This is slightly pointless, since we already had some term to SKI-convert, so we might as well use that directly,
@@ -3131,17 +3129,17 @@ pieces of code were developed, the source distribution does not include any code
 related to generic programming. 
 
 
-\chapter{Discussion} % ... and Conclusion and Related Work and Reflection API Limitations
-\label{sec:discussion}
+\chapter{Discussion}\label{sec:discussion}
+% ... and Conclusion and Related Work and Reflection API Limitations
 
 \todo{Mention mcbride with ornaments}
 \todo{in introduction: list motivating examples for using reflection? include bove-capretta, so we later can conclude reflection API isn't yet powerful enough?}
-
+ 
 \todo{compare the tauto-solver to tactics, note how this is embedded in agda and not some sub-language of coq (for in the discussion, perhaps)}
-
+ 
 %todo mention Patrick Bahr's tree automata?
-
-
+ 
+ 
 % TODO : I would like to do something like this:
 % 
 % cs : (A : Set) → List Name -- give a list of constructors
@@ -3154,19 +3152,19 @@ related to generic programming.
 % The same sort of problem holds for unquote: I can't do `unquote (somethingreturningaTerm ...)`
 % because at compile-time it's not always clear that the function `somethingreturningaTerm`
 % will return a bunch of constructors of Term. What we need is delayed or lazy quoting, maybe.
-
-
+ 
+ 
 This project's main innovations are the novel combinations of existing
 techniques; therefore quite a number of subjects are relevant to mention
 here.
-
+ 
 As far as reflection in general goes, Demers and Malenfant \cite{demers1995reflection} wrote a nice historical overview on the topic.
 What we are referring to as reflection dates back to work by Brian Smith \cite{Smith:1984:RSL:800017.800513}
 and was initially presented in the Lisp family of languages in the 80's. Since then,
 many developments in the functional, logic as well as object-oriented programming worlds have 
 been inspired -- systems with varying power and scope.
-
-
+ 
+ 
 People sometimes jokingly say that the more advanced
 a given programming language becomes, the more it converges towards Lisp \cite{graham04}.
 The fact is, though, that it is becoming increasingly common to generate pieces of code 
@@ -3174,7 +3172,7 @@ from a general recipe, giving rise to possibly a more efficient specific impleme
 or at the very least not having to reinvent the wheel. Reflection is becoming more common, to
 various extents, in industry-standard languages such as Java, Objective-C, as well as theoretically more interesting
 languages, such as Haskell \cite{DBLP:journals/lisp/Stump09}.
-
+ 
 This would seem to be the inspiration for the current reflection system recently introduced
 in Agda, although we shall see that it is lacking in a number of fundamental capabilities.
 If we look at the taxonomy of reflective systems in programming language technology written up 
@@ -3185,7 +3183,7 @@ being considered finished, so it would be unfair to judge the current implementa
 fact, the author hopes that this work might motivate the Agda developers to include some more features, to
 make the system truly useful. 
 }. \todo{ is this not becoming more of a discussion / conclusion?}
-
+ 
 Agda's reflection API\ldots
 \begin{itemize}
 \item leans more towards analysis than generation
@@ -3200,45 +3198,45 @@ Agda's reflection API\ldots
 \item is only two-stage: we cannot as yet produce an object program which is itself a metaprogram. This is
   because we rely on built-in keywords such as |quote|, which cannot themselves be quoted.
 \end{itemize}
-
-
-
-
+ 
+ 
+ 
+ 
 Other related work includes the large body of publications in the
 domain of generic programming
 \cite{Rodriguez:2008:CLG:1543134.1411301,mcbride2010ornamental}, where we found the
 inspiration to try and implement some of the techniques in a
 dependently-typed setting.
-
+ 
 Program transformations and their correctness (by various definitions) have long been a subject of research \cite{Partsch:1983:PTS:356914.356917},
 and given more advanced languages with more powerful generative programming techniques, this will likely prove a continuing trend.
-
+ 
 As far as the proof techniques used in the section on proof by reflection (Chapter~\ref{sec:proof-by-reflection}) is concerned,  
 Chlipala's work \cite{chlipala2011certified} proved an invaluable resource, both for inspiration and guidance. One motivating example
 for doing this in Agda was Wojciech Jedynak's ring solver \cite{ringsolver}, which was the first example of Agda's reflection
 API in use that came to our attention.
-
-
-
-
+ 
+ 
+ 
+ 
 % TODO: Wouter says ``Ik vind het zelf soms
 % prettig om conclusions/related work/enz. in één hoofdstuk 'Discussion'
 % te bundelen, waar je de bredere context van je werk kan beschrijven.''
-
+ 
 \todo{right at the end, check if references to sections and figures are called Sec. and Fig. accordingly.}
 \todo{consolidate Discussion and Related work into Discussion (also a subsection on Future Work, possibly)}
 \todo{mention in contributions:
  * structurally recursive CPS transform
  * well-typed SKI transform for de Bruijn indexed LC (this is new) + it is structurally recursive
  }
-
+ 
 This paper has presented two simple applications of proof by
 reflection. In the final version, we will show how
 Agda's reflection API has several other applications.
-
-
+ 
+ 
 Answer the research question here.
-
+ 
 Reflection API limitations:
 \begin{itemize}
 \item Cannot call |unquote| on non-constructor term. I.e. |unquote (lam2term t)|
@@ -3247,20 +3245,20 @@ Reflection API limitations:
 \item ?? creation of pattern matching functions not possible => bove capretta impossible (or maybe completely automatic GP impossible)
 \item untyped terms are returned. this is solved.
 \end{itemize}
-
+ 
 \todo{mention that program transformation (i.e. automatic bove-capretta) is also difficult/impossible. this is something different from GP automatically}
-
-
+ 
+ 
 %todo acknowledgements
 \ignore{
 \clearpage
-
-
+ 
+ 
 \vspace*{\stretch{1}}
 {\centering
 \textbf{Acknowledgements}\\[5mm]
 }
-
+ 
 Obviously, a formidable number of people deserve thanks here, but I will refrain
 from mentioning everyone. Foremost, I would like to thank Wouter for
 his infinite patience in explaining things, giving sound and complete
@@ -3273,14 +3271,14 @@ written while in a foreign city.  The Friday pie day club is of course
 also worthy of mention, if only because of the added motivation I felt
 near the end of my research period to catch up on all the wasted time
 spent drinking coffee and consuming calorific treats. 
-
+ 
 The rest of you know who you are.
 \vspace*{\stretch{4}}
 }
-
+ 
 \appendix
-
-\chapter{Modifications to the Agda Compiler}
+ 
+\chapter{Modifications to the Agda Compiler}\label{chap:modifications}
 
 During the course of this project, a few modifications were made to the Agda
 code base, to facilitate various processes. Since these modifications have
@@ -3366,12 +3364,12 @@ are interesting as far as highlighting goes: from \href{https://darcs.denknerd.o
 to \href{https://darcs.denknerd.org/darcsweb.cgi?r=Agda;a=darcs_commitdiff;h=20120625101400-a1717-6363a79683af6ad0752729ee24250e87d7af066b.gz;}{20120625101400-a1717-6363a79683af6ad0752729ee24250e87d7af066b.gz}.}. Examples
 of using this system are to be found in the code for this paper: the Makefile specifies how to generate the formatting rules, and the main \LaTeX\ file shows how it is used.
 
-\chapter{Guide to Source Code}
+\chapter{Guide to Source Code}\label{chap:guide-to-source}
 
 This project is currently hosted at github\footnote{\ghurl}. There, a 
 few files containing Agda code, the implementations of the presented algorithms, as well as the source for this
 paper, which is itself Literate Agda, can be found. Here a short summary is given of what each source file contains, see
-the directory tree presented in Fig.~\ref{fig:dir}.
+the directory tree presented in Fig.~\pref{fig:dir}.
 
 \begin{figure}[h]
 \dirtree{%
