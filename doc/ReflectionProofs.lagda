@@ -1006,7 +1006,6 @@ be didactically interesting to see how the various aspects of reflection can be 
 
 Should the |Autoquote| library prove powerful enough for a user's particular needs, the |ExampleAutoquote| module should be clear enough
 to distill a copy-and-paste ready solution from.
-\todo{Is this section even necessary? I'd like to provide pointers to the Examples* modules, but I don't know if this is the right way.}
 
 \chapter{Proof by Reflection}
 \label{sec:proof-by-reflection}
