@@ -3022,7 +3022,7 @@ Let us start with an example. Imagine a user has the following definition for a 
 
 \begin{code}
 data Col : Set where
-  R G B : Col
+  Red Green Blue : Col
 \end{code}
 
 Obviously, this data type is isomorphic to |Fin 3|, the usual data type of bounded natural numbers

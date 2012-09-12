@@ -122,9 +122,9 @@
 %format <-step = "\con{\lhsLE{}step}"
 %format <-ℕ-wf = "\id{\lhsLE{}" ℕ "\text{-}wf}"
 
-%format R = "\con{R}"
-%format G = "\con{G}"
-%format B = "\con{B}"
+%format Red = "\con{Red}"
+%format Green = "\con{Green}"
+%format Blue = "\con{Blue}"
 %format Col = "\id{Col}"
 %format isoDT = "\id{isoDT}"
 %format Combinator = "\id{Combinator}"
