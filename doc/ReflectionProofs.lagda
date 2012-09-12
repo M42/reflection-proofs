@@ -200,6 +200,8 @@ reflection. More specifically it makes the following contributions:
 %TODO: do I want to use the more extensive itemize points from
 %introduction.tex? These here are the condensed version for the IFL paper
 \begin{itemize}
+  \item A very short introduction to Agda as a programming language is given in 
+Chapter~\ref{chap:introducing-agda}.
 \item This paper documents the current status of the reflection
   mechanism. The existing documentation is limited to a paragraph in
   the release notes~\cite{agda-relnotes-228} and comments in the
@@ -217,11 +219,8 @@ reflection. More specifically it makes the following contributions:
   lambda calculus to programs in continuation-passing style (CPS), followed
 by a type-safe translation of closed lambda terms into SKI combinator calculus (Chapter~\ref{sec:type-safe-metaprogramming}).
  
-% \item A number of neat examples are given on how to automate certain
-%   aspects of modifying a program to use generic programming techniques in Chapter~\ref{sec:generic-programming}. 
-
 \item Finally, we also discuss some of the
-  limitations of the current implementation of reflection (Sec.~\ref{sec:reflection-api-limitations}),
+  limitations of the current implementation of reflection (Chapter~\ref{sec:generic-programming}),
   motivated by attempts to automate certain aspects of modifying a program to 
   use generic programming techniques. 
 \end{itemize}
@@ -465,8 +464,6 @@ excellent tutorial on the same written by Ulf Norell
 \cite{Norell:2009:DTP:1481861.1481862}.
 
 
-\todo{clearly state non-workingness of my code and suggest that sometime stuff will be implemented by the 
-devs}
 \chapter{Reflection in Agda}\label{sec:reflection}
 
 Since version 2.2.8, Agda includes a reflection API, which allows converting
