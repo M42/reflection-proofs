@@ -23,7 +23,7 @@ clean:
 
 pdfshow: $(PDF)
 	if [ -x /usr/bin/open ] ; then open $<; fi
-	if [ -x /usr/bin/xpdf ] ; then xpdf $<; fi &
+	if [ -x /usr/bin/zathura ] ; then zathura $<; fi &
 
 symbols:
 	-rm -fv *.agdai # this is a terrible hack. module loading is broken :(
