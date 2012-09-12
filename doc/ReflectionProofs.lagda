@@ -3035,7 +3035,6 @@ generic counterpart to |Col|.
 Our first attempt might be as follows.
 \begin{spec}
 to : (n : Name) → unquote (def n []) → isoDT n
-to nm s x = (HOLE 0)
 \end{spec}
 
 The problem here, though, is that even though |Col| is indeed a definition taking no arguments,
@@ -3047,7 +3046,6 @@ ask the user to provide both the reference to the data type in question and its 
 
 \begin{spec}
 to : (n : Name) → (s : Set) → quote s ≡ def n [] → s → isoDT n
-to nm s pf x = (HOLE 0)
 \end{spec}
 
 Here we run into another problem: we are not allowed to call |quote s|, since at compile time $s$
@@ -3337,7 +3335,9 @@ tokens are to be formatted. The required commands are:
 
 Once again, the actual code changes can be browsed on \url{https://darcs.denknerd.org}\footnote{Specifically the following changesets
 are interesting as far as highlighting goes: from \href{https://darcs.denknerd.org/darcsweb.cgi?r=Agda;a=darcs_commitdiff;h=20120621153102-a1717-bcec6bef23583acfb7fd06e3291a57e90d1b4c0b.gz;}{20120621153102-a1717-bcec6bef23583acfb7fd06e3291a57e90d1b4c0b.gz}
-to \href{https://darcs.denknerd.org/darcsweb.cgi?r=Agda;a=darcs_commitdiff;h=20120625101400-a1717-6363a79683af6ad0752729ee24250e87d7af066b.gz;}{20120625101400-a1717-6363a79683af6ad0752729ee24250e87d7af066b.gz}.}.
+to \href{https://darcs.denknerd.org/darcsweb.cgi?r=Agda;a=darcs_commitdiff;h=20120625101400-a1717-6363a79683af6ad0752729ee24250e87d7af066b.gz;}{20120625101400-a1717-6363a79683af6ad0752729ee24250e87d7af066b.gz}.}. Examples
+of using this system are to be found in the code for this paper: the Makefile specifies how to generate the formatting rules, and the main \LaTeX\ file shows how it is used.
+
 \chapter{Guide to Source Code}
 
 This project is currently hosted at github\footnote{\ghurl}. There, a 
