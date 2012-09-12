@@ -228,7 +228,7 @@ by a type-safe translation of closed lambda terms into SKI combinator calculus (
 
 The code and examples presented in this paper all compile using the
 latest development version of Agda (currently 2.3.1), with some minor modifications to the compiler (see Sec.~\ref{appendix:lambda-types}), and are available on
-github\footnote{\ghurl}.
+GitHub\footnote{\ghurl}.
 This thesis is also a Literate Agda file, which means the code snippets can be compiled 
 and played around with.
 
@@ -1119,7 +1119,7 @@ argument, which means we can turn the assumption |even? n| into an
 implicit argument, meaning a user could get away with writing just
 |soundnessEven| as the proof, letting the inferrer do the rest. For
 clarity this is not done here, but the complete implementation
-available on github does use this trick. A detailed explanation of this
+available on GitHub does use this trick. A detailed explanation of this
 technique, which is used extensively in the final code, is given in
 Sec.~\ref{sec:implicit-unit}. An implementation of the above, including comments,
 is to be found in the module |Proofs.IsEven|.
@@ -3366,7 +3366,7 @@ of using this system are to be found in the code for this paper: the Makefile sp
 
 \chapter{Guide to Source Code}\label{chap:guide-to-source}
 
-This project is currently hosted at github\footnote{\ghurl}. There, a 
+This project is currently hosted at GitHub\footnote{\ghurl}. There, a 
 few files containing Agda code, the implementations of the presented algorithms, as well as the source for this
 paper, which is itself Literate Agda, can be found. Here a short summary is given of what each source file contains, see
 the directory tree presented in Fig.~\pref{fig:dir}.
