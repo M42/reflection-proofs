@@ -2352,6 +2352,13 @@ Note that the types are also preserved, since, even though we drop the annotatio
 type signature which reflects the intended type of the lambda term. Therefore, the unit test would have failed if we omitted the |ℕ| annotations on the
 variables, or changed them to another type. 
 
+It would be nice to also have included the call to |unquote| inside the definition of |lam2term|, which would result in
+a more concise definition of |concrete|, but unfortunately, |unquote| does its magic at compile time, and if it were used
+inside |lam2term|, then the value of its argument would not be known at compile time. This is why a user will have to 
+use the |unquote| keyword explicitly each time a value (and not an argument) of type |Term| is to be cast back to concrete
+Agda.
+
+
 
 \section{Example: CPS Transformation}\label{sec:cps}
 \todo{give examples of CPS transformed terms. from Wouter's BG reading?}
@@ -3012,7 +3019,7 @@ structure to some generic universe
 Unfortunately, as we will see in Sec.~\ref{sec:ep-pairs}, the reflection API in Agda is not yet
 powerful enough, in a number of ways, to be able to provide similar tools.
 
-Another source of inspiration for an application of the reflection API\todo{maybe I shouldn't bang on about ornamentation so much}
+Another source of inspiration for an application of the reflection API
 comes from Epigram, and McBride's idea of ornamentation of data structures \cite{mcbride2010ornamental}.
 This idea, which is to be implemented in a future version of Epigram, can
 be summarised as arguing that data type definitions are something one does not want
@@ -3128,10 +3135,9 @@ related to generic programming.
 \chapter{Discussion}\label{sec:discussion}
 % ... and Conclusion and Related Work and Reflection API Limitations
 
-\todo{Mention mcbride with ornaments}
-\todo{in introduction: list motivating examples for using reflection? include bove-capretta, so we later can conclude reflection API isn't yet powerful enough?}
+Mention mcbride with ornaments
  
-\todo{compare the tauto-solver to tactics, note how this is embedded in agda and not some sub-language of coq (for in the discussion, perhaps)}
+compare the tauto-solver to tactics, note how this is embedded in agda and not some sub-language of coq
  
 %todo mention Patrick Bahr's tree automata?
  
@@ -3145,9 +3151,6 @@ related to generic programming.
 % something like var 0 [], which of course also isn't useful. I would actually like the same as
 % `quote Col`, for example. i.e. a QName I can actually use.
 % 
-% The same sort of problem holds for unquote: I can't do `unquote (somethingreturningaTerm ...)`
-% because at compile-time it's not always clear that the function `somethingreturningaTerm`
-% will return a bunch of constructors of Term. What we need is delayed or lazy quoting, maybe.
  
  
 This project's main innovations are the novel combinations of existing
@@ -3178,7 +3181,7 @@ supports\footnote{Of course the current implementation is more a proof-of-concep
 being considered finished, so it would be unfair to judge the current implementation all too harshly. In
 fact, the author hopes that this work might motivate the Agda developers to include some more features, to
 make the system truly useful. 
-}. \todo{ is this not becoming more of a discussion / conclusion?}
+}.
  
 Agda's reflection API\ldots
 \begin{itemize}
@@ -3186,7 +3189,7 @@ Agda's reflection API\ldots
 \item supports encoding as an algebraic data type (as opposed to a string, for example)
 \item involves manual staging annotations (with keywords such as |quote| and |unquote|)
 \item is neither strictly static nor runtime, but compile-time. This behaves much like a 
-  static system (one which compiles an object program, as does for example YAcc\todo{cite}
+  static system (one which compiles an object program, as does for example YAcc \cite{johnson1975yacc}
 ) would, but doesn't produce intermediate code which might be modified.
   Note that this fact is essential for Agda to remain sound as a logical framework.
 \item is homogeneous, in that the object language lives inside the metalanguage (as a native
@@ -3220,12 +3223,12 @@ API in use that came to our attention.
 % te bundelen, waar je de bredere context van je werk kan beschrijven.''
  
 \todo{right at the end, check if references to sections and figures are called Sec. and Fig. accordingly.}
-\todo{consolidate Discussion and Related work into Discussion (also a subsection on Future Work, possibly)}
-\todo{mention in contributions:
- * structurally recursive CPS transform
- * well-typed SKI transform for de Bruijn indexed LC (this is new) + it is structurally recursive
- }
- 
+mention in contributions:
+\begin{itemize}
+ \item structurally recursive CPS transform
+ \item well-typed SKI transform for de Bruijn indexed LC (this is new) + it is structurally recursive
+\end{itemize}
+
 This paper has presented two simple applications of proof by
 reflection. In the final version, we will show how
 Agda's reflection API has several other applications.
@@ -3242,7 +3245,7 @@ Reflection API limitations:
 \item untyped terms are returned. this is solved.
 \end{itemize}
  
-\todo{mention that program transformation (i.e. automatic bove-capretta) is also difficult/impossible. this is something different from GP automatically}
+mention that program transformation (i.e. automatic bove-capretta) is also difficult/impossible. this is something different from GP automatically
  
  
 %todo acknowledgements
@@ -3256,7 +3259,7 @@ Reflection API limitations:
 }
  
 Obviously, a formidable number of people deserve thanks here, but I will refrain
-from mentioning everyone. Foremost, I would like to thank Wouter for
+from mentioning everyone. Foremost, I would like to thank Wouter, my supervisor, for
 his infinite patience in explaining things, giving sound and complete
 advice, and his generally pleasant way of doing things. Tim deserves
 ample thanks for noticing overworkedness and nipping it in the bud, taking
