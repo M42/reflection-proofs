@@ -127,3 +127,4 @@
 %format B = "\con{B}"
 %format Col = "\id{Col}"
 %format isoDT = "\id{isoDT}"
+%format Combinator = "\id{Combinator}"

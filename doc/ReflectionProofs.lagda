@@ -2759,7 +2759,8 @@ of the actual function at hand seems a lot more convincing to us).
 We will first define a data type |Comb| in Fig.~\ref{fig:comb} which captures the SKI combinator language, extended with variables. One might be justified in starting
 to protest at this point, since we are introducing non-closedness into the language, but notice that, in the same way as the |WT'| type, we
 require variables to point to valid entries in the context, so that if we have a term of type |Comb []|, we know it contains no variables
-and thus is closed. We need these variables for intermediate results from the translation algorithm.
+and thus is closed. We need these variables for intermediate results from the translation algorithm. This is also why we define the alias
+|Combinator|, which stands for a closed term in |Comb|, i.e. with an empty environment.
 
 Note also that we have as much type safety in |Comb| as we have in |WT'|, on account of the types of the arguments to the constructors
 needing to have sensible types.
@@ -2781,6 +2782,9 @@ data Comb : Ctx → Uu → Set where
   I      : ∀ {Γ A}                          → Comb Γ (A => A)
   Lit    : ∀ {Γ} {x}    → Uel x             → Comb Γ (O x)
 \end{spec}
+\begin{code}
+Combinator = Comb []
+\end{code}
 \caption[The data type |Comb|, modeling SKI combinator calculus.]{The
 data type |Comb|, modeling SKI combinator calculus. The |Var|
 constructor is less dangerous than it may seem.}\label{fig:comb}
@@ -2887,12 +2891,12 @@ With this machinery in place, we can now successfully convert closed lambda expr
 to SKI combinator calculus.
 
 \begin{spec}
-testTermWT' : Well-typed-closed (typeOf (
+testTermWT : Well-typed-closed (typeOf (
          term2raw (quoteTerm λ (n : ℕ → ℕ) → λ (m : ℕ) → n m ))) _
-testTermWT' = raw2wt (
+testTermWT = raw2wt (
          term2raw (quoteTerm λ (n : ℕ → ℕ) → λ (m : ℕ) → n m ))
  
-unitTest1 : compile testTermWT' ≡
+unitTest1 : compile testTermWT ≡
     S ⟨ S ⟨ K ⟨ S ⟩ ⟩ ⟨ S ⟨ K ⟨ K ⟩ ⟩ ⟨ I ⟩ ⟩ ⟩ ⟨ K ⟨ I ⟩ ⟩
 unitTest1 = refl
 \end{spec}
@@ -2908,7 +2912,7 @@ make the resulting terms a little more readable, one might consider adding extra
 the |o| combinator, defined as follows.
 
 \begin{code}
-o : ∀ {A B C} → Comb [] ((B => C) => (A => B) => A => C)
+o : ∀ {A B C} → Combinator ((B => C) => (A => B) => A => C)
 o = S ⟨ K ⟨ S ⟩ ⟩ ⟨ K ⟩
 \end{code}
 
