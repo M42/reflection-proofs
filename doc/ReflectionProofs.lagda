@@ -2831,7 +2831,7 @@ lambda x (ApplyC t u)                = ApplyC     (ApplyC  S
                                                            (lambda x t))
                                                   (lambda x u)
 \end{spec}
-\caption{A pseudo-Haskell implementation of conversion from lambda terms to SKI calculus, using named variables.}\label{fig:pseudo-haskell-ski}.
+\caption{A pseudo-Haskell implementation of conversion from lambda terms to SKI calculus, using named variables.}\label{fig:pseudo-haskell-ski}
 \end{figure}
 
 We have the added complication of using de Bruijn indices, though. This means that each time we
