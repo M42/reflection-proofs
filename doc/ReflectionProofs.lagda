@@ -2048,6 +2048,7 @@ data WT' : Ctx → Uu → ℕ → Set where
 \end{code}
 \caption{The simply-typed lambda calculus with de Bruijn indices.}\label{fig:stlc-data}
 \end{figure}
+\todo{explain and show |_∈_|?}
 
 The first thing to notice is that all terms in |WT'| are annotated with
 a context, a type (the outer type of
@@ -2722,14 +2723,14 @@ The developments mentioned here, as well as termination proofs, can be found in
 
 \section{Example: Translation to SKI Combinators}
 
-\todo{bash the original, direct debruijn -> ski translation for having weird intermediate types. -> unsafe }
 
 Another interesting application of our new well-typed program transformation framework is the proof
 of a rather old result in computer science, revisited. This result says that any closed lambda term
-\todo{cite old ski-paper that says that all closed lambda terms can be translated into SKI}
-(closed in the sense of being typable under the empty environment) can be translated to a simple
-combinator language, having only 3 primitives, plus application. That language is known as SKI combinator
-calculus, and the 3 combinators are presented in Fig.~\ref{fig:ski}.
+(meaning being typable under the empty environment) can be translated to a simple
+combinatorial logic, having only 3 primitives, plus application \cite{curry1972combinatory}. The basis of that language is 
+the three combinators, |S|, |K| and |I|\footnote{In fact, even |I| can be expressed in terms of |S| and |K|: |S ⟨ K ⟩ ⟨ x ⟩|, where the $x$ may be an arbitrary combinator term, making 
+the minimal basis |S, K|. }. 
+The 3 combinators of the SKI calculus are presented in Fig.~\ref{fig:ski}.
 
 \begin{figure}[h]
 \begin{spec}
@@ -2745,7 +2746,7 @@ i     = \ x -> x
 \caption{The three combinators which make up SKI combinator calculus.}\label{fig:ski}
 \end{figure}
 
-Note that each of these 3 combinators are just closed lambda terms, but they form the basic building blocks
+Note that each of these 3 combinators are equivalent to closed lambda terms, but they form the basic building blocks (the basis, in fact)
 of the SKI language. Basically, the SKI language is the same as the simply-typed lambda calculus, except without
 the possibility of introducing new lambda abstractions, just the option to use one of these 3 predefined combinators.
 The fact that any closed lambda term can be translated to SKI may seem counterintuitive, but that is all the more
@@ -2811,7 +2812,8 @@ as the body, we should recursively do the lambda-modification on the
 applicand and argument, then apply them both to the |S| combinator,
 since that will restore the analogue of the $\lambda x
 . \text{App}~y~z$ (bearing in mind that initially $y$ and $z$
-might depend on $x$), since |S ⟨ y ⟩ ⟨ z ⟩ | indeed evaluates to |\ f
+might depend on $x$, being expressions and not necessarily atomic
+variables), since |S ⟨ y ⟩ ⟨ z ⟩| indeed evaluates to |\ f
 -> \ g -> \ x -> f x (g x)| applied to $y$ then $z$, which gives |\ x
 -> y x (z x)| which precisely reflects that we want $y$ applied to
 $z$, and that they each might depend upon $x$.
@@ -2843,9 +2845,6 @@ also uses the same context as the |WT'| language is in fact a useful property. T
 which is pretty boring, is to be found in Fig.~\ref{fig:compile}, and the more interesting |lambda| function, which
 does the swizzling of lambda abstractions and variable references, is in Fig.~\ref{fig:lambda}.
 
-\todo{clearly mention that ctx and $\in$ were the trick for SKI, otherwise closedness cannot be guaranteed}
-\todo{note that another problem with formalising a named representation is that you must guarantee 
-presence and unicity of a variable in the context, something which deBruijn gives you for free.}
 \ignore{
 \begin{code}
 mutual
@@ -2855,10 +2854,10 @@ mutual
 \begin{figure}
 \begin{code}
   compile : {Γ : Ctx} {τ : Uu} {n : ℕ} → WT' Γ τ n → Comb Γ τ
-  compile {_}{O σ} (Lit x)              = Lit x
-  compile {_}{τ} (Var  h)               = Var τ  h
-  compile {_}{τ} (_⟨_⟩ {._}{σ} wt wt₁)  = compile wt ⟨ compile wt₁ ⟩
-  compile {_}{σ => τ} (Lam .σ wt)       = lambda (compile wt) 
+  compile          (Lit x)          = Lit x
+  compile {_}{τ}   (Var h)          = Var τ h
+  compile          (wt ⟨ wt₁ ⟩)     = compile wt ⟨ compile wt₁ ⟩
+  compile          (Lam σ wt)       = lambda (compile wt) 
 \end{code}
 \caption{The proof that any |WT'| term can be translated into the |Comb| language.}\label{fig:compile}
 \end{figure}
@@ -2886,6 +2885,19 @@ combinator.
 \end{code}
 \caption{The function we invoke whenever we encounter a lambda abstraction during translation to SKI calculus.}\label{fig:lambda}
 \end{figure}
+
+It would not have been possible to define a total translation to SKI if the |Comb| data type did 
+not have the same notion of variables and their restricted connection to contexts. Either that, or
+we would not have been able to guarantee that a closed lambda term induces a closed SKI term. Also, if names had been used
+to identify variables, one might have used the same mechanism of guaranteeing presence of the variables in 
+the context, |_∈_|, but then an additional concept of uniqueness would have been necessary, both of which the
+de Bruijn representation provide for free. There also exist
+a few methods for directly translating from lambda terms to SKI combinators based only on de Bruijn variable
+identifiers \cite{dolio}, but apart from producing bloated SKI terms (since at least $n$ |K| combinators are introduced if
+the variable's identifier is $n$ -- a sort of n-ary const function is built up), implementing this algorithm
+in a well-typed setting is nearly impossible as a result of the fact that the intermediary terms returned by the 
+recursive calls when abstractions or variables are encountered have radically different (although predictable) types.
+These reasons lead to the belief that the algorithm presented here is the most elegant of the options explored.
 
 With this machinery in place, we can now successfully convert closed lambda expressions
 to SKI combinator calculus.
