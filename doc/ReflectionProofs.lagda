@@ -1171,9 +1171,10 @@ Env   : ℕ → Set
 Env   = Vec Bool
 \end{code}
 
-Now we can define our decision function, which decides if a given
+Now we can define a decision function, which decides if a given
 Boolean expression is true or not, under some assignment of variables. It does this by evaluating
-the formula's AST\todo{apostrophe?}. For example, |And| is converted to
+the AST of the formula, filling in for |Atomic| values the concrete values which are
+looked up in the environment. For example, |And| is converted to
 the Boolean function |_∧_|, and its two arguments in turn are
 recursively interpreted.
 
