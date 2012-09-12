@@ -197,8 +197,6 @@ new reflection mechanism. It describes several case studies,
 exemplative of the kind of problems that can be solved using
 reflection. More specifically it makes the following contributions:
 
-%TODO: do I want to use the more extensive itemize points from
-%introduction.tex? These here are the condensed version for the IFL paper
 \begin{itemize}
   \item A very short introduction to Agda as a programming language is given in 
 Chapter~\ref{chap:introducing-agda}.
