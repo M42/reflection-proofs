@@ -58,11 +58,3 @@ peirce = quoteGoal e in proveTautology e
 
 foo : quoteTerm (\(x : Bool) -> x) ≡ lam visible (el _ (def (quote Bool) [])) (var 0 [])
 foo = refl
-
--- -- TODO acknowledge Ruud:
--- -- thing : {err : String} {a : Bool} → So err a → a ≡ true
--- -- thing ⊤ = {!!}
--- -- 
--- -- another : (a b : Bool) → a ∧ b ⇒ b ∧ a ≡ true
--- -- another a b with anotherTheorem a b
--- -- ...  | asdf = {!asdf!}
