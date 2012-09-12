@@ -33,7 +33,7 @@ testTermWT = raw2wt (term2raw testTerm)
 -- we can now use the SKI-machinery and do an SKI transformation, as follows.
 -- note that the type of the expression remains identical: this is the first
 -- step towards argueing consistency of the procedure.
-testSKI : Comb [] (typeOf (term2raw testTerm))
+testSKI : Combinator (typeOf (term2raw testTerm))
 testSKI = topCompile testTermWT
 
 -- we can inspect the SKI term, and even though it's rather ugly, it does indeed

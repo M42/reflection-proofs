@@ -38,6 +38,11 @@ data Comb : Ctx → U' → Set where
   I      : ∀ {Γ A}      → Comb Γ (A => A)
   Lit    : ∀ {Γ} {x} → Uel x → Comb Γ (O x) -- a constant
 
+-- Combinator is an alias for a term in Comb with an empty environment,
+-- that is, with no free variables. That is our definition of a combinator:
+-- a closed lambda term.
+Combinator = Comb []
+
 -- this function essentially is used whenever a lambda abstraction is
 -- encountered.  the abstraction is removed, the body is compiled
 -- recursively, and this function, called on the result, replaces
@@ -79,7 +84,7 @@ compile {_}{σ => τ} (Lam .σ wt) = lambda (compile wt)
 -- results in a closed SKI combinator.
 -- this irrefutably means that no Vars will be present in the
 -- output, by construction of the Comb datatype.
-topCompile : {τ : U'} {n : ℕ} → Well-typed-closed τ n → Comb [] τ
+topCompile : {τ : U'} {n : ℕ} → Well-typed-closed τ n → Combinator τ
 topCompile (Lit x) = Lit x
 topCompile (Var ())
 topCompile {τ}(nwt ⟨ nwt₁ ⟩)      = compile (nwt ⟨ nwt₁ ⟩)
@@ -123,7 +128,7 @@ private
     -- an empty environment) indeed contains no variable references.
     -- by definition of the Comb datatype, this proof is trivial. Just
     -- here for sceptics, is all.
-    closed→closed : {σ : U'} → (x : Comb [] σ) → noVar x
+    closed→closed : {σ : U'} → (x : Combinator σ) → noVar x
     closed→closed (Lit x) = tt
     closed→closed {σ} (Var .σ ())
     closed→closed (v ⟨ v₁ ⟩) = (closed→closed v) , (closed→closed v₁)
@@ -167,11 +172,11 @@ ski2wt (Lit x₁)           = Lit x₁
 -- be unquoted and used as a real function again.  reuses code from
 -- the CPS developments.  Agda normalises before unquoting, so the
 -- terms are relatively neat.
-ski2term : {σ : U'} → Comb [] σ → Term
+ski2term : {σ : U'} → Combinator σ → Term
 ski2term c = lam2term (ski2wt c) 
 
 -- method to retrieve the type of a combinator term; useful when
 -- unquoting (one would like to know the type of the resulting term)
-ski2type : {σ : U'} → Comb [] σ → Set
+ski2type : {σ : U'} → Combinator σ → Set
 ski2type {σ} c = el' σ
 
