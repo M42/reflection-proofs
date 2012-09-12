@@ -2043,7 +2043,6 @@ data WT' : Ctx → Uu → ℕ → Set where
 \end{code}
 \caption{The simply-typed lambda calculus with de Bruijn indices.}\label{fig:stlc-data}
 \end{figure}
-\todo{explain and show |_∈_|?}
 
 The first thing to notice is that all terms in |WT'| are annotated with
 a context, a type (the outer type of
@@ -2072,6 +2071,23 @@ This allows a user to instantiate for example the type checking module, |Metapro
 which has a representation of natural numbers, or booleans, or both. In the following code we will present the other
 helper functions a user needs to define on an on-demand basis, summarising finally what is necessary and why.
 \todo{summarise what's necessary and why, in terms of helper functions.}
+
+Finally there are the arguments of type |τ ∈ Γ| to the |Var| constructor. These are evidence that the variable identifier
+in question points to a valid entry in the context, |Γ|. Values of this type are basically annotated naturals corresponding to the
+de Bruijn index of the variable. This data type is defined in
+Fig.~\ref{fig:in-data}, and from such a value, one can query either the index (as a natural or |Fin|) in the context (which is
+equal to their de Bruijn index, given how entering the body of a lambda abstraction pushes a new entry onto the context) or
+the type of the variable they represent. Note that because of this the |Var| constructor is not parameterised with an explicit other
+than the |_∈_| parameter.
+
+\begin{figure}[h]
+\begin{spec}
+data _∈_ {A : Set} (x : A) : List A → Set where
+  here    : {xs : List A}                        → x ∈ x ∷ xs
+  there   : {xs : List A} {y : A} → x ∈ xs       → x ∈ y ∷ xs
+\end{spec}
+\caption{The definition of the |_∈_| data type, used as a witness that a variable with some type points to a valid location in the context.}\label{fig:in-data}
+\end{figure}
 
 It should be clear that a term in |WT' []| is closed, since if the context of a term is empty and given that all |WT'| terms
 are well-scoped, the only way to
