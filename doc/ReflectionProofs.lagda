@@ -2896,7 +2896,6 @@ unitTest1 : compile testTermWT' ≡
     S ⟨ S ⟨ K ⟨ S ⟩ ⟩ ⟨ S ⟨ K ⟨ K ⟩ ⟩ ⟨ I ⟩ ⟩ ⟩ ⟨ K ⟨ I ⟩ ⟩
 unitTest1 = refl
 \end{spec}
-\todo{mention how supercombinators could make the term smaller, but nobody cares. give an example of a supercombinator.}
 
 Here we see how the existing lambda expression quoting system is used to read a
 concrete Agda lambda expression into a |WT'| value, which is then |compile|d to
@@ -2905,11 +2904,26 @@ produce an SKI term.
 The resulting terms are sometimes rather verbose, as is illustrated
 in the examples of use provided in the module |Metaprogramming.ExampleSKI|, but this is to be expected,
 since, while being a Turing complete language, the SKI calculus obviously is not very concise. If one wanted to
-make the resulting terms a little more readable, one might consider adding extra combinators (such as
-those defined in ...), \todo{examples of more powerful combinators}
-but it is interesting to note that by the fact that all lambda expressions can be translated to expressions
-using only S, K and I, these new combinators would simply be aliases for various combinations of the
-already-defined combinators.
+make the resulting terms a little more readable, one might consider adding extra combinators, called supercombinators, such as, for example,
+the |o| combinator, defined as follows.
+
+\begin{code}
+o : ∀ {A B C} → Comb [] ((B => C) => (A => B) => A => C)
+o = S ⟨ K ⟨ S ⟩ ⟩ ⟨ K ⟩
+\end{code}
+
+Notice that the |o| supercombinator is really just function composition, as can be
+seen by the type signature. We take a function |f| and a function |g| as the first two arguments,
+then a value of type |A|, and then apply to this value |f| \emph{after} |g|, precisely the definition of
+function composition, usually denoted |_∘_|.
+
+Introducing this, and other, supercombinators, could considerably
+shorten the representations of SKI terms, but being outside the scope
+of this example, we will stick with only the |S|, |K| and |I|
+previously defined. It is, however, interesting to note that because the
+fact that all lambda expressions can be translated to expressions
+using only S, K and I, these new supercombinators would simply be aliases
+for various combinations of the already-defined combinators.
 
 
 \subsection{From SKI to Concrete Agda}
@@ -3088,13 +3102,11 @@ can relatively easily inspect the constructors of data types, and that the use o
 since the type-of-types values are just Agda values. If one would like to have embedding and projection pairs, however,
 the same problem outlined in the previous section would arise: unquoting is not properly usable.
 
-...
 
 
 
-Talk about stuff here.
-\todo{say something about Ornaments - probably make comparison to Epigram and say something like 
-real reflection wouldn't be necessary - welcome to a lispy world}
+\todo{say something about Ornaments/levitation - probably make comparison to Epigram and say something like 
+real reflection wouldn't be necessary there - welcome to a lispy world}
 
 
 
