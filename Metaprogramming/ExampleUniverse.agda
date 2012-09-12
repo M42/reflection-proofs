@@ -89,9 +89,9 @@ open module DT = Metaprogramming.Datatypes U equal? Uel
 import Metaprogramming.TypeCheck
 open module TC = Metaprogramming.TypeCheck U equal? type? Uel quoteVal quoteBack
 import Metaprogramming.CPS
-open module CPS' = Metaprogramming.CPS U Uel equal? type? quoteBack halttype
+open module CPS' = Metaprogramming.CPS     U Uel equal? type? quoteBack halttype
 import Metaprogramming.SKI
-open module SKI' = Metaprogramming.SKI U equal? type? Uel quoteVal quoteBack
+open module SKI' = Metaprogramming.SKI     U equal? type? Uel quoteVal quoteBack
 
 {-
 for actual examples of the use of the different modules, refer to
