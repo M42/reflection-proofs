@@ -128,3 +128,6 @@
 %format Col = "\id{Col}"
 %format isoDT = "\id{isoDT}"
 %format Combinator = "\id{Combinator}"
+
+%%% spacing:
+%format fromℕ≤ = "\defin{fromℕ" "\mkern-8mu" "≤}"

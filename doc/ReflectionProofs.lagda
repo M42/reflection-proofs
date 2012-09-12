@@ -1789,7 +1789,7 @@ term2boolexpr' t {pf} = doConvert boolTable t {pf}
 \end{code}
 
 Once we have a |BoolInter| expression, we just need to check that its
-variables are all in-scope (this means that $\forall$ |Atomic x| $ : x < n$, if we
+variables are all in-scope (this means that $\forall$ |Atomic| $x$ s.t. $x < n$, if we
 want to convert to a |BoolExpr n|). This is done in |bool2fin|, assuming that |bool2finCheck|
 holds (the latter simple expresses the aforementioned in-scope property).
 
@@ -2143,9 +2143,9 @@ recursion is allowed by default, since the unification algorithm typically used 
 use of general recursion. This is in fact an entire topic of research, and therefore outside the scope
 of this project \cite{DBLP:journals/jfp/McBride03}.
 
-We choose instead to use the relatively simple, structurally recursive, algorithm for type checking lambda terms
+We choose instead to use the relatively straight-forward, structurally recursive, algorithm for type checking lambda terms
 presented in Norell's tutorial on Agda \cite{Norell:2009:DTP:1481861.1481862}.
-The function |infer| -- defined in Fig.~\ref{fig:infer-function} --
+The function |infer| -- defined in the following paragraph, in parts -- 
 provides a view on |Raw| lambda terms showing whether they are
 well-typed or not. This view is aptly called |Infer|, and is defined
 in Fig.~\ref{fig:infer-datatype}.
@@ -2204,14 +2204,17 @@ the left-hand side of the arrow. If all goes well, we are done.
 
 \begin{code}
 infer Γ (App e e₁) with infer Γ e
-infer Γ (App .(erase t) e₁) | ok n (Cont a) t = bad
-infer Γ (App .(erase t) e₁) | ok n (O x) t = bad
-infer Γ (App .(erase t) e₁) | ok n (τ => τ₁) t with infer Γ e₁
-infer Γ (App .(erase t₁) .(erase t₂)) | ok n (σ => τ) t₁   | ok n₂ σ' t₂ with σ =?= σ'
-infer Γ (App .(erase t₁) .(erase t₂)) | ok n (.σ' => τ) t₁ | ok n₂ σ' t₂ | yes = ok _ τ (t₁ ⟨ t₂ ⟩ )
-infer Γ (App .(erase t₁) .(erase t₂)) | ok n (σ => τ) t₁   | ok n₂ σ' t₂ | no  = bad
-infer Γ (App .(erase t) e₁) | ok n (τ => τ₁) t | bad = bad
-infer Γ (App e e₁) | bad = bad
+infer Γ (App .(erase t) e₁)    | ok n (Cont a) t       = bad
+infer Γ (App .(erase t) e₁)    | ok n (O x) t          = bad
+infer Γ (App .(erase t) e₁)    | ok n (τ => τ₁) t      with infer Γ e₁
+infer Γ (App .(erase t₁) .(erase t₂))    
+                               | ok n (σ => τ) t₁      | ok n₂ σ' t₂    with σ =?= σ'
+infer Γ (App .(erase t₁) .(erase t₂))     
+                               | ok n (.σ' => τ) t₁    | ok n₂ σ' t₂    | yes   = ok _ τ (t₁ ⟨ t₂ ⟩ )
+infer Γ (App .(erase t₁) .(erase t₂))    
+                               | ok n (σ => τ) t₁      | ok n₂ σ' t₂    | no    = bad
+infer Γ (App .(erase t) e₁)    | ok n (τ => τ₁) t      | bad            = bad
+infer Γ (App e e₁)             | bad                   = bad
 \end{code}
 
 \todo{make sure all the parameters to the CPS etc modules are mentioned and explained. summarise, possibly.}
