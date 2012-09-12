@@ -1040,18 +1040,18 @@ if $n$ is even, then so is $2 + n$.
 
 \begin{code}
 data Even      : ℕ → Set where
-  isEvenZ      :                          Even 0
-  isEvenSS     : {n : ℕ} → Even n     →   Even (2 + n)
+  isEven0      :                          Even 0
+  isEven+2     : {n : ℕ} → Even n     →   Even (2 + n)
 \end{code}
 
 Using these rules to produce the proof that some large number |n| is
 even can be very tedious: the proof that $2 \times n$ is even requires |n|
-applications of the |isEvenSS| constructor. For example, here is the
+applications of the |isEven+2| constructor. For example, here is the
 proof that 6 is even:
 
 \begin{code}
 isEven6 : Even 6
-isEven6 = isEvenSS (isEvenSS (isEvenSS isEvenZ))
+isEven6 = isEven+2 (isEven+2 (isEven+2 isEven0))
 \end{code}
 
 To automate this, we will show how to \emph{compute} the proof
@@ -1083,9 +1083,9 @@ constructing proof trees, such as the one we manually defined for
 
 \begin{code}
 soundnessEven : {n : ℕ} → even? n → Even n
-soundnessEven {0}              tt        = isEvenZ
+soundnessEven {0}              tt        = isEven0
 soundnessEven {1}              ()
-soundnessEven {suc (suc n)}    s         = isEvenSS (soundnessEven s)
+soundnessEven {suc (suc n)}    s         = isEven+2 (soundnessEven s)
 \end{code}
 
 Note that in the case branch for 1, we do not need to provide a
