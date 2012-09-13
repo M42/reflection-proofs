@@ -3115,6 +3115,22 @@ Here the problem is that |quoteTerm| indeed manages at compile time, but since, 
 that the last attempt failed, produces a useless term, namely |var 0 []|, or a reference to the nearest-bound
 variable, which results in a proof obligation |var 0 [] ≡ def Col []| in hole 1 which we of course cannot fulfil. 
 
+A similar problem arises if we want to be able to ask for the list of constructors of some type 
+which is passed into a function as a parameter. 
+
+
+\begin{spec}
+cs : (A : Set) → List Name
+cs type = ... quote type ...
+\end{spec}
+
+This gives the same problem as the previous snippet, where hole 1 was impossible, since the 
+result from |quoteTerm| is simply |var n []|, for some $n$. What would be more useful, is if the
+result were a |Name|, such as |Col|, assuming that were the original parameter to |cs|. |quote| also would not
+work here, because where it is used, |type| is not a defined identifier, but a variable, and |quote| can only
+handle definitions.
+
+
 We are now forced to conclude that, even though certain elements necessary for generation of
 embedding-projection functions are attainable, we are blocked relatively early in the development
 process by such minor issues as arguments to quoting functions having to be known at compile time,
@@ -3161,15 +3177,6 @@ compare the tauto-solver to tactics, note how this is embedded in agda and not s
 %todo mention Patrick Bahr's tree automata?
  
  
-% TODO : I would like to do something like this:
-% 
-% cs : (A : Set) → List Name -- give a list of constructors
-% cs type = ... quote type ...
-% 
-% but I can't, because type isn't a defined thing. if I try to use quoteTerm here, I just get
-% something like var 0 [], which of course also isn't useful. I would actually like the same as
-% `quote Col`, for example. i.e. a QName I can actually use.
-% 
  
  
 This project's main innovations are the novel combinations of existing
