@@ -213,7 +213,7 @@ Chapter~\ref{chap:introducing-agda}.
   
 \item We show how to
   guarantee \emph{type safety of meta-programs}. To illustrate this
-  point, we will develop a type safe translation from the simply typed
+  point, we will develop a type-safe translation from the simply typed
   lambda calculus to programs in continuation-passing style (CPS), followed
 by a type-safe translation of closed lambda terms into SKI combinator calculus (Chapter~\ref{sec:type-safe-metaprogramming}).
  
@@ -2013,7 +2013,7 @@ simply-typed lambda calculus (STLC) with the usual type and scoping
 rules, as defined in Fig.~\ref{fig:stlc-data}.  All the modules that
 deal with lambda expressions (everything in the
 |Metaprogramming| namespace of the project) work on this |WT'| (which
-stands for well-typed) datatype. Notice how the constructors are basically
+stands for well-typed) data type. Notice how the constructors are basically
 a transliteration of the STLC typing rules introduced in Fig.~\ref{fig:stlc-rules}, except
 now including a size parameter.
 
