@@ -3123,7 +3123,7 @@ which is passed into a function as a parameter.
 
 \begin{spec}
 cs : (A : Set) → List Name
-cs type = ... quote type ...
+cs type = ... quoteTerm type ...
 \end{spec}
 
 This gives the same problem as the previous snippet, where hole 1 was impossible, since the 
