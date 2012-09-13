@@ -215,7 +215,9 @@ Chapter~\ref{chap:introducing-agda}.
   guarantee \emph{type safety of meta-programs}. To illustrate this
   point, we will develop a type-safe translation from the simply typed
   lambda calculus to programs in continuation-passing style (CPS), followed
-by a type-safe translation of closed lambda terms into SKI combinator calculus (Chapter~\ref{sec:type-safe-metaprogramming}).
+by a type-safe translation of closed lambda terms into SKI combinator calculus (Chapter~\ref{sec:type-safe-metaprogramming}). 
+In
+doing this, structurally recursive, total, well-typed and terminating CPS and SKI transformations are defined.
  
 \item Finally, we also discuss some of the
   limitations of the current implementation of reflection (Chapter~\ref{sec:generic-programming}),
@@ -3249,11 +3251,6 @@ API in use that came to our attention.
 % te bundelen, waar je de bredere context van je werk kan beschrijven.''
  
 %todo right at the end, check if references to sections and figures are called Sec. and Fig. accordingly.
-mention in contributions:
-\begin{itemize}
- \item structurally recursive CPS transform
- \item well-typed SKI transform for de Bruijn indexed LC (this is new) + it is structurally recursive
-\end{itemize}
 
 This paper has presented two simple applications of proof by
 reflection. In the final version, we will show how
