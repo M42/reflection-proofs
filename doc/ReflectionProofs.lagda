@@ -2483,9 +2483,13 @@ Note that in
 the case of variables, some housekeeping needs to be done. We are actually changing all the values
 in the context (by applying |cpsType| to them), and we need to show that the same type, but CPS
 transformed, will be in the same spot as the old type was. Therefore, a proof is given that if some variable with type |σ| is inside the
-environment |Γ|, then it will also be inside the new environment |map cpsType Γ| at the same index, but having value |cpsType σ|.
+environment |Γ|, then it will also be inside the new environment |map cpsType Γ| at the same index, but having value |cpsType σ|. The
+signature of |cpsvar| is given for reference; the proof is trivial.\todo{give type signatures of proofs which may not be crystal clear.}
+
 
 \begin{spec}
+cpsvar : ∀ {t g} → t ∈ g → cpsType t ∈ map cpsType g
+
 Tt (Lit x)                                     cont = cont ⟨ Lit x ⟩
 Tt (Var inpf  )                                cont = cont ⟨ Var (cpsvar inpf) ⟩
 \end{spec}
@@ -2497,12 +2501,16 @@ passing style, asking it to invoke |Var 0| on the result, which is the
 newly-introduced continuation parameter. Variables are unchanged,
 except that their indices all need updating, since we have introduced
 a new lambda, so all the variables under that new lambda need an
-index-increase of 1. The function |shift1| does this. Note that even
+index-increase of 1. The function |shift1| does this. 
+
+Note that even
 though we are introducing two abstractions, only one is new, since we
 are rebuilding the original lambda term but assigning the argument a
 new type, namely |cpsType t1|.
 
 \begin{spec}
+shift1 : ∀ {Γ τ n} → (τ₀ : Uu) → WT Γ τ n → WT (τ₀ ∷ Γ) τ n
+
 Tt {t1 => t2} (Lam .t1 expr) cont
           = cont     ⟨     Lam      (cpsType t1)
                                     (Lam    (cpsType (Cont t2))
@@ -2598,10 +2606,10 @@ of type |ℕ|. Following Mertens' example \cite{mertens2010wellfoundedrecursion}
 we can build a well-foundedness proof for |WT'| in terms of our measure, which we can then add as an extra argument to the
 |allTsAcc| function.  The first pitfall we encounter is that we want to define some |Rel A| which we will prove is well-founded
 on our data structure. The problem is that |Rel| is of type |Set -> Set₁| (not exactly, but for the purposes of argument), but |WT'| is not
-of type |Set|, but |∁tx → Uu → ℕ → Set|. If we try to define something like |\ {Γ σ n} → Rel (WT' Γ σ n)|, things also become sticky rather
+of type |Set|, but |Ctx → Uu → ℕ → Set|. If we try to define something like |\ {Γ σ n} → Rel (WT' Γ σ n)|, things also become sticky rather
 quickly.
 
-We can, however, circumvent this problem by defining a ``wrapper'' which is isomorphic to |WT'|, but
+We can, however, circumvent this problem by defining a wrapper which is isomorphic to |WT'|, but
 at the same time an element of |Set|. We will define this wrapper, |WTwrap|, as follows.
 
 \begin{code}
@@ -2640,7 +2648,7 @@ open import Induction.WellFounded
 Now we use a lemma called Inverse-image from the |Induction.WellFounded| standard library module which shows that
 if we have some measure on a carrier, and a way to map some new type to this carrier type, we can
 lift the well-foundedness to the new type. We instantiate this lemma using our |WTwrap| wrapper, less-than on
-naturals, and a function |sz| which simply reads the size-index which we already included in |WT'| in Sec.~\ref{sec:wt}.
+naturals, and a function |sz| which simply reads the size-index which we already included in |WT'| in Fig.~\ref{fig:stlc-data}.
 
 \begin{spec}
 module <-on-sz-Well-founded where
@@ -2997,23 +3005,24 @@ provide a few easy-to-define helper functions. These functions are necessary bec
 which is something which is only possible if the to-be-used universe \emph{and all of its constructors} are in-scope.
 
 The following list describes all the necessary parameters to the modules (note that not all modules require all parameters).
-
+\colorlet{hlite}{CornflowerBlue!30!white}
+\newcommand{\hlitem}[1]{\item[\colorbox{hlite}{#1}]~\\}
 \begin{description}
-\item[|U : Set|] 
+\hlitem{|U : Set|}
 A data type representing the universe. It might have such elements as |Nat| and |Bl| which might stand for natural numbers and Boolean values.
-\item[|returnType : U|] 
+\hlitem{|returnType : U|} 
 The return type for a CPS transformed function, detailed in Sec.~\ref{sec:cps}.
-\item[|?type : U → Name|] 
+\hlitem{|?type : U → Name|} 
 A function which, given an element of the universe, gives back the concrete Agda identifier which it stands for, such as |quote ℕ|.
-\item[|Uel : U → Set|] 
+\hlitem{|Uel : U → Set|} 
 An interpretation function, which returns the Agda type corresponding to some element of the universe.
-\item[|equal? : (x : U) → (y : U) → Equal? x y|] 
+\hlitem{|equal? : (x : U) → (y : U) → Equal? x y|} 
 A function which implements decidable equality between elements of the universe.
-\item[|type? : Name → Maybe U|]
+\hlitem{|type? : Name → Maybe U|}
  A function which translates Agda identifiers into elements of the universe. Since failure is possible (the quoted term may be of some invalid shape), a |Maybe U| is expected.
-\item[|quoteBack : (x : U) → Uel x → Term|]
+\hlitem{|quoteBack : (x : U) → Uel x → Term|}
  A function which can turn a value in the universe into an Agda |Term|.
-\item[|quoteVal : (x : U) → Term → Uel x|] 
+\hlitem{|quoteVal : (x : U) → Term → Uel x|} 
 Finally, a function which, given an Agda term standing for a basic value, such as a natural, translates it into the universe.
 \end{description}
 
