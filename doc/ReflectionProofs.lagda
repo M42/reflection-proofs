@@ -2073,7 +2073,7 @@ Ctx = List Uu
 
 The |O| constructor, which stands for base types, is parameterised by an argument of type |U|. This
 is the user-defined universe with which all the library modules in |Metaprogramming| are parameterised. Finally
-there is the |Cont| constructor, which will be used and explained later in Sec.~\ref{sec:cps}.
+there is the |Cont| constructor, which will be used and explained later, in Sec.~\ref{sec:cps}.
 This allows a user to instantiate for example the type checking module, |Metaprogramming.TypeCheck|, with a universe
 which has a representation of natural numbers, or booleans, or both. In the following snippets of code we will present the other
 helper functions a user needs to define on an on-demand basis, summarising finally what is necessary and why in Sec.~\ref{sec:universe-parameters}.
@@ -2354,7 +2354,7 @@ Agda.
 
 
 \section{Example: CPS Transformation}\label{sec:cps}
-\todo{give examples of CPS transformed terms. from Wouter's BG reading?}
+\todo{give examples of CPS transformed terms.} % from Wouter's BG reading?
 
 Given the fact that we can now easily move from the world of concrete Agda syntax to a well-typed lambda calculus and back,
 the obvious next step is to do something with these well-typed terms. Doing anything with these terms constitutes
@@ -2434,9 +2434,10 @@ expect the new function to have can be derived. This is discussed at length by
 Might \cite{might-cps}, whose implementation was also used as inspiration for this type-safe version.
 
 The type of a CPS-transformed function can be computed as follows,
-where |RT| stands for some return type. This |RT| is some base type, i.e. |O σ| for some $\sigma$,
+where |RT| stands for return type. This |RT| is some base type, i.e. |O σ| for some $\sigma$,
 and is a user-defined parameter to the module |Metaprogramming.CPS| (as well as to the |Datatypes| module,
-but this parameter is automatically passed along to |Datatypes| in the |CPS| module).
+but this parameter is automatically passed along to |Datatypes| in the |CPS| module). It denotes the desired
+return type from continuation functions.
 
 
 Here we see the |Cont|
@@ -2715,7 +2716,7 @@ open <-on-sz-Well-founded ; open TLemma
 \begin{spec}
 T : {σ : Uu} {Γ : Ctx} {n m : ℕ}
        → (wt : WT' Γ σ n)
-       → (cont : WT' (map cpsType Γ) (cpsType (Cont σ)) m)
+       → WT' (map cpsType Γ) (cpsType (Cont σ)) m
        → WT' (map cpsType Γ) RT (sizeCPS n wt (allTsAcc wt (wf (to wt))) m)
 T wt cont = Tt wt (allTsAcc wt (wf (to wt))) cont
 \end{spec}

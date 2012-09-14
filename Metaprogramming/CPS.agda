@@ -177,6 +177,6 @@ allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁}{n}{m} wt wt₁) (acc x) = TApp (allTsAcc wt (
 -- well-foundedness of the packed term, which the standard library kindly provides
 -- us in Induction.WellFounded
 T : {σ : U'} {Γ : Ctx} {n m : ℕ} → (wt : WT Γ σ n)
-                                 → (cont : WT (map cpsType Γ) (cpsType σ => RT) m)
+                                 → WT (map cpsType Γ) (cpsType σ => RT) m
                                  → WT (map cpsType Γ) RT (sizeCPS n wt (allTsAcc wt (wf (to wt))) m)
 T wt cont = T' wt (allTsAcc wt (wf (to wt))) cont
