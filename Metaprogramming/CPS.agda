@@ -39,11 +39,11 @@ RT = O ReturnType
 -- the type of a function after being CPS transformed.
 cpsType : U' → U'
 cpsType (O x)     = O x
-cpsType (t => t₁) = cpsType t => ((cpsType t₁ => RT) => RT)
+cpsType (t => t₁) = cpsType t => (cpsType t₁ => RT) => RT
 cpsType (Cont t)  = cpsType t => RT
 
 -- translate the _∈_ objects to an environment where all the types have been transformed.
-cpsvar : ∀ {t g} → t ∈ g → (cpsType t) ∈ (map cpsType g)
+cpsvar : ∀ {t g} → t ∈ g → cpsType t ∈ map cpsType g
 cpsvar   here    = here
 cpsvar (there v) = there (cpsvar v)
 
