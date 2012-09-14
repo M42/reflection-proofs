@@ -145,6 +145,18 @@ open import Data.List hiding (_∷ʳ_)
 %  arise in dependently typed programming.
 %\end{abstract}
 
+
+\newcommand{\researchquestion}{%
+\begin{quote}
+``Given the new reflection API in Agda, what interesting applications can we give
+examples of? Which tedious and mundane tasks can we automate? What advantages
+does Agda's implementation of reflection have over other languages
+ which already have reflection, and, finally, is
+it adequate as it stands to facilitate our needs or does it require extension? If
+extension is necessary, how much?''
+\end{quote}
+}
+
 \chapter{Introduction}\label{chap:introduction}
 
 Since the inception of computer programming, the aim has often been to
@@ -181,14 +193,7 @@ this provides promising new programming potential.
 The main question which we aim to answer during this project is:
 
 
-\begin{quote}
-``Given the new reflection API in Agda, what interesting applications can we give
-examples of? Which tedious and mundane tasks can we automate? What advantages
-does Agda's implementation of reflection have over other languages
- which already have reflection, and, finally, is
-it adequate as it stands to facilitate our needs or does it require extension? If
-extension is necessary, how much?''
-\end{quote}
+\researchquestion
 
 
 
@@ -2423,7 +2428,6 @@ equivFact5 : factorial 5 ≡ factCPS 5 id
 equivFact5 = refl
 \end{code}
 
-%TODO wouter's "background reading on CPS"
 
 This transformation can be done in a mechanical way, too. Also the type we
 expect the new function to have can be derived. This is discussed at length by
@@ -3181,11 +3185,6 @@ related to generic programming.
 \chapter{Discussion}\label{sec:discussion}
 % ... and Conclusion and Related Work and Reflection API Limitations
 
-Mention mcbride with ornaments
- 
-compare the tauto-solver to tactics, note how this is embedded in agda and not some sub-language of coq
- 
-%todo mention Patrick Bahr's tree automata?
  
  
  
@@ -3194,7 +3193,7 @@ This project's main innovations are the novel combinations of existing
 techniques; therefore quite a number of subjects are relevant to mention
 here.
  
-As far as reflection in general goes, Demers and Malenfant \cite{demers1995reflection} wrote a nice historical overview on the topic.
+As far as reflection in general goes, Demers and Malenfant \cite{demers1995reflection} wrote an informative historical overview on the topic.
 What we are referring to as reflection dates back to work by Brian Smith \cite{Smith:1984:RSL:800017.800513}
 and was initially presented in the Lisp family of languages in the 80's. Since then,
 many developments in the functional, logic as well as object-oriented programming worlds have 
@@ -3214,22 +3213,21 @@ in Agda, although we shall see that it is lacking in a number of fundamental cap
 If we look at the taxonomy of reflective systems in programming language technology written up 
 by Sheard \cite{sheard-staged-programming}
 we see that we can make a few rough judgments about the metaprogramming facilities Agda currently 
-supports\footnote{Of course the current implementation is more a proof-of-concept, and is still far from
+supports\footnote{Of course, having been implemented during one AIM \cite{thorsten-communication}, the current implementation is more a proof-of-concept, and is still far from
 being considered finished, so it would be unfair to judge the current implementation all too harshly. In
 fact, the author hopes that this work might motivate the Agda developers to include some more features, to
-make the system truly useful. 
-}.
+make the system truly useful. }.
  
-Agda's reflection API\ldots
+A few statements about Agda's reflection API in light of this taxonomy can be made.\todo{wording?}
 \begin{itemize}
-\item leans more towards analysis than generation
-\item supports encoding as an algebraic data type (as opposed to a string, for example)
-\item involves manual staging annotations (with keywords such as |quote| and |unquote|)
-\item is neither strictly static nor runtime, but compile-time. This behaves much like a 
-  static system (one which compiles an object program, as does for example YAcc \cite{johnson1975yacc}
-) would, but doesn't produce intermediate code which might be modified.
-  Note that this fact is essential for Agda to remain sound as a logical framework.
-\item is homogeneous, in that the object language lives inside the metalanguage (as a native
+\item It leans more towards analysis than generation,
+\item it supports encoding as an algebraic data type (as opposed to a string, for example),
+\item it involves manual staging annotations (with keywords such as |quote| and |unquote|),
+\item it is neither strictly static nor runtime, but compile-time. This behaves much like a 
+  static system (one which compiles an object program, as does for example YAcc \cite{johnson1975yacc})
+  would, but doesn't produce intermediate code which might be modified.
+  Note that this fact is essential for Agda to remain sound as a logical framework. Also,
+\item it is homogeneous, in that the object language lives inside the metalanguage (as a native
   data type), but
 \item is only two-stage: we cannot as yet produce an object program which is itself a metaprogram. This is
   because we rely on built-in keywords such as |quote|, which cannot themselves be quoted.
@@ -3239,18 +3237,35 @@ Agda's reflection API\ldots
  
  
 Other related work includes the large body of publications in the
-domain of generic programming
+domain of data type generic programming
 \cite{Rodriguez:2008:CLG:1543134.1411301,mcbride2010ornamental}, where we found the
 inspiration to try and implement some of the techniques in a
-dependently-typed setting.
+dependently-typed setting. Especially  work by McBride, et al involving ornamentation and levitation \cite{Chapman:2010:GAL:1863543.1863547} is
+intriguing, and something which would have been very interesting to do is to embed the data type of 
+data types in Agda and automatically convert data type declarations (which we can inspect) into values of
+this type. This whole step would be unnecessary in a language which supports this type-of-types a priori, 
+so that the conversion to and from this type would be unnecessary, and data type generic programming becomes
+normal programming.
+
  
 Program transformations and their correctness (by various definitions) have long been a subject of research \cite{Partsch:1983:PTS:356914.356917},
-and given more advanced languages with more powerful generative programming techniques, this will likely prove a continuing trend.
+and given more advanced languages with more powerful generative programming techniques, this will likely prove a continuing trend. As such,
+the contribution made in this work of type-safe and total translation of simply-typed lambda calculus to a language of SKI combinator calculus
+and the continuation-passing style transformation are interesting case studies, especially since it has been shown that these
+translations are usable in combination with a reflective language, making the process of translation of programs straight-forward for 
+a user. Possible future work here includes extending the body of available translations using the well-typed model of lambda calculus here
+as an intermediary language (or at least as inspiration for some other, more specialised data structure).
  
 As far as the proof techniques used in the section on proof by reflection (Chapter~\ref{sec:proof-by-reflection}) is concerned,  
 Chlipala's work \cite{chlipala2011certified} proved an invaluable resource, both for inspiration and guidance. One motivating example
 for doing this in Agda was Wojciech Jedynak's ring solver \cite{ringsolver}, which was the first example of Agda's reflection
-API in use that came to our attention.
+API in use that came to our attention. Compared to Jedynak's work, the tactic presented here is more refined in terms of the interface
+presented to the user. The expectation is that approaches like these will become more commonplace for proving mundane components in 
+large proofs. The comparison to tactics in a language like Coq is a natural one, and we see both advantages and disadvantages. Of course, 
+the tactic language in Coq is much more specialised and sophisticated when it comes to generating proofs, but it is a pity that in fact one has
+two separate languages in one, instead of the way it is in Agda, where metaprograms are written directly in the object language. Also, the 
+fact that proof generation in Agda is explicit may be something some people appreciate. Further work (in the far future) might be to 
+implement some sort of tactic framework for Agda, possibly with a DSL in the style of Coq's tactic language, around the reflection API.
  
  
  
@@ -3261,23 +3276,42 @@ API in use that came to our attention.
  
 %todo right at the end, check if references to sections and figures are called Sec. and Fig. accordingly.
 
+Returning to our research question,  repeated here to jog the memory,  a summary of findings is made.
+
+\researchquestion
+
 This paper has presented two simple applications of proof by
-reflection. In the final version, we will show how
-Agda's reflection API has several other applications.
+reflection, the latter using Agda's reflection API. Also, type-safe 
+metaprogramming techniques have been demonstrated, offering automatic conversion 
+and translation of programs, while preserving typing safety along the way. We 
+have managed to automate generation of a certain class of proofs, which certainly 
+would count as mundane. The clear advantage of Agda's reflection system is that it
+leverages the power of Agda's dependent types, leading to, among other yet to be described
+methods, the technique of type-safe metaprogramming presented here. Unfortunately, though,
+the reflection API itself is still rather primitive, so we find ourselves unable to define 
+things such as an automatic Bove-Capretta transformation of a given function, or the generation
+of generic programming embedding and projection functions. The reasons for not being able to 
+do all that we would like with the API as it stands is best summarised as follows. 
  
- 
-Answer the research question here.
- 
-Reflection API limitations:
+%Reflection API limitations:
 \begin{itemize}
-\item Cannot call |unquote| on non-constructor term. I.e. |unquote (lam2term t)|
-\item Impossible to introduce definitions
-\item Inspection of functions (e.g. clauses) not implemented
-\item ?? creation of pattern matching functions not possible => bove capretta impossible (or maybe completely automatic GP impossible)
-\item untyped terms are returned. this is solved.
+\item One cannot call |unquote| on non-constructor terms,
+i.e. |unquote (lam2term t)| where $t$ is some parameter or variable.
+\item It is impossible to introduce definitions, and therefore also
+impossible to define pattern-matching, since pattern-matching is only
+allowed in definitions. Pattern-matching lambda expressions in Agda
+are simply syntactic sugar for local definitions. This precludes
+automating the Bove-Capretta method, and makes generic programming
+techniques all the more painful.
+\item Inspection of functions (e.g. clauses) not implemented, although
+inspection of data type definitions is quite complete.
+\item By default, untyped terms are returned from the |quoteTerm|
+keyword. This has been solved in the patches presented in
+Appendix~\ref{appendix:lambda-types}, but these patches are yet to be
+included in the main development version of Agda.
 \end{itemize}
  
-mention that program transformation (i.e. automatic bove-capretta) is also difficult/impossible. this is something different from GP automatically
+ 
  
  
 %todo acknowledgements
@@ -3293,12 +3327,13 @@ mention that program transformation (i.e. automatic bove-capretta) is also diffi
 Obviously, a formidable number of people deserve thanks here, but I will refrain
 from mentioning everyone. Foremost, I would like to thank Wouter, my supervisor, for
 his infinite patience in explaining things, giving sound and complete
-advice, and his generally pleasant way of doing things. Tim deserves
+advice, and his generally pleasant way of doing things. Marleen bravely
+proofread this work, and gave much-needed moral support. Tim deserves
 ample thanks for noticing overworkedness and nipping it in the bud, taking
 me on an epic hike through the forest.  Justin did his bit by
 convincing me to go hitchhiking, which actually was surprisingly
-inspiring -- rather a large portion of this thesis was eventually
-written while in a foreign city.  The Friday pie day club is of course
+inspiring -- a portion of this thesis was eventually
+written while in a foreign city.  The Friday Pie Day club and its members are of course
 also worthy of mention, if only because of the added motivation I felt
 near the end of my research period to catch up on all the wasted time
 spent drinking coffee and consuming calorific treats. 
