@@ -3271,10 +3271,6 @@ implement some sort of tactic framework for Agda, possibly with a DSL in the sty
  
  
  
-% TODO: Wouter says ``Ik vind het zelf soms
-% prettig om conclusions/related work/enz. in één hoofdstuk 'Discussion'
-% te bundelen, waar je de bredere context van je werk kan beschrijven.''
- 
 %todo right at the end, check if references to sections and figures are called Sec. and Fig. accordingly.
 
 Returning to our research question,  repeated here to jog the memory,  a summary of findings is made.
