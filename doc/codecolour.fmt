@@ -47,6 +47,10 @@
 
 %format postulate = "\bkw{postulate}"
 %format mutual = "\bkw{mutual}"
+%format module = "\bkw{module}"
+%format open = "\bkw{open}"
+%format import = "\bkw{import}"
+%format public = "\bkw{public}"
 %format data = "\bkw{data}"
 %format where = "\bkw{where}"
 %format let = "\bkw{let}"
