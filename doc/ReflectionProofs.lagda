@@ -19,6 +19,7 @@
 
 \usepackage{dirtree}
 \usepackage{subfigure}
+\usepackage[grumpy]{gitinfo}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Font definitions.
@@ -31,7 +32,8 @@
 
 \newcommand{\pref}[1]{~\ref{#1} on page~\pageref{#1}}
 
-\newcommand{\ghurl}{\url{https://github.com/toothbrush/reflection-proofs}}
+\newcommand{\ghloc}{https://github.com/toothbrush/reflection-proofs}
+\newcommand{\ghurl}{\url{\ghloc}}
 \def\CC{{C\nolinebreak[4]\hspace{ -.05em}\raisebox{.4ex}{\tiny\bf ++}}}
 
 \ignore{
@@ -118,7 +120,7 @@ open import Data.List hiding (_∷ʳ_)
 \\[2mm]
 \normalsize MSc thesis Computing Science\\
 \normalsize ICA-3120805\\
-\normalsize \today
+\normalsize rev. \texttt{\href{\ghloc/commit/\gitHash}{\gitAbbrevHash}}, \today
 \end{flushright}
 \HRule
 \vspace*{\stretch{2}}
