@@ -11,7 +11,12 @@
 %endif
 
 
+%% stuff only for draft versions
 \usepackage{todonotes}
+\usepackage{draftwatermark}
+\SetWatermarkLightness{0.95}
+%% end draft-version stuff.
+
 \usepackage{dirtree}
 \usepackage{subfigure}
 
