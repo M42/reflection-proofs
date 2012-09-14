@@ -2942,7 +2942,7 @@ shorten the representations of SKI terms, but being outside the scope
 of this example, we will stick with only the |S|, |K| and |I|
 previously defined. It is, however, interesting to note that because the
 fact that all lambda expressions can be translated to expressions
-using only S, K and I, these new supercombinators would simply be aliases
+using only |S|, |K| and |I|, these new supercombinators would simply be aliases
 for various combinations of the already-defined combinators.
 
 
@@ -3010,7 +3010,7 @@ provide a few easy-to-define helper functions. These functions are necessary bec
 which is something which is only possible if the to-be-used universe \emph{and all of its constructors} are in-scope.
 
 The following list describes all the necessary parameters to the modules (note that not all modules require all parameters).
-\colorlet{hlite}{CornflowerBlue!30!white}
+\colorlet{hlite}{CornflowerBlue!15!white}
 \newcommand{\hlitem}[1]{\item[\colorbox{hlite}{#1}]~\\}
 \begin{description}
 \hlitem{|U : Set|}
@@ -3257,12 +3257,12 @@ translations are usable in combination with a reflective language, making the pr
 a user. Possible future work here includes extending the body of available translations using the well-typed model of lambda calculus here
 as an intermediary language (or at least as inspiration for some other, more specialised data structure).
  
-As far as the proof techniques used in the section on proof by reflection (Chapter~\ref{sec:proof-by-reflection}) is concerned,  
+As far as the proof techniques used in the section on proof by reflection (Chapter~\ref{sec:proof-by-reflection}) are concerned,  
 Chlipala's work \cite{chlipala2011certified} proved an invaluable resource, both for inspiration and guidance. One motivating example
 for doing this in Agda was Wojciech Jedynak's ring solver \cite{ringsolver}, which was the first example of Agda's reflection
-API in use that came to our attention. Compared to Jedynak's work, the tactic presented here is more refined in terms of the interface
+API in use that came to our attention. Compared to Jedynak's work, the proof generator presented here is more refined in terms of the interface
 presented to the user. The expectation is that approaches like these will become more commonplace for proving mundane components in 
-large proofs. The comparison to tactics in a language like Coq is a natural one, and we see both advantages and disadvantages. Of course, 
+large proofs. The comparison to tactics in a language like Coq is a natural one, and we see both advantages and disadvantages of each system. Of course, 
 the tactic language in Coq is much more specialised and sophisticated when it comes to generating proofs, but it is a pity that in fact one has
 two separate languages in one, instead of the way it is in Agda, where metaprograms are written directly in the object language. Also, the 
 fact that proof generation in Agda is explicit may be something some people appreciate. Further work (in the far future) might be to 
@@ -3292,7 +3292,7 @@ methods, the technique of type-safe metaprogramming presented here. Unfortunatel
 the reflection API itself is still rather primitive, so we find ourselves unable to define 
 things such as an automatic Bove-Capretta transformation of a given function, or the generation
 of generic programming embedding and projection functions. The reasons for not being able to 
-do all that we would like with the API as it stands is best summarised as follows. 
+do all that we would like with the API as it stands are best summarised as follows. 
  
 %Reflection API limitations:
 \begin{itemize}
@@ -3312,6 +3312,11 @@ Appendix~\ref{appendix:lambda-types}, but these patches are yet to be
 included in the main development version of Agda.
 \end{itemize}
  
+
+Having said all of that, though, a number of things are possible with the reflection mechanism 
+as it stands, and the expectation is that it should be possible to define quite a few more examples
+of program transformations and proof generators which will likely turn out to be useful for various
+niche applications.
  
  
  

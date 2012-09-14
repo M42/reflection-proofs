@@ -132,6 +132,7 @@
 %format s = "\id{s}"
 %format k = "\id{k}"
 %format i = "\id{i}"
+%format Bl = "\id{Bl}"
 
 %%% spacing:
 %format fromℕ≤ = "\defin{fromℕ" "\mkern-8mu" "≤}"
