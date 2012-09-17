@@ -40,6 +40,18 @@
 \def\CC{{C\nolinebreak[4]\hspace{ -.05em}\raisebox{.2ex}{\small\bf ++}}}
 \colorlet{hlite}{CornflowerBlue!15!white}
 \newcommand{\hlitem}[1]{\item[\colorbox{hlite}{#1}]~\\}
+% This defines figures with backgrounds -- useful for code
+\usepackage{adjustbox}
+\newenvironment{shadedfigure}[1][tbhp]{%
+    \begin{figure}[#1]%
+    \begin{adjustbox}{minipage=\linewidth,margin=5pt 5pt,bgcolor=hlite}%,frame=2pt}
+    %\begin{adjustbox}{minipage=\linewidth-4pt,margin=0pt 5pt,bgcolor=hlite,frame=2pt}
+%        \centering
+}{%
+    \end{adjustbox}
+    \end{figure}
+}
+%%
 
 \ignore{
 \begin{code}
@@ -429,7 +441,7 @@ data types may not be inhabited if their indices can't be satisfied
 (for example: |refl| and the equality type).
 
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{code}
 foo : ⊤ × ⊤ → ℕ
 foo u = 5
@@ -443,11 +455,11 @@ arguments. Note that one could replace $u$ on the LHS of |foo| with
 the irrefutable pattern |u₁ , u₂|, since, as has been mentioned
 before, this is the only valid constructor for the type |_×_|.}
         \label{code:implicit-example}
-    \end{figure}
+    \end{shadedfigure}
 Since this inference is possible, we can also make this argument implicit, which effectively
 hides from the user that a value is being inferred and passed, as in Fig. \ref{fig:implicit0}.
     
-    \begin{figure}[h]
+    \begin{shadedfigure}[h]
 \begin{code}
 foo' : {u : ⊤ × ⊤} → ℕ
 foo' {tt  , tt} = 5
@@ -457,7 +469,7 @@ bar' = foo'
 \end{code}
         \caption{Implicit (or hidden) arguments are inferred, if possible.}
         \label{fig:implicit0}
-    \end{figure}
+    \end{shadedfigure}
 
 This is possible, since the type |⊤ × ⊤| only has one inhabitant, namely |(tt , tt)|. If
 multiple values were valid, the above code would have resulted in an unsolved meta. That brings
@@ -590,7 +602,7 @@ normalizes the |Term| before it is spliced into the program text.
 
 
 
-\begin{figure}[p]
+\begin{shadedfigure}[p]
 %if style == poly
   \begin{spec}
       postulate Name : Set
@@ -639,7 +651,7 @@ normalizes the |Term| before it is spliced into the program text.
 %endif
   \caption{The data types for reflecting terms.}
   \label{fig:reflection}
-\end{figure}
+\end{shadedfigure}
 
 
 
@@ -671,7 +683,7 @@ The |Reflection| module of the Agda standard library (version 0.6 was used here)
 functions. Here we will provide a list of them (see Fig. \ref{fig:reflection-functions}) along with
 a description of their use.
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{spec}
 _≟-Name_ : Decidable {A = Name} _≡_
 -- The other decidable properties are omitted for 
@@ -682,7 +694,7 @@ definition : Name → Definition
 constructors : Data-type → List Name
 \end{spec}
 \caption{The functions exported by the |Reflection| module of the Agda standard library, as of version 0.6.}\label{fig:reflection-functions}
-\end{figure}
+\end{shadedfigure}
 
 As mentioned before, the way to get an object of type |Name| is by using the |quote| keyword, for
 example as in |quote zero|. Once we have a |Name|, we can get more information about it.
@@ -866,7 +878,7 @@ a mapping and a |Name|, finds the corresponding entry in the mapping table. If n
 
 An example of such a mapping would be the one required for our |Expr| example.
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{code}
 exprTable : Table Expr
 exprTable = (Variable ,
@@ -875,7 +887,7 @@ exprTable = (Variable ,
              1   \# (quote ℕ.suc )   ↦ Succ ∷ [])
 \end{code}
 \caption{The mapping table for converting to the imaginary |Expr| AST. }\label{fig:exprTable}
-\end{figure}
+\end{shadedfigure}
 
 Here, we are saying that any variables encountered should be stored as |Variable| elements,
 the |_+_| operator should be a |Plus| constructor (we are required to specify that it takes 2 arguments),
@@ -977,7 +989,7 @@ another instance of the trick explained in Sec.~\ref{sec:implicit-unit} is appli
 a |just| value.
 
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{code}
 something : {x y : ℕ}    → doConvert    exprTable
                                         (quoteTerm ((1 + x + 2) + y))
@@ -987,7 +999,7 @@ something : {x y : ℕ}    → doConvert    exprTable
 something = refl
 \end{code}
 \caption{Examples of |Autoquote| in use. See Fig.~\ref{fig:exprTable} for the definition of |exprTable|, a typical |Name|-to-constructor mapping.}\label{fig:test-autoquote}
-\end{figure}
+\end{shadedfigure}
 
 Note the type signature of the |doConvert| function: we are implicitly assuming
 that the conversion is successful (i.e. that it returns a |just| value). This 
@@ -1160,7 +1172,7 @@ the one given in the section on even natural numbers (Sec.~\ref{sec:evenness}). 
 inductive data type to represent Boolean expressions with $n$ free
 variables in Fig.~\ref{fig:boolexprn}.
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{code}
 data BoolExpr (n : ℕ) : Set where
   Truth         :                                  BoolExpr n
@@ -1172,7 +1184,7 @@ data BoolExpr (n : ℕ) : Set where
   Atomic        : Fin n                        →   BoolExpr n
 \end{code}
 \caption{Inductive definition of Boolean expressions having $n$ free variables.}\label{fig:boolexprn}
-\end{figure}
+\end{shadedfigure}
 
 
 
@@ -1398,14 +1410,14 @@ intuitive propositional equality style, for example |(b : Bool) → b ∨ ¬ b �
 that notation more obviously reflects the meaning of ``being a tautology'', as opposed 
 to one having to understand the |So| function; this is justified in Sec.~\ref{sec:no-propositional-equality}.
 
-\begin{figure}\label{fig:exampletheorem}
+\begin{shadedfigure}\label{fig:exampletheorem}
 \begin{code}
 exampletheorem : Set
 exampletheorem = (p1 q1 p2 q2 : Bool)   →   P  (         (p1 ∨ q1) ∧ (p2 ∨ q2)
                                                    ⇒     (q1 ∨ p1) ∧ (q2 ∨ p2))
 \end{code}
 \caption{Encoding of an example tautology.}
-\end{figure}
+\end{shadedfigure}
 
 Here a complication arises, though. We are quantifying over a list of Boolean values \emph{outside}
 of the decision function |P|, so proving |P| to be sound will not suffice. We just defined a decision function (|⟦_⊢_⟧|)
@@ -1534,7 +1546,7 @@ passes the type checker, we know our formula is both a tautology and
 that we have the corresponding proof object at our disposal
 afterwards, as in the following example.
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{code}
 rep          : BoolExpr 2
 rep          = Imp (And (Atomic (suc zero)) (Atomic zero)) (Atomic zero)
@@ -1543,7 +1555,7 @@ someTauto    : (p q : Bool)         → P( p ∧ q ⇒ q )
 someTauto    = soundness rep _
 \end{code}
 \caption{An example Boolean formula, along with the transliteration to a proposition and the corresponding proof.}\label{fig:dup}
-\end{figure}
+\end{shadedfigure}
 
 The only part we still have to do manually is to convert the concrete
 Agda representation (|p ∧ q ⇒ q|, in this case) into our abstract
@@ -1616,14 +1628,14 @@ We cannot, however, make them equal in the type signature for |proofGoal|, since
 building up the environment with an accumulating parameter. Because of this, we introduce |Diff|.
 
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{spec}
 data Diff : ℕ → ℕ → Set where
   Base : ∀ {n}   → Diff n n
   Step : ∀ {n m} → Diff (suc n) m → Diff n m
 \end{spec}
 \caption{The definition of the |Diff| data type.}\label{fig:diff-datatype}
-\end{figure}
+\end{shadedfigure}
 
 The |Diff| data type is defined as in Fig.~\ref{fig:diff-datatype},
 and was necessary because given a term of type |BoolExpr m|, being a
@@ -1680,7 +1692,7 @@ and |isSoExprQ| simply traverse the |Term| to see if it fulfills the requirement
 being a Boolean expression preceded by a series of universally quantified Boolean variables, enclosed in a
 call to |P|.
 
-\begin{figure}
+\begin{shadedfigure}
 \begin{spec}
 term2boolexpr n (con tf []) pf with tf ≟-Name quote true
 term2boolexpr n (con tf []) pf | yes p = Truth
@@ -1693,7 +1705,7 @@ term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) pf | no ¬p wi
 ...
 \end{spec}
 \caption{Illustrating the conversion of a |Term| into a |BoolExpr n|.}\label{fig:concrete2abstract}
-\end{figure}
+\end{shadedfigure}
 
 
 All these pieces are assembled in the |proveTautology| function.
@@ -1771,7 +1783,7 @@ thus making the code for |term2boolexpr| more concise.
 Because of this, we introduce a simpler, intermediary data structure, to which we will convert
 from |Term|. This type, called |BoolInter|, is presented in Fig. \ref{fig:boolinter}.
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{code}
 data BoolInter : Set where
   Truth        :                                  BoolInter
@@ -1783,7 +1795,7 @@ data BoolInter : Set where
   Atomic       : ℕ                            →   BoolInter
 \end{code}
 \caption{An intermediary data type, which is a simplified (constraint-free) version of |BoolExpr n|.}\label{fig:boolinter}
-\end{figure}
+\end{shadedfigure}
 
 The mapping needed for |Autoquote| is as follows: we mention which constructor represents
 De Bruijn-indexed variables and what the arity is of the different constructors. This way
@@ -1963,7 +1975,7 @@ those assumptions hold.  The validity of a typing judgment is shown by
 providing a typing derivation, constructed using the typing rules.
 See Fig.~\ref{fig:stlc-rules} for the typing rules.
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
   \centering
   \subfigure{
     \inference[\bracket{var}]{x : \sigma \in \Gamma}{\Gamma ||- x : \sigma}   %variable rule
@@ -1979,7 +1991,7 @@ See Fig.~\ref{fig:stlc-rules} for the typing rules.
     \inference[\bracket{app}]{\Gamma ||- e_1 : \sigma -> \tau \\ \Gamma ||- e_2 : \sigma}{\Gamma ||- e_1 e_2 : \tau} %application
     }
 \caption{The typing rules for simply-typed lambda calculus.}\label{fig:stlc-rules}
-\end{figure}
+\end{shadedfigure}
 
 Of special interest are terms which we call \emph{closed}. Closed is
 defined as being typable under the empty context, |[]|. These terms do not refer
@@ -2055,7 +2067,7 @@ open DT renaming (U' to Uu)
 open import Metaprogramming.Util.Equal
 \end{code}
 }
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{code}
 data WT' : Ctx → Uu → ℕ → Set where
   Var   : ∀ {Γ} {τ}
@@ -2073,7 +2085,7 @@ data WT' : Ctx → Uu → ℕ → Set where
                    → WT' Γ           (O x)           1
 \end{code}
 \caption{The simply-typed lambda calculus with De Bruijn indices.}\label{fig:stlc-data}
-\end{figure}
+\end{shadedfigure}
 
 The first thing to notice is that all terms in |WT'| are annotated with
 a context, a type (the outer type of
@@ -2085,7 +2097,7 @@ The type annotations are elements of |Uu|, defined in Fig.~\ref{fig:datauu}, whi
 Contexts are simply lists of types, the position of elements of the list corresponding to
 their De Bruijn indices.
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{spec}
 data Uu : Set where
   O       : U             → Uu
@@ -2096,7 +2108,7 @@ Ctx : Set
 Ctx = List Uu
 \end{spec}
 \caption{The universe used inside the metaprogramming libraries, with base and arrow types, parameterised by a user-defined universe |U|.}\label{fig:datauu}
-\end{figure}
+\end{shadedfigure}
 
 The |O| constructor, which stands for base types, is parameterised by an argument of type |U|. This
 is the user-defined universe with which all the library modules in |Metaprogramming| are parameterised. Finally
@@ -2114,7 +2126,7 @@ equal to their De Bruijn index, given how entering the body of a lambda abstract
 the type of the variable they represent. Note that because of this the |Var| constructor is not parameterised with an explicit index other
 than the |_∈_| parameter.
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{spec}
 data _∈_ {A : Set} (x : A) : List A → Set where
   here    : {xs : List A}                        → x ∈ x ∷ xs
@@ -2122,7 +2134,7 @@ data _∈_ {A : Set} (x : A) : List A → Set where
 \end{spec}
 \newcommand{\captindata}{The definition of the |_∈_| data type, used as a witness that a variable with some type points to a valid location in the context.}
 \caption[\captindata]{\captindata\ |_∷_| binds more strongly than |_∈_|.}\label{fig:in-data}
-\end{figure}
+\end{shadedfigure}
 
 It should be clear that a term in |WT' []| is closed, since if the context of a term is empty and given that all |WT'| terms
 are well-scoped, the only way to
@@ -2170,7 +2182,7 @@ lambda terms with De Bruijn indices that should look a lot more
 familiar to Haskell users, since most models of lambda expressions in
 Haskell-land are untyped (because of a lack of dependent types).
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{spec}
 data Raw : Set where
   Var  : ℕ                           → Raw
@@ -2179,7 +2191,7 @@ data Raw : Set where
   Lit  : (x : U)   → Uel x           → Raw
 \end{spec}
 \caption{The |Raw| data type, or a model of simply-typed lambda expressions without any typing or scoping constraints.}\label{fig:raw}
-\end{figure}
+\end{shadedfigure}
 
 We do include some typing information in |Raw|s, but it is
 unverified. We also require lambda terms and literals to be annotated
@@ -2197,14 +2209,14 @@ provides a view on |Raw| lambda terms showing whether they are
 well-typed or not. This view is aptly called |Infer|, and is defined
 in Fig.~\ref{fig:infer-datatype}.
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{spec}
 data Infer (Γ : Ctx) : Raw → Set where
   ok    : (n : ℕ) (τ : Uu) (t : WT' Γ τ n)       → Infer Γ (erase t)
   bad   : {e : Raw}                              → Infer Γ e
 \end{spec}
 \caption{The view on |Raw| lambda terms denoting whether they are well-typed or not.}\label{fig:infer-datatype}
-\end{figure}
+\end{shadedfigure}
 
 The |Infer| view says that a term is either incorrectly typed
 (i.e. |bad|), the constructor which can be used on any term in |Raw|, or it
@@ -2769,7 +2781,7 @@ the three combinators, |S|, |K| and |I|\footnote{In fact, even |I| can be expres
 the minimal basis |S, K|. }. 
 The 3 combinators of the SKI calculus are presented in Fig.~\ref{fig:ski}.
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{spec}
 s     : ∀ {a b c : Set}      → (a → b → c) → (a → b) → a → c
 s     = \ f -> \ g -> \ x -> f x (g x)
@@ -2781,7 +2793,7 @@ i     : ∀ {a : Set}          → a → a
 i     = \ x -> x
 \end{spec}
 \caption{The three combinators which make up SKI combinator calculus.}\label{fig:ski}
-\end{figure}
+\end{shadedfigure}
 
 Note that each of these 3 combinators are equivalent to closed lambda terms, but they form the basic building blocks (the basis, in fact)
 of the SKI language. Basically, the SKI language is the same as the simply-typed lambda calculus, except without
@@ -2808,7 +2820,7 @@ open SKI' hiding (compile ; lambda ; Srep ; Irep ; Krep ; ski2wt )
 \end{code}
 }
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{spec}
 data Comb : Ctx → Uu → Set where
   Var    : ∀ {Γ} → (τ : Uu) → τ ∈ Γ         → Comb Γ τ
@@ -2825,7 +2837,7 @@ Combinator = Comb []
 \caption[The data type |Comb|, modelling SKI combinator calculus.]{The
 data type |Comb|, modelling SKI combinator calculus. The |Var|
 constructor is less dangerous than it may seem.}\label{fig:comb}
-\end{figure}
+\end{shadedfigure}
 
 
 Translation of lambda terms into SKI is actually surprisingly (that is, if one is used to spending days grappling
@@ -2855,7 +2867,7 @@ variables), since |S ⟨ y ⟩ ⟨ z ⟩| indeed evaluates to |\ f
 $z$, and that they each might depend upon $x$.
 
 Translating this fuzzy description into pseudo-Haskell, we get something like the code presented in Fig.~\ref{fig:pseudo-haskell-ski}.
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{spec}
 compile : Lambda -> Combinatory
 compile (Var x)        = VarC x
@@ -2870,7 +2882,7 @@ lambda x (ApplyC t u)                = ApplyC     (ApplyC  S
                                                   (lambda x u)
 \end{spec}
 \caption{A pseudo-Haskell implementation of conversion from lambda terms to SKI calculus, using named variables.}\label{fig:pseudo-haskell-ski}
-\end{figure}
+\end{shadedfigure}
 
 We have the added complication of using De Bruijn indices, though. This means that each time we
 replace a lambda abstraction with some other construction, we are potentially breaking the variable
@@ -2887,7 +2899,7 @@ mutual
 \end{code}
 }
 
-\begin{figure}
+\begin{shadedfigure}
 \begin{code}
   compile : {Γ : Ctx} {τ : Uu} {n : ℕ} → WT' Γ τ n → Comb Γ τ
   compile          (Lit x)          = Lit x
@@ -2896,7 +2908,7 @@ mutual
   compile          (Lam σ wt)       = lambda (compile wt) 
 \end{code}
 \caption{The proof that any |WT'| term can be translated into the |Comb| language.}\label{fig:compile}
-\end{figure}
+\end{shadedfigure}
 
 Notice in Fig.~\ref{fig:lambda} that when we encounter a variable as the only thing in the body
 of the lambda, and if it is not the variable which is bound by the lambda under consideration,
@@ -2905,7 +2917,7 @@ If it is the variable bound by the lambda in question, we can replace the whole 
 combinator.
 
 
-\begin{figure}
+\begin{shadedfigure}
 \begin{code}
   lambda : {σ τ : Uu}{Γ : Ctx}    → Comb (σ ∷ Γ) τ
                                   → Comb Γ (σ => τ)
@@ -2920,7 +2932,7 @@ combinator.
   lambda           I                            =    K ⟨ I         ⟩
 \end{code}
 \caption{The function we invoke whenever we encounter a lambda abstraction during translation to SKI calculus.}\label{fig:lambda}
-\end{figure}
+\end{shadedfigure}
 
 It would not have been possible to define a total translation to SKI if the |Comb| data type did 
 not have the same notion of variables and their restricted connection to contexts. Either that, or
@@ -2991,7 +3003,7 @@ Fig.~\ref{fig:skirepresentations}), and then use those to assemble a
 traditional |WT'| term from a value of type |Comb|.  The unsurprising
 code, which is just a fold, can be found in Fig.~\ref{fig:skitoWT}. 
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{code}
 Srep : ∀ {A B C Γ} → WT' Γ ((A => B => C) => (A => B) => A => C) _
 Srep {A}{B}{C} = Lam (A => B => C) (Lam (A => B) (Lam A
@@ -3004,9 +3016,9 @@ Krep : ∀ {A B Γ} → WT' Γ (A => B => A) _
 Krep {A}{B} = Lam A (Lam B (Var (there here)))
 \end{code}
 \caption{The SKI combinators as represented in the |WT'| data type.}\label{fig:skirepresentations}
-\end{figure}
+\end{shadedfigure}
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \begin{code}
 ski2wt : {Γ : Ctx} {σ : Uu} → (c : Comb Γ σ) → WT' Γ σ (combsz c)
 ski2wt (Var  σ h)              = Var h
@@ -3017,7 +3029,7 @@ ski2wt I                       = Irep
 ski2wt (Lit x₁)                = Lit x₁
 \end{code}
 \caption{Translating SKI calculus back to lambda terms in the |WT'| type.}\label{fig:skitoWT}
-\end{figure}
+\end{shadedfigure}
 
 Note that because |WT'| is
 just as well-typed as the |Comb| type, we are not losing any type safety
