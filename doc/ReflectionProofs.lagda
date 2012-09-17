@@ -136,16 +136,16 @@ open import Data.List hiding (_∷ʳ_)
   \emph{reflection}, in the style of Lisp, MetaML, and Template
   Haskell. It illustrates several applications of reflection that
   arise in dependently typed programming, and details the limitations
-  of the current implementation of reflection. Also provided is a detailed 
+  of the current implementation of reflection. Also provided is a detailed
   users' guide to the reflection API and a library of working code examples
   to illustrate how various common tasks can be performed, and suggestions for
   an updated reflection API in a future version of Agda. %conclusion?
 \end{abstract}
 
 \thispagestyle{empty}
-\vspace*{\fill} 
-\begin{quote} 
-\centering 
+\vspace*{\fill}
+\begin{quote}
+\centering
 \emph{``Using Coq is like doing brain surgery over the telephone.''}
 \end{quote}
 \vspace*{\fill}
@@ -196,7 +196,7 @@ MetaML~\cite{metaml}, Template Haskell~\cite{template-haskell}, and
 \CC\ templates~\cite{cplusplus}. Agda's reflection mechanisms makes it
 possible to convert a program fragment into its corresponding abstract
 syntax tree and vice versa. In tandem with Agda's dependent types,
-this provides promising new programming potential. 
+this provides promising new programming potential.
 
 
 The main question which we aim to answer during this project is:
@@ -332,9 +332,9 @@ Haskell. There, we are left to our own devices, and should be responsible enough
 matching failures might occur. In Sec.~\ref{sec:plandpa} we will see that this is a pivotal difference between Haskell and Agda, and that 
 this sort of feature makes Agda usable as a logical framework, not just a programming language.
 
-Another feature in Agda's pattern matching system is the ability to denote certain parameters as being inferrable or equal to others. Take
+Another feature in Agda's pattern matching system is the ability to denote certain parameters as being inferable or equal to others. Take
 the example of equality of natural numbers: here we first pattern match on whether some naturals are equal, and if so, we can use this information
-on the left-hand side of the equation too. Note how repeated variables on the left-hand side are allowed, if they are decidably equal.
+on the left-hand side of the equation too. Note how repeated variables on the left-hand side are allowed, if their type supports decidable equality.
 
 \begin{spec}
 something : ℕ → ℕ → Whatever
@@ -463,7 +463,7 @@ a proof witness of for example an input term being of the right shape), which is
 an argument is ambiguous, or worse, if it is a type with no inhabitants, the compiler won't fail
 with a type error, but merely with an unsolved meta warning (highlighting the piece of code yellow
 in the Emacs Agda mode). This is particularly unfortunate when we are using this technique
-to hide an inferrable proof of the soundness of a theorem, such as in the Boolean tautology example (Sec.~\ref{sec:Boolean-tautologies}).
+to hide an inferable proof of the soundness of a theorem, such as in the Boolean tautology example (Sec.~\ref{sec:Boolean-tautologies}).
 The thing is, we do not want a user to get away with being able to prove that something which is not a
 tautology, is a tautology. Since the proof that under all environments the theorem evaluates
 to true is an implicit argument in this style, one is merely left with an unsolved meta (with an uninhabitable type |⊥|, to be fair), which
@@ -481,9 +481,9 @@ excellent tutorial on the same written by Ulf Norell
 \chapter{Reflection in Agda}\label{sec:reflection}
 
 Since version 2.2.8, Agda includes a reflection API, which allows converting
-parts of a program's code into abstact syntax, in other words a data structure
+parts of a program's code into abstract syntax, in other words a data structure
 in Agda itself, which can be inspected or modified like any other data structure.
-The idea of reflection is nothing new: already in the 1980's Lisp included a similar
+The idea of reflection is nothing new: already in the 1980s Lisp included a similar
 feature, called quoting, which allowed run-time modification of a program's code, by
 the program itself. This gives rise to powerful techniques for reusing code and
 generating frequently needed but slightly different expressions automatically.
@@ -634,14 +634,14 @@ normalizes the |Term| before it is spliced into the program text.
           unknown : Sort
   \end{spec}
 %endif
-  \caption{The data types for reflecting terms}
+  \caption{The data types for reflecting terms.}
   \label{fig:reflection}
 \end{figure}
 
 
 
 The representation of |Term|s is de Bruijn-style,
-and lambda abstractions are modeled as binding one variable. A variable has a de Bruijn index,
+and lambda abstractions are modelled as binding one variable. A variable has a de Bruijn index,
 and may be applied to arguments.
 %Note the |Type| argument in the |lam| constructor:
 %this holds the type of the argument expected.
@@ -795,7 +795,7 @@ data Expr : Set where
   Zero          :                       Expr
 \end{code}
 
-We might concievably want to convert a piece of concrete syntax, such as $5 + x$, to this
+We might conceivably want to convert a piece of concrete syntax, such as $5 + x$, to this
 AST, using Agda's reflection system. This typically involves ugly and verbose functions such
 as the one from Sec.~\ref{sec:Boolean-tautologies} with many |with|-clauses and frankly, too
 much tedium to be anything to be proud of. What we would actually like to be able to do,
@@ -1070,7 +1070,7 @@ In this context |⊤| and |⊥| can be seen as the analogues of |true|
 and |false|. The meaning of such a decision function is that there exists
 a proof that some number is even, if it is |0| or |2 + n|. That is our
 claim, at least. The idea
-of ``there exists'' is perfectly modeled by the unit and empty types,
+of ``there exists'' is perfectly modelled by the unit and empty types,
 since the unit type has one inhabitant, the empty type none.
 
 \begin{code}
@@ -1420,7 +1420,7 @@ expression is true under all variable assignments. This is done by generating a 
 of unit values |⊤|, the single possible value which only exists if the interpretation function |⟦_⊢_⟧|
 evaluates to |true| in every leaf. This corresponds precisely to $b$ being a tautology.
 
-The |Diff| argument is unfortunately needed to prove that forallsAcc will eventually produce a
+The |Diff| argument is unfortunately needed to prove that |forallsAcc| will eventually produce a
 tree with depth equal to the number of free variables in an expression. 
 \begin{code}
 forallsAcc : {n m : ℕ} → BoolExpr m → Env n → Diff n m → Set
@@ -1715,7 +1715,7 @@ functions such as |freeVars|, which counts the number of variables
 (needed to be able to instantiate the $n$ in |BoolExpr n|), and
 |stripSo| \& |stripPi|, which peel off the universal quantifiers and the
 function |So| with which we wrap our tautologies. These helper
-functions have been ommitted for brevity, since they are rather
+functions have been omitted for brevity, since they are rather
 cumbersome and add little to the understanding of the subject at
 hand.
 
@@ -2128,7 +2128,7 @@ occur on its own without a non-empty context, since otherwise a proof of the var
 in the list would be impossible.
 
 
-Next, we encounter  abstractions, modeled by the |Lam| constructor. Here we are introducing a new variable with type |σ| into the
+Next, we encounter  abstractions, modelled by the |Lam| constructor. Here we are introducing a new variable with type |σ| into the
 context by binding it. Since we always push type variables on top of the context whenever we enter the body of a lambda abstraction,
 the index of the types in the context in fact always corresponds to the de Bruijn-index of that variable. That is, intuitively, the deeper
 a variable in the list, the further away (in terms of lambda's) it is towards the outside of the expression, as seen from the point of view
@@ -2303,7 +2303,7 @@ to an undefined function |quoteBack|. The idea is that all the
 universe of types we are using (arrows and base types denoted with the
 constructor |O|) is parameterised by a user-defined universe $U$,
 which is used for the base types. We cannot know what types a user has
-modeled in their universe, so we have to require
+modelled in their universe, so we have to require
 that they also provide a method which knows how to |unquote| values in their universe.
 
 The value |pleaseinfer| is simply set to |el unknown unknown|, which
@@ -2358,7 +2358,7 @@ unittest = refl
 
 Note that the types are also preserved, since, even though we drop the annotations on the lambda terms when interpreting, we do give |concrete| a
 type signature which reflects the intended type of the lambda term. Therefore, the unit test would have failed if we omitted the |ℕ| annotations on the
-variables, or changed them to another type. 
+variables, or changed them to another type.
 
 It would be nice to also have included the call to |unquote| inside the definition of |lam2term|, which would result in
 a more concise definition of |concrete|, but unfortunately, |unquote| does its magic at compile time, and if it were used
@@ -2374,7 +2374,7 @@ Agda.
 Given the fact that we can now easily move from the world of concrete Agda syntax to a well-typed lambda calculus and back,
 the obvious next step is to do something with these well-typed terms. Doing anything with these terms constitutes
 a program transformation, since lambda terms represent simple programs. An additional bonus feature we now have at our
-disposal is the ability to do these transformations while ensuring that certain properties (notably the well-typedness of
+disposal is the ability to do these transformations while ensuring that certain properties (notably the well-typed property of
 our terms) are preserved.
 
 The first case study in this area is that  of transforming lambda terms into continuation-passing style (CPS).
@@ -2394,7 +2394,7 @@ main = print (suc 5)
 
 If the idea of \emph{returning} values is forbidden, how then must one use the result of |suc|? The answer is
 to do a transformation on the code; a continuation-passing style transformation. This name refers
-to the fact that functions which would normally do something analogue to issueing a \texttt{return} statement,
+to the fact that functions which would normally do something analogue to issuing a \texttt{return} statement,
 are passed, as an additional parameter, a function to call on the result, instead of \texttt{return}.
 
 The following translation provides an example.
@@ -2887,7 +2887,7 @@ Notice in Fig.~\ref{fig:lambda} that when we encounter a variable as the only th
 of the lambda, and if it is not the variable which is bound by the lambda under consideration,
 that we decrement the de Bruijn index as promised, by peeling off a |there| constructor off the index-proof.
 If it is the variable bound by the lambda in question, we can replace the whole lambda expression with the identity
-combinator. 
+combinator.
 
 
 \begin{figure}
@@ -2915,7 +2915,7 @@ the context, |_∈_|, but then an additional concept of uniqueness would have be
 de Bruijn representation provide for free. There also exist
 a few methods for directly translating from lambda terms to SKI combinators based only on de Bruijn variable
 identifiers \cite{dolio}, but apart from producing bloated SKI terms (since at least $n$ |K| combinators are introduced if
-the variable's identifier is $n$ -- a sort of n-ary const function is built up), implementing this algorithm
+the variable's identifier is $n$ -- a sort of $n$-ary constant function is built up), implementing this algorithm
 in a well-typed setting is nearly impossible as a result of the fact that the intermediary terms returned by the 
 recursive calls when abstractions or variables are encountered have radically different (although predictable) types.
 These reasons lead to the belief that the algorithm presented here is the most elegant of the options explored.
@@ -3113,9 +3113,9 @@ Note that this would only work for very trivial enumeration data types without p
 However, even this simple idea quickly gets stuck. Let us try and write down a type signature for |to|.
 
 What we want is, given the |Name| of a type (which, in this case, is obtained with |quote Col|), a function
-from that type to the generic type which is isomorphic to it. 
+from that type to the generic type which is isomorphic to it.
 This means that |to (quote Col)| yields a function with type |Col -> Fin 3|, assuming that |Fin 3| is the isomorphic 
-generic counterpart to |Col|. 
+generic counterpart to |Col|.
 
 Our first attempt might be as follows.
 \begin{spec}
@@ -3197,7 +3197,7 @@ the same problem outlined in the previous section would arise: unquoting is not 
 
 Because the findings in this chapter were negative, and no functional or usable
 pieces of code were developed, the source distribution does not include any code
-related to generic programming. 
+related to generic programming.
 
 
 \chapter{Discussion}\label{sec:discussion}
@@ -3347,17 +3347,17 @@ Obviously, a formidable number of people deserve thanks here, but I will refrain
 from mentioning everyone. Foremost, I would like to thank Wouter, my supervisor, for
 his infinite patience in explaining things, giving sound and complete
 advice, and his generally pleasant way of doing things. Marleen bravely
-proofread this work, and gave much-needed moral support. Tim deserves
+proofread this work, gave much-needed moral support, much-appreciated longsuffering. Tim deserves
 ample thanks for noticing overworkedness and nipping it in the bud, taking
 me on an epic hike through the forest.  Justin did his bit by
 convincing me to go hitchhiking, which actually was surprisingly
 inspiring -- a portion of this thesis was eventually
-written while in a foreign city.  The Friday Pie Day club and its members are of course
+written in a foreign city.  The Friday Pie Day club and its members are of course
 also worthy of mention, if only because of the added motivation I felt
 near the end of my research period to catch up on all the wasted time
-spent drinking coffee and consuming calorific treats. 
- 
-The rest of you know who you are.
+spent drinking coffee and consuming calorific treats.
+
+The rest of you know who you are; tolerating an atypically stressed-out me. Thanks.
 \vspace*{\stretch{4}}
 }
  
