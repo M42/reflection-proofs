@@ -110,12 +110,9 @@ open import Data.List hiding (_∷ʳ_)
 \vspace*{\stretch{1}}
 \HRule
 \begin{flushright}
-%\fontfamily{cap}
 
-%\selectfont
 \LARGE Paul van der Walt <\href{mailto:paul@@denknerd.org}{\nolinkurl{paul@@denknerd.org}}>\\
 \Large \textsc{Supervisors:} Wouter Swierstra and Johan Jeuring \\[5mm]
-%% \LARGE \textsc{2$^\textnormal{nd}$ reader:} Johan Jeuring \\[5mm]
 \Huge \textbf{\mytitle}
 \\[2mm]
 \normalsize MSc thesis Computing Science\\
@@ -133,6 +130,18 @@ open import Data.List hiding (_∷ʳ_)
 \end{titlepage}
 
 \clearpage
+
+\begin{abstract}
+  This project explores the recent addition to Agda enabling
+  \emph{reflection}, in the style of Lisp, MetaML, and Template
+  Haskell. It illustrates several applications of reflection that
+  arise in dependently typed programming, and details the limitations
+  of the current implementation of reflection. Also provided is a detailed 
+  users' guide to the reflection API and a library of working code examples
+  to illustrate how various common tasks can be performed, and suggestions for
+  an updated reflection API in a future version of Agda. %conclusion?
+\end{abstract}
+
 \thispagestyle{empty}
 \vspace*{\fill} 
 \begin{quote} 
@@ -144,13 +153,6 @@ open import Data.List hiding (_∷ʳ_)
 
 \tableofcontents
 \clearpage
-
-%\begin{abstract}
-%  This paper explores the recent addition to Agda enabling
-%  \emph{reflection}, in the style of Lisp, MetaML, and Template
-%  Haskell. It illustrates several applications of reflection that
-%  arise in dependently typed programming.
-%\end{abstract}
 
 
 \newcommand{\researchquestion}{%
@@ -216,7 +218,7 @@ Chapter~\ref{chap:introducing-agda}.
   mechanism. The existing documentation is limited to a paragraph in
   the release notes~\cite{agda-relnotes-228} and comments in the
   compiler's source code. In Chapter~\ref{sec:reflection} we give
-  several short examples the reflection API in action.
+  several short examples of \emph{the reflection API in action}.
 \item This paper illustrates how to use Agda's reflection mechanism to
   automate certain categories of proofs
   (Chapter~\ref{sec:proof-by-reflection}). The idea of \emph{proof by
@@ -232,7 +234,7 @@ In
 doing this, structurally recursive, total, well-typed and terminating CPS and SKI transformations are defined.
  
 \item Finally, we also discuss some of the
-  limitations of the current implementation of reflection (Chapter~\ref{sec:generic-programming}),
+  \emph{limitations of the current implementation} of reflection (Chapter~\ref{sec:generic-programming}),
   motivated by attempts to automate certain aspects of modifying a program to 
   use generic programming techniques. 
 \end{itemize}
@@ -1888,8 +1890,8 @@ concrete again, and thus can be evaluated as if it were code the
 programmer had directly entered into a source file. In Agda the reflection happens at
 compile-time, allowing for the strong static typing we have come to know and love.
 If run-time reflection were possible, any program compiled with Agda would need to
-include the complete typing system, a problem which doesn't exist in, for example,
-Lisp, since it is dynamically typed, which makes run-time reflection possible. Here, therefore,
+include the complete typing system, a problem which doesn't exist in Lisp, for example,
+ since it is dynamically typed, which makes run-time reflection possible. In Agda, therefore,
 a compromise of sorts is required.
 
 Reflection is well-supported and widely used in Lisp and more
@@ -1899,44 +1901,50 @@ automations of tasks otherwise requiring
 \emph{boilerplate}\footnote{According to the Oxford English
   Dictionary, boilerplate is defined as \emph{``standardized pieces of
     text for use as clauses in contracts or as part of a computer
-    program''}.} code, such as automatically generating
+    program''}.} code, such as 
 embedding-projection function pairs for generic programming (for
 example in \cite{norell2004prototyping}).
 
 
-Clearly, the technique is a very useful one, but it does have a glaring
-limitation (or should we say, potential pitfall), namely that when one
+Clearly, the technique is a very useful one, but it does have a conspicuous cumbersomeness
+%limitation / restriction / inconvenience / disadvantage 
+(or should we say, potential pitfall), namely that when one
 is developing a piece of Template Haskell code which
-should generate some function, it often happens that one ends up
-debugging type errors in the produced (machine-generated) code. This
+should generate some function, one often finds oneself
+debugging type errors in the resulting machine-generated code. This
 is a tedious and painful process, since, typically, generated code is
 much less self-explanatory or readable than human-written code.
 
 Here we propose a new way of looking at metaprogramming, namely
 type-safe metaprogramming. It would be great if one could define some
 data structure for, say, lambda calculus, and have the guarantee that
-any term constructed in this AST is type-correct. The obvious
+any term constructed in this AST is type-correct. The apparent
 advantage is then that the compiler will show up errors in whichever
 method tries to build an invalid piece of abstract syntax at compile time, as opposed
 to giving an obscure error pointing at some generated code, leaving
 the programmer to figure out how to solve the problem.
+\todo{note in the conclusion of this chapter that a disadvantage of this strongly-typed
+AST is that intermediary terms often pose a difficulty -- maybe mention the example of de Bruijn SKI with erased lambdas}
 
-In this section we will explore how one can leverage the power of
+In this chapter we will explore how one can leverage the power of
 dependent types when metaprogramming.
 
-\section{Preamble}\label{sec:preamble}
+\section{Preamble}\label{sec:preamble}\todo{title?}
 
 
-In this section about metaprogramming, the object language we will be studying is the simply typed lambda calculus (STLC).
-Although we assume that the rules and behaviour of STLC are well-known, we will briefly repeat the definitions and rules which will be
+In this section about metaprogramming, the object language we will be
+studying is the simply typed lambda calculus (STLC).  Although we
+assume that the reader is familiar with the rules and behaviour of
+STLC, we will briefly repeat the definitions and rules which will be
 relevant later on.
 
 We first introduce the idea of contexts. A context is simply a list of
 types, in which one can look up what type a variable is supposed to
 have. We have empty contexts, |[]|, and the possibility of adding a
 new type to the top of the context stack. We denote concatenation by
-|_∷_|, as in |x ∷ xs| meaning $x$ pushed on the context $xs$. There are also typing assumptions, of the form $x :
-\sigma$. This means $x$ has type $\sigma$. We also introduce the
+|_∷_|, as in |x ∷ xs| meaning $x$ pushed on the context $xs$. There
+are also typing assumptions, of the form $x : \sigma$. This means $x$
+has type $\sigma$. We also introduce the
 notion of a typing relation, or judgement, $\Gamma \vdash x : \sigma$,
 meaning that given some context $\Gamma$, we can judge the validity of
 the typing assumption $x : \sigma$.
@@ -1967,7 +1975,7 @@ See Fig.~\ref{fig:stlc-rules} for the typing rules.
 
 Of special interest are terms which we call \emph{closed}. Closed is
 defined as being typable under the empty context, |[]|. These terms do not refer
-to variables which were not introduced by lambda abstractions in that same term, and
+to variables which were not introduced by lambda abstractions in that same term (free variables), and
 are also sometimes referred to as \emph{combinators}.
 
 Here we have
@@ -1982,9 +1990,9 @@ a short introduction will be given here regarding de Bruijn-indexed
 lambda terms, as opposed to the ``usual'' named representation which
 is surprisingly enough still the standard for most textbooks on the
 subject.  Surprisingly, because named representation of lambda terms
-has all sorts of pitfalls such as unintentionally binding free
+has all sorts of intricate issues such as preventing capture of free
 variables after $\alpha$-conversion, and needing to generate fresh
-variable names when adding abstractions, to name a few. Algorithms for
+variable names when adding abstractions, to name but a few. Algorithms for
 transforming and generating lambda terms are often riddled with
 ``bookkeeping'' to prevent such unwanted behaviour. For example, whole
 libraries \cite{Weirich:2011:BU:2034574.2034818} have been developed
@@ -2564,15 +2572,16 @@ universe, are to be found in |Metaprogramming.ExampleCPS|.
 Unfortunately, as the observant reader might have noticed, the algorithm |Tt| as presented in Sec.~\ref{sec:cps} is not structurally recursive,
 since in the recursive calls to |Tt| in the abstraction and application cases, we are applying |shift1| to the constituent components of the input first.
 We can trivially see that the |shift1| function does nothing to the size of the expression, but Agda's termination checker does not possess such
-intuition.
+intuition. As such, we will have to prove, by hand, that the algorithm is structurally recursive on its call graph.
 
 Luckily, Bove and Capretta \cite{bove2005modelling}
-come to the rescue. Their method for mechanically taking a non-structurally recursive algorithm and producing an auxiliary data type
-on which the algorithm is structurally recursive (a call graph, basically) along which also serves as a proof obligation that the
-algorithm terminates on whatever input the user would like to call it on, is perfectly suited to this sort of situation.
+come to the rescue by providing a recipe for this proof. Their method for mechanically taking a non-structurally recursive algorithm and producing an auxiliary data type
+on which the algorithm is structurally recursive (the call graph, basically),  which depends on a proof that the
+algorithm terminates on whatever input the user would like to call it on, is perfectly suited to this sort of situation. The curious 
+reader is referred to Bove and Capretta's work for a thorough guide to this useful method.
 
 After inspecting the recursive structure of the algorithm |Tt| we come to the conclusion that the data type |TAcc| presented below
-would do the job just fine.
+will do the job just fine.
 
 \begin{spec}
 data TAcc : {Γ : Ctx} {σ : Uu} {n : ℕ} → WT' Γ σ n → Set where
@@ -2590,9 +2599,10 @@ data TAcc : {Γ : Ctx} {σ : Uu} {n : ℕ} → WT' Γ σ n → Set where
 \end{spec}
 
 In |TAcc|, each constructor of |WT'| finds its analogue, and these proof terms are built having as arguments
-the proofs that |TAcc| can be constructed from the similar proofs on the arguments.
+the proofs that |TAcc| can be constructed from the similar proofs on the arguments. Notice that the type |TAcc| has
+an index of type |WT'|, which is a term we promise the |Tt| algorithm will terminate on.
 
-We can now add this |TAcc| argument to all the calls in |Tt|, and Agda now believes the function terminates. All that is left is
+We can now add this |TAcc| argument to all the calls in |Tt|, and Agda is now convinced the function terminates. All that is left is
 to prove that for all elements of |wt ∈ WT'| we can construct a |TAcc wt|. The proof is as obvious as the data type was: we simply recurse
 on the arguments of the constructors.
 
@@ -2607,9 +2617,9 @@ allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁} wt wt₁)    =
                           (allTsAcc (shift1 (σ => σ₁) wt₁))
 \end{spec}
 
-But, horror! Agda now is convinced that this function, |allTsAcc|, which is meant to give us the proof
+But, horror! Agda now is suspicious that this function, |allTsAcc|, which is meant to give us the proof
 that |Tt| terminates given any |WT'| term, does not terminate either! We also cannot apply Bove and Capretta's trick
-again, since that would give us a data type isomorphic to |TAcc|.
+again, since by the construction of |TAcc| that would give us a data type isomorphic to |TAcc|.
 
 As it turns out, there is another trick
 up our sleeve: that of well-founded recursion. What we need to do is show that even though the recursion here is non
