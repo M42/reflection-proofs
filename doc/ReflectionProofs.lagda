@@ -149,7 +149,7 @@ open import Data.List hiding (_∷ʳ_)
 \vspace*{\fill}
 \begin{quote}
 \centering
-\emph{``Using Coq is like doing brain surgery over the telephone.''}
+\emph{``Using Coq is like doing brain surgery over the telephone.''}\\ \hfill \mbox{-- Peter Hancock}
 \end{quote}
 \vspace*{\fill}
 \clearpage
@@ -160,11 +160,11 @@ open import Data.List hiding (_∷ʳ_)
 
 \newcommand{\researchquestion}{%
 \begin{quote}
-``Given the new reflection API in Agda, what interesting applications can we give
-examples of? Which tedious and mundane tasks can we automate? What advantages
-does Agda's implementation of reflection have over other languages
- which already have reflection, and, finally, is
-it adequate as it stands to facilitate our needs or does it require extension? If
+``What are interesting applications of the new reflection API?
+Which tedious and mundane tasks can we automate? What advantages
+does the combination of dependent types and reflection give us?
+ Finally, is
+the reflection API adequate as it stands to facilitate our needs or does it require extension? If
 extension is necessary, how much?''
 \end{quote}
 }
@@ -229,7 +229,7 @@ Chapter~\ref{chap:introducing-agda}.
   context of this new technology.
   
 \item We show how to
-  guarantee \emph{type safety of meta-programs}. To illustrate this
+  write \emph{type safe meta-programs}. To illustrate this
   point, we will develop a type-safe translation from the simply typed
   lambda calculus to programs in continuation-passing style (CPS), followed
 by a type-safe translation of closed lambda terms into SKI combinator calculus (Chapter~\ref{sec:type-safe-metaprogramming}). 
@@ -238,8 +238,8 @@ doing this, structurally recursive, total, well-typed and terminating CPS and SK
  
 \item Finally, we also discuss some of the
   \emph{limitations of the current implementation} of reflection (Chapter~\ref{sec:generic-programming}),
-  motivated by attempts to automate certain aspects of modifying a program to 
-  use generic programming techniques. 
+  motivated by attempts to automate certain aspects of 
+  generic programming.
 \end{itemize}
 
 The code and examples presented in this paper all compile using the
@@ -1192,7 +1192,8 @@ Env   = Vec Bool
 
 Now we can define a decision function, which decides if a given
 Boolean expression is true or not, under some assignment of variables. It does this by evaluating
-the AST of the formula, filling in for |Atomic| values the concrete values which are
+the formula's % the apostrophe is bonafide.
+ AST, filling in for |Atomic| values the concrete values which are
 looked up in the environment. For example, |And| is converted to
 the Boolean function |_∧_|, and its two arguments in turn are
 recursively interpreted.
@@ -1528,7 +1529,7 @@ that all branches of the proof tree are true. Agda is convinced
 that the representation does in fact correspond to the concrete
 formula, and also that |soundness| gives a valid proof. In fact, we need not
 even give |p| explicitly; since the only valid values of |p| are pairs of |tt|,
-the argument can be inferred automatically, if it is inhabited.
+the argument can be inferred automatically, if its type is inhabited.
 
 If the module
 passes the type checker, we know our formula is both a tautology, and
@@ -1580,14 +1581,14 @@ case.
 \subsection{Why Not Enumerate Environments?}\label{sec:no-enumerate-environments}
 
 
-One of the reasons for not enumerating environments (for exampke, something like |∀ (e : Env n) → P someprop |) is that
+One of the reasons for not enumerating environments (for example, something like |∀ (e : Env n) → P someprop |) is that
 referring to variables becomes a bit of a problem. One would have to introduce some new syntax, such as a constructor
 |Var : Fin n → Bool| which could be used to refer to an element of the environment by number. This is 
 rather less elegant than the current implementation, where one simply brings a few Boolean variables into scope in
 the native Agda manner, using a telescope (i.e. |(p q r : Bool) → P(p ∧ q ⇒ r)|). This has another advantage, namely
 that if one writes down a proposition, one is forced to only use valid variables, which translate to in-scope de Bruijn indices.
 
-Another difficulty of enumerating over environments is the generation of the proof obligation. Currently, a telescope
+Another difficulty of enumerating environments is the generation of the proof obligation. Currently, a telescope
 can be generated easily via recursion (see the function |proofObligation|), as opposed to having to generate all possible 
 lists. Some investigation was done to try and show that environments (lists of Booleans) of length $n$ are enumerable,
 but the results were not as elegant as those presented in Sec.~\ref{sec:Boolean-tautologies}. Also, generating the environments by quantifying over
