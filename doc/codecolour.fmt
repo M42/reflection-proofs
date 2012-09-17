@@ -109,6 +109,7 @@
 %format .     = "{"                 "."   "\mkern-5mu"     "}"
 %format Well-typed-closed     = "\id{Well\text{-}typed\text{-}closed}"
 %format Data-type     = "\id{Data\text{-}type}"
+%format Error-elim    = "\id{Error\text{-}elim}"
 %format isEven+2 = "\con{isEven\text{+}2}"
 %format data-type     = "\con{data\text{-}type}"
 %format Well-founded  = "\id{Well\text{-}founded}"
