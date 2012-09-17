@@ -37,7 +37,9 @@
 
 \newcommand{\ghloc}{https://github.com/toothbrush/reflection-proofs}
 \newcommand{\ghurl}{\url{\ghloc}}
-\def\CC{{C\nolinebreak[4]\hspace{ -.05em}\raisebox{.4ex}{\tiny\bf ++}}}
+\def\CC{{C\nolinebreak[4]\hspace{ -.05em}\raisebox{.2ex}{\small\bf ++}}}
+\colorlet{hlite}{CornflowerBlue!15!white}
+\newcommand{\hlitem}[1]{\item[\colorbox{hlite}{#1}]~\\}
 
 \ignore{
 \begin{code}
@@ -171,19 +173,19 @@ extension is necessary, how much?''
 
 \chapter{Introduction}\label{chap:introduction}
 
-Since the inception of computer programming, the aim has often been to
-write as concise code as possible, while achieving the most powerful effect.
+Since the inception of computer programming, one of the aims has been to
+write code as concisely as possible, while achieving the most powerful effect.
 One of the holy grails of writing programs is also being able to reuse pieces of
 code, after having written them once, as opposed to continually writing small
 variations on existing code. Reinventing the wheel is something a programmer
 should not enjoy doing.
 
 One of the many techniques invented to allow writing more effective
-code is that of \emph{metaprogramming}, which, in vague terms, refers
+code is that of \emph{metaprogramming}, which refers
 to the ability of a program to inspect (or \emph{reflect}) its own code
 and modify it. To the uninitiated, this sounds rather magical \cite{reflection-stackoverflow},
 but has long been a favourite
-feature of users of such languages as Lisp~\cite{lisp-macros}, in many cases allowing
+feature of users of such languages as Lisp~\cite{lisp-macros}. In many cases, this allows
 code to be a lot more concise and general, and thus reusable, than 
 usually is possible in simple imperative languages.
 
@@ -196,13 +198,13 @@ Agda~\cite{norell:thesis,Norell:2009:DTP:1481861.1481862} has recently been
 extended with a \emph{reflection mechanism} for compile time meta
 programming in the style of Lisp~\cite{lisp-macros},
 MetaML~\cite{metaml}, Template Haskell~\cite{template-haskell}, and
-\CC\ templates~\cite{cplusplus}. Agda's reflection mechanisms makes it
+\CC\ templates~\cite{cplusplus}. Agda's reflection mechanisms make it
 possible to convert a program fragment into its corresponding abstract
 syntax tree and vice versa. In tandem with Agda's dependent types,
 this provides promising new programming potential.
 
 
-The main question which we aim to answer during this project is:
+The main questions which we aim to answer during this project are:
 
 
 \researchquestion
@@ -255,25 +257,25 @@ Swedish folklore\footnote{See Cornelis Vreeswijk's rendition of
 a highly instructive song about Agda (the hen), at \mbox{\url{http://youtu.be/zPY42kkRADc}}.}, Agda
 is an implementation of Martin-L\"of's type theory, extended with
 records and modules, as a dependently typed programming language. Agda
-was and is developed at Chalmers \cite{norell:thesis}, and thanks to
+is developed at the Chalmers University of Technology \cite{norell:thesis}; thanks to
 the Curry-Howard isomorphism, it is both a
 functional\footnote{Functional as in practically usable.}
 functional\footnote{Functional as in Haskell.} programming language
-and a framework for intuitionistic logic (compare Coquand's calculus
-of constructions, another intuitionistic logic framework, the one
+and a framework for intuitionistic logic. It is comparable with Coquand's calculus
+of constructions, the one
 behind Coq, which is similarly both a programming language and an
-intuitionistic logic framework). In Agda, one directly manipulates and
+intuitionistic logic framework. In Agda, one directly manipulates and
 constructs
 proof objects in the same language as is used to express computation,
-as opposed to other theorem proving systems, such as Coq, where one
-has tactics which automatically construct proofs, and a separate
-language for describing these tactics \cite{coquand2006emacs}.
+as opposed to other theorem proving systems, such as Coq, where there is
+ a separate
+tactic language for writing proofs \cite{coquand2006emacs}.
 
 Agda's syntax is inspired by Haskell, and users familiar with programming in
 Haskell (using GADTs) will probably be able to hit the ground running in Agda (in this report
 the assumption is made that the reader is fluent in GHC Haskell). The main difference between
-a dependently typed programming language and a traditional one is
-that the unnatural divide between the world of values and that of types is torn down. This
+a dependently typed programming language and a simply-typed language is
+that the divide between the world of values and that of types is torn down. This
 allows such things as the textbook example of why DTP is the next best thing since sliced bread, namely not being able to ask for
 the head of an empty list (vector actually, which is a length-indexed counterpart of the concept list).
 
@@ -282,14 +284,14 @@ head : {A : Set} {n : ℕ} → Vec A (suc n) → A
 head (x ∷ xs) = x
 \end{spec}
 
-A number of things are happening here in the type system which deserve a little elaboration if one is coming 
-from a Hindley-Milner language background. Note for example how a natural number is the 
+A number of things are happening here in the type system which deserve a little elaboration if the reader is unfamiliar with dependently-typed programming.
+Note for example how a natural number is the 
 first argument, but that the argument is being bound in the type signature (called a pi type; a lambda abstraction in
 types) and later on used as an argument (a.k.a. index) to the type |Vec|, the list-type which is indexed by 
 a type (just like the |List| type in Haskell is) but also by a value of type |ℕ| corresponding to the length of the
 list in question. We also see that only vectors for which one can provide a value $n$ such that |suc n| is the length of the
 vector, are valid inputs. This way, we guarantee that non-empty vectors cannot be beheaded. Actually, behind the scenes, an
-absurd pattern is inferred for the case of the empty vector constructor |[]|, but this is dealt with separately in Sec.~\ref{sec:patternmatching}.
+absurd pattern is inferred for the case of the empty vector constructor |[]|. We will return to this in Sec.~\ref{sec:patternmatching}.
 
 
 The usual constructs such as records, modules and let-bindings are present and
@@ -304,13 +306,13 @@ project, but suffice it to say that tearing down the distinction between values 
 powerful new techniques, such as invariant-guaranteeing data types.
 
 After Haskell, looking at Agda for the first time, though, can be confusing, since a number
-of foreign concepts are introduced. In this chapter, a few possible stumbling blocks will
-be highlighted, and a number of tricks, the utility or sense of which might not 
-at first be apparent, are explained.
+of foreign concepts are introduced. In the remainder of this chapter, we will pay attention to a few possible stumbling blocks.
+We will also look at a number of tricks, the utility or sense of which might not 
+at first be apparent.
 
 \section{Pattern Matching}\label{sec:patternmatching}
 
-One of Haskell's selling points is the ability to do pattern matching, which makes writing
+One of Haskell's selling points is the ability to do pattern matching. This makes writing
 structurally recursive functions both easy and the Natural Way of Doing Things\texttrademark. Agda shares this
 capability and idiomatic programming style, but has a much more powerful version of pattern matching, namely
 dependent pattern matching.
@@ -329,10 +331,9 @@ natural (suc n)   (suc m)    = suc (natural n m)
 
 Basically, the dependent in dependent pattern matching refers to the fact that given the specialisation of the function in
 the case where |zero| is the first argument, it can be inferred that the next argument should be of type |Fin zero|, which obviously
-has no inhabitants (no natural numbers are strictly smaller than |zero|). This is something which we cannot do in Haskell, but which
-is also not necessary in Haskell, since we are not required to write total functions (i.e. functions defined on all possible inputs) in
-Haskell. There, we are left to our own devices, and should be responsible enough programmers that we do not write code such that pattern
-matching failures might occur. In Sec.~\ref{sec:plandpa} we will see that this is a pivotal difference between Haskell and Agda, and that 
+has no inhabitants (no natural numbers are strictly smaller than |zero|). This is something which we cannot easily do in Haskell, but which
+is also not necessary in Haskell, since we are not required to write total functions. There, we are left to our own devices, and should be responsible programmers that do not write code that may trigger pattern
+matching failures. In Sec.~\ref{sec:plandpa} we will see that this is a pivotal difference between Haskell and Agda, and that 
 this sort of feature makes Agda usable as a logical framework, not just a programming language.
 
 Another feature in Agda's pattern matching system is the ability to denote certain parameters as being inferable or equal to others. Take
@@ -357,8 +358,8 @@ input and output.
 
 In the previous section, the necessity of defining total functions was mentioned. This is no arbitrary choice, for without 
 this property, Agda would not be a sound logical framework. All programs in Agda are required to be total and terminating, because
-without this requirement, it would be very easy to define a proof of the absurd, or falsity, which of course would introduce
-unsoundness in the logic. If we do not require termination, the following simple function would prove falsity.
+without this requirement, it would be very easy to define a proof of falsity. Naturally the logic would not be sound in this case.
+If we do not require termination, the following simple function would prove falsity.
 
 \begin{spec}
 falsity : ⊥
@@ -393,8 +394,7 @@ hidden, and do not have to be provided if the can be inferred from the
 context. Arguments are marked hidden by surrounding them with curly braces 
 in the function (or data type) definition. This often reduces the
 number of ``obvious'' arguments that have to be explicitly passed
-around, reducing visual clutter (since the arguments can still be
-inspected, matched on and used as normal in the receiving function).
+around, reducing visual clutter.
 
 Furthermore, if a particular argument is a record type, and it has
 only one possible inhabitant, Agda can automatically infer its
@@ -477,7 +477,7 @@ in a real-life development.
 Of course, a full introduction to the Agda language including all its
 curiosities and features is out of the scope of such a crash course,
 and as such the inquisitive reader is invited to work through the
-excellent tutorial on the same written by Ulf Norell
+excellent tutorial written by Ulf Norell
 \cite{Norell:2009:DTP:1481861.1481862}.
 
 
@@ -643,8 +643,8 @@ normalizes the |Term| before it is spliced into the program text.
 
 
 
-The representation of |Term|s is de Bruijn-style,
-and lambda abstractions are modelled as binding one variable. A variable has a de Bruijn index,
+The representation of |Term|s is De Bruijn-style,
+and lambda abstractions are modelled as binding one variable. A variable has a De Bruijn index,
 and may be applied to arguments.
 %Note the |Type| argument in the |lam| constructor:
 %this holds the type of the argument expected.
@@ -657,7 +657,7 @@ used for things which are not or cannot be represented in this AST (such as func
 
 A common task will be casting the raw |Term| we get into some AST of
 our own.
-A library, |Autoquote|, has been developed, which might serve as both an instructive
+I developed a library, |Autoquote|, which might serve as both an instructive
 example in how to pull apart |Term|s, as well as a useful and reusable function,
 since it provides the feature of automatically converting a |Term|
 into some AST type, if a mapping is provided from concrete Agda
@@ -809,26 +809,26 @@ AST, and get a conversion function for free.
 
 During the course of this project, a module named |Autoquote| was developed. The
 motivating idea behind |Autoquote| is that one often ends up writing similar-looking
-functions for checking if a |Term| is of a specific shape, then if so,
+functions for checking if a |Term| is of a specific shape, and if so,
 translating |Term|s into some AST. What |Autoquote| does is abstract
 over this process, and provide an interface which, when provided with
 a mapping from concrete names to constructors in this AST,
 automatically quotes expressions that fit (i.e. which only have
 variables, and names which are listed in this mapping).
 
-This is the type we use for specifying what the AST we are expecting should look like. |N-ary| provides
+The type |Table a| is what we use for specifying what the AST we are expecting should look like. The function |N-ary| provides
 a way of storing a function with a variable number of arguments in our map, and |_dollarn_| is how we
 apply the ``stored'' function to a |Vec n| of arguments, where $n$ is the arity of the function. Note that
 this is a copy of the standard library |Data.Vec.N-ary|, but has been instantiated here specifically
 to contain functions with types in |Set|. This was necessary, since the standard library version of
-|N-ary| can hold functions of arbitrary level (i.e. |Set n|), and therefore the level of the 
+|N-ary| can hold functions of arbitrary level (i.e. |Set n|). Therefore, the level of the 
 |N-ary| argument inside |ConstructorMapping| could not be inferred (since this depends on which function
-one tries to store in that field), giving an unsolved constraint
-which prevented the module from being imported without using the unsound type-in-type option.
+one tries to store in that field). This yields an unsolved constraint
+which prevents the module from being imported without using the unsound type-in-type option.
 
 Using this |N-ary| we can now define an entry in our mapping |Table| as having an arity, and mapping
 a |Name| (which is Agda's internal representation of an identifier, see Fig.~\ref{fig:reflection}) to a
-constructor in the AST we would like to cast the |Term| to.
+constructor in the AST to which we would like to cast the |Term|.
 
 \begin{spec}
 N-ary : (n : ℕ) → Set → Set → Set
@@ -917,11 +917,11 @@ mutual
 
 
 If it encounters a variable, it just uses the constructor which stands for variables. Note that
-the parameter is the de Bruijn-index of the variable, which might or might not be in-scope.
+the parameter is the De Bruijn-index of the variable, which might or might not be in-scope.
 This is something to check for afterwards, if a |just| value is returned.
 
 Note that this is also why one might need
-an intermediary data structure to convert to, after which checks for invariants can be done. Typically,
+an intermediary data structure to convert to. Once we have converted to the intermediary type, checks for invariants can be done. Typically,
 it will not be possible to directly |convert| to some property-preserving data structure such
 as |BoolExpr n| in one step\footnote{On account of the |Fin n| type of variable indices.}; this will typically require post-processing.
 
@@ -951,7 +951,7 @@ these new arguments.
   ... | nothing      = nothing
 \end{spec}
 
-|appCons| and |convertArgs| just check to see if the desired |Name| is present in the provided
+The functions |appCons| and |convertArgs| just check to see if the desired |Name| is present in the provided
 mapping, and if all the arguments, provided they are of the right number, also convert successfully. If
 all this is true, the converted |Term| is returned as a |just e|, where $e$ is the new, converted member
 of the AST. For example, see the unit tests in Fig. \ref{fig:test-autoquote}.
@@ -1008,17 +1008,14 @@ Because of time constraints, however, this is left as a suggestion for future wo
 The |BoolExpr| AST used in \ref{sec:Boolean-tautologies} provides a
 good motivating example for using |Autoquote|, therefore a slightly
 more real-world example of |Autoquote| in use can be found in
-Sec.~\ref{sec:autoquote-example}.
+Sec.~\ref{sec:autoquote-example}. One might also use the ability of quoting 
+arithmetic equations shown here in combination with a monoid solver,
+such as the example in Norell et al \cite{bove2009brief}.
 
-\section{Real-world Quoting}\label{sec:real-world-quoting}
+Further examples of |Autoquote| functionality can be found in the module |Metaprogramming.ExampleAutoquote|.
+The module |Metaprogramming.Autoquote| contains 
+what could serve as a basis for a system for quoting concrete Agda into a user-defined AST.
 
-Finally, a reference should be made to the implementation of the |Autoquote| library, and the module |Metaprogramming.ExampleAutoquote| where
-a few instructive examples can be found regarding the real-world use of Agda's reflection API. The module |Metaprogramming.Autoquote| contains
-what should be able to serve as a basis for a system for quoting concrete Agda into a user-defined AST, and even if not, it should at the very least
-be didactically interesting to see how the various aspects of reflection can be used. 
-
-Should the |Autoquote| library prove powerful enough for a user's particular needs, the |ExampleAutoquote| module should be clear enough
-to distill a copy-and-paste ready solution from.
 
 \chapter{Proof by Reflection}\label{sec:proof-by-reflection}
 
@@ -1132,7 +1129,7 @@ Since the type |⊤| is a simple record type, Agda can infer the |tt|
 argument, which means we can turn the assumption |even? n| into an
 implicit argument, meaning a user could get away with writing just
 |soundnessEven| as the proof, letting the inferrer do the rest. For
-clarity this is not done here, but the complete implementation
+the sake of exposition this is not done here, but the complete implementation
 available on GitHub does use this trick. A detailed explanation of this
 technique, which is used extensively in the final code, is given in
 Sec.~\ref{sec:implicit-unit}. An implementation of the above, including comments,
@@ -1449,7 +1446,7 @@ B|, where |B| is an expression in the image of the interpretation
 |⟦_⊢_⟧|. For instance, the statement |exampletheorem| is a proposition
 of this form.
 
-The function |proofObligation|, given a |BoolExpr n|, generates the
+The function |proofGoal|, given a |BoolExpr n|, generates the
 corresponding proof obligation. That is, it gives back the type which
 should be equal to the theorem one wants to prove. It does this by
 first introducing $m$ universally quantified Boolean
@@ -1458,14 +1455,14 @@ binders have been introduced, the |BoolExpr| is evaluated under this
 environment.
 
 Refer to Sec.~\pref{sec:explain-diff} for
-a thorough explanation of the parameter |Diff n m| which, like here in |proofObligation|, is also passed into |forallsAcc|.
+a thorough explanation of the parameter |Diff n m| which, like here in |proofGoal|, is also passed into |forallsAcc|.
 
 \begin{code}
-proofObligation   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
-proofObligation   .m   m    (Base    ) b acc = P ⟦ acc ⊢ b ⟧ 
-proofObligation   n    m    (Step y  ) b acc =
+proofGoal   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
+proofGoal   .m   m    (Base    ) b acc = P ⟦ acc ⊢ b ⟧ 
+proofGoal   n    m    (Step y  ) b acc =
   (a : Bool) →
-      proofObligation (1 + n) m y b (a ∷ acc)
+      proofGoal (1 + n) m y b (a ∷ acc)
 \end{code}
 
 \ignore{
@@ -1481,7 +1478,7 @@ Error-elim ()
 \end{code}
 }
 
-Now that we can interpret a |BoolExpr n| as a theorem using |proofObligation|, and we have a
+Now that we can interpret a |BoolExpr n| as a theorem using |proofGoal|, and we have a
 way to decide if something is true for a given environment, we still
 need to show the soundness of our decision function |foralls|. That is, we need
 to be able to show that a formula is true if it holds for every
@@ -1496,32 +1493,33 @@ possible assignment of its variables to |true| or |false|.
 soundnessAcc :   {m : ℕ} →          (b : BoolExpr m) →
                  {n : ℕ} →          (env : Env n) →
                  (d : Diff n m) →   forallsAcc b env d →
-                 proofObligation n m d b env
+                 proofGoal n m d b env
 soundnessAcc     bexp     env Base     H with ⟦ env ⊢ bexp ⟧
 soundnessAcc     bexp     env Base     H | true  = H
 soundnessAcc     bexp     env Base     H | false = Error-elim H
 soundnessAcc {m} bexp {n} env (Step y) H =
-  λ a → if {λ b → proofObligation (1 + n) m y bexp (b ∷ env)} a
+  λ a → if {λ b → proofGoal (1 + n) m y bexp (b ∷ env)} a
     (soundnessAcc bexp (true  ∷ env)    y (proj₁ H))
     (soundnessAcc bexp (false ∷ env)    y (proj₂ H))
 \end{code}
 
 \begin{code}
 soundness       : {n : ℕ} → (b : BoolExpr n) → foralls b
-                → proofObligation 0 n (zeroleast 0 n) b []
+                → proofGoal 0 n (zeroleast 0 n) b []
 soundness {n} b i = soundnessAcc b [] (zeroleast 0 n) i
 \end{code}
-If we look closely at the definition of |soundnessAcc| (which is
-where the work is done -- |soundness| merely calls
-|soundnessAcc| with some initial input, namely the |BoolExpr n|, an
-empty environment, and the proof
-that |soundnessAcc| will be called ($n-0$) times, resulting in an environment
-of size $n$ everywhere the expression is to be evaluated --
-we see that we build up a function
-that, when called with the values assigned to the free variables,
-builds up the environment and eventually returns the
+
+If we look closely at the definition of |soundnessAcc|, we see that it
+builds up the environment by assigning all possible values to variables. It eventually returns the
 leaf from |foralls| which is the proof that the formula is a tautology
-in that specific case.
+in that specific case. 
+The function |soundness| calls
+|soundnessAcc| with some initial input, namely the |BoolExpr n|, an
+empty environment, and the |Diff| proof that |soundnessAcc| will be called
+($n-0$) times. This results in an environment of size $n$ everywhere
+the expression is to be evaluated.
+
+
 
 Now, we can prove theorems by calling |soundness b p|, where |b| is the
 representation of the formula under consideration, and |p| is the evidence
@@ -1532,11 +1530,11 @@ even give |p| explicitly; since the only valid values of |p| are pairs of |tt|,
 the argument can be inferred automatically, if its type is inhabited.
 
 If the module
-passes the type checker, we know our formula is both a tautology, and
+passes the type checker, we know our formula is both a tautology and
 that we have the corresponding proof object at our disposal
 afterwards, as in the following example.
 
-
+\begin{figure}[h]
 \begin{code}
 rep          : BoolExpr 2
 rep          = Imp (And (Atomic (suc zero)) (Atomic zero)) (Atomic zero)
@@ -1544,6 +1542,8 @@ rep          = Imp (And (Atomic (suc zero)) (Atomic zero)) (Atomic zero)
 someTauto    : (p q : Bool)         → P( p ∧ q ⇒ q )
 someTauto    = soundness rep _
 \end{code}
+\caption{An example Boolean formula, along with the transliteration to a proposition and the corresponding proof.}\label{fig:dup}
+\end{figure}
 
 The only part we still have to do manually is to convert the concrete
 Agda representation (|p ∧ q ⇒ q|, in this case) into our abstract
@@ -1586,10 +1586,10 @@ referring to variables becomes a bit of a problem. One would have to introduce s
 |Var : Fin n → Bool| which could be used to refer to an element of the environment by number. This is 
 rather less elegant than the current implementation, where one simply brings a few Boolean variables into scope in
 the native Agda manner, using a telescope (i.e. |(p q r : Bool) → P(p ∧ q ⇒ r)|). This has another advantage, namely
-that if one writes down a proposition, one is forced to only use valid variables, which translate to in-scope de Bruijn indices.
+that if one writes down a proposition, one is forced to only use valid variables, which translate to in-scope De Bruijn indices.
 
 Another difficulty of enumerating environments is the generation of the proof obligation. Currently, a telescope
-can be generated easily via recursion (see the function |proofObligation|), as opposed to having to generate all possible 
+can be generated easily via recursion (see the function |proofGoal|), as opposed to having to generate all possible 
 lists. Some investigation was done to try and show that environments (lists of Booleans) of length $n$ are enumerable,
 but the results were not as elegant as those presented in Sec.~\ref{sec:Boolean-tautologies}. Also, generating the environments by quantifying over
 fresh variables and adding them to an accumulating environment saves creating a large binary tree with all the possible
@@ -1597,22 +1597,22 @@ environments in the leaves.
 
 \subsection{What Is This |Diff| You Speak Of?}\label{sec:explain-diff}
 
-Back in Sec.~\ref{sec:Boolean-tautologies} the function |proofObligation| (among others)
+Back in Sec.~\ref{sec:Boolean-tautologies} the function |proofGoal| (among others)
 had a parameter of type |Diff n m|. Recalling the function's
 definition, note that there are two variables, $n$ and $m$ giving the size of the environment
 and the maximum number of bound variables in the proposition, respectively. 
 
 \begin{spec}
-proofObligation   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
-proofObligation   .m   m    (Base    ) b acc = P ⟦ acc ⊢ b ⟧ 
-proofObligation   n    m    (Step y  ) b acc =
+proofGoal   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
+proofGoal   .m   m    (Base    ) b acc = P ⟦ acc ⊢ b ⟧ 
+proofGoal   n    m    (Step y  ) b acc =
   (a : Bool) →
-      proofObligation (1 + n) m y b (a ∷ acc)
+      proofGoal (1 + n) m y b (a ∷ acc)
 \end{spec}
 
 This cannot be 
 right, since our interpretation function |⟦_⊢_⟧| requires that these $m$ and $n$ are equal.
-We cannot, however, make them equal in the type signature for |proofObligation|, since we are 
+We cannot, however, make them equal in the type signature for |proofGoal|, since we are 
 building up the environment with an accumulating parameter. Because of this, we introduce |Diff|.
 
 
@@ -1625,28 +1625,32 @@ data Diff : ℕ → ℕ → Set where
 \caption{The definition of the |Diff| data type.}\label{fig:diff-datatype}
 \end{figure}
 
-The |Diff| data type is defined as in Fig.~\ref{fig:diff-datatype}, and was necessary 
-because given a term of type |BoolExpr m|, being a proposition with at most $m$ 
-variables, it should be ensured that in the end an environment of size $m$ would be produced.
-The necessity of $m \equiv n$ is obvious considering that the evaluation function needs to
-be able to look up the variables in the Boolean expression, but being a recursive function
-which introduces a new variable to the telescope one at a time, we need some way to ``promise''
-that in the end $m$ will be equal to $n$. As can be seen in the definition of the |Base| constructor,
-this is exactly what is happening.
+The |Diff| data type is defined as in Fig.~\ref{fig:diff-datatype},
+and was necessary because given a term of type |BoolExpr m|, being a
+proposition with at most $m$ variables, it should be ensured that in
+the end an environment of size $m$ would be produced.  The necessity
+of $m \equiv n$ is obvious considering that the evaluation function
+needs to be able to look up the variables in the Boolean expression.
+As |forallsAcc| is a recursive function that introduces new variables
+to the environment one at a time, we need some way to ``promise'' that
+in the end $m$ will be equal to $n$. As can be seen in the definition
+of the |Base| constructor, this is exactly what is happening.
 
 The same thing is necessary in the functions |forallsAcc| and 
 friends, given that they also recursively construct or look up proofs that need to have a corresponding
-size to the |BoolExpr|, but given that they use the same technique in a slightly less overt manner
+size to the |BoolExpr|. Given that they use the same technique in a slightly less overt manner
 they are not separately detailed here.
 
 
 
 \section{Adding Reflection}\label{sec:addrefl}
 
-We can get rid of the aforementioned duplication using Agda's reflection API. More
+We can get rid of the duplication seen in Fig.~\ref{fig:dup} using Agda's reflection API. 
+There we see that the same Boolean formula is represented twice: once in the type signature as an Agda
+proposition and once in the |BoolExpr| AST. More
 specifically, we will use the |quoteGoal| keyword to inspect the
 current goal. Given the |Term| representation of the goal, we can
-convert it to its corresponding |BoolExpr|.
+convert it to its corresponding |BoolExpr| automatically.
 
 The conversion between a |Term| and |BoolExpr| is achieved using the
 |concrete2abstract| function:
@@ -1709,7 +1713,7 @@ proveTautology :    (t     : Term) →
                         {pf2   : isBoolExprQ n (stripPi t) pf} →
                         let b = concrete2abstract t n {pf} {pf2} in
                             {i : foralls b} →
-                            proofObligation 0 n (zeroleast 0 n) b []
+                            proofGoal 0 n (zeroleast 0 n) b []
 proveTautology t {_}{_}{i} = 
   soundness (concrete2abstract t (freeVars t)) i
 \end{code}
@@ -1782,7 +1786,7 @@ data BoolInter : Set where
 \end{figure}
 
 The mapping needed for |Autoquote| is as follows: we mention which constructor represents
-de Bruijn-indexed variables and what the arity is of the different constructors. This way
+De Bruijn-indexed variables and what the arity is of the different constructors. This way
 only |Term|s with and, or, not, true or false are accepted. Using this mapping, we can construct
 the function |term2boolexpr'| which, for suitable |Term|s, gives us an expression in |BoolInter|. 
 
@@ -1928,7 +1932,7 @@ method tries to build an invalid piece of abstract syntax at compile time, as op
 to giving an obscure error pointing at some generated code, leaving
 the programmer to figure out how to solve the problem.
 \todo{note in the conclusion of this chapter that a disadvantage of this strongly-typed
-AST is that intermediary terms often pose a difficulty -- maybe mention the example of de Bruijn SKI with erased lambdas}
+AST is that intermediary terms often pose a difficulty -- maybe mention the example of De Bruijn SKI with erased lambdas}
 
 In this chapter we will explore how one can leverage the power of
 dependent types when metaprogramming.
@@ -1984,13 +1988,13 @@ are also sometimes referred to as \emph{combinators}.
 
 Here we have
 used named variables, but in the following section these will be
-replaced in favour of de Bruijn indices.
+replaced in favour of De Bruijn indices.
 
 \subsection{De Bruijn Indices}\label{ssec:de-bruijn-indices}
 
 
 Since lambda calculus in general is considered common knowledge, only
-a short introduction will be given here regarding de Bruijn-indexed
+a short introduction will be given here regarding De Bruijn-indexed
 lambda terms, as opposed to the ``usual'' named representation which
 is surprisingly enough still the standard for most textbooks on the
 subject.  Surprisingly, because named representation of lambda terms
@@ -2003,11 +2007,11 @@ libraries \cite{Weirich:2011:BU:2034574.2034818} have been developed
 to do these sort of operations generically and out-of-the-box. This
 discussion is, however tempting it may be to speak derisively about
 named lambda representation, rather outside the scope of this project,
-so we will restrict ourselves to a short presentation of the de Bruijn
+so we will restrict ourselves to a short presentation of the De Bruijn
 representation.
 
 Usually, lambda terms are denoted with abstractions binding some variables as fresh names,
-and then later, in their bodies, referring to these bound values by name. Not so with de Bruijn
+and then later, in their bodies, referring to these bound values by name. Not so with De Bruijn
 indices, where a variable is simply a natural number with the depth of the variable's usage with
 respect to its binding site, in terms of number of abstractions in between. This sounds rather
 unwieldy, but the idea is simple, so we will illustrate the concept with some example terms in
@@ -2016,21 +2020,21 @@ Table~\ref{tab:debruijn}.
 \begin{table}[h]
   \centering
   \begin{tabular}{c||c}
-    Named & de Bruijn \\
+    Named & De Bruijn \\
     \hline
     $\lambda x . x$ & $\lambda . 0$\\
     $\lambda x . \lambda y . x y$ & $\lambda . \lambda . 1~0$\\
     \end{tabular}
-  \caption{A few sample translations from named lambda terms to de Bruijn-indexed terms.}\label{tab:debruijn}
+  \caption{A few sample translations from named lambda terms to De Bruijn-indexed terms.}\label{tab:debruijn}
   \end{table}
 
 Obviously, $\lambda y . y$ and $\lambda x . x$ are essentially the same lambda term, but represented differently.
-This is a ``problem'' we do not encounter using de Bruijn indices, since lambda expressions have one canonical representation.
+This is a ``problem'' we do not encounter using De Bruijn indices, since lambda expressions have one canonical representation.
 Also, because of the fact that a variable's index may not be higher than its depth, it is trivial to check that
 terms are closed, %\footnote{A closed term means one which contains no free variables.}, 
-which makes the de Bruijn representation
+which makes the De Bruijn representation
 ideal for combinators.
-In all of the algorithms presented in this paper, de Bruijn representation will be used.
+In all of the algorithms presented in this paper, De Bruijn representation will be used.
 
 
 \subsection{Modelling Well-typed $\lambda$-calculus}\label{ssec:modelling-wtlambda}
@@ -2068,7 +2072,7 @@ data WT' : Ctx → Uu → ℕ → Set where
                    → Uel x
                    → WT' Γ           (O x)           1
 \end{code}
-\caption{The simply-typed lambda calculus with de Bruijn indices.}\label{fig:stlc-data}
+\caption{The simply-typed lambda calculus with De Bruijn indices.}\label{fig:stlc-data}
 \end{figure}
 
 The first thing to notice is that all terms in |WT'| are annotated with
@@ -2079,7 +2083,7 @@ preserve the size of terms, but other than that the size has no interesting mean
 
 The type annotations are elements of |Uu|, defined in Fig.~\ref{fig:datauu}, which models base types and arrows.
 Contexts are simply lists of types, the position of elements of the list corresponding to
-their de Bruijn indices.
+their De Bruijn indices.
 
 \begin{figure}[h]
 \begin{spec}
@@ -2103,10 +2107,10 @@ helper functions a user needs to define on an on-demand basis, summarising final
 
 Finally there are the arguments of type |τ ∈ Γ| to the |Var| constructor. These are evidence that the variable identifier
 in question points to a valid entry in the context, |Γ|. Values of this type are basically annotated naturals corresponding to the
-de Bruijn index of the variable. This data type is defined in
+De Bruijn index of the variable. This data type is defined in
 Fig.~\ref{fig:in-data}, and from such a value, one can query either the index (as a natural or |Fin s|, $s$ being the length
 of the list) in the context (which is
-equal to their de Bruijn index, given how entering the body of a lambda abstraction pushes a new entry onto the context) or
+equal to their De Bruijn index, given how entering the body of a lambda abstraction pushes a new entry onto the context) or
 the type of the variable they represent. Note that because of this the |Var| constructor is not parameterised with an explicit index other
 than the |_∈_| parameter.
 
@@ -2140,7 +2144,7 @@ in the list would be impossible.
 
 Next, we encounter  abstractions, modelled by the |Lam| constructor. Here we are introducing a new variable with type |σ| into the
 context by binding it. Since we always push type variables on top of the context whenever we enter the body of a lambda abstraction,
-the index of the types in the context in fact always correspond to the de Bruijn-index of that variable. Intuitively, the deeper
+the index of the types in the context in fact always correspond to the De Bruijn-index of that variable. Intuitively, the deeper
 a variable in the list, the further away (in terms of lambda's) it is towards the outside of the expression, as seen from the point of view
 of the variable in question. Finally, a |Lam|s second argument is its body, which is a well-typed term with type |τ|, given the abstraction's
 context extended with the type of the variable the lambda binds. This now produces a term of type |σ => τ|, since we bind something of type |σ| and
@@ -2162,7 +2166,7 @@ Because it usually is impractical to require direct construction of
 |WT'| terms, we would also like to  offer a way of translating from some
 less constrained data type to |WT'|, if possible. To this end, we introduce the data
 type |Raw|, given in Fig.~\ref{fig:raw},  which is a model of
-lambda terms with de Bruijn indices that should look a lot more
+lambda terms with De Bruijn indices that should look a lot more
 familiar to Haskell users, since most models of lambda expressions in
 Haskell-land are untyped (because of a lack of dependent types).
 
@@ -2221,7 +2225,7 @@ infer Γ (Lit ty x) = ok 1 (O ty) (Lit {x = ty} x)
 
 Of course, a literal on its own is always well-typed, and corresponds to a |WT'| with whatever type the literal has.
 A variable is similarly easy to type check, except that it should not point outside the context, that is, it should
-have a de Bruijn index smaller than or equal to its depth. Here we do a lookup of the variable and return whatever type the
+have a De Bruijn index smaller than or equal to its depth. Here we do a lookup of the variable and return whatever type the
 context says it has, or, if it is out-of-scope, we return |bad|.
 
 \begin{code}
@@ -2355,6 +2359,7 @@ el' (Cont t)      = ⊥
 lam2type : {σ : Uu} {Γ : Ctx} {n : ℕ} → WT' Γ σ n → Set
 lam2type {σ} t = el' σ
 \end{spec}
+
 
 Once we have these functions, it is easy to introduce a concrete function from a |WT'| term as follows, using |unquote| and |lam2term|.
 
@@ -2569,7 +2574,7 @@ Tt .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂} f e)     cont =
 \end{spec}
 First |f|, the applicand, is transformed, with a new abstraction as the continuation. This abstraction
 must have a variable of the type of |f|, since it is the continuation which is to be invoked on |f|. The body
-of the abstraction is then the CPS transformation of |e| (after having shifted all the de Bruijn-indices up by 1
+of the abstraction is then the CPS transformation of |e| (after having shifted all the De Bruijn-indices up by 1
 to compensate for the new abstraction), with again a continuation, this time binding a variable of the type of the argument (albeit transformed)
 and applying the transformed |f| (bound to |Var 1|) to the transformed |e| (here |Var 0|). Finally the original continuation, the one which was the
 argument called |cont|, is applied to the new |f| and |e|, but only after two shifts, resulting from the two lambda abstractions we introduced.
@@ -2693,9 +2698,9 @@ module <-on-sz-Well-founded where
   wf = well-founded <-ℕ-wf
 \end{spec}
 
-Next we must show that recursing on smaller or equal arguments is also fine, and that shifting the de Bruijn indices does not change the
+Next we must show that recursing on smaller or equal arguments is also fine, and that shifting the De Bruijn indices does not change the
 ordering of two elements (|shift-pack-size|). Note that |weak| is a generalised weakening function, which |shift1| uses to add one type variable on top of the context stack
-and increase the de Bruijn indices by 1.
+and increase the De Bruijn indices by 1.
 
 \begin{spec}
   _≼_ : Rel WTwrap _
@@ -2867,7 +2872,7 @@ lambda x (ApplyC t u)                = ApplyC     (ApplyC  S
 \caption{A pseudo-Haskell implementation of conversion from lambda terms to SKI calculus, using named variables.}\label{fig:pseudo-haskell-ski}
 \end{figure}
 
-We have the added complication of using de Bruijn indices, though. This means that each time we
+We have the added complication of using De Bruijn indices, though. This means that each time we
 replace a lambda abstraction with some other construction, we are potentially breaking the variable
 references, since some of them (exactly those in the body of the destroyed lambda) will need decrementing.
 Also, it sounds difficult to do a check on the variable's name to see if we should introduce an |I| or |K| in
@@ -2895,7 +2900,7 @@ mutual
 
 Notice in Fig.~\ref{fig:lambda} that when we encounter a variable as the only thing in the body
 of the lambda, and if it is not the variable which is bound by the lambda under consideration,
-that we decrement the de Bruijn index as promised, by peeling off a |there| constructor off the index-proof.
+that we decrement the De Bruijn index as promised, by peeling off a |there| constructor off the index-proof.
 If it is the variable bound by the lambda in question, we can replace the whole lambda expression with the identity
 combinator.
 
@@ -2922,8 +2927,8 @@ not have the same notion of variables and their restricted connection to context
 we would not have been able to guarantee that a closed lambda term induces a closed SKI term. Also, if names had been used
 to identify variables, one might have used the same mechanism of guaranteeing presence of the variables in 
 the context, |_∈_|, but then an additional concept of uniqueness would have been necessary, both of which the
-de Bruijn representation provide for free. There also exist
-a few methods for directly translating from lambda terms to SKI combinators based only on de Bruijn variable
+De Bruijn representation provide for free. There also exist
+a few methods for directly translating from lambda terms to SKI combinators based only on De Bruijn variable
 identifiers \cite{dolio}, but apart from producing bloated SKI terms (since at least $n$ |K| combinators are introduced if
 the variable's identifier is $n$ -- a sort of $n$-ary constant function is built up), implementing this algorithm
 in a well-typed setting is nearly impossible as a result of the fact that the intermediary terms returned by the 
@@ -3037,8 +3042,6 @@ provide a few easy-to-define helper functions. These functions are necessary bec
 which is something which is only possible if the to-be-used universe \emph{and all of its constructors} are in-scope.
 
 The following list describes all the necessary parameters to the modules (note that not all modules require all parameters).
-\colorlet{hlite}{CornflowerBlue!15!white}
-\newcommand{\hlitem}[1]{\item[\colorbox{hlite}{#1}]~\\}
 \begin{description}
 \hlitem{|U : Set|}
 A data type representing the universe. It might have such elements as |Nat| and |Bl| which might stand for natural numbers and Boolean values.
