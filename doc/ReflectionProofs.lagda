@@ -32,6 +32,9 @@
 
 \newcommand{\pref}[1]{~\ref{#1} on page~\pageref{#1}}
 
+% brace yourself!
+\newcommand{\bracket}[1]{{[}#1{]}}
+
 \newcommand{\ghloc}{https://github.com/toothbrush/reflection-proofs}
 \newcommand{\ghurl}{\url{\ghloc}}
 \def\CC{{C\nolinebreak[4]\hspace{ -.05em}\raisebox{.4ex}{\tiny\bf ++}}}
@@ -138,7 +141,7 @@ open import Data.List hiding (_∷ʳ_)
   arise in dependently typed programming, and details the limitations
   of the current implementation of reflection. Also provided is a detailed
   users' guide to the reflection API and a library of working code examples
-  to illustrate how various common tasks can be performed, and suggestions for
+  to illustrate how various common tasks can be performed, along with suggestions for
   an updated reflection API in a future version of Agda. %conclusion?
 \end{abstract}
 
@@ -212,7 +215,7 @@ exemplative of the kind of problems that can be solved using
 reflection. More specifically it makes the following contributions:
 
 \begin{itemize}
-  \item A very short introduction to Agda as a programming language is given in 
+  \item A very short \emph{introduction to Agda} as a programming language is given in 
 Chapter~\ref{chap:introducing-agda}.
 \item This paper documents the current status of the reflection
   mechanism. The existing documentation is limited to a paragraph in
@@ -1933,12 +1936,12 @@ dependent types when metaprogramming.
 
 
 In this section about metaprogramming, the object language we will be
-studying is the simply typed lambda calculus (STLC).  Although we
-assume that the reader is familiar with the rules and behaviour of
-STLC, we will briefly repeat the definitions and rules which will be
-relevant later on.
+studying is the simply typed lambda calculus (STLC).  Although 
+the reader  is assumed to be familiar with the rules and behaviour of
+STLC,  the definitions and rules which will be
+relevant later on are briefly repeated.
 
-We first introduce the idea of contexts. A context is simply a list of
+We first introduce the idea of contexts. A context is simply a stack of
 types, in which one can look up what type a variable is supposed to
 have. We have empty contexts, |[]|, and the possibility of adding a
 new type to the top of the context stack. We denote concatenation by
@@ -1958,24 +1961,24 @@ See Fig.~\ref{fig:stlc-rules} for the typing rules.
 \begin{figure}[h]
   \centering
   \subfigure{
-    \inference[{[}var{]}]{x : \sigma \in \Gamma}{\Gamma ||- x : \sigma}   %variable rule
+    \inference[\bracket{var}]{x : \sigma \in \Gamma}{\Gamma ||- x : \sigma}   %variable rule
     }
   \subfigure{
-    \inference[{[}lit{]}]{c~\textnormal{constant of type}~\sigma}{\Gamma ||- c : \sigma} %literal
+    \inference[\bracket{lit}]{c~\textnormal{constant of type}~\sigma}{\Gamma ||- c : \sigma} %literal
     }
   \\
   \subfigure{
-    \inference[{[}lam{]}]{x : \sigma :: \Gamma ||- e : \tau}{\Gamma ||- (\lambda x : \sigma . e) : \sigma -> \tau} %abstraction
+    \inference[\bracket{lam}]{x : \sigma :: \Gamma ||- e : \tau}{\Gamma ||- (\lambda x : \sigma . e) : \sigma -> \tau} %abstraction
     }
   \subfigure{
-    \inference[{[}app{]}]{\Gamma ||- e_1 : \sigma -> \tau \\ \Gamma ||- e_2 : \sigma}{\Gamma ||- e_1 e_2 : \tau} %application
+    \inference[\bracket{app}]{\Gamma ||- e_1 : \sigma -> \tau \\ \Gamma ||- e_2 : \sigma}{\Gamma ||- e_1 e_2 : \tau} %application
     }
 \caption{The typing rules for simply-typed lambda calculus.}\label{fig:stlc-rules}
 \end{figure}
 
 Of special interest are terms which we call \emph{closed}. Closed is
 defined as being typable under the empty context, |[]|. These terms do not refer
-to variables which were not introduced by lambda abstractions in that same term (free variables), and
+to variables which were not introduced by lambda abstractions in that same term (a.k.a. terms free of free variables), and
 are also sometimes referred to as \emph{combinators}.
 
 Here we have
@@ -2003,10 +2006,10 @@ so we will restrict ourselves to a short presentation of the de Bruijn
 representation.
 
 Usually, lambda terms are denoted with abstractions binding some variables as fresh names,
-and the later, in their bodies, referring to the bound values by name. Not so with de Bruijn
+and then later, in their bodies, referring to these bound values by name. Not so with de Bruijn
 indices, where a variable is simply a natural number with the depth of the variable's usage with
 respect to its binding site, in terms of number of abstractions in between. This sounds rather
-strange, but the idea is simple, so we will illustrate the concept with some example translations in
+unwieldy, but the idea is simple, so we will illustrate the concept with some example terms in
 Table~\ref{tab:debruijn}.
 
 \begin{table}[h]
@@ -2021,23 +2024,24 @@ Table~\ref{tab:debruijn}.
   \end{table}
 
 Obviously, $\lambda y . y$ and $\lambda x . x$ are essentially the same lambda term, but represented differently.
-This is a ``problem'' we do not encounter using de Bruijn indices, since lambda expressions have a canonical representation.
+This is a ``problem'' we do not encounter using de Bruijn indices, since lambda expressions have one canonical representation.
 Also, because of the fact that a variable's index may not be higher than its depth, it is trivial to check that
-terms are closed\footnote{A closed term means one which contains no free variables.}, which makes the de Bruijn representation
+terms are closed, %\footnote{A closed term means one which contains no free variables.}, 
+which makes the de Bruijn representation
 ideal for combinators.
-In all of the developments presented in this paper, de Bruijn representation will be used.
+In all of the algorithms presented in this paper, de Bruijn representation will be used.
 
 
-\subsection{Modeling Well-typed $\lambda$-calculus}\label{ssec:modeling-wtlambda}
+\subsection{Modelling Well-typed $\lambda$-calculus}\label{ssec:modelling-wtlambda}
 
-For the running example in this section, we will look at a
+For the running example in this section, we will look at
 simply-typed lambda calculus (STLC) with the usual type and scoping
 rules, as defined in Fig.~\ref{fig:stlc-data}.  All the modules that
 deal with lambda expressions (everything in the
 |Metaprogramming| namespace of the project) work on this |WT'| (which
 stands for well-typed) data type. Notice how the constructors are basically
-a transliteration of the STLC typing rules introduced in Fig.~\ref{fig:stlc-rules}, except
-now including a size parameter.
+a transliteration of the STLC typing rules introduced in Fig.~\ref{fig:stlc-rules},
+save the addition of a size parameter.
 
 \ignore{
 \begin{code}
@@ -2072,10 +2076,11 @@ the lambda expression), and a size.  The size is an arbitrary measure which shou
 for terms which are structurally larger. This will become useful later, when we need to show that certain functions
 preserve the size of terms, but other than that the size has no interesting meaning.
 
-The type annotations are elements of a |Uu|, which models base types and arrows.
+The type annotations are elements of |Uu|, defined in Fig.~\ref{fig:datauu}, which models base types and arrows.
 Contexts are simply lists of types, the position of elements of the list corresponding to
 their de Bruijn indices.
 
+\begin{figure}[h]
 \begin{spec}
 data Uu : Set where
   O       : U             → Uu
@@ -2085,6 +2090,8 @@ data Uu : Set where
 Ctx : Set
 Ctx = List Uu
 \end{spec}
+\caption{The universe used inside the metaprogramming libraries, with base and arrow types, parameterised by a user-defined universe |U|.}\label{fig:datauu}
+\end{figure}
 
 The |O| constructor, which stands for base types, is parameterised by an argument of type |U|. This
 is the user-defined universe with which all the library modules in |Metaprogramming| are parameterised. Finally
@@ -2096,9 +2103,10 @@ helper functions a user needs to define on an on-demand basis, summarising final
 Finally there are the arguments of type |τ ∈ Γ| to the |Var| constructor. These are evidence that the variable identifier
 in question points to a valid entry in the context, |Γ|. Values of this type are basically annotated naturals corresponding to the
 de Bruijn index of the variable. This data type is defined in
-Fig.~\ref{fig:in-data}, and from such a value, one can query either the index (as a natural or |Fin|) in the context (which is
+Fig.~\ref{fig:in-data}, and from such a value, one can query either the index (as a natural or |Fin s|, $s$ being the length
+of the list) in the context (which is
 equal to their de Bruijn index, given how entering the body of a lambda abstraction pushes a new entry onto the context) or
-the type of the variable they represent. Note that because of this the |Var| constructor is not parameterised with an explicit other
+the type of the variable they represent. Note that because of this the |Var| constructor is not parameterised with an explicit index other
 than the |_∈_| parameter.
 
 \begin{figure}[h]
@@ -2107,7 +2115,8 @@ data _∈_ {A : Set} (x : A) : List A → Set where
   here    : {xs : List A}                        → x ∈ x ∷ xs
   there   : {xs : List A} {y : A} → x ∈ xs       → x ∈ y ∷ xs
 \end{spec}
-\caption{The definition of the |_∈_| data type, used as a witness that a variable with some type points to a valid location in the context.}\label{fig:in-data}
+\newcommand{\captindata}{The definition of the |_∈_| data type, used as a witness that a variable with some type points to a valid location in the context.}
+\caption[\captindata]{\captindata\ |_∷_| binds more strongly than |_∈_|.}\label{fig:in-data}
 \end{figure}
 
 It should be clear that a term in |WT' []| is closed, since if the context of a term is empty and given that all |WT'| terms
@@ -2130,7 +2139,7 @@ in the list would be impossible.
 
 Next, we encounter  abstractions, modelled by the |Lam| constructor. Here we are introducing a new variable with type |σ| into the
 context by binding it. Since we always push type variables on top of the context whenever we enter the body of a lambda abstraction,
-the index of the types in the context in fact always corresponds to the de Bruijn-index of that variable. That is, intuitively, the deeper
+the index of the types in the context in fact always correspond to the de Bruijn-index of that variable. Intuitively, the deeper
 a variable in the list, the further away (in terms of lambda's) it is towards the outside of the expression, as seen from the point of view
 of the variable in question. Finally, a |Lam|s second argument is its body, which is a well-typed term with type |τ|, given the abstraction's
 context extended with the type of the variable the lambda binds. This now produces a term of type |σ => τ|, since we bind something of type |σ| and
@@ -2148,10 +2157,10 @@ This way, terms of type |WT'| can only be constructed if they are well-scoped (t
 
 \subsection{Inferring Types}\label{ssec:inferring-types}
 
-Because it sometimes is impractical to require direct construction of
-|WT'| terms, we would like to also offer a way of translating from some
-weaker-constrained data type to |WT'|, if possible. We use the data
-type |Raw'|, given in Fig.~\ref{fig:raw}, for this, which is a model of
+Because it usually is impractical to require direct construction of
+|WT'| terms, we would also like to  offer a way of translating from some
+less constrained data type to |WT'|, if possible. To this end, we introduce the data
+type |Raw|, given in Fig.~\ref{fig:raw},  which is a model of
 lambda terms with de Bruijn indices that should look a lot more
 familiar to Haskell users, since most models of lambda expressions in
 Haskell-land are untyped (because of a lack of dependent types).
@@ -2160,8 +2169,8 @@ Haskell-land are untyped (because of a lack of dependent types).
 \begin{spec}
 data Raw : Set where
   Var  : ℕ                           → Raw
-  App  : Raw       → Raw             → Raw
   Lam  : Uu        → Raw             → Raw
+  App  : Raw       → Raw             → Raw
   Lit  : (x : U)   → Uel x           → Raw
 \end{spec}
 \caption{The |Raw| data type, or a model of simply-typed lambda expressions without any typing or scoping constraints.}\label{fig:raw}
@@ -2170,15 +2179,15 @@ data Raw : Set where
 We do include some typing information in |Raw|s, but it is
 unverified. We also require lambda terms and literals to be annotated
 with the type of their argument, because otherwise the type checker
-would become a type inferencer, which, while possible (Algorithm W would suffice), is a
+would become a type inferencer, which, while possible (Algorithm W \cite{Damas:1982:PTF:582153.582176} would suffice), is a
 pain to implement, especially in a language where only structural
 recursion is allowed by default, since the unification algorithm typically used with Algorithm W makes
-use of general recursion. This is in fact an entire topic of research, and therefore outside the scope
+use of general recursion. This is in fact a topic of research in its own right, and therefore outside the scope
 of this project \cite{DBLP:journals/jfp/McBride03}.
 
 We choose instead to use the relatively straight-forward, structurally recursive, algorithm for type checking lambda terms
 presented in Norell's tutorial on Agda \cite{Norell:2009:DTP:1481861.1481862}.
-The function |infer| -- defined in the following paragraph, in parts -- 
+The function |infer| -- defined in the following paragraph, incrementally -- 
 provides a view on |Raw| lambda terms showing whether they are
 well-typed or not. This view is aptly called |Infer|, and is defined
 in Fig.~\ref{fig:infer-datatype}.
@@ -2193,12 +2202,12 @@ data Infer (Γ : Ctx) : Raw → Set where
 \end{figure}
 
 The |Infer| view says that a term is either incorrectly typed
-(i.e. |bad|), which can be constructed using any term in |Raw|, or it
+(i.e. |bad|), the constructor which can be used on any term in |Raw|, or it
 is well-typed, which is shown using the |ok| constructor, which also
-requires on provides the corresponding (this correspondence is forced
+requires the corresponding (this correspondence is forced
 by giving the |Infer| view |erase t| as an argument, which is the
-erasure of a |WT'| term and certainly not an arbitrary |Raw| term) term
-in |WT'|, and we had already decided that if something was
+erasure of a |WT'| term and certainly not an arbitrary |Raw| term) witness
+in |WT'|; we had already decided that if something was
 representable in |WT'|, it must be both well-scoped and well-typed.
 
 The |infer| algorithm, which provides the |Infer| view and therefore generates
@@ -2300,8 +2309,8 @@ which we can then |unquote|.  The first few clauses are precisely what
 one would expect, except maybe for the |Lit| case. Here we see the
 first signs of the universe model which is implemented, namely a call
 to an undefined function |quoteBack|. The idea is that all the
-universe of types we are using (arrows and base types denoted with the
-constructor |O|) is parameterised by a user-defined universe $U$,
+types in the |Uu| universe we are using (arrows and base types denoted with the
+constructor |O|) are parameterised by a user-defined universe $U$,
 which is used for the base types. We cannot know what types a user has
 modelled in their universe, so we have to require
 that they also provide a method which knows how to |unquote| values in their universe.
@@ -2338,9 +2347,9 @@ since it has to do with the CPS transformation, which is introduced in Sec.~\ref
 
 \begin{spec}
 el' : Uu → Set
-el' (O x) = Uel x
-el' (u => u₁) = el' u → el' u₁
-el' (Cont t) = ⊥
+el' (O x)         = Uel x
+el' (u => u₁)     = el' u → el' u₁
+el' (Cont t)      = ⊥
 
 lam2type : {σ : Uu} {Γ : Ctx} {n : ℕ} → WT' Γ σ n → Set
 lam2type {σ} t = el' σ
@@ -2807,8 +2816,8 @@ data Comb : Ctx → Uu → Set where
   
 Combinator = Comb []
 \end{spec}
-\caption[The data type |Comb|, modeling SKI combinator calculus.]{The
-data type |Comb|, modeling SKI combinator calculus. The |Var|
+\caption[The data type |Comb|, modelling SKI combinator calculus.]{The
+data type |Comb|, modelling SKI combinator calculus. The |Var|
 constructor is less dangerous than it may seem.}\label{fig:comb}
 \end{figure}
 
