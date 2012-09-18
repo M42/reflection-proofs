@@ -46,9 +46,7 @@
 \newenvironment{shade}{
 
 \vskip 0.5\baselineskip
-%\vskip 30pt
 \begin{adjustbox}{minipage=\linewidth,margin=0pt,padding=0pt,bgcolor=hlite}}{\end{adjustbox}
-%\vskip 30pt
 \vskip 0.5\baselineskip
 
 }
@@ -108,11 +106,11 @@ open import Data.List hiding (_∷ʳ_)
 
 %%%% the semantic package, for the nice type rules.
 \usepackage{semantic}
-\mathlig{->}{\to}
+\mathlig{ ->}{ \to}
 \mathlig{||->}{\mapsto}
 \mathlig{||=>}{\Mapsto}
 \mathlig{=>}{\Rightarrow}
-\mathlig{||-}{\vdash}
+\mathlig{||- }{\vdash }
 \mathlig{~>}{\leadsto}
 \mathlig{=/=}{\neq}
 %%%% end semantic package stuff.
@@ -180,7 +178,7 @@ open import Data.List hiding (_∷ʳ_)
 \vspace*{\fill}
 \begin{quote}
 \centering
-\emph{``Using Coq is like doing brain surgery over the telephone.''}\\ \hfill \mbox{-- Peter Hancock}
+\emph{``Using Coq is like doing brain surgery over the telephone.''}\\ \hfill \mbox{ -- Peter Hancock}
 \end{quote}
 \vspace*{\fill}
 \clearpage
@@ -281,110 +279,281 @@ and played around with.
 
 \chapter{Introducing Agda}\label{chap:introducing-agda}
 
-Besides being a common Swedish female name and referring to a certain hen in
-Swedish folklore\footnote{See Cornelis Vreeswijk's rendition of
-a highly instructive song about Agda (the hen), at \mbox{\url{http://youtu.be/zPY42kkRADc}}.}, Agda
-is an implementation of Martin-L\"of's type theory, extended with
-records and modules, as a dependently typed programming language. Agda
-is developed at the Chalmers University of Technology \cite{norell:thesis}; thanks to
-the Curry-Howard isomorphism, it is both a
-functional\footnote{Functional as in practically usable.}
+Besides being a common Swedish female name and referring to a certain
+hen\footnote{\ldots{}bearing in mind that \emph{coq} means rooster in
+French\ldots} in Swedish pop culture\footnote{See Cornelis Vreeswijk's
+song about Agda, a hen, at
+\mbox{\url{http://youtu.be/zPY42kkRADc}}.}, Agda is an implementation
+of Martin-L\"of's type theory, extended with records and modules. Agda
+is developed at the Chalmers University of Technology
+\cite{norell:thesis}; thanks to the Curry-Howard isomorphism, it is
+both a functional\footnote{Functional as in practically usable.}
 functional\footnote{Functional as in Haskell.} programming language
-and a framework for intuitionistic logic. It is comparable with Coquand's calculus
-of constructions, the one
-behind Coq, which is similarly both a programming language and an
-intuitionistic logic framework. In Agda, one directly manipulates and
-constructs
-proof objects in the same language as is used to express computation,
-whereas in other theorem proving systems, such as Coq, there is
- a separate
-tactic language for writing proofs \cite{coquand2006emacs}.
+and a framework for intuitionistic logic. It is comparable with
+Coquand's calculus of constructions, the logic behind Coq. Coq is
+similarly both a programming language and an intuitionistic logic
+framework.
+
+In informal terms, the Curry-Howard isomorphism  states that there is a correspondence
+between types and propositions on the one hand, and programs and proofs on the other hand. The
+interpretation of a programming language as a logic framework is that types express theorems which 
+are proven by providing an implementation. In Agda, types of functions are allowed
+to \emph{depend upon} values -- the main difference between
+a dependently typed programming language and a simply-typed language is
+that the divide between the world of values and that of types is torn down.
+
 
 Agda's syntax is inspired by Haskell, and users familiar with programming in
-Haskell (using GADTs) will probably be able to hit the ground running in Agda (in this report
-the reader is assumed to be fluent in GHC Haskell). The main difference between
-a dependently typed programming language and a simply-typed language is
-that the divide between the world of values and that of types is torn down. This
-allows such things as the textbook example of why DTP is the best thing since sliced bread, 
+Haskell will probably be able to hit the ground running in Agda. 
+Consequently, 
+the reader is assumed to be fluent in GHC Haskell. 
 
+We will start slowly, and look at how textbooks define natural numbers. The colon
+means ``is of type'', so here, |zero| is of type |Natural|. 
 
-%%namely not being able to ask for
-%%the head of an empty list (vector actually, which is a length-indexed counterpart of the concept list).
+\begin{shade}
+\begin{code}
+data Natural : Set where
+    zero     : Natural
+    succ     : Natural -> Natural
+\end{code}
+\end{shade}
+
+The definition of naturals here looks a lot like the GADT (generalised algebraic
+data type \cite{citeulike:2082722}) rendition in Haskell would; this is no coincidence. Notice that we have to define that |Natural| is of type
+|Set|. In Agda, |Set| is the type of types. Types are themselves also simply values. Just as in Haskell,
+we can also use pattern matching to do operations on natural numbers. Let us look 
+at the definition of addition of natural numbers.
+
+\begin{shade}
+\begin{code}
+_+'_ : Natural -> Natural -> Natural
+zero       +'   m  = m
+(succ n)   +'   m  = succ (n +' m)
+\end{code}
+\end{shade}
+
+Notice how we wrote |_+_| for the name of the function. This notation
+is referred to as mixfix -- in Agda we are allowed to define operators using 
+underscores to denote places we expect arguments.
+Other than that, addition is fairly straight-forward, using the recursive style
+of programming we will come to know and love. 
+
+We will now look at the
+definition of list in Agda. This is already starting to look
+slightly different to the corresponding Haskell implementation.
+
+\begin{shade}
+\begin{code}
+data List' (A : Set) : Set where
+   []        :                                   List' A
+   _∷_       :    A         -> List' A ->        List' A
+\end{code}
+\end{shade}
+
+The first thing to note is that we are allowed to use Unicode symbols
+for function and constructor names -- the combination of mixfix and Unicode make Agda
+very liberal in what is accepted as an identifier.
+The next thing to note is that the |List| data type is parameterised by
+an argument, |A|, of type |Set|. Recall that  |Set| is the type of types, 
+so |List| is parameterised by a type for the values it should contain. 
+
+Our shiny new data types are clamouring to be used, so why not define a |head| function
+on |List|? The function |head₀| is supposed to give the first element of a list. A Haskell
+programmer would probably  write something like this.
 
 \begin{shade}
 \begin{spec}
-head : {A : Set} {n : ℕ} → Vec A (suc n) → A
-head (x ∷ xs) = x
+head₀ : List A -> A
+head₀ (x ∷ xs) = x
 \end{spec}
 \end{shade}
 
-A number of things are happening here in the type system which deserve a little elaboration if the reader is unfamiliar with dependently-typed programming.
-Note for example how a natural number is the 
-first argument, but that the argument is being bound in the type signature (called a pi type; a lambda abstraction in
-types) and later on used as an argument (a.k.a. index) to the type |Vec|, the list-type which is indexed by 
-a type (just like the |List| type in Haskell is) but also by a value of type |ℕ| corresponding to the length of the
-list in question. We also see that only vectors for which one can provide a value $n$ such that |suc n| is the length of the
-vector, are valid inputs. This way, we guarantee that non-empty vectors cannot be beheaded. Actually, behind the scenes, an
-absurd pattern is inferred for the case of the empty vector constructor |[]|. We will return to this in Sec.~\ref{sec:patternmatching}.
+There are a number of problems with this definition! The first thing Agda will 
+complain about, is that |A| is undefined in the type signature. The solution is simple: we
+introduce a \emph{telescope}. A telescope is like a lambda function, except that it is a function
+on types (also known as values of type |Set|). The result of this attempt is |head₁|.
+
+\begin{shade}
+\begin{spec}
+head₁ : {A : Set} -> List A -> A
+head₁ (x ∷ xs) = x
+\end{spec}
+\end{shade}
+
+This is getting somewhere, but we have again introduced a new concept: implicit arguments. 
+The distinction
+between explicit (usual arguments to functions, as seen in Haskell,
+for example) and implicit arguments is merely that the latter are tagged as
+hidden, and do not have to be provided if they can be inferred from the
+context. Arguments are marked hidden by surrounding them with curly braces 
+in the function (or data type) definition. This often reduces the
+number of ``obvious'' arguments that have to be explicitly passed
+around, reducing visual clutter. Compare this to the way class constraints on Haskell 
+functions cause a dictionary to be passed around implicitly. In the |head₁| example, we need not
+give the type of the elements of the list, since Agda can infer this information from
+whatever list we pass.
+
+However, this definition of |head₁| still will not be accepted by Agda. Another
+concept is that of \emph{totality}: a function is \emph{total} when it is both terminating
+and defined on all inputs. Termination is checked by making sure that recursive calls are always 
+done on \emph{structurally smaller} arguments -- as is the case in the addition example.
+Furthermore, a function is considered to be defined on all inputs when the patterns it matches on
+cover all the possibilities. What we mean by this is that an alternative should be given for each
+possible constructor -- something which is violated by the most recent |head₁| attempt: it is missing a
+case for the empty list. This is something Haskell does not care about; it simply smirks and crashes if we try to normalise |head []|.
+
+If we have to define |head₂| for the empty list too, we will have to resort to a |Maybe| type. The definition of
+|Maybe| is omitted, because it is hardly surprising to a Haskell programmer.
 
 
-The usual constructs such as records, modules and let-bindings are present and
-behave as expected (bearing in mind that also type signatures may
-include let-bindings), as do definitions of functions and data types
-(except that in contrast with Haskell, one is forced to use GADT-like
-notation for data constructors).  Agda is, practically speaking, like
-Haskell, but with a type system on steroids. The discussion of how and why this 
- is so\footnote{For example, the Agda type system does $\beta$-reduction on terms,
-evaluation, which is something seen as possible -- but quite exotic -- in Haskell-land.} is considered out of the scope of this 
-project, but suffice it to say that tearing down the distinction between values and types allows
-powerful new techniques, such as invariant-guaranteeing data types.
+\begin{shade}
+\begin{code}
+head₂ : {A : Set} -> List A -> Maybe A
+head₂ []           = nothing
+head₂ (x ∷ xs)     = just x
+\end{code}
+\end{shade}
 
-After Haskell though, looking at Agda for the first time can be confusing, since a number
-of foreign concepts are introduced. In the remainder of this chapter, we will pay attention to a few possible stumbling blocks.
-We will also look at a number of tricks, the utility or sense of which might not 
-at first be apparent.
+Of course, this |Maybe| is something of a hack;  it would be preferable to 
+guarantee that the empty list is not valid input to the |head₂| function. This
+is where a dependently typed language really starts to shine. We will now move on to the 
+\emph{de facto} example of a dependent type, the vector -- like a list, but with
+a certain length.
 
-\section{Pattern Matching}\label{sec:patternmatching}
+\begin{shade}
+\begin{code}
+data Vector (A : Set) : Natural -> Set where
+   []   :                                              Vector A zero
+   _∷_  :  {n : Natural} -> A -> Vector A n       ->   Vector A (succ n)
+\end{code}
+\end{shade}
+
+We now have an argument both to the left and the right of the colon in the type signature
+of the data definition. Left-hand arguments are called parameters, and scope over all the constructors. Right-hand
+arguments are called indices, and only scope over single constructors, and as such need to be introduced there using 
+a telescope. The |_∷_| constructor has a size parameter, which is an example of such an index.
+This dependent type has the advantage that we can distinguish vectors of different sizes by their type, 
+which allows us to write functions like the following, our final (and most successful) attempt: |head₃|.
+
+
+\begin{shade}
+\begin{code}
+head₃ : {A : Set} {n : Natural} → Vector A (succ n) → A
+head₃ (x ∷ xs) = x
+\end{code}
+\end{shade}
+
+We also see that only vectors for which one can provide a value $n$ such that |suc n| is the length of the
+vector, are valid inputs. This way, we guarantee that empty vectors cannot be beheaded. Agda is also convinced
+that this function is total, so we are done: we have a safe |head₃| function.
+
+This is the most common example of why DTP is the best thing since sliced bread:
+we cannot ask for the head of an empty vector, since we will get a compile-time error
+that there is no possible value of |n| such that |succ n == zero|. Compare this to the |head| function
+defined in Haskell's Prelude, where a run-time exception is generated if an empty list is passed in. How primitive!
+
+
+
+Now that we have seen the basics of Agda, we will introduce a few tricks used in the rest of this 
+project which may not be completely intuitive. 
+
+\section{More on Pattern Matching}\label{sec:patternmatching}
+So far we have seen the very basics of Agda. A few aspects deserve more attention, though, one prime
+example being Agda's pattern matching system.
+
 
 One of Haskell's selling points is the ability to do pattern matching. This makes writing
 structurally recursive functions both easy and the Natural Way of Doing Things\texttrademark. Agda shares this
 ability and idiomatic programming style, but has a much more powerful version of pattern matching, namely
 dependent pattern matching.
 
-This means that based on the (rich) type information available about terms, certain combinations of
-arguments are automatically regarded as impossible, or \emph{absurd}, to use Agda lingo. For example, consider the 
-following fragment, where we compute the value of a |Fin n|, the type of numbers smaller than $n$, in |ℕ|, the type
-of natural numbers. Note the use of the absurd pattern, \texttt{()}.
+\subsection{Absurd Patterns}
+This means that based on the (rich) type information available about
+terms, certain combinations of arguments are automatically regarded as
+impossible, or \emph{absurd}, to use Agda lingo.
+
+
+Another interesting data type is that of finite natural numbers. The usual definition of naturals, |Natural|, has 
+no maximum value, but we can define a data type, called |Fin n|, that only has values smaller than |n|.
 
 \begin{shade}
 \begin{code}
-natural : (n : ℕ) → Fin n → ℕ
-natural zero      ()
-natural (suc n)   zero       = zero
-natural (suc n)   (suc m)    = suc (natural n m)
+data Fin' : Natural → Set where
+  zero     : {n : Natural}                   → Fin' (succ n)
+  succ     : {n : Natural} (i : Fin' n)      → Fin' (succ n)
 \end{code}
 \end{shade}
 
-Basically, the dependent in dependent pattern matching refers to the fact that given the specialisation of the function in
-the case where |zero| is the first argument, it can be inferred that the next argument should be of type |Fin zero|, which obviously
-has no inhabitants (no natural numbers are strictly smaller than |zero|). This is something which we cannot easily do in Haskell, but which
-is also not necessary in Haskell, since we are not required to write total functions. There, we are left to our own devices, and should be responsible programmers that do not write code that may trigger pattern
-matching failures. In Sec.~\ref{sec:plandpa} we will see that this is a pivotal difference between Haskell and Agda, and that 
-this sort of feature makes Agda usable as a logical framework, not just a programming language.
+We might want to convert a value in |Fin n| to a value in |Natural|, since every value that
+can be expressed in |Fin n| has a cousin in |Natural|. The function |natural| performs this 
+conversion.
+Note the use of the absurd pattern, \texttt{()}.
 
-Another feature in Agda's pattern matching system is the ability to denote certain parameters as being inferable or equal to others. Take
-the example of equality of natural numbers: here we first pattern match on whether some naturals are equal, and if so, we can use this information
-on the left-hand side of the equation too. Note how repeated variables on the left-hand side are allowed, if their type supports decidable equality.
+
+
 
 \begin{shade}
-\begin{spec}
-something : ℕ → ℕ → Whatever
-something n             m          with n ≟ m
-something .0            0          | yes     refl  =    (HOLE 0)
-something .(suc m)      (suc m)    | yes     refl  =    (HOLE 1)
-something n             m          | no      ¬p    =    (HOLE 2)
-\end{spec}
+\begin{code}
+natural : (n : Natural) → Fin' n → Natural
+natural zero       ()
+natural (succ n)   zero        = zero
+natural (succ n)   (succ m)    = succ (natural n m)
+\end{code}
 \end{shade}
+
+
+Basically, the dependent in dependent pattern matching refers to the
+fact that given the specialisation of the function in the case where
+|zero| is the first argument, it can be inferred that the next
+argument should be of type |Fin zero|, which obviously has no
+inhabitants (no natural numbers are strictly smaller than
+|zero|). This is something which we cannot easily do in Haskell, but
+which is also not necessary in Haskell, since we are not required to
+write total functions. There, we are left to our own devices, and
+should be responsible programmers that do not write code that may
+trigger pattern matching failures, but in Agda, all functions must be
+total. In Sec.~\ref{sec:plandpa} we will see that this is a pivotal
+difference between Haskell and Agda, and that this sort of feature
+makes Agda usable as a logical framework, not just a programming
+language.
+
+\subsection{Inferable Patterns}
+
+
+Another Agda pattern matching feature we will often encounter later on in this project is
+dotted patterns. Because pattern matching is dependent, information about certain arguments
+can often be inferred from others.  Using a dotted pattern means certain parameters are inferable or equal to others. 
+
+
+
+
+For purposes of illustration, we will define an equality
+type. 
+\begin{shade}
+\begin{code}
+data Equal {A : Set} (x : A) : A → Set where
+  refl : Equal x x
+\end{code}
+\end{shade}
+
+The type |_≡_| only contains values constructed using |refl| (which stands for reflexive), and
+|refl| can only be used when the arguments to |_≡_| are identical. This is because the same |x| is
+used as both first and second argument to |_≡_|.
+
+We might use the equality type as follows; we are writing a function which is only defined 
+on equal naturals.
+Here we  pattern match on whether some naturals are equal, and if so, we can use this information
+on the left-hand side of the equation too. Note how repeated variables on the left-hand side are allowed, if their value is inferable.
+
+\begin{shade}
+\begin{code}
+weird : (    n    m : Natural) ->       Equal n m     ->      List Natural
+weird        .m   m                     refl          =       zero ∷ []
+\end{code}
+\end{shade}
+
+
 
 
 This will prove useful when type-safe metaprograms cannot alter the types of the terms between
@@ -392,12 +561,47 @@ input and output.
 
 
 
+Other than the features explicitly mentioned in this chapter so far,
+the usual constructs such as records, modules and let-bindings are present and
+behave as expected. Bear in mind that type signatures may also
+include let-bindings. Definitions of functions and data types are also
+very similar to those found in Haskell, except that in contrast with Haskell, one is forced to use GADT-like
+notation for data constructors. 
+
+ Agda is, practically speaking, like
+Haskell with a type system on steroids\footnote{For example, the Agda type system does $\beta$-reduction on terms --
+evaluation -- which is something seen as possible, but quite exotic, in Haskell-land.}. The discussion of how and why this 
+ is so is considered out of the scope of this 
+project, but suffice it to say that tearing down the distinction between values and types allows
+powerful new techniques, such as invariant-guaranteeing data types. We will see many examples of
+these in the following chapters.
+
+After Haskell though, looking at Agda for the first time can be
+confusing, since a number of foreign concepts are introduced. In the
+remainder of this chapter, we will pay attention to a number of
+tricks, the utility or sense of which might not at first be apparent.
+
+
+
 \section{A Programming Language \emph{and} Proof Assistant}\label{sec:plandpa}
 
-In the previous section, the necessity of defining total functions was mentioned. This is no arbitrary choice, for without 
-this property, Agda would not be a sound logical framework. All programs in Agda are required to be total and terminating, because
-without this requirement, it would be very easy to define a proof of falsity. Naturally the logic would not be sound in this case.
-If we do not require termination, the following simple function proves falsity.
+
+
+In Agda, one directly manipulates and
+constructs
+proof objects in the same language as is used to express computation,
+whereas in other theorem proving systems, such as Coq, there is
+ a separate
+tactic language for writing proofs \cite{coquand2006emacs}.
+
+
+In the previous section, the necessity of defining total functions was
+mentioned. This is no arbitrary choice, for without this property,
+Agda would not be a sound logical framework. All programs in Agda are
+required to be total and terminating, because without this
+requirement, it would be easy to define a proof of falsity, as we have
+done in the function |falsity|. Naturally the logic would not be sound
+in this case.
 
 \begin{shade}
 \begin{spec}
@@ -406,10 +610,10 @@ falsity = falsity
 \end{spec}
 \end{shade}
 
-This is possible because it would take an infinite amount of evaluation time to discover that this function is
+This is allowed because it would take an infinite amount of evaluation time to discover that this function is
 in fact not making any progress. 
 
-Totality of functions, that is, being defined for all possible inputs, is also required. If this requirement were 
+Being defined for all possible inputs, is also required. If this requirement were 
 dropped, a number of desirable properties for a logic would not hold any longer. The most obvious example is that
 all of a sudden, run-time exceptions are possible: if a function is not defined on a given input but that value
 is, at some point, passed as an argument, bad things will happen (compare Haskell and a run-time pattern matching failure).
@@ -427,14 +631,6 @@ that point are available.
 
 \section{Implicit Record-type Arguments}\label{sec:implicit-unit}
 
-Agda also supports so-called implicit arguments. The distinction
-between explicit (usual arguments to functions, as seen in Haskell,
-for example) and implicit arguments is merely that the latter are tagged as
-hidden, and do not have to be provided if they can be inferred from the
-context. Arguments are marked hidden by surrounding them with curly braces 
-in the function (or data type) definition. This often reduces the
-number of ``obvious'' arguments that have to be explicitly passed
-around, reducing visual clutter.
 
 Furthermore, if a particular argument is a record type, and it has
 only one possible inhabitant, Agda can automatically infer its
@@ -515,9 +711,9 @@ importing modules with unsolved metas, which means such a spurious proof will no
 in a real-life development. 
 
 Of course, a full introduction to the Agda language including all its
-curiosities and features is out of the scope of such a crash course,
-and as such the inquisitive reader is invited to work through the
-excellent tutorial written by Ulf Norell
+curiosities and features is out of the scope of such a crash course;
+the inquisitive reader is invited to work through Norell's
+excellent tutorial 
 \cite{Norell:2009:DTP:1481861.1481862}.
 
 
@@ -691,15 +887,17 @@ normalises the |Term| before it is spliced into the program text.
 
 
 
-The representation of |Term|s is De Bruijn-style,
-and lambda abstractions are modelled as binding one variable. A variable has a De Bruijn index,
+Lambda abstractions bind one variable. A variable is represented by a De Bruijn index and may be applied to multiple arguments.
+
+
+A variable has a De Bruijn index,
 and may be applied to arguments.
 %Note the |Type| argument in the |lam| constructor:
 %this holds the type of the argument expected.
 
-|con| and |def| are introduced when constructors and definitions, respectively,
-are applied to a (possibly empty) list of arguments. Finally the constructor |unknown| is
-used for things which are not or cannot be represented in this AST (such as function definitions).
+The constructors |con| and |def| are introduced for constructors and definitions, respectively,
+applied to a (possibly empty) list of arguments. Finally the constructor |unknown| is
+used for things which are not or cannot be represented in this AST (such as function definitions or holes).
 
 
 
@@ -2403,12 +2601,18 @@ infer Γ (App .(erase t) e₁)    | ok n (Cont a) t       = bad
 infer Γ (App .(erase t) e₁)    | ok n (O x) t          = bad
 infer Γ (App .(erase t) e₁)    | ok n (τ => τ₁) t      with infer Γ e₁
 infer Γ (App .(erase t₁) .(erase t₂))    
-                               | ok n (σ => τ) t₁      | ok n₂ σ' t₂    with σ =?= σ'
+                               | ok n (σ => τ) t₁      
+                               | ok n₂ σ' t₂           with σ =?= σ'
 infer Γ (App .(erase t₁) .(erase t₂))     
-                               | ok n (.σ' => τ) t₁    | ok n₂ σ' t₂    | yes   = ok _ τ (t₁ ⟨ t₂ ⟩ )
+                               | ok n (.σ' => τ) t₁    
+                               | ok n₂ σ' t₂    
+                               | yes                   = ok _ τ (t₁ ⟨ t₂ ⟩ )
 infer Γ (App .(erase t₁) .(erase t₂))    
-                               | ok n (σ => τ) t₁      | ok n₂ σ' t₂    | no    = bad
-infer Γ (App .(erase t) e₁)    | ok n (τ => τ₁) t      | bad            = bad
+                               | ok n (σ => τ) t₁      
+                               | ok n₂ σ' t₂    
+                               | no                    = bad
+infer Γ (App .(erase t) e₁)    | ok n (τ => τ₁) t      
+                               | bad                   = bad
 infer Γ (App e e₁)             | bad                   = bad
 \end{code}
 \end{shade}
@@ -2620,10 +2824,10 @@ as we expect it to.
 
 \begin{shade}
 \begin{code}
-equivFact1 : factorial 1 ≡ factCPS 1 id
-equivFact1 = refl
-equivFact5 : factorial 5 ≡ factCPS 5 id
-equivFact5 = refl
+equivFact1      : factorial 1        ≡ factCPS 1       id
+equivFact1      = refl
+equivFact5      : factorial 5        ≡ factCPS 5       id
+equivFact5      = refl
 \end{code}
 \end{shade}
 
@@ -2835,10 +3039,10 @@ We can, however, circumvent this problem by defining a wrapper which is isomorph
 at the same time an element of |Set|. We will define this wrapper, |WTwrap|, as follows.
 
 \begin{shade}
-\begin{code}
+\begin{spec}
 WTwrap : Set
 WTwrap = Σ ℕ (λ n → Σ Uu (λ σ → Σ Ctx (λ Γ → WT' Γ σ n)))
-\end{code}
+\end{spec}
 \end{shade}
 
 What is happening here is that we have defined a few nested dependent pairs, thus ``hiding'' the pi-type, which is what was causing us
@@ -2846,8 +3050,8 @@ the headache. We will also need a function |to| to convert from |WT'| into our w
 
 \begin{shade}
 \begin{code}
-to' : ∀ {Γ σ n} → WT' Γ σ n → WTwrap
-to' {Γ}{σ}{n} wt = n , σ , Γ , wt
+to' : ∀ {Γ σ n} → WT Γ σ n → WTwrap
+to' {Γ}{σ}{n} wt = Γ , σ , n , wt
 \end{code}
 \end{shade}
 

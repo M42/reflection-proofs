@@ -137,3 +137,4 @@
 
 %%% spacing:
 %format fromℕ≤ = "\defin{fromℕ" "\mkern-8mu" "≤}"
+%format _+'_ = "\defin{\_+\_}"
