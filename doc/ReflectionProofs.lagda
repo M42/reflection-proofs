@@ -42,9 +42,20 @@
 \newcommand{\hlitem}[1]{\item[\colorbox{hlite}{#1}]~\\}
 % This defines figures with backgrounds -- useful for code
 \usepackage{adjustbox}
+%\usepackage{float} % enable H position specifier
+\newenvironment{shade}{
+
+\vskip 0.5\baselineskip
+%\vskip 30pt
+\begin{adjustbox}{minipage=\linewidth,margin=0pt,padding=0pt,bgcolor=hlite}}{\end{adjustbox}
+%\vskip 30pt
+\vskip 0.5\baselineskip
+
+}
+%\newenvironment{shade}{}{}
 \newenvironment{shadedfigure}[1][tbhp]{%
-    \begin{figure}[#1]%
-    \begin{adjustbox}{minipage=\linewidth,margin=5pt 5pt,bgcolor=hlite}%,frame=2pt}
+    \begin{figure}[#1]
+    \begin{adjustbox}{minipage=\linewidth-10pt,margin=5pt,bgcolor=hlite}%,frame=2pt}
     %\begin{adjustbox}{minipage=\linewidth-4pt,margin=0pt 5pt,bgcolor=hlite,frame=2pt}
 %        \centering
 }{%
@@ -54,11 +65,14 @@
 %%
 
 \ignore{
+\begin{shade}
 \begin{code}
 module doc.ReflectionProofs where
 \end{code}
+\end{shade}
 
 
+\begin{shade}
 \begin{code}
 -- imports for Evenness
 open import Relation.Binary.PropositionalEquality
@@ -66,9 +80,11 @@ open import Data.Maybe using (Maybe ; just ; nothing)
 open import Data.Bool hiding (T) renaming (not to ¬_) 
 open import Data.Nat hiding (_<_) renaming (_≟_ to _≟-Nat_)
 \end{code}
+\end{shade}
 }
 
 \ignore{
+\begin{shade}
 \begin{code}
 -- imports for Boolean tauto solver
 open import Data.String using (String)
@@ -85,6 +101,7 @@ open import Data.Sum hiding (map)
 open import Data.Product hiding (map)
 open import Data.List hiding (_∷ʳ_)
 \end{code}
+\end{shade}
 }
 
 \usepackage{amsmath}
@@ -291,10 +308,12 @@ that the divide between the world of values and that of types is torn down. This
 allows such things as the textbook example of why DTP is the next best thing since sliced bread, namely not being able to ask for
 the head of an empty list (vector actually, which is a length-indexed counterpart of the concept list).
 
+\begin{shade}
 \begin{spec}
 head : {A : Set} {n : ℕ} → Vec A (suc n) → A
 head (x ∷ xs) = x
 \end{spec}
+\end{shade}
 
 A number of things are happening here in the type system which deserve a little elaboration if the reader is unfamiliar with dependently-typed programming.
 Note for example how a natural number is the 
@@ -334,12 +353,14 @@ arguments are automatically regarded as impossible, or \emph{absurd}, to use Agd
 following fragment, where we compute the value of a |Fin n|, the type of numbers smaller than $n$, in |ℕ|, the type
 of natural numbers. Note the use of the absurd pattern, \texttt{()}.
 
+\begin{shade}
 \begin{code}
 natural : (n : ℕ) → Fin n → ℕ
 natural zero      ()
 natural (suc n)   zero       = zero
 natural (suc n)   (suc m)    = suc (natural n m)
 \end{code}
+\end{shade}
 
 Basically, the dependent in dependent pattern matching refers to the fact that given the specialisation of the function in
 the case where |zero| is the first argument, it can be inferred that the next argument should be of type |Fin zero|, which obviously
@@ -352,6 +373,7 @@ Another feature in Agda's pattern matching system is the ability to denote certa
 the example of equality of natural numbers: here we first pattern match on whether some naturals are equal, and if so, we can use this information
 on the left-hand side of the equation too. Note how repeated variables on the left-hand side are allowed, if their type supports decidable equality.
 
+\begin{shade}
 \begin{spec}
 something : ℕ → ℕ → Whatever
 something n             m          with n ≟ m
@@ -359,6 +381,7 @@ something .0            0          | yes     refl  =    (HOLE 0)
 something .(suc m)      (suc m)    | yes     refl  =    (HOLE 1)
 something n             m          | no      ¬p    =    (HOLE 2)
 \end{spec}
+\end{shade}
 
 
 This will prove useful when type-safe metaprogramming may not alter the types of the terms between
@@ -373,10 +396,12 @@ this property, Agda would not be a sound logical framework. All programs in Agda
 without this requirement, it would be very easy to define a proof of falsity. Naturally the logic would not be sound in this case.
 If we do not require termination, the following simple function would prove falsity.
 
+\begin{shade}
 \begin{spec}
 falsity : ⊥
 falsity = falsity
 \end{spec}
+\end{shade}
 
 This is possible because it would take an infinite amount of evaluation time to discover that this function is
 in fact not making any progress. 
@@ -539,11 +564,13 @@ The easiest example of quotation uses the |quoteTerm| keyword to turn
 a fragment of concrete syntax into a |Term| data type. Note that the
 |quoteTerm| keyword reduces like any other function in Agda. As an
 example, the following unit test type checks:
+\begin{shade}
 \begin{code}
 example₀   : quoteTerm (\ (x : Bool) -> x)
            ≡ lam visible (el _ (def (quote Bool) [])) (var 0 [])
 example₀   = refl
 \end{code}
+\end{shade}
 
 Dissecting
 this, we introduced a lambda abstraction, so we expect the |lam|
@@ -554,18 +581,22 @@ the empty list.
 
 Furthermore, |quoteTerm| type checks and normalizes its term before
 returning the required |Term|, as the following example demonstrates:
+\begin{shade}
 \begin{code}
 example₁   : quoteTerm ((\ x → x) 0) ≡ con (quote ℕ.zero) []
 example₁   = refl
 \end{code}
+\end{shade}
 
 The |quoteGoal| keyword is slightly different. It is best explained using an
 example:
 
+\begin{shade}
 \begin{spec}
 exampleQuoteGoal : ℕ
 exampleQuoteGoal = quoteGoal e in (HOLE 0)
 \end{spec}
+\end{shade}
 The |quoteGoal| keyword binds the variable |e| to the |Term|
 representing the type of the current goal. In this example, the value
 of $e$ in the hole will be |def ℕ []|, i.e., the |Term| representing
@@ -579,6 +610,7 @@ In |example₂| we see what |type| returns when asked about the successor functi
 type |ℕ → ℕ|), and in |example₃| we illustrate that the term shown is in fact the same as a
 function type from naturals to naturals.
 
+\begin{shade}
 \begin{code}
 example₂   : type (quote ℕ.suc)
            ≡ el (lit 0)     (pi (arg visible relevant
@@ -591,6 +623,7 @@ example₃   : type          (quote ℕ.suc)
 example₃ = refl
 
 \end{code}
+\end{shade}
 
 
 The |unquote| keyword converts a |Term| data type back to concrete
@@ -604,7 +637,7 @@ normalizes the |Term| before it is spliced into the program text.
 
 \begin{shadedfigure}[p]
 %if style == poly
-  \begin{spec}
+\begin{spec}
       postulate Name : Set
 
     -- Arguments may be implicit, explicit, or inferred
@@ -700,6 +733,7 @@ As mentioned before, the way to get an object of type |Name| is by using the |qu
 example as in |quote zero|. Once we have a |Name|, we can get more information about it.
 The |type| function, unsurprisingly, tells us the type of whatever we give it, or |unknown|. For example:
 
+\begin{shade}
 \begin{code}
 typeExample : type (quote ℕ.suc) ≡
             el (lit 0) (pi
@@ -709,12 +743,14 @@ typeExample : type (quote ℕ.suc) ≡
                        )
 typeExample = refl
 \end{code}
+\end{shade}
 
 The right-hand side of the type of |typeExample| boils down to a function of type |ℕ → ℕ|, where the |el (lit 0) x| annotations
 mean that the sort of $x$ is |Set₀| (which is the same as |Set|). 
 
 The |definition| function returns the definition of a given identifier. The type is defined as follows.
 
+\begin{shade}
 \begin{spec}
 data Definition : Set where
   function          : Function  → Definition
@@ -724,6 +760,7 @@ data Definition : Set where
   axiom             : Definition
   primitive′        : Definition
 \end{spec}
+\end{shade}
 
 At the time of writing the only constructor we can do anything with is |data-type|: using
 it we can get a list of constructors, by calling the suitably-named |constructors| function. See the
@@ -733,12 +770,14 @@ Finally, we have decidable equality on the following types: |Visibility|, |Relev
 
 Typically, this is useful for deciding which constructor is present in some expression, such as:
 
+\begin{shade}
 \begin{spec}
 convert : Term → Something
 convert (def c args) with c ≟-Name quote foo
 ...                   | yes p     = (HOLE 0) -- |foo| applied to arguments
 ...                   | no ¬p     = (HOLE 1) -- a function other than |foo|
 \end{spec}
+\end{shade}
 
 
 \subsection{Inspecting Definitions}\label{sec:inspecting-definitions}
@@ -748,29 +787,38 @@ to get a list of constructors for some data type. The following code snippet
 illustrates how this is done, and what the format of the answer is.
 
 \ignore{
+\begin{shade}
 \begin{code}
 isDatatype : Definition → Set
 isDatatype (data-type x) = ⊤
 isDatatype _ = ⊥
 \end{code}
+\end{shade}
 }
+\begin{shade}
 \begin{code}
 giveDatatype : (d : Definition) → {pf : isDatatype d} → Data-type
 giveDatatype (data-type d) = d
 giveDatatype (function x)   {()}
 \end{code}
+\end{shade}
 \vskip -7mm
+\begin{shade}
 \begin{spec}
 ...
 \end{spec}
+\end{shade}
 \vskip -4mm
 \ignore{
+\begin{shade}
 \begin{code}
 giveDatatype (record′ x)    {()}
 giveDatatype constructor′   {()}
 giveDatatype axiom          {()}
 giveDatatype primitive′     {()}
-\end{code}}
+\end{code}
+\end{shade}}
+\begin{shade}
 \begin{code}
 
 ℕcons : List Name
@@ -780,6 +828,7 @@ consExample : ℕcons ≡       quote ℕ.zero   ∷
                             quote ℕ.suc    ∷ []
 consExample = refl
 \end{code}
+\end{shade}
 
 So now we have in |ℕcons| a list of the names of the constructors of the data type |ℕ|, which we
 could use to do more interesting things which depend on the structure of a data type, such as
@@ -793,15 +842,18 @@ This capability is exploited in Sec.~\ref{sec:generic-programming}.
 
 \section{Introducing |Autoquote|}\label{sec:autoquote}
 \ignore{
+\begin{shade}
 \begin{code}
 open import Metaprogramming.Autoquote hiding (convertManages ; doConvert) renaming (_#_↦_ to _\#_↦_)
 \end{code}
+\end{shade}
 }
 
 Imagine we have some AST, for example |Expr|, which is presented below.
 This is a rather simple data structure representing terms which can contain Peano style natural
 numbers, variables (indexed by an Agda natural) and additions.
 
+\begin{shade}
 \begin{code}
 data Expr : Set where
   Variable      : ℕ               →     Expr
@@ -809,6 +861,7 @@ data Expr : Set where
   Succ          : Expr            →     Expr
   Zero          :                       Expr
 \end{code}
+\end{shade}
 
 We might conceivably want to convert a piece of concrete syntax, such as $5 + x$, to this
 AST, using Agda's reflection system. This typically involves ugly and verbose functions such
@@ -842,6 +895,7 @@ Using this |N-ary| we can now define an entry in our mapping |Table| as having a
 a |Name| (which is Agda's internal representation of an identifier, see Fig.~\ref{fig:reflection}) to a
 constructor in the AST to which we would like to cast the |Term|.
 
+\begin{shade}
 \begin{spec}
 N-ary : (n : ℕ) → Set → Set → Set
 N-ary zero       A B = B
@@ -868,6 +922,7 @@ lookupName (arity \# x ↦ x₁ ∷ tab) name with name ≟-Name x
 ... | yes p      = just (arity \# x ↦ x₁)
 ... | no ¬p      = lookupName tab name
 \end{spec}
+\end{shade}
 
 With the above ingredients we can now define the function |convert| below, which, given a mapping of
 type |Table a|, where $a$ is the type we would like to cast to, for example |Expr|, and a
@@ -898,6 +953,7 @@ The function that does this conversion for us looks like this. Note that it isn'
 be called directly; a convenience function |doConvert| is defined below. 
 
 \ignore{
+\begin{shade}
 \begin{code}
 
 data EqN : ℕ → ℕ → Set where
@@ -917,7 +973,9 @@ suc m ≟-ℕ zero = no
 suc m ≟-ℕ suc n = ≟-Nat-cong m n (m ≟-ℕ n)
 
 \end{code}
+\end{shade}
 }
+\begin{shade}
 \begin{spec}
 mutual
   convert : {a : Set} → Table a → Term → Maybe a
@@ -926,6 +984,7 @@ mutual
   convert (vc , tab) (def f args)       = appCons (vc , tab) f args
   convert (vc , tab)     _              = nothing
 \end{spec}
+\end{shade}
 
 
 If it encounters a variable, it just uses the constructor which stands for variables. Note that
@@ -943,6 +1002,7 @@ these new arguments.
 
 % the comment at the top of this code block fixes the indentation.
 % indentation is forgotten between code blocks, it seems.
+\begin{shade}
 \begin{spec}
 -- mutual continues...
   appCons : {a : Set} → Table a → Name → List (Arg Term) → Maybe a
@@ -962,6 +1022,7 @@ these new arguments.
   ... | just x₁      | nothing     = nothing
   ... | nothing      = nothing
 \end{spec}
+\end{shade}
 
 The functions |appCons| and |convertArgs| just check to see if the desired |Name| is present in the provided
 mapping, and if all the arguments, provided they are of the right number, also convert successfully. If
@@ -969,6 +1030,7 @@ all this is true, the converted |Term| is returned as a |just e|, where $e$ is t
 of the AST. For example, see the unit tests in Fig. \ref{fig:test-autoquote}.
 
 
+\begin{shade}
 \begin{code}
 convertManages : {a : Set} → Table a → Term → Set
 convertManages t term with convert t term
@@ -983,6 +1045,7 @@ doConvert tab t {man   }      with convert tab t
 doConvert tab t {man   }      | just x     = x
 doConvert tab t {()    }      | nothing
 \end{code}
+\end{shade}
 
 The module also exports the functions |convertManages| and |doConvert|, displayed above, which are to be used as illustrated in Fig.~\ref{fig:test-autoquote}. Here
 another instance of the trick explained in Sec.~\ref{sec:implicit-unit} is applied, namely accepting as an implicit argument the proof that a given call to |doConvert| returns
@@ -1059,21 +1122,25 @@ property |Even| below. There are two constructors: the first
 constructor says that zero is even; the second constructor states that
 if $n$ is even, then so is $2 + n$.
 
+\begin{shade}
 \begin{code}
 data Even      : ℕ → Set where
   isEven0      :                          Even 0
   isEven+2     : {n : ℕ} → Even n     →   Even (2 + n)
 \end{code}
+\end{shade}
 
 Using these rules to produce the proof that some large number |n| is
 even can be very tedious: the proof that $2 \times n$ is even requires |n|
 applications of the |isEven+2| constructor. For example, here is the
 proof that 6 is even:
 
+\begin{shade}
 \begin{code}
 isEven6 : Even 6
 isEven6 = isEven+2 (isEven+2 (isEven+2 isEven0))
 \end{code}
+\end{shade}
 
 To automate this, we will show how to \emph{compute} the proof
 required. We start by defining a predicate |even?| that
@@ -1085,12 +1152,14 @@ claim, at least. The idea
 of ``there exists'' is perfectly modelled by the unit and empty types,
 since the unit type has one inhabitant, the empty type none.
 
+\begin{shade}
 \begin{code}
 even? : ℕ → Set
 even? 0                 = ⊤
 even? 1                 = ⊥
 even? (suc (suc n))     = even? n
 \end{code}
+\end{shade}
 
 
 Next we need to show that the |even?| function is \emph{sound}, that
@@ -1102,12 +1171,14 @@ actually happening here is that we are giving a recipe for
 constructing proof trees, such as the one we manually defined for
 |isEven6|.
 
+\begin{shade}
 \begin{code}
 soundnessEven : {n : ℕ} → even? n → Even n
 soundnessEven {0}              tt        = isEven0
 soundnessEven {1}              ()
 soundnessEven {suc (suc n)}    s         = isEven+2 (soundnessEven s)
 \end{code}
+\end{shade}
 
 Note that in the case branch for 1, we do not need to provide a
 right-hand side of the function definition. The assumption, |even?
@@ -1122,6 +1193,7 @@ that |even? n| is inhabited. For any closed term, such as the numbers |28|
 or |8772|, this proof obligation can be reduced to proving 
 |⊤|, which is proven by the single constructor it has, |tt|.
 
+\begin{shade}
 \begin{code}
 isEven28        : Even 28
 isEven28        = soundnessEven tt
@@ -1129,6 +1201,7 @@ isEven28        = soundnessEven tt
 isEven8772      : Even 8772
 isEven8772      = soundnessEven tt
 \end{code}
+\end{shade}
 
 Now we can easily get a proof that arbitrarily large numbers are even,
 without having to explicitly write down a large proof tree. Note that
@@ -1194,10 +1267,12 @@ that variables (represented by |Atomic|) are always in scope. If we want to
 evaluate the expression, however, we will need some way to map variables to values.
 Enter |Env n|, it has fixed size $n$ since a |BoolExpr n| has $n$ free variables.
 
+\begin{shade}
 \begin{code}
 Env   : ℕ → Set
 Env   = Vec Bool
 \end{code}
+\end{shade}
 
 Now we can define a decision function, which decides if a given
 Boolean expression is true or not, under some assignment of variables. It does this by evaluating
@@ -1208,6 +1283,7 @@ the Boolean function |_∧_|, and its two arguments in turn are
 recursively interpreted.
 
 \ignore{
+\begin{shade}
 \begin{code}
 infixr 4 _⇒_
 _⇒_ : Bool → Bool → Bool
@@ -1216,8 +1292,10 @@ true  ⇒ false = false
 false ⇒ true  = true
 false ⇒ false = true
 \end{code}
+\end{shade}
 }
 
+\begin{shade}
 \begin{code}
 ⟦_⊢_⟧ : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
 ⟦ env     ⊢ Truth       ⟧ = true
@@ -1228,6 +1306,7 @@ false ⇒ false = true
 ⟦ env     ⊢ Imp be be₁  ⟧ =     ⟦ env ⊢ be ⟧     ⇒      ⟦ env ⊢ be₁ ⟧
 ⟦ env     ⊢ Atomic n    ⟧ = lookup n env
 \end{code}
+\end{shade}
 
 Recall our decision function |even?| in the previous section. It returned
 |⊤| if the proposition was valid, |⊥| otherwise. Looking at |⟦_⊢_⟧|, we see that
@@ -1237,6 +1316,7 @@ the analogue of the |even?| function.
 We call this function |P|, the string parameter serving to give a clearer type error
 to the user, if possible.
 
+\begin{shade}
 \begin{code}
 data Error (e : String) : Set where
 
@@ -1247,13 +1327,17 @@ So   err      false    = Error err
 P    : Bool → Set
 P    = So "Argument expression does not evaluate to true."
 \end{code}
+\end{shade}
 \ignore{
+\begin{shade}
 \begin{code}
 data Diff : ℕ → ℕ → Set where
   Base : ∀ {n}   → Diff n n
   Step : ∀ {n m} → Diff (suc n) m → Diff n m
 \end{code}
+\end{shade}
 
+\begin{shade}
 \begin{code}
 -- peels off all the outermost Pi constructors,
 -- returning a term with freeVars free variables.
@@ -1395,6 +1479,7 @@ zeroleast k zero    = coerceDiff (zeroId k) Base
 zeroleast k (suc n) = Step (coerceDiff (succLemma k n) (zeroleast (1 + k) n))
 
 \end{code}
+\end{shade}
 }
 
 
@@ -1435,6 +1520,7 @@ evaluates to |true| in every leaf. This corresponds precisely to $b$ being a tau
 
 The |Diff| argument is unfortunately needed to prove that |forallsAcc| will eventually produce a
 tree with depth equal to the number of free variables in an expression. 
+\begin{shade}
 \begin{code}
 forallsAcc : {n m : ℕ} → BoolExpr m → Env n → Diff n m → Set
 forallsAcc b acc    (Base     ) = P ⟦ acc ⊢ b ⟧
@@ -1444,13 +1530,16 @@ forallsAcc b acc    (Step y   ) =
 foralls : {n : ℕ} → BoolExpr n → Set
 foralls {n} b = forallsAcc b [] (zeroleast 0 n)
 \end{code}
+\end{shade}
 
 Now we finally know our real decision function, we can set about proving its
 soundness. Following the evens example, we want a function something like this.
 
+\begin{shade}
 \begin{spec}
 sound : {n : ℕ} → (b : BoolExpr n) → foralls b → ...
 \end{spec}
+\end{shade}
 What should the return type of the |sound| lemma be? We would like to
 prove that the argument |b| is a tautology, and hence, the |sound|
 function should return something of the form |(b1 ... bn : Bool) -> P
@@ -1469,6 +1558,7 @@ environment.
 Refer to Sec.~\pref{sec:explain-diff} for
 a thorough explanation of the parameter |Diff n m| which, like here in |proofGoal|, is also passed into |forallsAcc|.
 
+\begin{shade}
 \begin{code}
 proofGoal   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
 proofGoal   .m   m    (Base    ) b acc = P ⟦ acc ⊢ b ⟧ 
@@ -1476,8 +1566,10 @@ proofGoal   n    m    (Step y  ) b acc =
   (a : Bool) →
       proofGoal (1 + n) m y b (a ∷ acc)
 \end{code}
+\end{shade}
 
 \ignore{
+\begin{shade}
 \begin{code}
 -- dependently typed if-statement
 if : {P : Bool → Set} → (b : Bool) → P true → P false → P b
@@ -1488,6 +1580,7 @@ if false t f = f
 Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
 Error-elim ()
 \end{code}
+\end{shade}
 }
 
 Now that we can interpret a |BoolExpr n| as a theorem using |proofGoal|, and we have a
@@ -1501,6 +1594,7 @@ possible assignment of its variables to |true| or |false|.
 
 
 
+\begin{shade}
 \begin{code}
 soundnessAcc :   {m : ℕ} →          (b : BoolExpr m) →
                  {n : ℕ} →          (env : Env n) →
@@ -1514,17 +1608,20 @@ soundnessAcc {m} bexp {n} env (Step y) H =
     (soundnessAcc bexp (true  ∷ env)    y (proj₁ H))
     (soundnessAcc bexp (false ∷ env)    y (proj₂ H))
 \end{code}
+\end{shade}
 
-\begin{code}
-soundness       : {n : ℕ} → (b : BoolExpr n) → foralls b
-                → proofGoal 0 n (zeroleast 0 n) b []
-soundness {n} b i = soundnessAcc b [] (zeroleast 0 n) i
-\end{code}
 
 If we look closely at the definition of |soundnessAcc|, we see that it
 builds up the environment by assigning all possible values to variables. It eventually returns the
 leaf from |foralls| which is the proof that the formula is a tautology
 in that specific case. 
+\begin{shade}
+\begin{code}
+soundness       : {n : ℕ} → (b : BoolExpr n) → foralls b
+                → proofGoal 0 n (zeroleast 0 n) b []
+soundness {n} b i = soundnessAcc b [] (zeroleast 0 n) i
+\end{code}
+\end{shade}
 The function |soundness| calls
 |soundnessAcc| with some initial input, namely the |BoolExpr n|, an
 empty environment, and the |Diff| proof that |soundnessAcc| will be called
@@ -1614,6 +1711,7 @@ had a parameter of type |Diff n m|. Recalling the function's
 definition, note that there are two variables, $n$ and $m$ giving the size of the environment
 and the maximum number of bound variables in the proposition, respectively. 
 
+\begin{shade}
 \begin{spec}
 proofGoal   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
 proofGoal   .m   m    (Base    ) b acc = P ⟦ acc ⊢ b ⟧ 
@@ -1621,6 +1719,7 @@ proofGoal   n    m    (Step y  ) b acc =
   (a : Bool) →
       proofGoal (1 + n) m y b (a ∷ acc)
 \end{spec}
+\end{shade}
 
 This cannot be 
 right, since our interpretation function |⟦_⊢_⟧| requires that these $m$ and $n$ are equal.
@@ -1666,16 +1765,20 @@ convert it to its corresponding |BoolExpr| automatically.
 
 The conversion between a |Term| and |BoolExpr| is achieved using the
 |concrete2abstract| function:
+\begin{shade}
 \begin{code}
 concrete2abstract    :     (t     : Term)        → (n : ℕ)
                      →     {pf    : isSoExprQ (stripPi t)}
                      →     {pf2   : isBoolExprQ n (stripPi t) pf}
                      →     BoolExpr n
 \end{code}
+\end{shade}
 \ignore{
+\begin{shade}
 \begin{code}
 concrete2abstract t n {pf} {pf2} = term2boolexpr n (stripSo (stripPi t) pf) pf2
-\end{code}}\!\!
+\end{code}
+\end{shade}}\!\!
 Note that not every |Term| can be converted to a |BoolExpr|. The
 |concrete2abstract| function requires additional assumptions about the
 |Term|: it should only contain functions such as |_∧_| or |_∨_|, and
@@ -1711,13 +1814,16 @@ term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) pf | no ¬p wi
 All these pieces are assembled in the |proveTautology| function.
 
 \ignore{
+\begin{shade}
 \begin{code}
 freeVars : Term → ℕ
 freeVars (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = 1 + (freeVars t)
 -- identity otherwise
 freeVars    _         = 0
 \end{code}
+\end{shade}
 }
+\begin{shade}
 \begin{code}
 proveTautology :    (t     : Term) →
                     {pf    : isSoExprQ (stripPi t)} →
@@ -1729,6 +1835,7 @@ proveTautology :    (t     : Term) →
 proveTautology t {_}{_}{i} = 
   soundness (concrete2abstract t (freeVars t)) i
 \end{code}
+\end{shade}
 The |proveTautology| function converts a raw |Term| to a |BoolExpr n|
 format and calls the |soundness| lemma. It uses a few auxiliary
 functions such as |freeVars|, which counts the number of variables
@@ -1745,6 +1852,7 @@ formulae are tautologies.  The following code illustrates the use of
 the |proveTautology| functions; we can omit the implicit arguments for
 the reasons outlined in Sec.~\ref{sec:implicit-unit}.
 
+\begin{shade}
 \begin{code}
 exclMid    : (b : Bool) → P(b ∨ ¬ b)
 exclMid    = quoteGoal e in proveTautology e
@@ -1755,6 +1863,7 @@ peirce     = quoteGoal e in proveTautology e
 fave       : exampletheorem -- defined in Fig.~\ref{fig:exampletheorem}
 fave       = quoteGoal e in proveTautology e
 \end{code}
+\end{shade}
 
 
 This shows that the reflection capabilities recently added to Agda are quite useful for
@@ -1802,6 +1911,7 @@ De Bruijn-indexed variables and what the arity is of the different constructors.
 only |Term|s with and, or, not, true or false are accepted. Using this mapping, we can construct
 the function |term2boolexpr'| which, for suitable |Term|s, gives us an expression in |BoolInter|. 
 
+\begin{shade}
 \begin{code}
 boolTable : Table BoolInter
 boolTable = (Atomic ,
@@ -1817,6 +1927,7 @@ term2boolexpr'     : (t : Term)
                    → BoolInter
 term2boolexpr' t {pf} = doConvert boolTable t {pf}
 \end{code}
+\end{shade}
 
 Once we have a |BoolInter| expression, we just need to check that its
 variables are all in-scope (this means that $\forall$ |Atomic| $x$ s.t. $x < n$, if we
@@ -1824,6 +1935,7 @@ want to convert to a |BoolExpr n|). This is done in |bool2fin|, assuming that |b
 holds (the latter simple expresses the aforementioned in-scope property).
 
 \ignore{
+\begin{shade}
 \begin{code}
 bool2finCheck : (n : ℕ) → (t : BoolInter) → Set
 bool2finCheck n Truth        = ⊤
@@ -1847,7 +1959,9 @@ bool2fin n (Atomic x)  p₁ with suc x ≤? n
 bool2fin n (Atomic x)  p₁ | yes p  = Atomic (fromℕ≤ {x} p)
 bool2fin n (Atomic x)  () | no ¬p
 \end{code}
+\end{shade}
 }
+\begin{shade}
 \begin{spec}
 bool2finCheck : (n : ℕ) → (t : BoolInter) → Set
 bool2finCheck n Truth        = ⊤
@@ -1865,11 +1979,13 @@ bool2fin n (Atomic x)  p₁       with suc x ≤? n
 bool2fin n (Atomic x)  p₁       | yes p    = Atomic (fromℕ≤ {x} p)
 bool2fin n (Atomic x)  ()       | no ¬p
 \end{spec}
+\end{shade}
 
 With these ingredients, our |concrete2abstract| function presented in Sec.~\ref{sec:addrefl}
 can be rewritten to the following  drop-in replacement, illustrating how useful such an
 abstraction can be. 
 
+\begin{shade}
 \begin{spec}
 concrete2abstract :
          (t : Term)
@@ -1884,6 +2000,7 @@ concrete2abstract t {pf} {pf2} fin = bool2fin     (freeVars t)
                                                     {pf2})
                                                   fin
 \end{spec}
+\end{shade}
 
 This example illustrates how the |Autoquote| module can save a lot
 of repetitive coding for converting an Agda |Term| into some invariant-preserving
@@ -2061,11 +2178,13 @@ a transliteration of the STLC typing rules introduced in Fig.~\ref{fig:stlc-rule
 save the addition of a size parameter.
 
 \ignore{
+\begin{shade}
 \begin{code}
 open import Metaprogramming.ExampleUniverse
 open DT renaming (U' to Uu)
 open import Metaprogramming.Util.Equal
 \end{code}
+\end{shade}
 }
 \begin{shadedfigure}[h]
 \begin{code}
@@ -2141,10 +2260,12 @@ are well-scoped, the only way to
 introduce variables (remembering that they require a proof of being in the context) is to first introduce an abstraction
 which extends the environment. This leads us to define the following alias for well-typed \emph{and} well-scoped terms.
 
+\begin{shade}
 \begin{spec}
 Well-typed-closed : Uu → ℕ → Set
 Well-typed-closed = WT' []
 \end{spec}
+\end{shade}
 
 Looking at the data type constructor by constructor, we first encounter the |Var| constructor.
 This stands for variables in lambda abstractions. A variable only has one argument, namely a proof
@@ -2230,37 +2351,44 @@ representable in |WT'|, it must be both well-scoped and well-typed.
 The |infer| algorithm, which provides the |Infer| view and therefore generates
 |WT'| terms corresponding to |Raw| terms, is presented here, in sections.
 
+\begin{shade}
 \begin{code}
 infer : (Γ : Ctx)(e : Raw) → Infer Γ e
 infer Γ (Lit ty x) = ok 1 (O ty) (Lit {x = ty} x)
 \end{code}
+\end{shade}
 
 Of course, a literal on its own is always well-typed, and corresponds to a |WT'| with whatever type the literal has.
 A variable is similarly easy to type check, except that it should not point outside the context, that is, it should
 have a De Bruijn index smaller than or equal to its depth. Here we do a lookup of the variable and return whatever type the
 context says it has, or, if it is out-of-scope, we return |bad|.
 
+\begin{shade}
 \begin{code}
 infer Γ (Var x)                    with Γ ! x
 infer Γ (Var .(index p))           | inside σ p = ok 1 σ (Var p)
 infer Γ (Var .(length Γ + m))      | outside m = bad
 \end{code}
+\end{shade}
 
 The case for abstractions is well-typed if the body of the lambda is well-typed, under a context extended with the
 type of the variable the lambda binds (indeed, binding a variable adds it to the context for the body of the abstraction,
 its index being 0, since it is the ``most recent'' binding). The type of the abstraction is, as argued above, a function from
 the type of the binding to the type of the body.
 
+\begin{shade}
 \begin{code}
 infer Γ (Lam σ e)              with infer (σ ∷ Γ) e
 infer Γ (Lam σ .(erase t))     | ok n τ t    = ok _ (σ => τ) (Lam σ t)
 infer Γ (Lam σ e)              | bad         = bad
 \end{code}
+\end{shade}
 
 The application case is the most verbose, since we need to check the type of the applicand (called $e$ in the code), and assuming it
 has an arrow type (otherwise something is wrong), we then have to check that the argument (called $e_1$ in the code) has the same type as
 the left-hand side of the arrow. If all goes well, we are done.
 
+\begin{shade}
 \begin{code}
 infer Γ (App e e₁) with infer Γ e
 infer Γ (App .(erase t) e₁)    | ok n (Cont a) t       = bad
@@ -2275,6 +2403,7 @@ infer Γ (App .(erase t₁) .(erase t₂))
 infer Γ (App .(erase t) e₁)    | ok n (τ => τ₁) t      | bad            = bad
 infer Γ (App e e₁)             | bad                   = bad
 \end{code}
+\end{shade}
 
 
 The code which does all of this can be found in |Metaprogramming.TypeCheck|, the views and data type definitions are in |Metaprogramming.Datatypes|.
@@ -2290,10 +2419,13 @@ conversion code is uninteresting and quite similar to the code presented in Sec.
 Since we have a conversion function from |Term| to |Raw| at our disposal, as well as a type checker, it is tempting to write something like the following.
 
 \ignore{
+\begin{shade}
 \begin{code}
 open TC
 \end{code}
+\end{shade}
 }
+\begin{shade}
 \begin{code}
 testgoal1 : Raw
 testgoal1 = term2raw (quoteTerm λ (b : ℕ → ℕ) → (λ (x : ℕ) → b x))
@@ -2307,6 +2439,7 @@ seeTypedgoal1 : typedgoal1 ≡
                           (Var (there here) ⟨ Var here ⟩))
 seeTypedgoal1 = refl
 \end{code}
+\end{shade}
 
 What we now have, is an automatic quoting of lambda terms into well-typed |WT'| terms. Note that we are required to annotate the binders
 with types, because otherwise the |quoteTerm| keyword will return a lambda term with |unknown| as the type annotation, which our type checker will not
@@ -2337,12 +2470,14 @@ means an unknown sort and unknown type. In this case, Agda will just
 infer the type before splicing the term into the concrete code. We know
 this will succeed, since |WT'| terms are well-typed.
 
+\begin{shade}
 \begin{spec}
 lam2term : {σ : Uu} {Γ : Ctx} {n : ℕ} → WT' Γ σ n → Term
 lam2term (Lit {_}{σ} x)   = quoteBack σ x
 lam2term (Var x)          = var (index x) []
 lam2term (Lam σ t)        = lam visible pleaseinfer (lam2term t)
 \end{spec}
+\end{shade}
 
 The application case on the other hand is curious. Unfortunately this is motivated by
 practical limitations. The |Term| AST only allows introduction of applications with the |var| and |def| constructors,
@@ -2351,17 +2486,20 @@ which stand for variables or definitions applied to a list of variables, respect
 it the actual application-arguments in the expected list-format.
 
 
+\begin{shade}
 \begin{spec}
 lam2term (t₁ ⟨ t₂ ⟩)      = def (quote Apply)
                      (        arg visible relevant (lam2term t₁) ∷
                               arg visible relevant (lam2term t₂) ∷ [])
 \end{spec}
+\end{shade}
 
 We also would like to be able to recover the type of the term in concrete Agda. We first reconstruct a term of type |Type|, Agda's
 representation of types. These functions are also unsurprising: arrows are translated to arrows, and for base types we must once again
 invoke a user-defined function which can interpret their universe values to Agda types. The |Cont| case should be ignored for now,
 since it has to do with the CPS transformation, which is introduced in Sec.~\ref{sec:cps}.
 
+\begin{shade}
 \begin{spec}
 el' : Uu → Set
 el' (O x)         = Uel x
@@ -2371,10 +2509,12 @@ el' (Cont t)      = ⊥
 lam2type : {σ : Uu} {Γ : Ctx} {n : ℕ} → WT' Γ σ n → Set
 lam2type {σ} t = el' σ
 \end{spec}
+\end{shade}
 
 
 Once we have these functions, it is easy to introduce a concrete function from a |WT'| term as follows, using |unquote| and |lam2term|.
 
+\begin{shade}
 \begin{code}
 concrete :          lam2type typedgoal1
 concrete = unquote (lam2term typedgoal1)
@@ -2382,6 +2522,7 @@ concrete = unquote (lam2term typedgoal1)
 unittest : concrete ≡ λ (a : ℕ → ℕ) → λ (b : ℕ) → a b
 unittest = refl
 \end{code}
+\end{shade}
 
 Note that the types are also preserved, since, even though we drop the annotations on the lambda terms when interpreting, we do give |concrete| a
 type signature which reflects the intended type of the lambda term. Therefore, the unit test would have failed if we omitted the |ℕ| annotations on the
@@ -2415,9 +2556,11 @@ consider the example where one wants to print an integer, but before doing so, w
 to call, on that number, the function which increases integers by 1. That might look something like
 this fictional functional code.
 
+\begin{shade}
 \begin{spec}
 main = print (suc 5)
 \end{spec}
+\end{shade}
 
 If the idea of \emph{returning} values is forbidden, how then must one use the result of |suc|? The answer is
 to do a transformation on the code; a continuation-passing style transformation. This name refers
@@ -2426,6 +2569,7 @@ are passed, as an additional parameter, a function to call on the result, instea
 
 The following translation provides an example.
 
+\begin{shade}
 \begin{code}
 factorial : ℕ → ℕ
 factorial 0         = 1
@@ -2438,6 +2582,7 @@ factCPS (suc n)    k      = factCPS n (\ f -> mult f (suc n) k)
     mult : {a : Set} → ℕ -> ℕ -> (ℕ → a) → a
     mult n m k = k (n * m)
 \end{code}
+\end{shade}
 
 Here we have translated the function by adding a new parameter (called |k|) which is called on the original
 result of the computation, instead of just returning that result. In the base case the translation was trivial,
@@ -2452,23 +2597,27 @@ the result of the computation is returned unchanged. Notice, though, that the ty
 is necessarily different from the original function.
 
 \ignore{
+\begin{shade}
 \begin{code}
 id : {A : Set}  → A → A
 id x = x
 open  import Relation.Binary.EqReasoning
 \end{code}
+\end{shade}
 }
 
 Some anecdotal evidence that our CPS-transformed function does, indeed, perform
 as we expect it to.
 
 
+\begin{shade}
 \begin{code}
 equivFact1 : factorial 1 ≡ factCPS 1 id
 equivFact1 = refl
 equivFact5 : factorial 5 ≡ factCPS 5 id
 equivFact5 = refl
 \end{code}
+\end{shade}
 
 
 This transformation can be done in a mechanical way, too. Also the type we
@@ -2496,17 +2645,21 @@ and finally dictate that the resulting function will also return a value in |RT|
 first and second arguments. The |Cont| case stands for the type of a continuation function, which is obtained
 by going from the CPS-transformed original return type to the result type |RT|. 
 \ignore{
+\begin{shade}
 \begin{code}
 open CPS' hiding (cpsType ; T)
 \end{code}
+\end{shade}
 }
 
+\begin{shade}
 \begin{code}
 cpsType : Uu → Uu
 cpsType (O x)           = O x
 cpsType (t => t₁)       = cpsType t => (cpsType t₁ => RT) => RT
 cpsType (Cont t)        = cpsType t => RT
 \end{code}
+\end{shade}
 
 The type we would like our transformation function to have is something which takes
 as input a term with some environment and type (|WT' Γ σ|), a
@@ -2516,11 +2669,13 @@ function must not rely on any variables which are not in the scope of the to-be-
 and must produce a value of type |RT|.
 If these are then applied to each other, a value of type |RT| will be returned.
 
+\begin{shade}
 \begin{spec}
 Tt : {σ : Uu} {Γ : Ctx}      → WT'      Γ                      σ
                              → WT'      (map cpsType Γ)        (cpsType (Cont σ))
                              → WT'      (map cpsType Γ)        RT
 \end{spec}
+\end{shade}
 
 The case for literals and variables is, as usual, not very difficult. All that happens here is
 that the continuation function is applied to the original term. The size arguments to |WT'| have been omitted
@@ -2534,12 +2689,14 @@ environment |Γ|, then it will also be inside the new environment |map cpsType �
 signature of |cpsvar| is given for reference; the proof is trivial.\todo{give type signatures of proofs which may not be crystal clear.}
 
 
+\begin{shade}
 \begin{spec}
 cpsvar : ∀ {t g} → t ∈ g → cpsType t ∈ map cpsType g
 
 Tt (Lit x)                                     cont = cont ⟨ Lit x ⟩
 Tt (Var inpf  )                                cont = cont ⟨ Var (cpsvar inpf) ⟩
 \end{spec}
+\end{shade}
 
 The case for lambdas is slightly more involved: When it sees a lambda
 term, it adds a fresh continuation parameter, having type |Cont t2|,
@@ -2555,6 +2712,7 @@ though we are introducing two abstractions, only one is new, since we
 are rebuilding the original lambda term but assigning the argument a
 new type, namely |cpsType t1|.
 
+\begin{shade}
 \begin{spec}
 shift1 : ∀ {Γ τ n} → (τ₀ : Uu) → WT Γ τ n → WT (τ₀ ∷ Γ) τ n
 
@@ -2568,6 +2726,7 @@ Tt {t1 => t2} (Lam .t1 expr) cont
                      ⟩
 
 \end{spec}
+\end{shade}
 
 Finally, we have the application case. Here, the values of both the applicand and the argument have to be
 converted into CPS.
@@ -2577,6 +2736,7 @@ newly-created continuations; note that both of the lambda abstractions are
 continuations.
 
 
+\begin{shade}
 \begin{spec}
 Tt .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂} f e)     cont =
   Tt f (Lam (cpsType (σ₁ => σ₂))
@@ -2584,6 +2744,7 @@ Tt .{σ₂} {Γ} (_⟨_⟩ .{_}{σ₁}{σ₂} f e)     cont =
                         (Var (there here) ⟨ Var here ⟩  
                             ⟨ shift1 (cpsType σ₁) (shift1 (cpsType (σ₁ => σ₂)) cont) ⟩ ))))
 \end{spec}
+\end{shade}
 First |f|, the applicand, is transformed, with a new abstraction as the continuation. This abstraction
 must have a variable of the type of |f|, since it is the continuation which is to be invoked on |f|. The body
 of the abstraction is then the CPS transformation of |e| (after having shifted all the De Bruijn-indices up by 1
@@ -2610,6 +2771,7 @@ reader is referred to Bove and Capretta's work for a thorough guide to this usef
 After inspecting the recursive structure of the algorithm |Tt| we come to the conclusion that the data type |TAcc| presented below
 will do the job just fine.
 
+\begin{shade}
 \begin{spec}
 data TAcc : {Γ : Ctx} {σ : Uu} {n : ℕ} → WT' Γ σ n → Set where
   TBaseLit      : ∀     {Γ σ x} → TAcc (Lit {Γ} {σ} x)
@@ -2624,6 +2786,7 @@ data TAcc : {Γ : Ctx} {σ : Uu} {n : ℕ} → WT' Γ σ n → Set where
          → TAcc (shift1 (σ => σ₁) b)
          → TAcc (a ⟨ b ⟩)
 \end{spec}
+\end{shade}
 
 In |TAcc|, each constructor of |WT'| finds its analogue, and these proof terms are built having as arguments
 the proofs that |TAcc| can be constructed from the similar proofs on the arguments. Notice that the type |TAcc| has
@@ -2633,6 +2796,7 @@ We can now add this |TAcc| argument to all the calls in |Tt|, and Agda is now co
 to prove that for all elements of |wt ∈ WT'| we can construct a |TAcc wt|. The proof is as obvious as the data type was: we simply recurse
 on the arguments of the constructors.
 
+\begin{shade}
 \begin{spec}
 allTsAcc : ∀ {Γ σ n} → (wt : WT' Γ σ n) → TAcc wt
 allTsAcc (Var x)                     = TBaseVar
@@ -2643,6 +2807,7 @@ allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁} wt wt₁)    =
           TApp            (allTsAcc wt)
                           (allTsAcc (shift1 (σ => σ₁) wt₁))
 \end{spec}
+\end{shade}
 
 But, horror! Agda now is suspicious that this function, |allTsAcc|, which is meant to give us the proof
 that |Tt| terminates given any |WT'| term, does not terminate either! We also cannot apply Bove and Capretta's trick
@@ -2661,18 +2826,22 @@ quickly.
 We can, however, circumvent this problem by defining a wrapper which is isomorphic to |WT'|, but
 at the same time an element of |Set|. We will define this wrapper, |WTwrap|, as follows.
 
+\begin{shade}
 \begin{code}
 WTwrap : Set
 WTwrap = Σ ℕ (λ n → Σ Uu (λ σ → Σ Ctx (λ Γ → WT' Γ σ n)))
 \end{code}
+\end{shade}
 
 What is happening here is that we have defined a few nested dependent pairs, thus ``hiding'' the pi-type, which is what was causing us
 the headache. We will also need a function |to| to convert from |WT'| into our wrapper type, but it is equally mundane.
 
+\begin{shade}
 \begin{code}
 to' : ∀ {Γ σ n} → WT' Γ σ n → WTwrap
 to' {Γ}{σ}{n} wt = n , σ , Γ , wt
 \end{code}
+\end{shade}
 
 Now that we have this small bit of machinery, we can import the standard library's notion of well-foundedness and show that our measure,
 namely smaller than or equal to for |WT'| elements, is well-founded.
@@ -2680,10 +2849,13 @@ namely smaller than or equal to for |WT'| elements, is well-founded.
 We begin by showing that smaller-than is a well-founded relation on naturals.
 
 \ignore{
+\begin{shade}
 \begin{code}
 open import Induction.WellFounded
 \end{code}
+\end{shade}
 }
+\begin{shade}
 \begin{code}
 <-ℕ-wf : Well-founded _<_
 <-ℕ-wf x = acc (aux x)
@@ -2693,12 +2865,14 @@ open import Induction.WellFounded
     aux (suc x₁)     .x₁        <-base          = <-ℕ-wf x₁
     aux (suc x₁)     y          (<-step m)      = aux x₁ y m
 \end{code}
+\end{shade}
 
 Now we use a lemma called Inverse-image from the |Induction.WellFounded| standard library module which shows that
 if we have some measure on a carrier, and a way to map some new type to this carrier type, we can
 lift the well-foundedness to the new type. We instantiate this lemma using our |WTwrap| wrapper, less-than on
 naturals, and a function |sz| which simply reads the size-index which we already included in |WT'| in Fig.~\ref{fig:stlc-data}.
 
+\begin{shade}
 \begin{spec}
 module <-on-sz-Well-founded where
   open Inverse-image {_} {WTwrap} {ℕ} {_<_} sz public
@@ -2709,11 +2883,13 @@ module <-on-sz-Well-founded where
   wf : Well-founded _≺_
   wf = well-founded <-ℕ-wf
 \end{spec}
+\end{shade}
 
 Next we must show that recursing on smaller or equal arguments is also fine, and that shifting the De Bruijn indices does not change the
 ordering of two elements (|shift-pack-size|). Note that |weak| is a generalised weakening function, which |shift1| uses to add one type variable on top of the context stack
 and increase the De Bruijn indices by 1.
 
+\begin{shade}
 \begin{spec}
   _≼_ : Rel WTwrap _
   x ≼ y = sz x < (1 + sz y)
@@ -2722,6 +2898,7 @@ and increase the De Bruijn indices by 1.
                                           → to (weak {Γ'}{σ}{Γ} x τ) ≼ to x
   shift-pack-size = ...
 \end{spec}
+\end{shade}
 
 Note that for this to work, the natural number parameter to |WT'|, which stands for a measure of expression size, is
 necessary, since if this was missing we would have to define a fold on |WT'| resulting in size instead of the simple projection
@@ -2732,6 +2909,7 @@ Once we have these ingredients, we can assemble it all to show that all calls to
 the function that returns this proof itself also terminates. This leads to the following definition of function |Tt| which maps
 expressions and continuations to CPS-style expressions. Our |allTsAcc| function now looks like this, showing only the ``interesting'' clauses.
 
+\begin{shade}
 \begin{spec}
   allTsAcc : ∀ {Γ σ n}          → (wt : WT' Γ σ n)
                                 → Acc _≺_ (to wt)
@@ -2746,17 +2924,21 @@ expressions and continuations to CPS-style expressions. Our |allTsAcc| function 
                           (allTsAcc (shift1 (σ => σ₁) wt₁)
                                   (x (to (shift1 (σ => σ₁) wt₁)) (n<1+m+n {_}{n})) )
 \end{spec}
+\end{shade}
 
 We now can export the final |Tt| translation function as follows, so the user of the library need not worry about
 termination proofs. |Tt| terminates on all inputs anyway.
 
 \ignore{
+\begin{shade}
 \begin{code}
 open import Metaprogramming.WTWellfounded
 open <-on-sz-Well-founded ; open TLemma
 \end{code}
+\end{shade}
 }
 
+\begin{shade}
 \begin{spec}
 T : {σ : Uu} {Γ : Ctx} {n m : ℕ}
        → (wt : WT' Γ σ n)
@@ -2764,6 +2946,7 @@ T : {σ : Uu} {Γ : Ctx} {n m : ℕ}
        → WT' (map cpsType Γ) RT (sizeCPS n wt (allTsAcc wt (wf (to wt))) m)
 T wt cont = Tt wt (allTsAcc wt (wf (to wt))) cont
 \end{spec}
+\end{shade}
 
 
 The developments mentioned here, as well as termination proofs, can be found in
@@ -2815,9 +2998,11 @@ and thus is closed. We need these variables for intermediate results from the tr
 Note also that we have as much type safety in |Comb| as we have in |WT'|, on account of the types of the arguments to the constructors
 needing to have sensible types.
 \ignore{
+\begin{shade}
 \begin{code}
 open SKI' hiding (compile ; lambda ; Srep ; Irep ; Krep ; ski2wt )
 \end{code}
+\end{shade}
 }
 
 \begin{shadedfigure}[h]
@@ -2894,9 +3079,11 @@ which is pretty boring, is to be found in Fig.~\ref{fig:compile}, and the more i
 does the swizzling of lambda abstractions and variable references, is in Fig.~\ref{fig:lambda}.
 
 \ignore{
+\begin{shade}
 \begin{code}
 mutual
 \end{code}
+\end{shade}
 }
 
 \begin{shadedfigure}
@@ -2950,6 +3137,7 @@ These reasons lead to the belief that the algorithm presented here is the most e
 With this machinery in place, we can now successfully convert closed lambda expressions
 to SKI combinator calculus.
 
+\begin{shade}
 \begin{spec}
 testTermWT : Well-typed-closed (typeOf (
          term2raw (quoteTerm λ (n : ℕ → ℕ) → λ (m : ℕ) → n m ))) _
@@ -2960,6 +3148,7 @@ unitTest1 : compile testTermWT ≡
     S ⟨ S ⟨ K ⟨ S ⟩ ⟩ ⟨ S ⟨ K ⟨ K ⟩ ⟩ ⟨ I ⟩ ⟩ ⟩ ⟨ K ⟨ I ⟩ ⟩
 unitTest1 = refl
 \end{spec}
+\end{shade}
 
 Here we see how the existing lambda expression quoting system is used to read a
 concrete Agda lambda expression into a |WT'| value, which is then |compile|d to
@@ -2971,10 +3160,12 @@ since, while being a Turing complete language, the SKI calculus obviously is not
 make the resulting terms a little more readable, one might consider adding extra combinators, called supercombinators, such as, for example,
 the |o| combinator, defined as follows \cite{dolio}.
 
+\begin{shade}
 \begin{code}
 o : ∀ {A B C} → Combinator ((B => C) => (A => B) => A => C)
 o = S ⟨ K ⟨ S ⟩ ⟩ ⟨ K ⟩
 \end{code}
+\end{shade}
 
 Notice that the |o| supercombinator is really just function composition, as can be
 seen by the type signature. We take a function |f| and a function |g| as the first two arguments,
@@ -3112,10 +3303,12 @@ ideas for future work are outlined in Sec.~\ref{sec:ornamentation}.
 
 Let us start with an example. Imagine a user has the following definition for a data type |Col|.
 
+\begin{shade}
 \begin{code}
 data Col : Set where
   Red Green Blue : Col
 \end{code}
+\end{shade}
 
 Obviously, this data type is isomorphic to |Fin 3|, the usual data type of bounded natural numbers
 indexed by an upper bound. It would be nice if we had a function which could, given the definition 
@@ -3124,10 +3317,12 @@ to the user's type. For now we will assume we have such a function -- we will ca
 the current reflection machinery, but because it is not used eventually, we will omit it as being an exercise
 to the reader to fill in.
 
+\begin{shade}
 \begin{spec}
 isoDT : Name -> Set
 isoDT = (HOLE 0)
 \end{spec}
+\end{shade}
 
 The next logical move would be to write some function, which, given the pointer to |Col|'s definition, and a 
 value in |Col|, automatically returns a corresponding value in the isomorphic data type. This should be 
@@ -3143,9 +3338,11 @@ This means that |to (quote Col)| yields a function with type |Col -> Fin 3|, ass
 generic counterpart to |Col|.
 
 Our first attempt might be as follows.
+\begin{shade}
 \begin{spec}
 to : (n : Name) → unquote (def n []) → isoDT n
 \end{spec}
+\end{shade}
 
 The problem here, though, is that even though |Col| is indeed a definition taking no arguments,
  we cannot unquote |def n []|, since at compile time $n$ is unknown, or as the Agda compiler aptly
@@ -3154,20 +3351,24 @@ puts it, \texttt{n not a literal qname value}.
 Another attempt might be the following, where we are not unquoting things at compile-time, but rather
 ask the user to provide both the reference to the data type in question and its concrete Agda representation.
 
+\begin{shade}
 \begin{spec}
 to : (n : Name) → (s : Set) → quote s ≡ def n [] → s → isoDT n
 \end{spec}
+\end{shade}
 
 Here we run into another problem: we are not allowed to call |quote s|, since at compile time $s$
 is not a defined name, but some parameter. A final attempt seems to work a little better, and at least
 compiles, although we are clutching at straws.
 
+\begin{shade}
 \begin{spec}
 to : (n : Name) → (s : Set) → quoteTerm s ≡ def n [] → s → isoDT n
 to nm s pf x = (HOLE 0)
 
 testValue = to (quote Col) Col (HOLE 1)
 \end{spec}
+\end{shade}
 
 Here the problem is that |quoteTerm| indeed manages at compile time, but since, for the same reason
 that the last attempt failed, produces a useless term, namely |var 0 []|, or a reference to the nearest-bound
@@ -3177,10 +3378,12 @@ A similar problem arises if we want to be able to ask for the list of constructo
 which is passed into a function as a parameter. 
 
 
+\begin{shade}
 \begin{spec}
 cs : (A : Set) → List Name
 cs type = ... quoteTerm type ...
 \end{spec}
+\end{shade}
 
 This gives the same problem as the previous snippet, where hole 1 was impossible, since the 
 result from |quoteTerm| is simply |var n []|, for some $n$. What would be more useful, is if the
@@ -3481,7 +3684,7 @@ few files containing Agda code, the implementations of the presented algorithms,
 paper, which is itself Literate Agda, can be found. Here a short summary is given of what each source file contains, see
 the directory tree presented in Fig.~\pref{fig:dir}.
 
-\begin{figure}[h]
+\begin{shadedfigure}[h]
 \dirtree{%
 .1 /.
 .2 \color{Blue}doc.
@@ -3514,7 +3717,7 @@ the directory tree presented in Fig.~\pref{fig:dir}.
 .4 Types.agda.
 }
 \caption{Directory listing of the source distribution for this project.}\label{fig:dir}
-\end{figure}
+\end{shadedfigure}
 
 
 The \texttt{doc} directory contains the sources for this paper, which
@@ -3544,7 +3747,7 @@ tautologies. The \texttt{Util} folder contains some file with
 uninteresting lemmas and alias definitions.
 
 \newpage
-\phantomsection \label{listoffig}\todo{is the list of figures useful?}
+\phantomsection \label{listoffig}
 \addcontentsline{toc}{chapter}{List of Figures}
 \listoffigures
 
