@@ -387,7 +387,7 @@ between explicit (usual arguments to functions, as seen in Haskell,
 for example) and implicit arguments is merely that the latter are tagged as
 hidden, and do not have to be provided if they can be inferred from the
 context. Arguments are marked hidden by surrounding them with curly braces 
-in the function (or data type) definition. This often reduces the
+in the telescope; in |head₁|, |A| is an example of such an argument. This often reduces the
 number of ``obvious'' arguments that have to be explicitly passed
 around, reducing visual clutter. Compare this to the way class constraints on Haskell 
 functions cause a dictionary to be passed around implicitly. In the |head₁| example, we need not
@@ -508,15 +508,18 @@ fact that given the specialisation of the function in the case where
 |zero| is the first argument, it can be inferred that the next
 argument should be of type |Fin zero|, which obviously has no
 inhabitants (no natural numbers are strictly smaller than
-|zero|). This is something which we cannot easily do in Haskell, but
-which is also not necessary in Haskell, since we are not required to
+|zero|). 
+
+We now can convince Agda that even though there are no alternatives provided
+for the |n == zero|  case, the function is still total.
+
+
+
+This is something which is not necessary in Haskell, since we are not required to
 write total functions. There, we are left to our own devices, and
 should be responsible programmers that do not write code that may
-trigger pattern matching failures, but in Agda, all functions must be
-total. In Sec.~\ref{sec:plandpa} we will see that this is a pivotal
-difference between Haskell and Agda, and that this sort of feature
-makes Agda usable as a logical framework, not just a programming
-language.
+trigger pattern matching failures.
+
 
 \subsection{Inferable Patterns}
 
@@ -594,6 +597,7 @@ whereas in other theorem proving systems, such as Coq, there is
  a separate
 tactic language for writing proofs \cite{coquand2006emacs}.
 
+\todo{short story about C-H isomorphism}
 
 In the previous section, the necessity of defining total functions was
 mentioned. This is no arbitrary choice, for without this property,
@@ -631,7 +635,8 @@ that point are available.
 
 \section{Implicit Record-type Arguments}\label{sec:implicit-unit}
 
-
+\todo{intro this piece!}
+\todo{this piece is dodgy!}
 Furthermore, if a particular argument is a record type, and it has
 only one possible inhabitant, Agda can automatically infer its
 value. Thus, it also need not be passed as an explicit argument at the
@@ -658,7 +663,11 @@ allows Agda to infer that there is exactly one inhabitant of a certain
 type. This $\eta$-reduction is not done on general data types, since this
 would increase the complexity of the work the compiler needs to do as
 well as potentially introduce unsound behaviour
-\cite{mcbride-motivation-eta-rules}.  Also, it means that it is possible to
+\cite{mcbride-motivation-eta-rules}.  
+
+
+\todo{what?}
+Also, it means that it is possible to
 assert to Agda that a function that returns a certain type always
 produces an inhabited value. On the other hand, single-constructor
 data types may not be inhabited if their indices cannot be satisfied
@@ -697,18 +706,14 @@ bar' = foo'
 
 This is possible, since the type |⊤ × ⊤| only has one inhabitant, namely |(tt , tt)|. If
 multiple values were valid, the above code would have resulted in an unsolved meta. That brings
-us to one of the drawbacks of this solution which has been used quite often (chiefly to ``hide''
-a proof witness of for example an input term being of the right shape), which is that if such
-an argument is ambiguous, or worse, if it is a type with no inhabitants, the compiler won't fail
-with a type error, but merely with an unsolved meta warning (highlighting the piece of code yellow
-in the Emacs Agda mode). This is particularly unfortunate when using this technique
-to hide an inferable proof of the soundness of a theorem, such as in the Boolean tautology example (Sec.~\ref{sec:Boolean-tautologies}).
-The thing is, we do not want a user to get away with being able to prove that something which is not a
-tautology, is a tautology. Since the proof that under all environments the theorem evaluates
-to true is an implicit argument in this style, one is merely left with an unsolved meta (with an uninhabitable type |⊥|, to be fair), which
-might seem a triviality if you do not read the compiler's output carefully. Luckily Agda disallows
-importing modules with unsolved metas, which means such a spurious proof will not be usable elsewhere
-in a real-life development. 
+us to one of the drawbacks of this solution which has been used quite often. Mainly, it has been used to ``hide''
+a proof witness of, for example, an input term being of the right shape.
+The problem with this trick is that if an implicit
+an argument is ambiguous, or worse, if it is a type with no inhabitants\footnote{A type with no inhabitants is a false proposition.}, the compiler will not fail
+with a type error, but merely with a warning that there is an unsolved meta. The corresponding piece of code will be highlighted yellow
+in the Emacs Agda mode, but the user will not be given any fatal error.
+
+
 
 Of course, a full introduction to the Agda language including all its
 curiosities and features is out of the scope of such a crash course;
@@ -770,6 +775,11 @@ example₀   : quoteTerm (\ (x : Bool) -> x)
 example₀   = refl
 \end{code}
 \end{shade}
+
+\todo{explain what |el| does!}
+The right-hand side of the type of |typeExample| boils down to a function of type |ℕ → ℕ|, where the |el (lit 0) x| annotations
+mean that the sort of $x$ is |Set₀| (which is the same as |Set|). 
+%%% end broken text.
 
 Dissecting
 this, we introduced a lambda abstraction, so we expect the |lam|
@@ -913,6 +923,7 @@ in Sec.~\ref{sec:autoquote}, and an example use-case is given in \ref{sec:autoqu
 
 \section{List of Functions Exported by |Reflection|}\label{sec:list-of-functions-reflection}
 
+\todo{is this separate section necessary?}
 The |Reflection| module of the Agda standard library (version 0.6 was used here) exports a number of
 functions. Here we will provide a list of them (see Fig. \ref{fig:reflection-functions}) along with
 a description of their use.
@@ -930,24 +941,6 @@ constructors       : Data-type    → List Name
 \caption{The functions exported by the |Reflection| module of the Agda standard library, as of version 0.6.}\label{fig:reflection-functions}
 \end{shadedfigure}
 
-As mentioned before, the way to get an object of type |Name| is by using the |quote| keyword, for
-example as in |quote zero|. Once we have a |Name|, we can get more information about it.
-The |type| function, unsurprisingly, tells us the type of whatever we give it, or |unknown|. For example:
-
-\begin{shade}
-\begin{code}
-typeExample : type (quote ℕ.suc) ≡
-            el (lit 0) (pi
-              (arg visible relevant (el (lit 0) (def (quote ℕ) []))
-              )
-                                    (el (lit 0) (def (quote ℕ) []))
-                       )
-typeExample = refl
-\end{code}
-\end{shade}
-
-The right-hand side of the type of |typeExample| boils down to a function of type |ℕ → ℕ|, where the |el (lit 0) x| annotations
-mean that the sort of $x$ is |Set₀| (which is the same as |Set|). 
 
 The |definition| function returns the definition of a given identifier. The type is defined as follows.
 
@@ -1843,7 +1836,7 @@ the argument can be inferred automatically, if its type is inhabited.
 If the module
 passes the type checker, we know our formula is both a tautology and
 that we have the corresponding proof object at our disposal
-afterwards, as in the following example.
+afterwards, as in the example of Fig.~\ref{fig:dup}.
 
 \begin{shadedfigure}[h]
 \begin{code}
@@ -1855,6 +1848,16 @@ someTauto    = soundness rep _
 \end{code}
 \caption{An example Boolean formula, along with the transliteration to a proposition and the corresponding proof.}\label{fig:dup}
 \end{shadedfigure}
+
+\todo{talk about the fact that invalid proofs are merely unsolved metas here}
+This is particularly unfortunate when using this technique
+to hide an inferable proof of the soundness of a theorem, such as in the Boolean tautology example (Sec.~\ref{sec:Boolean-tautologies}).
+The thing is, we do not want a user to get away with being able to prove that something which is not a
+tautology, is a tautology. Since the proof that under all environments the theorem evaluates
+to true is an implicit argument in this style, one is merely left with an unsolved meta (with an uninhabitable type |⊥|, to be fair), which
+might seem a triviality if you do not read the compiler's output carefully. Luckily Agda disallows
+importing modules with unsolved metas, which means such a spurious proof will not be usable elsewhere
+in a real-life development. 
 
 The only part we still have to do manually is to convert the concrete
 Agda representation (|p ∧ q ⇒ q|, in this case) into our abstract
