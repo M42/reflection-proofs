@@ -42,7 +42,7 @@
 \newcommand{\hlitem}[1]{\item[\colorbox{hlite}{#1}]~\\}
 % This defines figures with backgrounds -- useful for code
 \usepackage{adjustbox}
-%\usepackage{float} % enable H position specifier
+\usepackage{float} % enable H position specifier
 \newenvironment{shade}{
 
 \vskip 0.5\baselineskip
@@ -196,7 +196,7 @@ Which tedious and mundane tasks can we automate? What advantages
 does the combination of dependent types and reflection give us?
  Finally, is
 the reflection API adequate as it stands to facilitate our needs or does it require extension? If
-extension is necessary, how much?''
+extension is necessary, what kind and how much?''
 \end{quote}
 }
 
@@ -209,11 +209,11 @@ code, after having written them once, as opposed to continually writing small
 variations on existing code. Reinventing the wheel is something a programmer
 should not enjoy doing.
 
-One of the many techniques invented to allow writing more effective
+One of the many techniques for writing more effective
 code is that of \emph{metaprogramming}, which refers
 to the ability of a program to inspect (or \emph{reflect}) its own code
 and modify it. To the uninitiated, this sounds rather magical \cite{reflection-stackoverflow},
-but has long been a favourite
+but it has long been a favourite
 feature of users of such languages as Lisp~\cite{lisp-macros}. In many cases, this allows
 code to be a lot more concise and general, and thus reusable, than 
 usually is possible in simple imperative languages.
@@ -230,37 +230,37 @@ MetaML~\cite{metaml}, Template Haskell~\cite{template-haskell}, and
 \CC\ templates~\cite{cplusplus}. Agda's reflection mechanisms make it
 possible to convert a program fragment into its corresponding abstract
 syntax tree and vice versa. In tandem with Agda's dependent types,
-this provides promising new programming potential.
+this has promising new programming potential.
 
 
-The main questions which we aim to answer during this project are:
+The main questions we aim to answer during this project are:
 
 
 \researchquestion
 
 
 
-This paper starts exploring the possibilities and limitations of this
+This paper starts to explore the possibilities and limitations of this
 new reflection mechanism. It describes several case studies,
 exemplative of the kind of problems that can be solved using
 reflection. More specifically it makes the following contributions:
 
 \begin{itemize}
-  \item A very short \emph{introduction to Agda} as a programming language is given in 
+  \item A short \emph{introduction to Agda} as a programming language is given in 
 Chapter~\ref{chap:introducing-agda}.
-\item This paper documents the current status of the reflection
+\item It documents the current status of the reflection
   mechanism. The existing documentation is limited to a paragraph in
   the release notes~\cite{agda-relnotes-228} and comments in the
   compiler's source code. In Chapter~\ref{sec:reflection} we give
   several short examples of \emph{the reflection API in action}.
-\item This paper illustrates how to use Agda's reflection mechanism to
+\item It illustrates how to use Agda's reflection mechanism to
   automate certain categories of proofs
   (Chapter~\ref{sec:proof-by-reflection}). The idea of \emph{proof by
     reflection} is certainly not new, but still worth examining in the
   context of this new technology.
   
 \item We show how to
-  write \emph{type safe meta-programs}. To illustrate this
+  write \emph{type-safe meta-programs}. To illustrate this
   point, we will develop a type-safe translation from the simply typed
   lambda calculus to programs in continuation-passing style (CPS), followed
 by a type-safe translation of closed lambda terms into SKI combinator calculus (Chapter~\ref{sec:type-safe-metaprogramming}). 
@@ -296,17 +296,20 @@ behind Coq, which is similarly both a programming language and an
 intuitionistic logic framework. In Agda, one directly manipulates and
 constructs
 proof objects in the same language as is used to express computation,
-as opposed to other theorem proving systems, such as Coq, where there is
+whereas in other theorem proving systems, such as Coq, there is
  a separate
 tactic language for writing proofs \cite{coquand2006emacs}.
 
 Agda's syntax is inspired by Haskell, and users familiar with programming in
 Haskell (using GADTs) will probably be able to hit the ground running in Agda (in this report
-the assumption is made that the reader is fluent in GHC Haskell). The main difference between
+the reader is assumed to be fluent in GHC Haskell). The main difference between
 a dependently typed programming language and a simply-typed language is
 that the divide between the world of values and that of types is torn down. This
-allows such things as the textbook example of why DTP is the next best thing since sliced bread, namely not being able to ask for
-the head of an empty list (vector actually, which is a length-indexed counterpart of the concept list).
+allows such things as the textbook example of why DTP is the best thing since sliced bread, 
+
+
+%%namely not being able to ask for
+%%the head of an empty list (vector actually, which is a length-indexed counterpart of the concept list).
 
 \begin{shade}
 \begin{spec}
@@ -331,12 +334,12 @@ include let-bindings), as do definitions of functions and data types
 (except that in contrast with Haskell, one is forced to use GADT-like
 notation for data constructors).  Agda is, practically speaking, like
 Haskell, but with a type system on steroids. The discussion of how and why this 
-type system is on steroids\footnote{For example, the Agda type system does $\beta$ reduction on terms,
+ is so\footnote{For example, the Agda type system does $\beta$-reduction on terms,
 evaluation, which is something seen as possible -- but quite exotic -- in Haskell-land.} is considered out of the scope of this 
 project, but suffice it to say that tearing down the distinction between values and types allows
 powerful new techniques, such as invariant-guaranteeing data types.
 
-After Haskell, looking at Agda for the first time, though, can be confusing, since a number
+After Haskell though, looking at Agda for the first time can be confusing, since a number
 of foreign concepts are introduced. In the remainder of this chapter, we will pay attention to a few possible stumbling blocks.
 We will also look at a number of tricks, the utility or sense of which might not 
 at first be apparent.
@@ -345,7 +348,7 @@ at first be apparent.
 
 One of Haskell's selling points is the ability to do pattern matching. This makes writing
 structurally recursive functions both easy and the Natural Way of Doing Things\texttrademark. Agda shares this
-capability and idiomatic programming style, but has a much more powerful version of pattern matching, namely
+ability and idiomatic programming style, but has a much more powerful version of pattern matching, namely
 dependent pattern matching.
 
 This means that based on the (rich) type information available about terms, certain combinations of
@@ -384,7 +387,7 @@ something n             m          | no      ¬p    =    (HOLE 2)
 \end{shade}
 
 
-This will prove useful when type-safe metaprogramming may not alter the types of the terms between
+This will prove useful when type-safe metaprograms cannot alter the types of the terms between
 input and output.
 
 
@@ -394,7 +397,7 @@ input and output.
 In the previous section, the necessity of defining total functions was mentioned. This is no arbitrary choice, for without 
 this property, Agda would not be a sound logical framework. All programs in Agda are required to be total and terminating, because
 without this requirement, it would be very easy to define a proof of falsity. Naturally the logic would not be sound in this case.
-If we do not require termination, the following simple function would prove falsity.
+If we do not require termination, the following simple function proves falsity.
 
 \begin{shade}
 \begin{spec}
@@ -410,14 +413,14 @@ Totality of functions, that is, being defined for all possible inputs, is also r
 dropped, a number of desirable properties for a logic would not hold any longer. The most obvious example is that
 all of a sudden, run-time exceptions are possible: if a function is not defined on a given input but that value
 is, at some point, passed as an argument, bad things will happen (compare Haskell and a run-time pattern matching failure).
-Because functions can also return types (which are just more values) and thus be used in type signatures, one would not want
+Because functions can also return types (which are just more values) and thus be used in type signatures, we would not want
 it to be possible for type-checking to break as a result of an incomplete function definition. 
 
 Finally, though, Agda allows us to define functions and proofs side-by-side, allowing concurrent development of
-programs and proofs of properties about those programs hand-in-hand.  The Emacs mode which is typically used
-to interactively develop proofs and programs has a concept of \emph{holes} -- one is free to place a question mark (?)
-anywhere in the file, and compile. This question mark turns into something which looks a bit like |(HOLE n)|, and when the
-cursor is placed inside the goal, queries such as the  type of the value expected there or the objects in the environment at 
+programs and proofs of properties about those programs hand-in-hand.  The Emacs mode, which is typically used
+to interactively develop proofs and programs, has a concept of \emph{holes} -- we are free to place a question mark 
+anywhere in the file, and compile. This question mark turns into something which looks a bit like |(HOLE n)|, which we call a goal. When the
+cursor is placed inside a goal, queries such as the  type of the value expected there or the objects in the environment at 
 that point are available. 
 
 
@@ -426,8 +429,8 @@ that point are available.
 
 Agda also supports so-called implicit arguments. The distinction
 between explicit (usual arguments to functions, as seen in Haskell,
-for example) and implicit arguments is merely that they are tagged as
-hidden, and do not have to be provided if the can be inferred from the
+for example) and implicit arguments is merely that the latter are tagged as
+hidden, and do not have to be provided if they can be inferred from the
 context. Arguments are marked hidden by surrounding them with curly braces 
 in the function (or data type) definition. This often reduces the
 number of ``obvious'' arguments that have to be explicitly passed
@@ -454,15 +457,15 @@ Agda should infer the argument for us.
 
 The fact that pairs and unit are defined as records in the standard
 library is pretty crucial here.  The type system does some work for us
-in these cases: since eta-conversion is done on record types, which
+in these cases; $\eta$-reduction is done on record types, which
 allows Agda to infer that there is exactly one inhabitant of a certain
-type. This eta reduction is not done on general data types, since this
+type. This $\eta$-reduction is not done on general data types, since this
 would increase the complexity of the work the compiler needs to do as
 well as potentially introduce unsound behaviour
-\cite{mcbride-motivation-eta-rules}.  Also, it means that one can
+\cite{mcbride-motivation-eta-rules}.  Also, it means that it is possible to
 assert to Agda that a function that returns a certain type always
 produces an inhabited value. On the other hand, single-constructor
-data types may not be inhabited if their indices can't be satisfied
+data types may not be inhabited if their indices cannot be satisfied
 (for example: |refl| and the equality type).
 
 
@@ -476,7 +479,7 @@ bar = foo _
 \end{code}
         \caption[Illustrating the automatic inference of record type
 arguments.]{Illustrating the automatic inference of record type
-arguments. Note that one could replace $u$ on the LHS of |foo| with
+arguments. Note that it is possible to replace $u$ on the LHS of |foo| with
 the irrefutable pattern |u₁ , u₂|, since, as has been mentioned
 before, this is the only valid constructor for the type |_×_|.}
         \label{code:implicit-example}
@@ -502,12 +505,12 @@ us to one of the drawbacks of this solution which has been used quite often (chi
 a proof witness of for example an input term being of the right shape), which is that if such
 an argument is ambiguous, or worse, if it is a type with no inhabitants, the compiler won't fail
 with a type error, but merely with an unsolved meta warning (highlighting the piece of code yellow
-in the Emacs Agda mode). This is particularly unfortunate when we are using this technique
+in the Emacs Agda mode). This is particularly unfortunate when using this technique
 to hide an inferable proof of the soundness of a theorem, such as in the Boolean tautology example (Sec.~\ref{sec:Boolean-tautologies}).
 The thing is, we do not want a user to get away with being able to prove that something which is not a
 tautology, is a tautology. Since the proof that under all environments the theorem evaluates
 to true is an implicit argument in this style, one is merely left with an unsolved meta (with an uninhabitable type |⊥|, to be fair), which
-might seem a triviality if one doesn't read the compiler's output carefully. Luckily Agda disallows
+might seem a triviality if you do not read the compiler's output carefully. Luckily Agda disallows
 importing modules with unsolved metas, which means such a spurious proof will not be usable elsewhere
 in a real-life development. 
 
@@ -522,10 +525,10 @@ excellent tutorial written by Ulf Norell
 
 Since version 2.2.8, Agda includes a reflection API, which allows converting
 parts of a program's code into abstract syntax, in other words a data structure
-in Agda itself, which can be inspected or modified like any other data structure.
+in Agda itself, that can be inspected or modified like any other data structure.
 The idea of reflection is nothing new: already in the 1980s Lisp included a similar
 feature, called quoting, which allowed run-time modification of a program's code, by
-the program itself. This gives rise to powerful techniques for reusing code and
+the program itself. This has given rise to powerful techniques for reusing code and
 generating frequently needed but slightly different expressions automatically.
 
 
@@ -540,7 +543,7 @@ types that represent \emph{terms}, there is limited support for
 reflecting \emph{definitions} as opposed to terms. Inspection of definitions
 is detailed in Sec.~\ref{sec:inspecting-definitions}.
 \paragraph{Caveat}\label{para:caveat} One rather serious word of precaution is to be made here.
-The code presented in this thesis does not, actually, work out of the box as advertised.
+The code presented in this thesis does not, actually, work out of the box as advertised.\todo{what's advertised?}
 For reasons which will be made clear in Chapter~\ref{sec:type-safe-metaprogramming}, the abstract 
 data type representing terms inside the Agda compiler (the one in Fig.~\ref{fig:reflection}) needed to be extended with
 an extra argument to the constructor representing a lambda abstraction, denoting 
@@ -574,12 +577,12 @@ example₀   = refl
 
 Dissecting
 this, we introduced a lambda abstraction, so we expect the |lam|
-constructor. It's one argument is visible, and
+constructor. Its one argument is visible, and
 the body of the lambda abstraction is just a reference to the
 nearest-bound variable, thus |var 0|, applied to no arguments, hence
 the empty list.
 
-Furthermore, |quoteTerm| type checks and normalizes its term before
+Furthermore, |quoteTerm| type checks and normalises its term before
 returning the required |Term|, as the following example demonstrates:
 \begin{shade}
 \begin{code}
@@ -628,7 +631,7 @@ example₃ = refl
 
 The |unquote| keyword converts a |Term| data type back to concrete
 syntax. Just as |quoteTerm| and |quoteGoal|, it type checks and
-normalizes the |Term| before it is spliced into the program text.
+normalises the |Term| before it is spliced into the program text.
 
 
 
@@ -718,13 +721,13 @@ a description of their use.
 
 \begin{shadedfigure}[h]
 \begin{spec}
-_≟-Name_ : Decidable {A = Name} _≡_
+_≟-Name_           : Decidable {A = Name} _≡_
 -- The other decidable properties are omitted for 
 -- brevity, but are similarly-named.
 
-type : Name → Type
-definition : Name → Definition
-constructors : Data-type → List Name
+type               : Name         → Type
+definition         : Name         → Definition
+constructors       : Data-type    → List Name
 \end{spec}
 \caption{The functions exported by the |Reflection| module of the Agda standard library, as of version 0.6.}\label{fig:reflection-functions}
 \end{shadedfigure}
@@ -753,12 +756,12 @@ The |definition| function returns the definition of a given identifier. The type
 \begin{shade}
 \begin{spec}
 data Definition : Set where
-  function          : Function  → Definition
-  data-type         : Data-type → Definition
-  record′           : Record    → Definition
-  constructor′      : Definition
-  axiom             : Definition
-  primitive′        : Definition
+  function          : Function       →     Definition
+  data-type         : Data-type      →     Definition
+  record′           : Record         →     Definition
+  constructor′      :                      Definition
+  axiom             :                      Definition
+  primitive′        :                      Definition
 \end{spec}
 \end{shade}
 
@@ -790,20 +793,18 @@ illustrates how this is done, and what the format of the answer is.
 \begin{shade}
 \begin{code}
 isDatatype : Definition → Set
-isDatatype (data-type x) = ⊤
-isDatatype _ = ⊥
+isDatatype (data-type x)           = ⊤
+isDatatype _                       = ⊥
 \end{code}
 \end{shade}
 }
 \begin{shade}
 \begin{code}
-giveDatatype : (d : Definition) → {pf : isDatatype d} → Data-type
-giveDatatype (data-type d) = d
-giveDatatype (function x)   {()}
+giveDatatype : (d : Definition)  → {pf    : isDatatype d} → Data-type
+giveDatatype (data-type   d  )   {_   }   = d
+giveDatatype (function    x  )   {()  }
 \end{code}
-\end{shade}
 \vskip -7mm
-\begin{shade}
 \begin{spec}
 ...
 \end{spec}
@@ -832,7 +833,7 @@ consExample = refl
 
 So now we have in |ℕcons| a list of the names of the constructors of the data type |ℕ|, which we
 could use to do more interesting things which depend on the structure of a data type, such as
-giving isomorphisms to generic representations of data types, such as is often done using
+giving isomorphisms to generic representations of data types, as is often done using
 Template Haskell, for example in the Regular library for generic programming \cite{van2010lightweight}.
 This capability is exploited in Sec.~\ref{sec:generic-programming}.
 
@@ -872,16 +873,16 @@ AST, and get a conversion function for free.
 
 
 
-During the course of this project, a module named |Autoquote| was developed. The
-motivating idea behind |Autoquote| is that one often ends up writing similar-looking
+A common annoyance when using Agda's reflection is that we often end up writing similar-looking
 functions for checking if a |Term| is of a specific shape, and if so,
-translating |Term|s into some AST. What |Autoquote| does is abstract
-over this process, and provide an interface which, when provided with
-a mapping from concrete names to constructors in this AST,
-automatically quotes expressions that fit (i.e. which only have
-variables, and names which are listed in this mapping).
+translating |Term|s into some AST. This motivated the development of
+|Autoquote| in the course of this project. What |Autoquote| does is abstract over this process, and
+provide an interface which, when provided with a mapping from concrete
+names to constructors in this AST, automatically quotes expressions
+that fit (i.e. which only have variables, and names which are listed
+in this mapping).
 
-The type |Table a| is what we use for specifying what the AST we are expecting should look like. The function |N-ary| provides
+The type |Table a|, in Fig.~\ref{fig:nary}, is what we use for specifying what the AST we are expecting should look like. The function |N-ary| provides
 a way of storing a function with a variable number of arguments in our map, and |_dollarn_| is how we
 apply the ``stored'' function to a |Vec n| of arguments, where $n$ is the arity of the function. Note that
 this is a copy of the standard library |Data.Vec.N-ary|, but has been instantiated here specifically
@@ -895,7 +896,7 @@ Using this |N-ary| we can now define an entry in our mapping |Table| as having a
 a |Name| (which is Agda's internal representation of an identifier, see Fig.~\ref{fig:reflection}) to a
 constructor in the AST to which we would like to cast the |Term|.
 
-\begin{shade}
+\begin{shadedfigure}[H]
 \begin{spec}
 N-ary : (n : ℕ) → Set → Set → Set
 N-ary zero       A B = B
@@ -922,16 +923,18 @@ lookupName (arity \# x ↦ x₁ ∷ tab) name with name ≟-Name x
 ... | yes p      = just (arity \# x ↦ x₁)
 ... | no ¬p      = lookupName tab name
 \end{spec}
-\end{shade}
+\caption{The types and helper functions associated with the |Autoquote| library.}\label{fig:nary}
+\end{shadedfigure}
 
-With the above ingredients we can now define the function |convert| below, which, given a mapping of
+\todo{this code snippet is huge. we must split and explain better}
+With the above ingredients we can now define the function |convert| below, which -- given a mapping of
 type |Table a|, where $a$ is the type we would like to cast to, for example |Expr|, and a
-|Term| obtained from one of Agda's reflection keywords, produces a value which might be a
-properly converted term of type $a$. We also provide the helper function |lookupName|, which, given
-a mapping and a |Name|, finds the corresponding entry in the mapping table. If nothing usable is found,
+|Term| obtained from one of Agda's reflection keywords -- produces a value which might be a
+properly converted term of type $a$. We also provide the helper function |lookupName|, which -- given
+a mapping and a |Name| -- finds the corresponding entry in the mapping table. If nothing usable is found,
 |nothing| is returned. 
 
-An example of such a mapping would be the one required for our |Expr| example.
+An example of such a mapping would be the one required for our |Expr| example, presented in Fig.~\ref{fig:exprTable}.
 
 \begin{shadedfigure}[h]
 \begin{code}
@@ -949,7 +952,7 @@ the |_+_| operator should be a |Plus| constructor (we are required to specify th
 that a |zero|, from the |Data.Nat| standard library, should be treated as our |Zero| constructor, and
 finally that |suc| translates to |Succ| and expects 1 argument.
 
-The function that does this conversion for us looks like this. Note that it isn't intended to
+The function that does this conversion for us looks like this. Note that it is not intended to
 be called directly; a convenience function |doConvert| is defined below. 
 
 \ignore{
@@ -988,11 +991,11 @@ mutual
 
 
 If it encounters a variable, it just uses the constructor which stands for variables. Note that
-the parameter is the De Bruijn-index of the variable, which might or might not be in-scope.
+the parameter is the De Bruijn-index of the variable, which might or might not be in scope.
 This is something to check for afterwards, if a |just| value is returned.
 
-Note that this is also why one might need
-an intermediary data structure to convert to. Once we have converted to the intermediary type, checks for invariants can be done. Typically,
+Note that 
+an intermediary data structure to convert to might be necessary. Once we have converted to the intermediary type, checks for invariants can be done. Typically,
 it will not be possible to directly |convert| to some property-preserving data structure such
 as |BoolExpr n| in one step\footnote{On account of the |Fin n| type of variable indices.}; this will typically require post-processing.
 
@@ -1099,11 +1102,11 @@ is both a programming language and a proof system, it is possible to
 define functions that compute proofs. Reflection is an overloaded word
 in this context, since in programming language technology reflection
 is the capability of converting some piece of concrete program syntax
-into a syntax tree object which can be manipulated in the same
+into a syntax tree object that can be manipulated in the same
 system. Reflection in the proof technical sense is the method of
 mechanically constructing a proof of a theorem by inspecting its
 shape.
-Here we will present two case studies illustrating proof by
+Here we will see two case studies illustrating proof by
 reflection and how Agda's reflection mechanism can make the technique
 more usable and accessible.
 
@@ -1130,8 +1133,8 @@ data Even      : ℕ → Set where
 \end{code}
 \end{shade}
 
-Using these rules to produce the proof that some large number |n| is
-even can be very tedious: the proof that $2 \times n$ is even requires |n|
+Using these rules to produce the proof that some large number $n$ is
+even can be very tedious: the proof that $2 \times n$ is even requires $n$
 applications of the |isEven+2| constructor. For example, here is the
 proof that 6 is even:
 
@@ -1145,9 +1148,9 @@ isEven6 = isEven+2 (isEven+2 (isEven+2 isEven0))
 To automate this, we will show how to \emph{compute} the proof
 required. We start by defining a predicate |even?| that
 returns the unit type when its input is even and bottom otherwise.
-In this context |⊤| and |⊥| can be seen as the analogues of |true|
-and |false|. The meaning of such a decision function is that there exists
-a proof that some number is even, if it is |0| or |2 + n|. That is our
+In this context, |⊤| and |⊥| can be seen as the analogues of |true|
+and |false| \todo{C-H isomorphism reference? back to introducing Agda?}. The meaning of such a decision function is that there exists
+a proof that some number is even, if it is |0| or |2 + n|. That is the
 claim, at least. The idea
 of ``there exists'' is perfectly modelled by the unit and empty types,
 since the unit type has one inhabitant, the empty type none.
@@ -1166,8 +1169,9 @@ Next we need to show that the |even?| function is \emph{sound}, that
 our claim holds. To do so, we prove that when |even? n| returns |⊤|,
 the type |Even n| is
 inhabited, and since we are working in a constructive logic, the only
-way to show this is to give some witness. This is done in the function |soundnessEven|. What is
-actually happening here is that we are giving a recipe for
+way to show this is to give some witness. This is done in the function |soundnessEven|. What
+we are 
+actually doing here is giving a recipe for
 constructing proof trees, such as the one we manually defined for
 |isEven6|.
 
@@ -1205,7 +1209,7 @@ isEven8772      = soundnessEven tt
 
 Now we can easily get a proof that arbitrarily large numbers are even,
 without having to explicitly write down a large proof tree. Note that
-it's not possible to write something with type |Even 27|, or any other uneven
+it is not possible to write something with type |Even 27|, or any other uneven
 number, since the parameter |even? n| cannot be instantiated, thus
 |tt| would not be accepted where it is in the |Even 28| example. This will
 produce a |⊤ !=< ⊥| type error at compile-time.
@@ -1560,11 +1564,11 @@ a thorough explanation of the parameter |Diff n m| which, like here in |proofGoa
 
 \begin{shade}
 \begin{code}
-proofGoal   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
-proofGoal   .m   m    (Base    ) b acc = P ⟦ acc ⊢ b ⟧ 
-proofGoal   n    m    (Step y  ) b acc =
-  (a : Bool) →
-      proofGoal (1 + n) m y b (a ∷ acc)
+proofGoal      : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
+proofGoal   .  m    m    (Base    ) b acc = P ⟦ acc ⊢ b ⟧ 
+proofGoal      n    m    (Step y  ) b acc =
+               (a : Bool) →
+                    proofGoal (1 + n) m y b (a ∷ acc)
 \end{code}
 \end{shade}
 
@@ -1683,7 +1687,8 @@ recursive cases of functions such as |soundness| become a lot simpler: the inter
 of a sub-expression being true becomes the same as a unit type being inhabited, and the and-operator
 corresponds to a pair. If the propositional equality way was being used, many lemmas such as that 
 |a ∧ b ≡ true ⇒ a ≡ true ∧ b ≡ true| need to be proven, and they are continually needed to
-pull apart such propositions for recursive calls. Using a type on which one can pattern match with irrefutable patterns
+pull apart such propositions for recursive calls. Using a type that allows
+pattern matching with irrefutable patterns
 to obtain left-truth and right-truth, to then be passed to the recursive calls, is much simpler in this
 case.
 
@@ -1691,17 +1696,19 @@ case.
 
 
 One of the reasons for not enumerating environments (for example, something like |∀ (e : Env n) → P someprop |) is that
-referring to variables becomes a bit of a problem. One would have to introduce some new syntax, such as a constructor
+referring to variables becomes a bit of a problem. 
+Some new syntax would have to be introduced, such as a constructor
 |Var : Fin n → Bool| which could be used to refer to an element of the environment by number. This is 
-rather less elegant than the current implementation, where one simply brings a few Boolean variables into scope in
-the native Agda manner, using a telescope (i.e. |(p q r : Bool) → P(p ∧ q ⇒ r)|). This has another advantage, namely
-that if one writes down a proposition, one is forced to only use valid variables, which translate to in-scope De Bruijn indices.
+rather less elegant than the current implementation, which simply brings a few Boolean variables into scope in
+the native Agda manner, using a telescope\todo{formally intro telescope then forget here} (i.e. |(p q r : Bool) → P(p ∧ q ⇒ r)|). This has another advantage, namely
+that when writing down a proposition, you are forced to use only valid variables, which translate to in-scope De Bruijn indices.
 
 Another difficulty of enumerating environments is the generation of the proof obligation. Currently, a telescope
 can be generated easily via recursion (see the function |proofGoal|), as opposed to having to generate all possible 
 lists. Some investigation was done to try and show that environments (lists of Booleans) of length $n$ are enumerable,
 but the results were not as elegant as those presented in Sec.~\ref{sec:Boolean-tautologies}. Also, generating the environments by quantifying over
-fresh variables and adding them to an accumulating environment saves creating a large binary tree with all the possible
+fresh variables and adding them to an accumulating environment saves 
+the hassle of creating a large binary tree with all the possible
 environments in the leaves.
 
 \subsection{What Is This |Diff| You Speak Of?}\label{sec:explain-diff}
@@ -1713,11 +1720,11 @@ and the maximum number of bound variables in the proposition, respectively.
 
 \begin{shade}
 \begin{spec}
-proofGoal   : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
-proofGoal   .m   m    (Base    ) b acc = P ⟦ acc ⊢ b ⟧ 
-proofGoal   n    m    (Step y  ) b acc =
-  (a : Bool) →
-      proofGoal (1 + n) m y b (a ∷ acc)
+proofGoal      : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
+proofGoal   .  m    m    (Base    ) b acc = P ⟦ acc ⊢ b ⟧ 
+proofGoal      n    m    (Step y  ) b acc =
+               (a : Bool) →
+                    proofGoal (1 + n) m y b (a ∷ acc)
 \end{spec}
 \end{shade}
 
@@ -1730,8 +1737,8 @@ building up the environment with an accumulating parameter. Because of this, we 
 \begin{shadedfigure}[h]
 \begin{spec}
 data Diff : ℕ → ℕ → Set where
-  Base : ∀ {n}   → Diff n n
-  Step : ∀ {n m} → Diff (suc n) m → Diff n m
+  Base   : ∀ {n}                         → Diff n n
+  Step   : ∀ {n m} → Diff (suc n) m      → Diff n m
 \end{spec}
 \caption{The definition of the |Diff| data type.}\label{fig:diff-datatype}
 \end{shadedfigure}
@@ -1747,10 +1754,11 @@ to the environment one at a time, we need some way to ``promise'' that
 in the end $m$ will be equal to $n$. As can be seen in the definition
 of the |Base| constructor, this is exactly what is happening.
 
-The same thing is necessary in the functions |forallsAcc| and 
-friends, given that they also recursively construct or look up proofs that need to have a corresponding
-size to the |BoolExpr|. Given that they use the same technique in a slightly less overt manner
-they are not separately detailed here.
+The same thing is necessary in the functions |forallsAcc| \&c., given
+that they also recursively construct or look up proofs that need to
+have the same size as their |BoolExpr| argument. Because they use the same
+technique in a slightly less overt manner they are not separately
+detailed here.
 
 
 
@@ -1880,11 +1888,11 @@ as only certain functions like |_∧_| or |¬_| occurring in the |Term|) being r
 then wanted to quote to some other AST, the whole process would have to be modified, which, the author can guarantee,
 is a painful process.
 
-The actual conversion function also ends up having many branches, checking if the current
-constructor or definition is on we know, \&c. This process can be made a lot less ugly and a lot more reusable.
+The actual conversion function also ends up having many branches, checking if all the
+constructors and definitions are ones we recognise, \&c. This process can be made a lot less ugly and a lot more reusable.
 Recall the |Autoquote| module developed in
-Sec.~\ref{sec:autoquote}; this can be used here, both as an
-illustration of the use of |Autoquote|, and to avoid code duplication,
+Sec.~\ref{sec:autoquote}; the same can be used here, both as an
+illustration of its use, and to avoid code duplication,
 thus making the code for |term2boolexpr| more concise.
 
 |Autoquote| only supports simple recursive data types, so the first problem we encounter is that
@@ -1930,9 +1938,9 @@ term2boolexpr' t {pf} = doConvert boolTable t {pf}
 \end{shade}
 
 Once we have a |BoolInter| expression, we just need to check that its
-variables are all in-scope (this means that $\forall$ |Atomic| $x$ s.t. $x < n$, if we
+variables are all in scope (this means that $\forall$ |Atomic| $x$ s.t. $x < n$, if we
 want to convert to a |BoolExpr n|). This is done in |bool2fin|, assuming that |bool2finCheck|
-holds (the latter simple expresses the aforementioned in-scope property).
+holds (the latter simply expresses the aforementioned in-scope property).
 
 \ignore{
 \begin{shade}
@@ -2002,15 +2010,16 @@ concrete2abstract t {pf} {pf2} fin = bool2fin     (freeVars t)
 \end{spec}
 \end{shade}
 
-This example illustrates how the |Autoquote| module can save a lot
-of repetitive coding for converting an Agda |Term| into some invariant-preserving
-AST such as |BoolExpr n|. 
+Clearly, the |Autoquote| module can save a lot
+of repetitive coding for converting |Term|s into some invariant-preserving
+AST, such as |BoolExpr n|. 
 
 Finally, all developments regarding the proof by reflection technique, including
 the quoting code can be found in the modules |Proofs.TautologyProver| and |Metaprogramming.Autoquote|, respectively.
 There are also examples of using the tautology prover as a library in |Proofs.ExampleTautologies|, as well as two examples
-of using |Autoquote| in |Metaprogramming.ExampleAutoquote|. One might also refer to |Proofs.TautologyProver| for an
-extensive illustration of what is possible using |Autoquote|.
+of using |Autoquote| in |Metaprogramming.ExampleAutoquote|. 
+An extensive illustration of what is possible using |Autoquote| can be
+found in |Proofs.TautologyProver|, for those interested.
 
 
 \chapter{Type-safe Metaprogramming}\label{sec:type-safe-metaprogramming}
@@ -2020,10 +2029,10 @@ of type-safe metaprogramming, taking advantage of Agda's very powerful type syst
 
 Metaprogramming is a technique which is already widely used, for example in the Lisp
 community, and involves converting terms in the concrete syntax of a
-programming language into an abstract syntax tree which can be
+programming language into an abstract syntax tree that can be
 inspected and/or manipulated, and possibly be
 made
-concrete again, and thus can be evaluated as if it were code the
+concrete again. As such it can be evaluated as if it were code the
 programmer had directly entered into a source file. In Agda the reflection happens at
 compile-time, allowing for the strong static typing we have come to know and love.
 If run-time reflection were possible, any program compiled with Agda would need to
@@ -2045,15 +2054,14 @@ example in \cite{norell2004prototyping}).
 
 Clearly, the technique is a very useful one, but it does have a conspicuous cumbersomeness
 %limitation / restriction / inconvenience / disadvantage 
-(or should we say, potential pitfall), namely that when one
-is developing a piece of Template Haskell code which
-should generate some function, one often finds oneself
+(or should we say, potential pitfall).
+Developing a piece of Template Haskell code which should generate some function often results in
 debugging type errors in the resulting machine-generated code. This
 is a tedious and painful process, since, typically, generated code is
 much less self-explanatory or readable than human-written code.
 
 Here we propose a new way of looking at metaprogramming, namely
-type-safe metaprogramming. It would be great if one could define some
+type-safe metaprogramming. It would be great to be able to define some
 data structure for, say, lambda calculus, and have the guarantee that
 any term constructed in this AST is type-correct. The apparent
 advantage is then that the compiler will show up errors in whichever
@@ -3242,7 +3250,7 @@ in |Metaprogramming.ExampleSKI|.
 As promised, we provide here a summary of the parameters to the modules |Datatypes|, |TypeCheck|, |SKI| and |CPS|, because 
 these are designed to work with a user-defined universe. Aside from the universe, though, the user is also required to 
 provide a few easy-to-define helper functions. These functions are necessary because invariably, they rely on pattern matching,
-which is something which is only possible if the to-be-used universe \emph{and all of its constructors} are in-scope.
+which is something which is only possible if the to-be-used universe \emph{and all of its constructors} are in scope.
 
 The following list describes all the necessary parameters to the modules (note that not all modules require all parameters).
 \begin{description}
@@ -3441,7 +3449,7 @@ here.
  
 As far as reflection in general goes, Demers and Malenfant \cite{demers1995reflection} wrote an informative historical overview on the topic.
 What we are referring to as reflection dates back to work by Brian Smith \cite{Smith:1984:RSL:800017.800513}
-and was initially presented in the Lisp family of languages in the 80's. Since then,
+and was initially presented in the Lisp family of languages in the 80s. Since then,
 many developments in the functional, logic as well as object-oriented programming worlds have 
 been inspired -- systems with varying power and scope.
  
@@ -3611,7 +3619,7 @@ The modifications made are the following.
 \item The output of the reflection system (in other words the |Term| data type)
 was modified to include type annotations on lambda abstractions. See Sec.~\ref{appendix:lambda-types}.
 \item For convenience of producing syntax-highlighted documents from Literate Agda,
-the compiler was extended to output a list of formatting rules based on the currently in-scope identifiers. See Sec.~\ref{appendix:lhs-syntax}.
+the compiler was extended to output a list of formatting rules based on the identifiers currently in scope. See Sec.~\ref{appendix:lhs-syntax}.
 \end{itemize}
 
 
