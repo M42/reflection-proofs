@@ -1465,10 +1465,10 @@ without having to explicitly write down a large proof tree. Note that
 it is not possible to write something with type |Even 27|, or any other uneven
 number, since the parameter |even? n| cannot be instantiated, thus
 |tt| would not be accepted where it is in the |Even 28| example. This will
-produce a |⊤ !=< ⊥| type error at compile-time.
+produce a |⊤ !=< ⊥| type error at compile-time.\todo{wouter's nicer error?}
 
 Since the type |⊤| is a simple record type, Agda can infer the |tt|
-argument, which means we can turn the assumption |even? n| into an
+argument, as explained in Sec.~\ref{sec:implicit-unit}. This means we can turn the assumption |even? n| into an
 implicit argument, meaning a user could get away with writing just
 |soundnessEven| as the proof, letting the inferrer do the rest. For
 the sake of exposition this is not done here, but the complete implementation
