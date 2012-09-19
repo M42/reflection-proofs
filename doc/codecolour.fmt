@@ -138,3 +138,6 @@
 %%% spacing:
 %format fromℕ≤ = "\defin{fromℕ" "\mkern-8mu" "≤}"
 %format _+'_ = "\defin{\_+\_}"
+%format head₁ = "\defin{head₁}"
+%format head₀ = "\defin{head₀}"
+%format ≟-ℕ = "\defin{≟\mkern-5mu{}\text{-}ℕ}"
