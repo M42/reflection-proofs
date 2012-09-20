@@ -5,7 +5,7 @@ open import Data.Bool
 
 -- simply a nice way of writing down implication. Classical logic.
 infixr 4 _⇒_
-_⇒_ : Bool → Bool → Bool
+_⇒_   : Bool → Bool → Bool
 true  ⇒ true  = true
 true  ⇒ false = false
 false ⇒ true  = true

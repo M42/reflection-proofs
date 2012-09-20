@@ -61,6 +61,7 @@
     \end{figure}
 }
 
+\newcommand{\lagda}{\texttt{\--\--{}lagda}\xspace}
 \ignore{
 \begin{shade}
 \begin{code}
@@ -662,7 +663,7 @@ falsity = falsity
 
 This is allowed because it would take an infinite amount of evaluation time to discover that this function is
 in fact not making any progress. This is why the requirement exists that at least one of the arguments to the 
-recursive call be \emph{structurally smaller}. Compare the example where |suc n| is pattern matched, and |n| is passed
+recursive call be \emph{structurally smaller}. Compare the addition of naturals example where |suc n| is pattern matched, and |n| is passed
 as a recursive argument -- |n| is structurally smaller than |suc n|.
 
 \paragraph{Covering} Being defined on all possible inputs is also an aspect of totality. If this requirement were 
@@ -693,7 +694,6 @@ makes calls to functions more concise, since some arguments are not explicitly l
 useful when the value of the argument can be inferred. This section demonstrates the technique. Furthermore  it turns out that record types have 
 advantageous properties when it comes to inferring their value.
 
-\todo{this piece is dodgy!}
 If a particular argument is a record type, and it has
 only one possible inhabitant, Agda can automatically infer its
 value. Thus, it also need not be passed as an explicit argument at the
@@ -719,8 +719,9 @@ before, this is the only valid constructor for the type |_×_|.}
 
 The function |foo| expects a value of type |⊤ × ⊤|, and returns a
 natural number.  We know, however, that | _×_ | is a record and only
-has the constructor | _,_ : A → B → A × B|. This pair type is a
-special case of the dependent pair |Σ (A : Set) (B : A → Set) : Set|.
+has the constructor | _,_ : A → B → A × B|. 
+%This pair type is a
+%special case of the dependent pair |Σ (A : Set) (B : A → Set) : Set|.
 Therefore, the only possible value is one using the constructor
 |_,_|. If we next look at the values for |A| and |B| here, namely the
 left and right-hand arguments' types, we see that in both cases they
@@ -786,7 +787,11 @@ in Agda itself, that can be inspected or modified like any other data structure.
 The idea of reflection is nothing new: already in the 1980s Lisp included a similar
 feature, called quoting, which allowed run time modification of a program's code, by
 the program itself. This has given rise to powerful techniques for reusing code and
-generating frequently needed but slightly different expressions automatically.
+generating frequently needed but slightly different expressions automatically. What
+can be done with Lisp, can be done better using Agda; at least, so we hope. This chapter
+looks at the current state of the admittedly work-in-progress reflection API, and
+illustrates how to use it. It should be a good starting point for someone already comfortable with
+Agda to find inspiration on how to make reflection work to their advantage.
 
 
 \section{The Basics}\label{sec:thebasics}
@@ -1520,6 +1525,11 @@ looked up in the environment. For example, |And| is converted to
 the Boolean function |_∧_|, and its two arguments in turn are
 recursively interpreted.
 
+\ignore{
+\begin{code}
+open import Proofs.Util.Handy
+\end{code}
+}
 
 \begin{shade}
 \begin{code}
@@ -1596,6 +1606,13 @@ evaluates to |true| in every leaf. This corresponds precisely to $b$ being a tau
 The |Diff| argument is unfortunately needed to prove that |forallsAcc| will eventually produce a
 tree with depth equal to the number of free variables in an expression. 
 
+\ignore{
+\begin{code}
+open import Proofs.Util.Lemmas renaming (zero-least to zeroleast)
+open import Proofs.Util.Types using (Diff; Base; Step)
+\end{code}
+}
+
 \begin{shadedfigure}[h]
 \begin{code}
 forallsAcc : {n m : ℕ} → BoolExpr m → Env n → Diff n m → Set
@@ -1628,11 +1645,11 @@ recursively building up the environment with an accumulating parameter. Because 
 
 
 \begin{shadedfigure}[h]
-\begin{spec}
-data Diff : ℕ → ℕ → Set where
-  Base   : ∀ {n}                         → Diff n n
-  Step   : ∀ {n m} → Diff (suc n) m      → Diff n m
-\end{spec}
+\begin{code}
+data Diff' : ℕ → ℕ → Set where
+  Base   : ∀ {n}                          → Diff' n n
+  Step   : ∀ {n m} → Diff' (suc n) m      → Diff' n m
+\end{code}
 \caption{The definition of the |Diff| data type.}\label{fig:diff-datatype}
 \end{shadedfigure}
 
@@ -1700,7 +1717,12 @@ possible assignment of its variables to |true| or |false|.
 
 
 
-
+\ignore{
+\begin{code}
+Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
+Error-elim ()
+\end{code}
+}
 
 \begin{shade}
 \begin{code}
@@ -1835,6 +1857,136 @@ proposition and once in the |BoolExpr| AST. More
 specifically, we will use the |quoteGoal| keyword to inspect the
 current goal. Given the |Term| representation of the goal, we can
 convert it to its corresponding |BoolExpr| automatically.
+
+\ignore{
+\begin{code}
+open import Proofs.TautologyProver hiding (concrete2abstract; BoolExpr; foralls; proveTautology; soundness; boolTable; term2boolexpr'; stripSo ; isSoExprQ)
+
+{-
+Unfortunately, we need to duplicate this code here, because the So which is
+quoted in isSoExprQ is not the same So as in the library. Oh well, this works.
+-}
+
+-- a check-function, or predicate, to determine if the thing which has
+-- been quoted is a Term wrapped in a call to So(), which P()
+-- normalises to.
+isSoExprQ : (t : Term) → Set
+isSoExprQ (var x args) = ⊥
+isSoExprQ (con c args) = ⊥
+isSoExprQ (def f args) with Data.Nat._≟_ (length args) 2
+isSoExprQ (def f args) | yes p with tt
+isSoExprQ (def f [])                   | yes () | tt
+isSoExprQ (def f (x ∷ []))             | yes () | tt
+isSoExprQ (def f (a ∷ arg v r x ∷ [])) | yes p  | tt with f ≟-Name quote So
+isSoExprQ (def f (a ∷ arg v r x ∷ [])) | yes p₁ | tt | yes p = ⊤
+isSoExprQ (def f (a ∷ arg v r x ∷ [])) | yes p  | tt | no ¬p = ⊥
+isSoExprQ (def f (x ∷ x₃ ∷ x₄ ∷ args)) | yes () | tt
+isSoExprQ (def f args)                 | no ¬p with tt
+isSoExprQ (def f [])                   | no ¬p | tt = ⊥
+isSoExprQ (def f (x ∷ xs))             | no ¬p | tt = ⊥
+isSoExprQ (lam v σ t)                  = ⊥
+isSoExprQ (pi t₁ t₂)                   = ⊥
+isSoExprQ (sort x)                     = ⊥
+isSoExprQ unknown                      = ⊥
+
+-- assuming the predicate isSoExprQ above, return the
+-- argument to So, which should be the boolean expression
+-- we want.
+stripSo : (t : Term) → isSoExprQ t → Term
+stripSo (var x args)                 ()
+stripSo (con c args)                 ()
+stripSo (def f args)                 pf with Data.Nat._≟_ (length args) 2
+stripSo (def f args) pf | yes p with tt -- doing "with tt" at the end
+                                        -- is necessary in some cases,
+                                        -- to force normalisation of preceding
+                                        -- arguments.
+stripSo (def f [])                   pf | yes () | tt
+stripSo (def f (x ∷ []))             pf | yes () | tt
+stripSo (def f (a ∷ arg v r x ∷ [])) pf | yes p  | tt with f ≟-Name quote So
+stripSo (def f (a ∷ arg v r x ∷ [])) pf | yes p₁ | tt | yes p = x
+stripSo (def f (a ∷ arg v r x ∷ [])) () | yes p  | tt | no ¬p
+stripSo (def f (x ∷ x₃ ∷ x₄ ∷ args)) pf | yes () | tt
+stripSo (def f args)                 pf | no ¬p with tt
+stripSo (def f [])                   () | no ¬p | tt
+stripSo (def f (x ∷ xs))             () | no ¬p | tt
+stripSo (lam v σ t)                  ()
+stripSo (pi t₁ t₂)                   ()
+stripSo (sort x)                     ()
+stripSo unknown                      ()
+
+
+isBoolExprQ' : (n : ℕ) → (t : Term) → Set
+isBoolExprQ' n (var x args) with (1 + x) ≤? n
+isBoolExprQ' n (var x args) | yes p = ⊤
+isBoolExprQ' n (var x args) | no ¬p = ⊥
+isBoolExprQ' n (con tf as) with Data.Nat._≟_ 0 (length as)
+isBoolExprQ' n (con tf []) | yes pp with tf ≟-Name quote true
+isBoolExprQ' n (con tf []) | yes pp | yes p = ⊤
+isBoolExprQ' n (con tf []) | yes pp | no ¬p with tf ≟-Name quote false
+isBoolExprQ' n (con tf []) | yes pp | no ¬p | yes p = ⊤
+isBoolExprQ' n (con tf []) | yes pp | no ¬p₁ | no ¬p = ⊥
+isBoolExprQ' n (con tf (x ∷ as)) | yes ()
+isBoolExprQ' n (con tf []) | no ¬p = ⊥-elim (¬p refl)
+isBoolExprQ' n (con tf (a ∷ s)) | no ¬p = ⊥
+isBoolExprQ' n (def f []) = ⊥
+isBoolExprQ' n (def f (arg v r x ∷ [])) with f ≟-Name quote ¬_
+isBoolExprQ' n (def f (arg v r x ∷ [])) | yes p = isBoolExprQ' n x
+isBoolExprQ' n (def f (arg v r x ∷ [])) | no ¬p = ⊥
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) with f ≟-Name quote _∧_
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | yes p = (isBoolExprQ' n x) × (isBoolExprQ' n x₁)
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p with f ≟-Name quote _∨_
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p | yes p = (isBoolExprQ' n x) × (isBoolExprQ' n x₁)
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | no ¬p | yes p = (isBoolExprQ' n x) × (isBoolExprQ' n x₁)
+isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₂ | no ¬p₁ | no ¬p = ⊥
+isBoolExprQ' n (def f (x ∷ x₁ ∷ x₂ ∷ args)) = ⊥
+isBoolExprQ' n (lam v σ t) = ⊥
+isBoolExprQ' n (pi t₁ t₂) = ⊥
+isBoolExprQ' n (sort y) = ⊥
+isBoolExprQ' n unknown = ⊥
+
+isBoolExprQ : (freeVars : ℕ) → (t : Term) → isSoExprQ t → Set
+isBoolExprQ n t pf with stripSo t pf
+isBoolExprQ n t pf | t' = isBoolExprQ' n t'
+
+
+term2boolexpr : (n : ℕ)
+        → (t : Term)
+        → isBoolExprQ' n t
+        → BoolExpr n
+term2boolexpr n (var x args) pf with (1 + x) ≤? n
+term2boolexpr n (var x args) pf | yes p = Atomic (fromℕ≤ {x} p)
+term2boolexpr n (var x args) () | no ¬p
+term2boolexpr n (con tf []) pf with tf ≟-Name quote true
+term2boolexpr n (con tf []) pf | yes p = Truth
+term2boolexpr n (con tf []) pf | no ¬p with tf ≟-Name quote false
+term2boolexpr n (con tf []) pf | no ¬p | yes p = Falsehood
+term2boolexpr n (con tf []) () | no ¬p₁ | no ¬p
+term2boolexpr n (con c (a ∷ rgs)) ()
+term2boolexpr n (def f []) ()
+term2boolexpr n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
+term2boolexpr n (def f (arg v r x ∷ [])) pf | yes p = Not (term2boolexpr n x pf)
+term2boolexpr n (def f (arg v r x ∷ [])) () | no ¬p
+term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) pf with f ≟-Name quote _∧_
+term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | yes p = And
+  (term2boolexpr n x proj₁)
+  (term2boolexpr n x₁ proj₂)
+term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no p with f ≟-Name quote _∨_
+term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | no ¬p | yes p = Or
+  (term2boolexpr n x proj₁)
+  (term2boolexpr n x₁ proj₂)
+term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no ¬p | no p with f ≟-Name quote _⇒_
+term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | no ¬p₁ | no ¬p | yes p = Imp
+  (term2boolexpr n x proj₁)
+  (term2boolexpr n x₁ proj₂)
+term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) () | no ¬p | no p | no p₁
+term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ x₂ ∷ args)) ()
+term2boolexpr n (lam v σ t) ()
+term2boolexpr n (pi t₁ t₂) ()
+term2boolexpr n (sort x) ()
+term2boolexpr n unknown ()
+\end{code}
+}
 
 The conversion between a |Term| and |BoolExpr| is achieved using the
 |concrete2abstract| function:
@@ -2023,18 +2175,18 @@ abstraction can be.
 
 \begin{shade}
 \begin{spec}
-concrete2abstract :
+concrete2abstract' :
          (t : Term)
        → {pf : isSoExprQ (stripPi t)}
        → let t' = stripSo (stripPi t) pf in
             {pf2 : convertManages boolTable t'}
           → (bool2finCheck (freeVars t) (term2boolexpr' t' {pf2}))
           → BoolExpr (freeVars t)
-concrete2abstract t {pf} {pf2} fin = bool2fin     (freeVars t)
-                                                  (term2boolexpr'
-                                                    (stripSo (stripPi t) pf)
-                                                    {pf2})
-                                                  fin
+concrete2abstract' t {pf} {pf2} fin = bool2fin     (freeVars t)
+                                                   (term2boolexpr'
+                                                     (stripSo (stripPi t) pf)
+                                                     {pf2})
+                                                   fin
 \end{spec}
 \end{shade}
 
@@ -2281,12 +2433,17 @@ equal to their De Bruijn index, given how entering the body of a lambda abstract
 the type of the variable they represent. Note that because of this the |Var| constructor is not parameterised with an explicit index other
 than the |_∈_| parameter.
 
+\ignore{
+\begin{code}
+infix 3 _∈'_
+\end{code}
+}
 \begin{shadedfigure}[h]
-\begin{spec}
-data _∈_ {A : Set} (x : A) : List A → Set where
-  here    : {xs : List A}                        → x ∈ x ∷ xs
-  there   : {xs : List A} {y : A} → x ∈ xs       → x ∈ y ∷ xs
-\end{spec}
+\begin{code}
+data _∈'_ {A : Set} (x : A) : List A → Set where
+  here    : {xs : List A}                        → x ∈' x ∷ xs
+  there   : {xs : List A} {y : A} → x ∈ xs       → x ∈' y ∷ xs
+\end{code}
 \newcommand{\captindata}{The definition of the |_∈_| data type, used as a witness that a variable with some type points to a valid location in the context.}
 \caption[\captindata]{\captindata\ |_∷_| binds more strongly than |_∈_|.}\label{fig:in-data}
 \end{shadedfigure}
@@ -3130,7 +3287,7 @@ mutual
 
 \begin{shadedfigure}
 \begin{code}
-  compile : {Γ : Ctx} {τ : Uu} {n : ℕ} → WT' Γ τ n → Comb Γ τ
+  compile : {Γ : Ctx} {τ : Uu} {n : ℕ} → WT Γ τ n → Comb Γ τ
   compile          (Lit x)          = Lit x
   compile {_}{τ}   (Var h)          = Var τ h
   compile          (wt ⟨ wt₁ ⟩)     = compile wt ⟨ compile wt₁ ⟩
@@ -3180,16 +3337,16 @@ With this machinery in place, we can now successfully convert closed lambda expr
 to SKI combinator calculus.
 
 \begin{shade}
-\begin{spec}
+\begin{code}
 testTermWT : Well-typed-closed (typeOf (
          term2raw (quoteTerm λ (n : ℕ → ℕ) → λ (m : ℕ) → n m ))) _
 testTermWT = raw2wt (
          term2raw (quoteTerm λ (n : ℕ → ℕ) → λ (m : ℕ) → n m ))
  
-unitTest1 : compile testTermWT ≡
+unitTest1 : compile testTermWT ≡ 
     S ⟨ S ⟨ K ⟨ S ⟩ ⟩ ⟨ S ⟨ K ⟨ K ⟩ ⟩ ⟨ I ⟩ ⟩ ⟩ ⟨ K ⟨ I ⟩ ⟩
 unitTest1 = refl
-\end{spec}
+\end{code}
 \end{shade}
 
 Here we see how the existing lambda expression quoting system is used to read a
@@ -3238,14 +3395,14 @@ code, which is just a fold, can be found in Fig.~\ref{fig:skitoWT}.
 
 \begin{shadedfigure}[h]
 \begin{code}
-Srep : ∀ {A B C Γ} → WT' Γ ((A => B => C) => (A => B) => A => C) _
+Srep : ∀ {A B C Γ} → WT Γ ((A => B => C) => (A => B) => A => C) _
 Srep {A}{B}{C} = Lam (A => B => C) (Lam (A => B) (Lam A
                       ( Var (there (there here)) ⟨ Var here ⟩ ⟨ Var (there here) ⟨ Var here ⟩ ⟩ )))
 
-Irep : ∀ {A Γ} → WT' Γ (A => A) _
+Irep : ∀ {A Γ} → WT Γ (A => A) _
 Irep {A} = Lam A (Var here)
 
-Krep : ∀ {A B Γ} → WT' Γ (A => B => A) _
+Krep : ∀ {A B Γ} → WT Γ (A => B => A) _
 Krep {A}{B} = Lam A (Lam B (Var (there here)))
 \end{code}
 \caption{The SKI combinators as represented in the |WT'| data type.}\label{fig:skirepresentations}
@@ -3253,7 +3410,7 @@ Krep {A}{B} = Lam A (Lam B (Var (there here)))
 
 \begin{shadedfigure}[h]
 \begin{code}
-ski2wt : {Γ : Ctx} {σ : Uu} → (c : Comb Γ σ) → WT' Γ σ (combsz c)
+ski2wt : {Γ : Ctx} {σ : Uu} → (c : Comb Γ σ) → WT Γ σ (combsz c)
 ski2wt (Var  σ h)              = Var h
 ski2wt (c ⟨ c₁ ⟩)              = ski2wt c ⟨ ski2wt c₁ ⟩
 ski2wt S                       = Srep
@@ -3696,11 +3853,11 @@ the documentation suggests using the idiomatic \texttt{\%format x = "\textbacksl
 basically \LaTeX\ preprocessing macros. 
 
 A small modification to the Agda compiler added an extension,
-available via the \texttt{-}\texttt{-lagda} flag, which first loads
+available via the \lagda flag, which first loads
 the desired module, then if the module passes type checking, outputs a
 list of identifiers which are in scope, as a list of LHS2\TeX\ format
 rules. The output of such a command, invoked using the usual
-parameters plus the \texttt{-}\texttt{-lagda} flag can be piped into
+parameters plus the \lagda flag can be piped into
 some file and then included in the main \texttt{lagda} file, as is
 done for this paper. The user is expected to define a number of
 \LaTeX\ commands, though, which specify how the various source code
