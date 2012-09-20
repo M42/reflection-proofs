@@ -19,6 +19,7 @@
 
 \usepackage{dirtree}
 \usepackage{subfigure}
+\usepackage{xspace}
 \usepackage[grumpy]{gitinfo}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -40,6 +41,7 @@
 \def\CC{{C\nolinebreak[4]\hspace{ -.05em}\raisebox{.2ex}{\small\bf ++}}}
 \colorlet{hlite}{CornflowerBlue!15!white}
 \newcommand{\hlitem}[1]{\item[\colorbox{hlite}{#1}]~\\}
+\newcommand{\ch}{Curry-Howard isomorphism\xspace}
 % This defines figures with backgrounds -- useful for code
 \usepackage{adjustbox}
 \usepackage{float} % enable H position specifier
@@ -284,7 +286,7 @@ song about Agda, a hen, at
 \mbox{\url{http://youtu.be/zPY42kkRADc}}.}, Agda is an implementation
 of Martin-L\"of's type theory \cite{Martin-Lof:1985:CMC:3721.3731}, extended with records and modules. Agda
 is developed at the Chalmers University of Technology
-\cite{norell:thesis}; thanks to the Curry-Howard isomorphism, it is
+\cite{norell:thesis}; thanks to the \ch, it is
 both a functional\footnote{Functional as in practically usable.}
 functional\footnote{Functional as in Haskell.} programming language
 and a framework for intuitionistic logic. It is comparable with
@@ -292,7 +294,7 @@ Coquand's calculus of constructions, the logic behind Coq \cite{DBLP:journals/ia
 similarly both a programming language and an intuitionistic logic
 framework.
 
-In informal terms, the Curry-Howard isomorphism  states that there is a correspondence
+In informal terms, the \ch  states that there is a correspondence
 between types and propositions on the one hand, and programs and proofs on the other hand \cite{sorensen1998lectures}. The
 interpretation of a programming language as a logic framework is that types express theorems which 
 are proven by providing an implementation.  This correspondence is outlined further in Sec.~\ref{sec:plandpa}.
@@ -391,7 +393,7 @@ head₁ (x ∷ xs) = x
 \end{spec}
 \end{shade}
 
-\paragraph{Implicit Arguments} This is getting somewhere, but we have
+\paragraph{Implicit Arguments}\label{para:implicit} This is getting somewhere, but we have
 again introduced a new concept: implicit arguments.  The distinction
 between explicit (usual arguments to functions, as seen in Haskell,
 for example) and implicit arguments is merely that the latter are tagged as
@@ -599,26 +601,26 @@ tricks, the utility or sense of which might not at first be apparent.
 \section{A Programming Language \emph{and} Proof Assistant}\label{sec:plandpa}
 
 It has already been briefly mentioned that Agda is both a logical framework and a programming language,
-as a result of the Curry-Howard correspondence. This correspondence lays down a relationship between programs as proofs and
+as a result of the \ch. This correspondence lays down a relationship between programs as proofs and
 types as theorems. 
 
 In this section, we will give a short explanation of how this correspondence works, and 
 what it means for programmers. I refrain from attempting to give a comprehensive explanation
 of intuitionistic logic and why the
 exact correspondence between natural deduction and simply typed $\lambda$-calculus exists. The
-inquisitive reader is advised to take a look at  the Lectures on Curry-Howard by S\o rensen and Urzyczyn \cite{sorensen1998lectures}.
+inquisitive reader is advised to take a look at  the Lectures on the \ch by S\o rensen and Urzyczyn \cite{sorensen1998lectures}.
 
 \paragraph{Programs as Proofs}
 
 Intuitionistic logic is at the heart of Agda as a logical framework. Intuitionistic
-logic is similar to classical logic, and works as expected (including implication, disjunction, etc.)
+logic is similar to classical logic, and works as expected (including implication, conjunction, etc.)
 except for one difference: the axiom $A = \neg \neg A$ is not present. Intuitionistic
 logic is also referred to as constructive logic, since only when one provides a constructive 
 proof of a proposition, is it regarded as a theorem\footnote{In parlance, \emph{theorem} refers to a true and proven proposition, whereas \emph{nontheorem} refers to a 
 false proposition.}. For that reason,  \emph{reductio ad absurdum} does not yield 
 valid proofs -- only when it is shown how a proof term that witnesses the proposition is it acceptable.
 
-By the Curry-Howard isomorphism, propositions are types. A logical proposition, such as $a => b$ translates to
+By the \ch, propositions are types. A logical proposition, such as $a => b$ translates to
 a type |a -> b|. Now, $a => b$ is a theorem if and only if the type |a -> b| is inhabited.  One of the most intuitive
 illustrations of this is the proposition $A => B => A$. This can be read as ``if we assume $A$ is true, and we furthermore assume that $B$ is true, then we can conclude $A$.''
 Obviously this is a theorem, but let us translate the proposition to a type. It becomes |a -> b -> a|; an example of a 
@@ -629,9 +631,9 @@ argument, we fulfil our proof obligation |a| by returning the first argument unc
 Keeping this correspondence in mind, we can give analogues of mathematical logic in type theory. The trivial theorem, |true|, translates to 
 the type |⊤|, which has one inhabitant, |tt|. The simplest nontheorem |false| translates to |⊥|, the type with no inhabitants. Therefore,
 a proof for |⊥| can never be constructed. Other equivalents are |_∧_| and |(_×_)|, which is only proven if both left and right components
-are inhabited. Disjunction translates to the |_⊎_| data type (known as @Either@ in Haskell), which has constructors for left or right.
+are inhabited. Disjunction (a.k.a. the |_∨_| operator in logic) translates to the |_⊎_| data type (known as @Either@ in Haskell), which has constructors for left or right.
 
-Now that we have an intuition for the Curry-Howard isomorphism, we can continue
+Now that we have an intuition for the \ch, we can continue
 looking at various aspects of Agda as a logical framework. One point
 worth noting, is that in Agda, one directly manipulates and constructs
 proof objects in the
@@ -668,7 +670,7 @@ dropped, a number of desirable properties for a logic would not hold any longer.
 all of a sudden, run time exceptions are possible: if a function is not defined on a given input but that value
 is, at some point, passed as an argument, bad things will happen (compare Haskell and a run time pattern matching failure).
 Because functions can also return types (which are just more values) and thus be used in type signatures, we would not want
-it to be possible for type-checking to break as a result of an incomplete function definition. 
+it to be possible for type checking to break as a result of an incomplete function definition. 
 
 Finally, though, Agda allows us to define functions and proofs side-by-side, allowing concurrent development of
 programs and proofs of properties about those programs hand-in-hand.  The Emacs mode, which is typically used
@@ -677,47 +679,26 @@ anywhere in the file, and compile. This question mark turns into something which
 cursor is placed inside a goal, queries such as the  type of the value expected there or the objects in the environment at 
 that point are available. 
 
+Admittedly, this section is by no means comprehensive as far as explaining the \ch goes.
+More information about how to use Agda as a proof assistant is available \cite{Norell:2009:DTP:1481861.1481862,coquand2006emacs}. For
+background reading on the \ch a reference should be made to S\o rensen et al \cite{sorensen1998lectures}.
+We will now look at some specific tricks which are peculiar to Agda; hopefully
+dealing with those now will make code snippets introduced later a little more comprehensible. 
 
 
 \section{Implicit Record-type Arguments}\label{sec:implicit-unit}
 
-\todo{intro this piece!}
+Previously, in Sec.~\ref{para:implicit}, we saw how certain arguments which are considered obvious, can be marked implicit. This technique 
+makes calls to functions more concise, since some arguments are not explicitly listed. This technique of hiding arguments is particularly
+useful when the value of the argument can be inferred. This section demonstrates the technique. Furthermore  it turns out that record types have 
+advantageous properties when it comes to inferring their value.
+
 \todo{this piece is dodgy!}
-Furthermore, if a particular argument is a record type, and it has
+If a particular argument is a record type, and it has
 only one possible inhabitant, Agda can automatically infer its
 value. Thus, it also need not be passed as an explicit argument at the
-call-site. The following code snippet
-(Fig. \ref{code:implicit-example}) illustrates how record type
+call-site. The code snippet in Fig. \ref{code:implicit-example} illustrates how record type
 arguments having only one alternative can be automatically inferred.
-
-The function |foo| expects a value of type |⊤ × ⊤|, and returns a
-natural number.  We know, however, that | _×_ | is a record and only
-has the constructor | _,_ : A → B → A × B| (this pair type is a
-special case of the dependent pair |Σ (A : Set) (B : A → Set) : Set|),
-therefore the only possible value is one using the constructor
-|_,_|. If we next look at the values for |A| and |B| here, namely the
-left and right-hand arguments' types, we see that in both cases they
-have type |⊤|. The unit type also is defined as a record with only one
-constructor, namely |tt|. This means that the only value possible is
-|tt , tt|, which is why we can use the underscore-notation, meaning
-Agda should infer the argument for us.
-
-The fact that pairs and unit are defined as records in the standard
-library is pretty crucial here.  The type system does some work for us
-in these cases; $\eta$-reduction is done on record types, which
-allows Agda to infer that there is exactly one inhabitant of a certain
-type. This $\eta$-reduction is not done on general data types, since this
-would increase the complexity of the work the compiler needs to do as
-well as potentially introduce unsound behaviour
-\cite{mcbride-motivation-eta-rules}.  
-
-
-\todo{what?}
-Also, it means that it is possible to
-assert to Agda that a function that returns a certain type always
-produces an inhabited value. On the other hand, single-constructor
-data types may not be inhabited if their indices cannot be satisfied
-(for example: |refl| and the equality type).
 
 
 \begin{shadedfigure}[h]
@@ -734,9 +715,36 @@ arguments. Note that it is possible to replace $u$ on the LHS of |foo| with
 the irrefutable pattern |u₁ , u₂|, since, as has been mentioned
 before, this is the only valid constructor for the type |_×_|.}
         \label{code:implicit-example}
-    \end{shadedfigure}
+\end{shadedfigure}
+
+The function |foo| expects a value of type |⊤ × ⊤|, and returns a
+natural number.  We know, however, that | _×_ | is a record and only
+has the constructor | _,_ : A → B → A × B|. This pair type is a
+special case of the dependent pair |Σ (A : Set) (B : A → Set) : Set|.
+Therefore, the only possible value is one using the constructor
+|_,_|. If we next look at the values for |A| and |B| here, namely the
+left and right-hand arguments' types, we see that in both cases they
+have type |⊤|. The unit type also is defined as a record with only one
+constructor, namely |tt|. This means that the only value possible is
+|tt , tt|, which is why we can use the underscore-notation, meaning
+Agda should infer the argument for us.
+
+The fact that pairs and unit are defined as records in the standard
+library is pretty crucial here.  The type system does some work for us
+in these cases; $\eta$-reduction is done on record types, which
+allows Agda to infer that there is exactly one inhabitant of a certain
+type. This $\eta$-reduction is not done on general data types, since this
+would increase the complexity of the work the compiler needs to do as
+well as potentially introduce unsound behaviour
+\cite{mcbride-motivation-eta-rules}.  
+
+Also, it means that it is possible to
+assert to Agda that a function that receives a certain type always
+produces an inhabited value. We call this assertion an \emph{irrefutable pattern}, see Fig.~\ref{fig:implicit0}. Here, we 
+pattern match on |(tt , tt)|, and Agda is convinced that no other options are possible.
+
 Since this inference is possible, we can also make this argument implicit, which effectively
-hides from the user that a value is being inferred and passed, as in Fig. \ref{fig:implicit0}.
+hides from the user that a value is being inferred and passed, as in Fig. \ref{fig:implicit0}. This saves us an underscore.
     
     \begin{shadedfigure}[h]
 \begin{code}
@@ -751,18 +759,20 @@ bar' = foo'
     \end{shadedfigure}
 
 This is possible, since the type |⊤ × ⊤| only has one inhabitant, namely |(tt , tt)|. If
-multiple values were valid, the above code would have resulted in an unsolved meta. That brings
-us to one of the drawbacks of this solution which has been used quite often. Mainly, it has been used to ``hide''
+multiple values were valid, the above code would have resulted in an unsolved meta in the definition of |bar'|. That brings
+us to one of the drawbacks of this solution which has been used quite often. Mainly, the technique has been used to ``hide''
 a proof witness of, for example, an input term being of the right shape.
 The problem with this trick is that if an implicit
-an argument is ambiguous, or worse, if it is a type with no inhabitants\footnote{A type with no inhabitants is a false proposition.}, the compiler will not fail
+ argument is ambiguous, or worse, if it is a type with no inhabitants\footnote{A type with no inhabitants is a false proposition.}, the compiler will not fail
 with a type error, but merely with a warning that there is an unsolved meta. The corresponding piece of code will be highlighted yellow
 in the Emacs Agda mode, but the user will not be given any fatal error.
+The problem is then that an inattentive programmer might miss this innocuous-looking error, while it actually represents an error in a proof.
+Luckily Agda prevents us from importing modules with unsolved metas, mitigating the danger of hiding proofs this way.
 
-\todo{bruggetje}
-
+Now that we have seen some idiosyncrasies which could otherwise cause confusion later on, it is time to move on to
+the real reason for introducing Agda; let us start using the possibilities we have thanks to dependent types!
 Of course, a full introduction to the Agda language including all its
-curiosities and features is out of the scope of such a crash course;
+curiosities and features is out of the scope of such a crash course. In closing,
 the inquisitive reader is invited to work through Norell's
 excellent tutorial 
 \cite{Norell:2009:DTP:1481861.1481862}.
