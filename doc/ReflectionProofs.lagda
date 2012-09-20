@@ -53,14 +53,11 @@
 %\newenvironment{shade}{}{}
 \newenvironment{shadedfigure}[1][tbhp]{%
     \begin{figure}[#1]
-    \begin{adjustbox}{minipage=\linewidth-10pt,margin=5pt,bgcolor=hlite}%,frame=2pt}
-    %\begin{adjustbox}{minipage=\linewidth-4pt,margin=0pt 5pt,bgcolor=hlite,frame=2pt}
-%        \centering
+    \begin{adjustbox}{minipage=\linewidth-10pt,margin=5pt,bgcolor=hlite}
 }{%
     \end{adjustbox}
     \end{figure}
 }
-%%
 
 \ignore{
 \begin{shade}
@@ -134,10 +131,9 @@ open import Data.List hiding (_∷ʳ_)
 \setcounter{tocdepth}{1}
 
 %TODO make a fancy title page
-%? \frontmatter %% only available in book-like classes.
 \begin{titlepage}
-%% Naar een voorbeeld in de LaTeX Companion Second Edition
-%% pagina 858
+%% Inspired by an example in the LaTeX Companion Second Edition
+%% page 858
 \newcommand{\HRule}{\noindent\rule{\linewidth}{1.5pt}}
 \vspace*{\stretch{1}}
 \HRule
@@ -177,7 +173,7 @@ typing information is discussed, and a solution is presented. Also
 provided is a detailed users' guide to the reflection API and a
 library of working code examples to illustrate how various common
 tasks can be performed, along with suggestions for an updated
-reflection API in a future version of Agda. %conclusion?
+reflection API in a future version of Agda.
 \end{abstract}
 
 \thispagestyle{empty}
@@ -210,12 +206,12 @@ Since the inception of computer programming, one of the aims has been to
 write code as concisely as possible, while achieving the most powerful effect.
 One of the holy grails of writing programs is also being able to reuse pieces of
 code, after having written them once, as opposed to continually writing small
-variations on existing code. Reinventing the wheel is something a programmer
-should not enjoy doing.
+variations on existing code. Reinventing the wheel is something the programmer
+should not relish doing.
 
 One of the many techniques for writing more effective
 code is that of \emph{metaprogramming}, which refers
-to the ability of a program to inspect (or \emph{reflect}) its own code
+to the ability of a program to inspect\footnote{or \emph{reflect} upon} its own code
 and modify it. To the uninitiated, this sounds rather magical \cite{reflection-stackoverflow},
 but it has long been a favourite
 feature of users of such languages as Lisp~\cite{lisp-macros}. In many cases, this allows
@@ -223,13 +219,9 @@ code to be a lot more concise and general, and thus reusable, than
 usually is possible in simple imperative languages.
 
 
-
-
-
 The dependently typed programming language
 Agda~\cite{norell:thesis,Norell:2009:DTP:1481861.1481862} has recently been
-extended with a \emph{reflection mechanism} for compile time meta
-programming in the style of Lisp~\cite{lisp-macros},
+extended with a \emph{reflection mechanism} for compile time metaprogramming in the style of Lisp~\cite{lisp-macros},
 MetaML~\cite{metaml}, Template Haskell~\cite{template-haskell}, and
 \CC\ templates~\cite{cplusplus}. Agda's reflection mechanisms make it
 possible to convert a program fragment into its corresponding abstract
@@ -244,7 +236,7 @@ The main questions we aim to answer during this project are:
 
 
 
-This paper starts to explore the possibilities and limitations of this
+This project starts to explore the possibilities and limitations of this
 new reflection mechanism. It describes several case studies,
 exemplative of the kind of problems that can be solved using
 reflection. More specifically it makes the following contributions:
@@ -278,9 +270,9 @@ doing this, structurally recursive, total, well-typed and terminating CPS and SK
 \end{itemize}
 
 The code and examples presented in this paper all compile using the
-latest development version of Agda (currently 2.3.1), with some minor modifications to the compiler (see Sec.~\ref{appendix:lambda-types}), and are available on
+latest development version of Agda (currently 2.3.1), with some minor modifications to the compiler (see Sec.~\ref{appendix:lambda-types}). All code, including this report, are available on
 GitHub\footnote{\ghurl}.
-This thesis is also a Literate Agda file, which means the code snippets can be compiled 
+This thesis is also a Literate Agda file, which means the code snippets can be extracted, compiled 
 and played around with.
 
 \chapter{Introducing Agda}\label{chap:introducing-agda}
@@ -303,7 +295,7 @@ framework.
 In informal terms, the Curry-Howard isomorphism  states that there is a correspondence
 between types and propositions on the one hand, and programs and proofs on the other hand \cite{sorensen1998lectures}. The
 interpretation of a programming language as a logic framework is that types express theorems which 
-are proven by providing an implementation.  This correspondence is explored further in Sec.~\ref{sec:plandpa}.
+are proven by providing an implementation.  This correspondence is outlined further in Sec.~\ref{sec:plandpa}.
 
 In Agda, types of functions are allowed
 to \emph{depend upon} values -- the main difference between
@@ -315,25 +307,27 @@ This chapter aims to provide a crash course on Agda.
 The reader is assumed to be fluent in GHC Haskell;
 the fact that
 Agda's syntax is inspired by Haskell
-makes the choice to explain
+makes it a reasonable choice to explain
  most of the concepts here 
- in terms of Haskell, a reasonable one.
- Users familiar with programming in
+ in terms of Haskell.
+ Consequently, users familiar with programming in
 Haskell should be able to hit the ground running in Agda. 
 
 \section{First Steps in Agda}
 
-Our short tutorial will start slowly; we will start by looking at how textbooks define natural numbers, using so-called Peano style natural numbers. The colon
-means ``is of type'', so here, |zero| is of type |Natural|. This inductive style of data type definitions is a common
+Our short tutorial will start slowly; we will start by looking at how textbooks define natural numbers, in so-called Peano style. The colon
+means ``is of type'', so in Fig.~\ref{fig:peano}, |zero| is of type |Natural|. The constructor |suc| has type |Natural -> Natural|, which means that
+it takes a natural as argument and produces a new natural. This new natural is also the successor of the old natural. This inductive style of data type definitions is a common
 technique in both Haskell and Agda.
 
-\begin{shade}
+\begin{shadedfigure}
 \begin{code}
 data Natural : Set where
     zero     :                 Natural
     succ     : Natural ->      Natural
 \end{code}
-\end{shade}
+\caption{The definition of natural numbers as an inductive data type.}\label{fig:peano}
+\end{shadedfigure}
 
 The definition of naturals here looks a lot like the GADT (generalised algebraic
 data type \cite{citeulike:2082722}) rendition in Haskell would; this is no coincidence. Notice that we have to define that |Natural| is of type
@@ -465,9 +459,9 @@ vector, are valid inputs. This way, we guarantee that empty vectors cannot be be
 that this function is total, so we are done: we have a safe |head₃| function.
 
 This is the most common example of why DTP is the best thing since sliced bread:
-we cannot ask for the head of an empty vector, since we will get a compile-time error
+we cannot ask for the head of an empty vector, since we will get a compile time error
 that there is no possible value of |n| such that |succ n == zero|. Compare this to the |head| function
-defined in Haskell's Prelude, where a run-time exception is generated if an empty list is passed in. How primitive!
+defined in Haskell's Prelude, where a run time exception is generated if an empty list is passed in. How primitive!
 
 
 
@@ -671,8 +665,8 @@ as a recursive argument -- |n| is structurally smaller than |suc n|.
 
 \paragraph{Covering} Being defined on all possible inputs is also an aspect of totality. If this requirement were 
 dropped, a number of desirable properties for a logic would not hold any longer. The most obvious example is that
-all of a sudden, run-time exceptions are possible: if a function is not defined on a given input but that value
-is, at some point, passed as an argument, bad things will happen (compare Haskell and a run-time pattern matching failure).
+all of a sudden, run time exceptions are possible: if a function is not defined on a given input but that value
+is, at some point, passed as an argument, bad things will happen (compare Haskell and a run time pattern matching failure).
 Because functions can also return types (which are just more values) and thus be used in type signatures, we would not want
 it to be possible for type-checking to break as a result of an incomplete function definition. 
 
@@ -780,7 +774,7 @@ Since version 2.2.8, Agda includes a reflection API, which allows converting
 parts of a program's code into abstract syntax, in other words a data structure
 in Agda itself, that can be inspected or modified like any other data structure.
 The idea of reflection is nothing new: already in the 1980s Lisp included a similar
-feature, called quoting, which allowed run-time modification of a program's code, by
+feature, called quoting, which allowed run time modification of a program's code, by
 the program itself. This has given rise to powerful techniques for reusing code and
 generating frequently needed but slightly different expressions automatically.
 
@@ -1112,13 +1106,13 @@ data Expr : Set where
 We might conceivably want to convert a piece of concrete syntax, such as $5 + x$, to this
 AST, using Agda's reflection system. This typically involves ugly and verbose functions such
 as the one from Sec.~\ref{sec:Boolean-tautologies} with many |with|-clauses and frankly, too
-much tedium to be anything to be proud of. What we would actually like to be able to do,
+much tedium to be anything to be proud of. What we want to do,
 is provide a mapping from concrete constructs such as the |_+_| function to elements of our
 AST, and get a conversion function for free.
 
 A common annoyance when using Agda's reflection is that we often end up writing similar-looking
 functions for checking if a |Term| is of a specific shape, and if so,
-translating |Term|s into some AST. This motivated the development of
+translating |Term|s into some AST. This motivated my development of
 |Autoquote| in the course of this project. What |Autoquote| does is abstract over this process, and
 provide an interface which, when provided with a mapping from concrete
 names to constructors in this AST, automatically quotes expressions
@@ -1208,29 +1202,6 @@ example, presented in Fig.~\ref{fig:exprTable}.
 The function that does this conversion for us looks like this\todo{what?}. Note that it is not intended to
 be called directly; a convenience function |doConvert| is defined below. 
 
-\ignore{
-\begin{shade}
-\begin{code}
-
-data EqN : ℕ → ℕ → Set where
-  yes : {m : ℕ} → EqN m m
-  no  : {m n : ℕ} → EqN m n
-
-
-≟-Nat-cong : (m : ℕ) → (n : ℕ) → EqN m n → EqN (suc m) (suc n)
-≟-Nat-cong .n n yes = yes
-≟-Nat-cong  m n no  = no
-
-
-_≟-ℕ_ : (m : ℕ) → (n : ℕ) → EqN m n
-zero ≟-ℕ zero = yes
-zero ≟-ℕ suc n = no
-suc m ≟-ℕ zero = no
-suc m ≟-ℕ suc n = ≟-Nat-cong m n (m ≟-ℕ n)
-
-\end{code}
-\end{shade}
-}
 \begin{shade}
 \begin{spec}
 mutual
@@ -1326,7 +1297,7 @@ the allowed constructors, and if none of them match, it can fail with a |nothing
 This is a lot simpler than writing a predicate function with the same pattern matching 
 structure by hand, since sometimes the |with|-clauses are expanded unpredictably. The net effect
 of writing a pair of functions in this style is the same as the ``usual'' way of writing a predicate
-function by hand, in that a compile-time error is generated if the function |doConvert| is 
+function by hand, in that a compile time error is generated if the function |doConvert| is 
 invoked on an argument with the wrong shape.
 
 The format of the translation |Table| required could most probably be made a little simpler,
@@ -1465,7 +1436,7 @@ without having to explicitly write down a large proof tree. Note that
 it is not possible to write something with type |Even 27|, or any other uneven
 number, since the parameter |even? n| cannot be instantiated, thus
 |tt| would not be accepted where it is in the |Even 28| example. This will
-produce a |⊤ !=< ⊥| type error at compile-time.\todo{wouter's nicer error?}
+produce a |⊤ !=< ⊥| type error at compile time.\todo{wouter's nicer error?}
 
 Since the type |⊤| is a simple record type, Agda can infer the |tt|
 argument, as explained in Sec.~\ref{sec:implicit-unit}. This means we can turn the assumption |even? n| into an
@@ -1539,18 +1510,6 @@ looked up in the environment. For example, |And| is converted to
 the Boolean function |_∧_|, and its two arguments in turn are
 recursively interpreted.
 
-\ignore{
-\begin{shade}
-\begin{code}
-infixr 4 _⇒_
-_⇒_ : Bool → Bool → Bool
-true  ⇒ true  = true
-true  ⇒ false = false
-false ⇒ true  = true
-false ⇒ false = true
-\end{code}
-\end{shade}
-}
 
 \begin{shade}
 \begin{code}
@@ -1585,159 +1544,6 @@ P    : Bool → Set
 P    = So "Argument expression does not evaluate to true."
 \end{code}
 \end{shade}
-\ignore{
-\begin{shade}
-\begin{code}
-data Diff : ℕ → ℕ → Set where
-  Base : ∀ {n}   → Diff n n
-  Step : ∀ {n m} → Diff (suc n) m → Diff n m
-\end{code}
-\end{shade}
-
-\begin{shade}
-\begin{code}
--- peels off all the outermost Pi constructors,
--- returning a term with freeVars free variables.
-
-stripPi : Term → Term
-stripPi (pi args (el s t)) = stripPi t
--- identity otherwise
-stripPi (var x args) = var  x    args
-stripPi (con c args) = con  c    args
-stripPi (def f args) = def  f    args
-stripPi (lam v σ t)  = lam  v σ  t
-stripPi (sort x)     = sort x
-stripPi unknown      = unknown
-
-isSoExprQ : (t : Term) → Set
-isSoExprQ (var x args) = ⊥
-isSoExprQ (con c args) = ⊥
-isSoExprQ (def f args) with Data.Nat._≟_ (length args) 2
-isSoExprQ (def f args) | yes p with tt
-isSoExprQ (def f [])                        | yes () | tt
-isSoExprQ (def f (x ∷ []))                  | yes () | tt
-isSoExprQ (def f (a ∷ arg v r x ∷ []))      | yes p  | tt with f ≟-Name quote So
-isSoExprQ (def f (a ∷ arg v r x ∷ []))      | yes p₁ | tt | yes p = ⊤
-isSoExprQ (def f (a ∷ arg v r x ∷ []))      | yes p  | tt | no ¬p = ⊥
-isSoExprQ (def f (x ∷ x₃ ∷ x₄ ∷ args))      | yes () | tt
-isSoExprQ (def f args)                      | no ¬p with tt
-isSoExprQ (def f [])                        | no ¬p | tt = ⊥
-isSoExprQ (def f (x ∷ xs))                  | no ¬p | tt = ⊥
-isSoExprQ (lam v σ t)                       = ⊥
-isSoExprQ (pi t₁ t₂)                        = ⊥
-isSoExprQ (sort x)                          = ⊥
-isSoExprQ unknown                           = ⊥
-
-
-stripSo : (t : Term) → isSoExprQ t → Term
-stripSo (var x args) ()
-stripSo (con c args) ()
-stripSo (def f args) pf with Data.Nat._≟_ (length args) 2
-stripSo (def f args) pf | yes p with tt
-stripSo (def f [])   pf                      | yes () | tt
-stripSo (def f (x ∷ [])) pf                  | yes () | tt
-stripSo (def f (a ∷ arg v r x ∷ [])) pf      | yes p  | tt with f ≟-Name quote So
-stripSo (def f (a ∷ arg v r x ∷ [])) pf  | yes p₁ | tt | yes p = x
-stripSo (def f (a ∷ arg v r x ∷ [])) () | yes p | tt | no ¬p
-stripSo (def f (x ∷ x₃ ∷ x₄ ∷ args)) pf     | yes () | tt
-stripSo (def f args)             pf         | no ¬p with tt
-stripSo (def f []) () | no ¬p | tt
-stripSo (def f (x ∷ xs)) () | no ¬p | tt
-stripSo (lam v σ t)    ()
-stripSo (pi t₁ t₂)   ()
-stripSo (sort x)     ()
-stripSo unknown      ()
-
-
-isBoolExprQ' : (n : ℕ) → (t : Term) → Set
-isBoolExprQ' n (var x args) with (1 + x) ≤? n
-isBoolExprQ' n (var x args) | yes p = ⊤
-isBoolExprQ' n (var x args) | no ¬p = ⊥
-isBoolExprQ' n (con tf as) with Data.Nat._≟_ 0 (length as)
-isBoolExprQ' n (con tf []) | yes pp with tf ≟-Name quote true
-isBoolExprQ' n (con tf []) | yes pp | yes p = ⊤
-isBoolExprQ' n (con tf []) | yes pp | no ¬p with tf ≟-Name quote false
-isBoolExprQ' n (con tf []) | yes pp | no ¬p  | yes p = ⊤
-isBoolExprQ' n (con tf []) | yes pp | no ¬p₁ | no ¬p = ⊥
-isBoolExprQ' n (con tf (x ∷ as)) | yes ()
-isBoolExprQ' n (con tf []) | no ¬p = ⊥-elim (¬p refl)
-isBoolExprQ' n (con tf (a ∷ s)) | no ¬p = ⊥
-isBoolExprQ' n (def f []) = ⊥
-isBoolExprQ' n (def f (arg v r x ∷ [])) with f ≟-Name quote ¬_
-isBoolExprQ' n (def f (arg v r x ∷ [])) | yes p = isBoolExprQ' n x
-isBoolExprQ' n (def f (arg v r x ∷ [])) | no ¬p = ⊥
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) with f ≟-Name quote _∧_
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | yes p = (isBoolExprQ' n x) × (isBoolExprQ' n x₁)
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p with f ≟-Name quote _∨_
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p | yes p = (isBoolExprQ' n x) × (isBoolExprQ' n x₁)
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | no ¬p | yes p = (isBoolExprQ' n x) × (isBoolExprQ' n x₁)
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₂ | no ¬p₁ | no ¬p = ⊥
-isBoolExprQ' n (def f (x ∷ x₁ ∷ x₂ ∷ args)) = ⊥
-isBoolExprQ' n (lam v σ t) = ⊥
-isBoolExprQ' n (pi t₁ t₂) = ⊥
-isBoolExprQ' n (sort y) = ⊥
-isBoolExprQ' n unknown = ⊥
-
-isBoolExprQ : (freeVars : ℕ) → (t : Term) → isSoExprQ t → Set
-isBoolExprQ n t pf with stripSo t pf
-isBoolExprQ n t pf | t' = isBoolExprQ' n t'
-
-term2boolexpr : (n : ℕ)
-        → (t : Term)
-        → isBoolExprQ' n t
-        → BoolExpr n
-term2boolexpr n (var x args) pf with (1 + x) ≤? n
-term2boolexpr n (var x args) pf | yes p = Atomic (fromℕ≤ {x} p)
-term2boolexpr n (var x args) () | no ¬p
-term2boolexpr n (con tf []) pf with tf ≟-Name quote true
-term2boolexpr n (con tf []) pf | yes p = Truth
-term2boolexpr n (con tf []) pf | no ¬p with tf ≟-Name quote false
-term2boolexpr n (con tf []) pf | no ¬p  | yes p = Falsehood
-term2boolexpr n (con tf []) () | no ¬p₁ | no ¬p
-term2boolexpr n (con c (a ∷ rgs)) ()
-term2boolexpr n (def f []) ()
-term2boolexpr n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
-term2boolexpr n (def f (arg v r x ∷ [])) pf | yes p = Not (term2boolexpr n x pf)
-term2boolexpr n (def f (arg v r x ∷ [])) () | no ¬p
-term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) pf with f ≟-Name quote _∧_
-term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | yes p = And
-  (term2boolexpr n x proj₁)
-  (term2boolexpr n x₁ proj₂)
-term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no p with f ≟-Name quote _∨_
-term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | no ¬p | yes p = Or
-  (term2boolexpr n x proj₁)
-  (term2boolexpr n x₁ proj₂)
-term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no ¬p | no p with f ≟-Name quote _⇒_
-term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | no ¬p₁ | no ¬p | yes p = Imp
-  (term2boolexpr n x proj₁)
-  (term2boolexpr n x₁ proj₂)
-term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) () | no ¬p | no p | no p₁
-term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ x₂ ∷ args)) ()
-term2boolexpr n (lam v σ t)  ()
-term2boolexpr n (pi t₁ t₂) ()
-term2boolexpr n (sort x)   ()
-term2boolexpr n unknown    ()
-
-zeroId : (n : ℕ) → n ≡ n + 0
-zeroId zero                           = refl
-zeroId (suc  n) with n + 0 | zeroId n
-zeroId (suc .w)    | w     | refl     = refl
-
-succLemma : (n m : ℕ) → suc (n + m) ≡ n + suc m
-succLemma zero m    = refl
-succLemma (suc n) m = cong suc (succLemma n m)
-
-coerceDiff : {n m k : ℕ} → n ≡ m → Diff k n → Diff k m
-coerceDiff refl d = d
-
-zeroleast : (k n : ℕ) → Diff k (k + n)
-zeroleast k zero    = coerceDiff (zeroId k) Base
-zeroleast k (suc n) = Step (coerceDiff (succLemma k n) (zeroleast (1 + k) n))
-
-\end{code}
-\end{shade}
-}
 
 
 Now that we have these helper functions, it is easy to define what it
@@ -1874,20 +1680,6 @@ proofGoal      n    m    (Step y  ) b acc =
 \end{code}
 \end{shade}
 
-\ignore{
-\begin{shade}
-\begin{code}
--- dependently typed if-statement
-if : {P : Bool → Set} → (b : Bool) → P true → P false → P b
-if true  t f = t
-if false t f = f
-
--- very much like ⊥-elim, but for Errors.
-Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
-Error-elim ()
-\end{code}
-\end{shade}
-}
 
 Now that we can interpret a |BoolExpr n| as a theorem using |proofGoal|, and we have a
 way to decide if something is true for a given environment, we still
@@ -2084,16 +1876,6 @@ term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) pf | no ¬p wi
 
 All these pieces are assembled in the |proveTautology| function.
 
-\ignore{
-\begin{shade}
-\begin{code}
-freeVars : Term → ℕ
-freeVars (pi (arg visible relevant (el (lit _) (def Bool []))) (el s t)) = 1 + (freeVars t)
--- identity otherwise
-freeVars    _         = 0
-\end{code}
-\end{shade}
-}
 \begin{shade}
 \begin{code}
 proveTautology :    (t     : Term) →
@@ -2205,33 +1987,6 @@ variables are all in scope (this means that $\forall$ |Atomic| $x$ s.t. $x < n$,
 want to convert to a |BoolExpr n|). This is done in |bool2fin|, assuming that |bool2finCheck|
 holds (the latter simply expresses the aforementioned in-scope property).
 
-\ignore{
-\begin{shade}
-\begin{code}
-bool2finCheck : (n : ℕ) → (t : BoolInter) → Set
-bool2finCheck n Truth        = ⊤
-bool2finCheck n Falsehood    = ⊤
-bool2finCheck n (And t t₁)   = bool2finCheck n t × bool2finCheck n t₁
-bool2finCheck n (Or t t₁)    = bool2finCheck n t × bool2finCheck n t₁
-bool2finCheck n (Not t)      = bool2finCheck n t
-bool2finCheck n (Imp t t₁)   = bool2finCheck n t × bool2finCheck n t₁
-bool2finCheck n (Atomic x)   with suc x ≤? n
-bool2finCheck n (Atomic x)   | yes p = ⊤
-bool2finCheck n (Atomic x)   | no ¬p = ⊥
-
-bool2fin : (n : ℕ) → (t : BoolInter) → (bool2finCheck n t) → BoolExpr n
-bool2fin n Truth       pf          = Truth
-bool2fin n Falsehood   pf          = Falsehood
-bool2fin n (And t t₁) (p₁ , p₂)    = And (bool2fin n t p₁) (bool2fin n t₁ p₂)
-bool2fin n (Or t t₁)  (p₁ , p₂)    = Or  (bool2fin n t p₁) (bool2fin n t₁ p₂)
-bool2fin n (Not t)     p₁          = Not (bool2fin n t p₁)
-bool2fin n (Imp t t₁) (p₁ , p₂)    = Imp (bool2fin n t p₁) (bool2fin n t₁ p₂)
-bool2fin n (Atomic x)  p₁ with suc x ≤? n
-bool2fin n (Atomic x)  p₁ | yes p  = Atomic (fromℕ≤ {x} p)
-bool2fin n (Atomic x)  () | no ¬p
-\end{code}
-\end{shade}
-}
 \begin{shade}
 \begin{spec}
 bool2finCheck : (n : ℕ) → (t : BoolInter) → Set
@@ -2297,10 +2052,10 @@ inspected and/or manipulated, and possibly be
 made
 concrete again. As such it can be evaluated as if it were code the
 programmer had directly entered into a source file. In Agda the reflection happens at
-compile-time, allowing for the strong static typing we have come to know and love.
-If run-time reflection were possible, any program compiled with Agda would need to
+compile time, allowing for the strong static typing we have come to know and love.
+If run time reflection were possible, any program compiled with Agda would need to
 include the complete typing system, a problem which doesn't exist in Lisp, for example,
- since it is dynamically typed, which makes run-time reflection possible. In Agda, therefore,
+ since it is dynamically typed, which makes run time reflection possible. In Agda, therefore,
 a compromise of sorts is required.
 
 Reflection is well-supported and widely used in Lisp and more
@@ -3554,7 +3309,7 @@ similar languages, it is not surprising that one of the inspirations
 for this project came from the (Template) Haskell world. Template
 Haskell is, as has been mentioned before, a GHC compiler extension,
 first described by Sheard and Peyton~Jones \cite{template-haskell},
-that allows compile-time metaprogramming, not unlike Agda's recent
+that allows compile time metaprogramming, not unlike Agda's recent
 reflection API. One of the many useful applications of Template
 Haskell has been the automatic generation of embedding-projection
 function pairs for generic programming, saving a certain amount of
@@ -3625,7 +3380,7 @@ The problem here, though, is that even though |Col| is indeed a definition takin
  we cannot unquote |def n []|, since at compile time $n$ is unknown, or as the Agda compiler aptly
 puts it, \texttt{n not a literal qname value}.
 
-Another attempt might be the following, where we are not unquoting things at compile-time, but rather
+Another attempt might be the following, where we are not unquoting things at compile time, but rather
 ask the user to provide both the reference to the data type in question and its concrete Agda representation.
 
 \begin{shade}
@@ -3746,7 +3501,7 @@ A few statements about Agda's reflection API in light of this taxonomy can be ma
 \item It leans more towards analysis than generation,
 \item it supports encoding as an algebraic data type (as opposed to a string, for example),
 \item it involves manual staging annotations (with keywords such as |quote| and |unquote|),
-\item it is neither strictly static nor runtime, but compile-time. This behaves much like a 
+\item it is neither strictly static nor runtime, but compile time. This behaves much like a 
   static system (one which compiles an object program, as does for example YAcc \cite{johnson1975yacc})
   would, but doesn't produce intermediate code which might be modified.
   Note that this fact is essential for Agda to remain sound as a logical framework. Also,
