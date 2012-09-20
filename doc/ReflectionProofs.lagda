@@ -553,9 +553,9 @@ data Equal {A : Set} (x : A) : A → Set where
 \end{code}
 \end{shade}
 
-The type |_≡_| only contains values constructed using |refl| (which stands for reflexive), and
-|refl| can only be used when the arguments to |_≡_| are identical. This is because the same |x| is
-used as both first and second argument to |_≡_|.
+The type |Equal| only contains values constructed using |refl| (which stands for reflexive), and
+|refl| can only be used when the arguments to |Equal| are identical. This is because the same |x| is
+used as both first and second argument to |Equal|.
 
 We might use the equality type as follows; we are writing a function which is only defined 
 on equal naturals.
@@ -572,8 +572,8 @@ weird        .m   m                     refl          =       zero ∷ []
 
 
 
-This will prove useful when type-safe metaprograms cannot alter the types of the terms between
-input and output.
+%This will prove useful when type-safe metaprograms cannot alter the types of the terms between
+%input and output.
 
 
 
@@ -741,7 +741,7 @@ well as potentially introduce unsound behaviour
 
 Also, it means that it is possible to
 assert to Agda that a function that receives a certain type always
-produces an inhabited value. We call this assertion an \emph{irrefutable pattern}, see Fig.~\ref{fig:implicit0}. Here, we 
+gets an inhabited value. We call this assertion an \emph{irrefutable pattern}, see Fig.~\ref{fig:implicit0}. Here, we 
 pattern match on |(tt , tt)|, and Agda is convinced that no other options are possible.
 
 Since this inference is possible, we can also make this argument implicit, which effectively
@@ -3213,14 +3213,14 @@ The 3 combinators of the SKI calculus are presented in Fig.~\ref{fig:ski}.
 
 \begin{shadedfigure}[h]
 \begin{spec}
-s     : ∀ {a b c : Set}      → (a → b → c) → (a → b) → a → c
-s     = \ f -> \ g -> \ x -> f x (g x)
+s     : ∀ {a b c     : Set}      → (a → b → c) → (a → b) → a → c
+s     = \ f -> \ g -> \ x     -> f x (g x)
  
-k     : ∀ {a b : Set}        → a → b → a
-k     = \ c -> \ v -> c
+k     : ∀ {a b       : Set}        → a → b → a
+k     = \ c -> \ v            -> c
  
-i     : ∀ {a : Set}          → a → a
-i     = \ x -> x
+i     : ∀ {a         : Set}          → a → a
+i     = \ x                   -> x
 \end{spec}
 \caption{The three combinators which make up SKI combinator calculus.}\label{fig:ski}
 \end{shadedfigure}
