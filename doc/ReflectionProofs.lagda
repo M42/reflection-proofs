@@ -781,7 +781,7 @@ excellent tutorial
 
 \chapter{Reflection in Agda}\label{sec:reflection}
 
-Since version 2.2.8, Agda includes a reflection API, which allows converting
+Since version 2.2.8, Agda includes a reflection API \cite{agda-relnotes-228}, which allows converting
 parts of a program's code into abstract syntax, in other words a data structure
 in Agda itself, that can be inspected or modified like any other data structure.
 The idea of reflection is nothing new: already in the 1980s Lisp included a similar
@@ -796,39 +796,44 @@ Agda to find inspiration on how to make reflection work to their advantage.
 
 \section{The Basics}\label{sec:thebasics}
 
+Before going into too much detail about how reflection works and what data
+types are involved, we will look at a few simple code snippets which should serve
+to illustrate the basics of using the reflection API.
+
 Agda's reflection API defines several data types which represent terms,
 types, and sorts. These definitions take into account various
 features, including hidden arguments and computationally irrelevant
-terms. An overview of the core data types involved has been
-included in Fig.~\ref{fig:reflection}. In addition to these data
+terms. An overview of the core data types involved is 
+included in Sec.~\ref{sec:reflection-datatypes}. % Fig.~\ref{fig:reflection}. 
+In addition to these data
 types that represent \emph{terms}, there is limited support for
 reflecting \emph{definitions} as opposed to terms. Inspection of definitions
 is detailed in Sec.~\ref{sec:inspecting-definitions}.
-\paragraph{Caveat}\label{para:caveat} One rather serious word of precaution is to be made here.
-The code presented in this thesis does not, actually, work out of the box as advertised.\todo{what's advertised?}
+\paragraph{Caveat}\label{para:caveat} One rather serious word of caution is to be made here.
+The code presented in this thesis does not, actually, work out of the box as advertised. For this
+code to compile, some minor changes to the Agda compiler are necessary.
 For reasons which will be made clear in Chapter~\ref{sec:type-safe-metaprogramming}, the abstract 
 data type representing terms inside the Agda compiler (the one in Fig.~\ref{fig:reflection}) needed to be extended with
 an extra argument to the constructor representing a lambda abstraction, denoting 
 the type (or more accurately, a representation thereof in terms of |Type|) of the argument 
 bound in that abstraction. There is a high likelihood that the changes to the Agda reflection API detailed
 in Appendix~\ref{appendix:lambda-types} will be adopted in a future version of Agda,
-but at the time of writing a fork of the compiler was used\footnote{This fork, along with a version of the
+but at the time of writing a personal fork of the compiler's repository was used\footnote{This fork, along with a version of the
   Agda standard library with the modifications necessary to work with it, is available at \url{https://darcs.denknerd.org}.}.
 
 
 There are several new keywords that can be used to quote and unquote
 |Term| values: |quote|, |quoteTerm|, |quoteGoal|, and |unquote|. The
 |quote| keyword allows the user to access the internal representation of
-any identifier. This internal representation can be used to query the
+any identifier, or name. This internal representation can be used to query the
 type or definition of the identifier.
-The
-examples discussed in this paper will not illustrate |quote|. The other quotation forms,
-|quoteTerm| and |quoteGoal|, will be used.
+
 
 The easiest example of quotation uses the |quoteTerm| keyword to turn
 a fragment of concrete syntax into a |Term| data type. Note that the
 |quoteTerm| keyword reduces like any other function in Agda. As an
 example, the following unit test type checks:
+
 \begin{shade}
 \begin{code}
 example₀   : quoteTerm (\ (x : Bool) -> x)
@@ -837,17 +842,19 @@ example₀   = refl
 \end{code}
 \end{shade}
 
-\todo{explain what |el| does!}
-The right-hand side of the type of |typeExample| boils down to a function of type |ℕ → ℕ|, where the |el (lit 0) x| annotations
-mean that the sort of $x$ is |Set₀| (which is the same as |Set|). 
-%%% end broken text.
-
 Dissecting
 this, we introduced a lambda abstraction, so we expect the |lam|
 constructor. Its one argument is visible, and
 the body of the lambda abstraction is just a reference to the
-nearest-bound variable, thus |var 0|, applied to no arguments, hence
-the empty list.
+nearest-bound variable, thus |var 0|, applied to an empty list of arguments.
+\paragraph{The |el| constructor} The test |example₀| also shows us that
+the quoted lambda binds a variable with some type.
+ The |el| constructor we see 
+represents the type of the argument to the lambda. The first argument represents the sort, if it is known.
+Furthermore
+the type of $x$ is Boolean, represented as |def (quote Bool) []|. This means
+the |Bool| type (which is a definition, hence |def|) is applied to zero arguments.
+
 
 Furthermore, |quoteTerm| type checks and normalises its term before
 returning the required |Term|, as the following example demonstrates:
@@ -858,6 +865,10 @@ example₁   = refl
 \end{code}
 \end{shade}
 
+See how the value zero is applied to the identity function, resulting in only the value zero.
+The quoted representation of a natural zero is |con (quote zero) []|, where |con| means that we
+are introducing a constructor. No arguments are applied, hence the empty list.
+
 The |quoteGoal| keyword is slightly different. It is best explained using an
 example:
 
@@ -867,18 +878,19 @@ exampleQuoteGoal : ℕ
 exampleQuoteGoal = quoteGoal e in (HOLE 0)
 \end{spec}
 \end{shade}
+
 The |quoteGoal| keyword binds the variable |e| to the |Term|
 representing the type of the current goal. In this example, the value
 of $e$ in the hole will be |def ℕ []|, i.e., the |Term| representing
 the type |ℕ|.
 
-Another keyword which deals with types is the aptly-named |type| function. Given
-a |Name|, such as the result of |quote identifier|, |type| returns the |Type| representing the
+Another function that deals with types is the aptly-named |type| function. Given
+a |Name|, such as the result of |quote example₀|, |type| returns the |Type| value representing the
 type of that identifier. This indeed implies one cannot ask the type of an arbitrary
 |Term|, since one would need to introduce it as a definition first, to be able to get its |Name|.
 In |example₂| we see what |type| returns when asked about the successor function (a function with
-type |ℕ → ℕ|), and in |example₃| we illustrate that the term shown is in fact the same as a
-function type from naturals to naturals.
+type |ℕ → ℕ|), and in |example₃| we verify that the term shown is in fact the same as a
+function from naturals to naturals.
 
 \begin{shade}
 \begin{code}
@@ -891,7 +903,6 @@ example₂ = refl
 example₃   : type          (quote ℕ.suc)
            ≡ el (lit 0)    (quoteTerm (∀ (n : ℕ) → ℕ))
 example₃ = refl
-
 \end{code}
 \end{shade}
 
@@ -901,8 +912,15 @@ syntax. Just as |quoteTerm| and |quoteGoal|, it type checks and
 normalises the |Term| before it is spliced into the program text.
 
 
+\section{The Structures of Reflection}\label{sec:reflection-datatypes}
 
+After having seen an informal introduction to practical reflection, we will look at 
+the data types involved in reflection. After all, it is a good idea to be aware of what
+values one might expect as a result from |quoteTerm|.  The full definitions of |Term|, |Type| and their
+helpers are presented in Fig.~\ref{fig:reflection}.
 
+The first structure we will look at step-by-step is |Term|, which represents concrete 
+Agda terms.
 
 
 \begin{shadedfigure}[p]
@@ -913,7 +931,6 @@ normalises the |Term| before it is spliced into the program text.
     -- Arguments may be implicit, explicit, or inferred
       data Visibility : Set where
         visible hidden instance : Visibility
-
 
     -- Arguments can be relevant or irrelevant.
       data Relevance : Set where
@@ -931,7 +948,7 @@ normalises the |Term| before it is spliced into the program text.
           con     : (c : Name) (args : List (Arg Term)) → Term
         -- Identifier applied to a list of arguments
           def     : (f : Name) (args : List (Arg Term)) → Term
-        -- Lambda abstraction (with type annotation -- see Appendix~\ref{appendix:lambda-types}).
+        -- Lambda abstraction (typed -- see Appendix~\ref{appendix:lambda-types}).
           lam     : (v : Visibility) (σ : Type) (t : Term) → Term
         -- Dependent function types
           pi      : (t₁ : Arg Type) (t₂ : Type) → Term
@@ -956,37 +973,20 @@ normalises the |Term| before it is spliced into the program text.
   \label{fig:reflection}
 \end{shadedfigure}
 
-
-
-Lambda abstractions bind one variable. A variable is represented by a De Bruijn index and may be applied to multiple arguments.
-
-
-A variable has a De Bruijn index,
+A variable has a De Bruijn index, represented by a natural number,
 and may be applied to arguments.
-%Note the |Type| argument in the |lam| constructor:
-%this holds the type of the argument expected.
-
 The constructors |con| and |def| are introduced for constructors and definitions, respectively,
-applied to a (possibly empty) list of arguments. Finally the constructor |unknown| is
+applied to a list of arguments. 
+Lambda abstractions bind one variable. A variable is represented by a De Bruijn index and may be applied to multiple arguments. Included is the type signature of the argument, represented by a |Type|.
+The |pi| constructor represents function types, or telescopes. It can be seen as a lambda for types instead of terms. 
+Finally the constructor |unknown| is
 used for things which are not or cannot be represented in this AST (such as function definitions or holes).
 
+As explained in the previous section, the |el| constructor constructs values in |Type|. It has two arguments:
+one for the sort of the type, the other for the |Term| representing the type.
 
-
-A common task will be casting the raw |Term| we get into some AST of
-our own.
-I developed a library, |Autoquote|, which might serve as both an instructive
-example in how to pull apart |Term|s, as well as a useful and reusable function,
-since it provides the feature of automatically converting a |Term|
-into some AST type, if a mapping is provided from concrete Agda
-|Name|s to constructors of this AST. An explanation of its implementation and application is given
-in Sec.~\ref{sec:autoquote}, and an example use-case is given in \ref{sec:autoquote-example}.
-
-
-\section{List of Functions Exported by |Reflection|}\label{sec:list-of-functions-reflection}
-
-\todo{is this separate section necessary?}
-The |Reflection| module of the Agda standard library (version 0.6 was used here) exports a number of
-functions. Here we will provide a list of them (see Fig. \ref{fig:reflection-functions}) along with
+Aside from the necessary types, the |Reflection| module of the Agda standard library (version 0.6 was used here) also exports a number of
+functions. We provide a list of them in Fig. \ref{fig:reflection-functions}, along with
 a description of their use.
 
 \begin{shadedfigure}[h]
@@ -1022,8 +1022,7 @@ it we can get a list of constructors, by calling the suitably-named |constructor
 illustration in Sec.~\ref{sec:inspecting-definitions}.
 
 Finally, we have decidable equality on the following types: |Visibility|, |Relevance|, |List Arg|s, |Arg Type|s, |Arg Term|s,  |Name|s,  |Term|s, |Sort|s  and |Type|s. 
-
-Typically, this is useful for deciding which constructor is present in some expression, such as:
+Typically, this is useful for deciding which constructor is present in some expression, by comparing to known |Name|s.
 
 \begin{shade}
 \begin{spec}
@@ -1034,21 +1033,23 @@ convert (def c args) with c ≟-Name quote foo
 \end{spec}
 \end{shade}
 
+Aside from these functions and types, the |Reflection| module also contains a few 
+lemmas for decidable equality on terms and types. These are rather boring though, 
+and the user will probably never have to use them directly.
 
 \subsection{Inspecting Definitions}\label{sec:inspecting-definitions}
 
-Using the functions exported by the module |Reflection|, we are able
-to get a list of constructors for some data type. The following code snippet
+With the functions provided by |Reflection| we can get a little more insight into definitions of data types. 
+For example, we can
+ get a list of constructors for some data type. The following code snippet
 illustrates how this is done, and what the format of the answer is.
 
 \ignore{
-\begin{shade}
 \begin{code}
 isDatatype : Definition → Set
 isDatatype (data-type x)           = ⊤
 isDatatype _                       = ⊥
 \end{code}
-\end{shade}
 }
 \begin{shade}
 \begin{code}
@@ -1061,19 +1062,23 @@ giveDatatype (function    x  )   {()  }
 ...
 \end{spec}
 \end{shade}
-\vskip -4mm
 \ignore{
-\begin{shade}
 \begin{code}
 giveDatatype (record′ x)    {()}
 giveDatatype constructor′   {()}
 giveDatatype axiom          {()}
 giveDatatype primitive′     {()}
 \end{code}
-\end{shade}}
+}
+
+The helper function |giveDatatype| assumes that the constructor present is, in fact, |data-type|, which
+saves some elimination of uninteresting cases. With this helper, we can get the |Data-type| to feed to 
+the |constructors| function. The following unit test shows an example, where we ask for all the constructors
+of the natural numbers. 
+
+
 \begin{shade}
 \begin{code}
-
 ℕcons : List Name
 ℕcons = constructors (giveDatatype (definition (quote ℕ)))
 
@@ -1085,17 +1090,26 @@ consExample = refl
 
 Now we have in |ℕcons| a list of the names of the constructors of the data type |ℕ|, which we
 could use to do more interesting things which depend on the structure of a data type. One example
-might be to compute a generic representation which is isomorphic to the given data type,
+might be to compute a generic representation which is isomorphic to the naturals,
 as is often done using
 Template Haskell. For example, in the Regular library for generic programming \cite{van2010lightweight}, a
 translation to a sum-of-products view is made.
-This option is explored in Sec.~\ref{sec:generic-programming}.
+This possibility is explored in Chapter~\ref{sec:generic-programming}.
 
 
+That wraps up all the functionality available from the reflection API. Contemplating
+what we might want to do using these new tools, it becomes clear that
+a common task will be casting a raw |Term| into some AST of
+our own.
+I developed a library, |Autoquote|, which might serve as both an instructive
+example in how to pull apart |Term|s, as well as a useful and reusable function,
+since it can automatically convert a |Term|
+into some AST type. All that is needed is a mapping from concrete Agda
+|Name|s to constructors of this AST. An explanation of its implementation application is given
+in Sec.~\ref{sec:autoquote}, and an example use-case is given in \ref{sec:autoquote-example}.
 
 
-
-\section{Introducing |Autoquote|}\label{sec:autoquote}
+\section{Automatic Quoting}\label{sec:autoquote}
 \ignore{
 \begin{shade}
 \begin{code}
@@ -1104,55 +1118,65 @@ open import Metaprogramming.Autoquote hiding (convertManages ; doConvert) renami
 \end{shade}
 }
 
-Imagine we have some AST, for example |Expr|, which is presented below.
+If we had to write a huge function, with many pattern matching cases and nested |with| statements to handle different 
+shapes of ASTs, we would quickly become discouraged. This nearly happened while doing this project, which is why
+|Autoquote| was conceived. Quoting some expression grammar is a mundane task we are frequently faced with if we 
+are foolhardy enough to use reflection. The (partial) solution to this problem -- something which at least mitigates 
+the agony -- is presented in this section.
+
+Imagine we have some AST, for example |Expr|, such as in Fig.~\ref{fig:exprdata}.
 This is a rather simple data structure representing terms which can contain Peano style natural
 numbers, variables (indexed by an Agda natural) and additions.
 
-\begin{shade}
+\begin{shadedfigure}
 \begin{code}
 data Expr : Set where
-  Variable      : ℕ               →     Expr
-  Plus          : Expr → Expr     →     Expr
-  Succ          : Expr            →     Expr
-  Zero          :                       Expr
+  Var           : ℕ               →     Expr
+  Pl            : Expr → Expr     →     Expr
+  S             : Expr            →     Expr
+  Z             :                       Expr
 \end{code}
-\end{shade}
+\caption{The toy expression language |Expr|. We would like support for automatically quoting such terms.}\label{fig:exprdata}
+\end{shadedfigure}
 
-We might conceivably want to convert a piece of concrete syntax, such as $5 + x$, to this
-AST, using Agda's reflection system. This typically involves ugly and verbose functions such
+We might conceivably want to convert a piece of Agda concrete syntax, such as $5 + x$, to this
+AST, using reflection. This typically involves ugly and verbose functions such
 as the one from Sec.~\ref{sec:Boolean-tautologies} with many |with|-clauses and frankly, too
-much tedium to be anything to be proud of. What we want to do,
-is provide a mapping from concrete constructs such as the |_+_| function to elements of our
+much tedium to be anything to be proud of. Ideally, we could 
+ provide a mapping from concrete constructs such as the |_+_| function to elements of our
 AST, and get a conversion function for free.
 
 A common annoyance when using Agda's reflection is that we often end up writing similar-looking
 functions for checking if a |Term| is of a specific shape, and if so,
-translating |Term|s into some AST. This motivated my development of
+translating |Term|s into some AST. This headache motivated my development of
 |Autoquote| in the course of this project. What |Autoquote| does is abstract over this process, and
 provide an interface which, when provided with a mapping from concrete
 names to constructors in this AST, automatically quotes expressions
-that fit (i.e. which only have variables, and names which are listed
-in this mapping).
+that fit. Here, \emph{fitting} is defined as only having variables, or names which are listed
+in this mapping. Other terms are rejected.
 
 A system is presented here, which takes an elegant-looking mapping and automatically converts
-concrete Agda to something like the |Expr| type. The mapping table we will use for |Expr| is
+concrete Agda to a simple non-inductive type. The mapping table for |Expr| is
 shown in Fig.~\ref{fig:exprTable}.
 
 \begin{shadedfigure}[h]
 \begin{code}
 exprTable : Table Expr
-exprTable = (Variable ,
-             2   \# (quote _+_ )     ↦ Plus ∷
-             0   \# (quote ℕ.zero)   ↦ Zero ∷
-             1   \# (quote ℕ.suc )   ↦ Succ ∷ [])
+exprTable = (Var ,
+             2   \# (quote _+_)      ↦ Pl   ∷
+             0   \# (quote ℕ.zero)   ↦ Z    ∷
+             1   \# (quote ℕ.suc)    ↦ S    ∷ [])
 \end{code}
 \caption{The mapping table for converting to the imaginary |Expr| AST. }\label{fig:exprTable}
 \end{shadedfigure}
 
-Here, we are saying that any variables encountered should be stored as |Variable| elements,
-the |_+_| operator should be a |Plus| constructor (we are required to specify that it takes 2 arguments),
-that a |zero|, from the |Data.Nat| standard library, should be treated as our |Zero| constructor, and
-finally that |suc| translates to |Succ| and expects 1 argument.
+What this means is that any variables encountered should be stored as |Variable| elements,
+the |_+_| operator should be a |Pl| constructor. In each case we are required to manually specify the
+arity of the constructor, or how many arguments it expects.
+A |zero|, from the |Data.Nat| standard library, should be treated as our |Z| constructor, and
+a |suc| translates to |S|. These constructors expect 0 respectively 1 argument.
+
+We will now look at the implementation of this library.
 
 \paragraph{Implementation}
 
@@ -1168,7 +1192,10 @@ which prevents the module from being imported without using the unsound type-in-
 
 Using this |N-ary| we can now define an entry in our mapping |Table| as having an arity, and mapping
 a |Name| (which is Agda's internal representation of an identifier, see Fig.~\ref{fig:reflection}) to a
-constructor in the AST to which we would like to cast the |Term|.
+constructor in the AST to which we would like to cast the |Term|. The definition of |N-ary| restricts 
+the possible function types to zero or more arguments of type |A| to an element of type |B|. In |ConstructorMapping|, we
+further specialise this function to zero or more arguments of type |astType| to |astType|, which forces 
+us to stick to simple inductive types, such as our |Expr| example. 
 
 \begin{shadedfigure}[H]
 \begin{spec}
@@ -1188,25 +1215,16 @@ data ConstructorMapping (astType : Set) : Set₁ where
 
 Table : Set → Set₁
 Table a = (ℕ → a) × List (ConstructorMapping a)
-
-lookupName : {a : Set}      → List     (ConstructorMapping a)
-                            → Name
-                            → Maybe    (ConstructorMapping a)
-lookupName [] name = nothing
-lookupName (arity \# x ↦ x₁ ∷ tab) name with name ≟-Name x
-... | yes p      = just (arity \# x ↦ x₁)
-... | no ¬p      = lookupName tab name
 \end{spec}
 \caption{The types and helper functions associated with the |Autoquote| library.}\label{fig:nary}
 \end{shadedfigure}
 
-\todo{this code snippet is huge. we must split and explain better}
 With the above ingredients we can now define the function |convert|
 below. It takes a mapping of type |Table a|, and a |Term| obtained
 from one of Agda's reflection keywords, and produces a value which
 might be a properly converted term of type $a$. Here, $a$ is the type
-we would like to cast to, for example |Expr|.  We also provide the
-helper function |lookupName|, which -- given a mapping and a |Name| --
+we would like to cast to, for example |Expr|.  We also have the
+helper function |lookupName|, which 
 finds the corresponding entry in the mapping table. If nothing usable
 is found, |nothing| is returned.
 
@@ -1214,11 +1232,15 @@ An example of such a mapping would be the one required for our |Expr|
 example, presented in Fig.~\ref{fig:exprTable}.
 
 
-The function that does this conversion for us looks like this\todo{what?}. Note that it is not intended to
-be called directly; a convenience function |doConvert| is defined below. 
+Note that |convert| is not intended to
+be called directly; a convenience function |doConvert| is defined later.
 
 \begin{shade}
 \begin{spec}
+lookupName : {a : Set}      → List     (ConstructorMapping a)
+                            → Name
+                            → Maybe    (ConstructorMapping a)
+                            
 mutual
   convert : {a : Set} → Table a → Term → Maybe a
   convert (vc , tab) (var x args)       = just (vc x)
@@ -1229,8 +1251,8 @@ mutual
 \end{shade}
 
 
-If it encounters a variable, it just uses the constructor which stands for variables. Note that
-the parameter is the De Bruijn-index of the variable, which might or might not be in scope.
+If |convert| encounters a variable, it just uses the constructor which stands for variables. Note that
+the parameter is the De Bruijn index of the variable, which might or might not be in scope.
 This is something to check for afterwards, if a |just| value is returned.
 
 Note that  we will probably need to post-process the output of |convert|. For example, checking that all
@@ -1238,8 +1260,8 @@ variables are in scope is a bit more work, but this will be illustrated later, i
 
 
 In the case of a constructor or a definition applied to arguments, the function |appCons| is called,
-which looks up a |Name| in the mapping and tries to recursively |convert| its arguments, then applies the given constructor to
-these new arguments.
+which looks up a |Name| in the mapping and tries to recursively |convert| its arguments, then applies the corresponding constructor to
+these new arguments. Before this is done, the number of arguments is also compared to the defined arity of the function.
 
 % the comment at the top of this code block fixes the indentation.
 % indentation is forgotten between code blocks, it seems.
@@ -1265,10 +1287,12 @@ these new arguments.
 \end{spec}
 \end{shade}
 
-The functions |appCons| and |convertArgs| just check to see if the desired |Name| is present in the provided
-mapping, and if all the arguments, provided they are of the right number, also convert successfully. If
-all this is true, the converted |Term| is returned as a |just e|, where $e$ is the new, converted member
-of the AST. For example, see the unit tests in Fig. \ref{fig:test-autoquote}.
+If
+all of these steps are successful, the converted |Term| is returned as a |just e|, where |e| is the new, converted member
+of the AST. For example, see the unit tests in Fig. \ref{fig:test-autoquote}. Convenience functions for dealing with failing
+conversions are also provided. The |doConvert| function makes the assumption that the conversion manages, which enables it 
+to return a value without the |just|. Furthermore, this assumption, defined in |convertManages|, is inferable. This is on
+account of it being a record type. This is explained in Sec.~\ref{sec:implicit-unit}.
 
 
 \begin{shade}
@@ -1288,32 +1312,26 @@ doConvert tab t {()    }      | nothing
 \end{code}
 \end{shade}
 
-The module also exports the functions |convertManages| and |doConvert|, displayed above, which are to be used as illustrated in Fig.~\ref{fig:test-autoquote}. Here
-another instance of the trick explained in Sec.~\ref{sec:implicit-unit} is applied, namely accepting as an implicit argument the proof that a given call to |doConvert| returns
-a |just| value.
+The use of |convertManages| and |doConvert| is illustrated in Fig.~\ref{fig:test-autoquote}. 
+This approach, using |convertManages| as an assumption, is a lot simpler than writing a predicate function with the same pattern matching 
+structure as |convert| by hand. In practice, |with|-clauses are often expanded unpredictably. The net effect
+of writing a pair of functions in this style is the same as the ``usual'' way of writing a predicate
+function by hand, in that a compile time error is generated if the function |doConvert| is 
+invoked on an argument with the wrong shape. Compare these relatively elegant functions to the verbose |term2boolexpr| and |isBoolExprQ| functions in Sec.~\ref{sec:addrefl}.
 
 
 \begin{shadedfigure}[h]
 \begin{code}
 something : {x y : ℕ}    → doConvert    exprTable
                                         (quoteTerm ((1 + x + 2) + y))
-                         ≡ Succ (Plus       (Plus     (Variable 1)
-                                                      (Succ (Succ Zero)))
-                                            (Variable 0))
+                         ≡ S    (Pl         (Pl       (Var 1)
+                                                      (S (S Z)))
+                                            (Var 0))
 something = refl
 \end{code}
 \caption{Examples of |Autoquote| in use. See Fig.~\ref{fig:exprTable} for the definition of |exprTable|, a typical |Name|-to-constructor mapping.}\label{fig:test-autoquote}
 \end{shadedfigure}
 
-Note the type signature of the |doConvert| function: we are implicitly assuming
-that the conversion is successful (i.e. that it returns a |just| value). This 
-allows a much cleaner implementation of the |convert| function; it can try all
-the allowed constructors, and if none of them match, it can fail with a |nothing| value.
-This is a lot simpler than writing a predicate function with the same pattern matching 
-structure by hand, since sometimes the |with|-clauses are expanded unpredictably. The net effect
-of writing a pair of functions in this style is the same as the ``usual'' way of writing a predicate
-function by hand, in that a compile time error is generated if the function |doConvert| is 
-invoked on an argument with the wrong shape.
 
 The format of the translation |Table| required could most probably be made a little simpler,
 by not requiring the user to provide the arity of the function, but using the tools 
@@ -1331,6 +1349,8 @@ such as the example in Norell et al \cite{bove2009brief}.
 Further examples of |Autoquote| functionality can be found in the module |Metaprogramming.ExampleAutoquote|.
 The module |Metaprogramming.Autoquote| contains 
 what could serve as a basis for a system for quoting concrete Agda into a user-defined AST.
+Now that we have had a quick introduction to Agda in Chapter~\ref{chap:introducing-agda}, and defined
+this library, it is time to move on to putting it all to use.
 
 
 \chapter{Proof by Reflection}\label{sec:proof-by-reflection}
