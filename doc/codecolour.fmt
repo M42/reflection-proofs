@@ -141,3 +141,4 @@
 %format head₁ = "\defin{head₁}"
 %format head₀ = "\defin{head₀}"
 %format ≟-ℕ = "\defin{≟\mkern-5mu{}\text{-}ℕ}"
+%format ≟-Name = "\defin{≟\mkern-5mu{}\text{-}Name}"
