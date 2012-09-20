@@ -1376,6 +1376,11 @@ more usable and accessible.
 
 \section{Simple Example: Evenness}\label{sec:evenness}
 
+Sometimes, the best way to explain a complicated topic is to start by giving 
+some simpler examples, letting the reader figure out the pattern behind what is being
+done. Proof by reflection is no different: it is not a difficult technique, but can initially be
+counter intuitive. 
+
 To illustrate the concept of proof by reflection, we will cover an example taken from
 Chlipala~\cite{chlipala2011certified}, where we develop a procedure to automatically
 prove that a number is even. We start by defining the
@@ -1446,7 +1451,7 @@ soundnessEven {suc (suc n)}    s         = isEven+2 (soundnessEven s)
 Note that in the case branch for 1, we do not need to provide a
 right-hand side of the function definition. The assumption, |even?
 1|, is uninhabited, and we discharge this branch using Agda's
-absurd pattern ().
+absurd pattern, \texttt{()}.
 
 Now that this has been done, if we need a proof that some arbitrary
 $n$ is even, we only need to instantiate |soundnessEven|. Note that
@@ -1483,14 +1488,22 @@ technique, which is used extensively in the final code, is given in
 Sec.~\ref{sec:implicit-unit}. An implementation of the above, including comments,
 is to be found in the module |Proofs.IsEven|.
 
+This concludes the example of proving that certain naturals are even using proof by reflection.
+The next step will be to use the same approach for a more involved and realistic problem.
+
 \section{Second Example: Boolean Tautologies}\label{sec:Boolean-tautologies}
 
-Another application of the proof by reflection technique
-is Boolean expressions which are a tautology. We will follow the same
+Obviously, the first example of proof by reflection, the evenness of natural 
+numbers, was a rather trivial one. There was a reason for studying it, though, since
+we will now apply the same technique to a more interesting problem.
+
+Another application of proof by reflection 
+is Boolean expressions which are a tautology. We will prove this by evaluation of the
+formulae. We will follow the same
 recipe as for even naturals, with one further addition. In the
 previous example, the input of our decision procedure |even?| and the
 problem domain were both natural numbers. As we shall see, this need
-not always be the case.
+not always be the case: more complex structures and properties may be used.
 
 Take as an example the Boolean formula in equation \ref{eqn:tauto-example}.
 \begin{align}\label{eqn:tauto-example}
@@ -1498,7 +1511,7 @@ Take as an example the Boolean formula in equation \ref{eqn:tauto-example}.
 \end{align}
 
 It is trivial to see that this is a tautology, but proving this 
-using deduction rules for Booleans would be rather tedious. It
+using deduction rules for classical logic would be rather tedious. It
 is even worse if we want to check if the formula always holds by
 trying all possible variable assignments, since this will give $2^n$
 cases, where $n$ is the number of variables.
@@ -1643,7 +1656,7 @@ forallsAcc b acc    (Step y   ) =
 foralls : {n : ℕ} → BoolExpr n → Set
 foralls {n} b = forallsAcc b [] (zeroleast 0 n)
 \end{code}
-\caption{}\label{fig:forallsacc}
+\caption{The function |foralls|, which decides if a proposition is a tautology. Compare to the |even?| function in Sec.~\ref{sec:evenness}.}\label{fig:forallsacc}
 \end{shadedfigure}
 
 
@@ -1669,6 +1682,8 @@ recursively building up the environment with an accumulating parameter. Because 
 data Diff' : ℕ → ℕ → Set where
   Base   : ∀ {n}                          → Diff' n n
   Step   : ∀ {n m} → Diff' (suc n) m      → Diff' n m
+  
+zeroleast : (k n : ℕ) → Diff k (k + n)
 \end{code}
 \caption{The definition of the |Diff| data type.}\label{fig:diff-datatype}
 \end{shadedfigure}
@@ -1690,10 +1705,11 @@ have the same size as their |BoolExpr| argument. Because they use the same
 technique in a slightly less overt manner they are not separately
 detailed here.
 
+We also provide the simple lemma |zeroleast|, which shows that for any 
+two $k$ and $n$, $n$ steps are needed to count from $k$ to $k+n$.
 
 
-%%%%%%%%%%after Diff
-\paragraph{Continuing} Since |Diff| has been explained, and we now we finally know our real decision function |foralls|, we can set about proving its
+\paragraph{Soundness} Since |Diff| has been explained, and we now we finally know our real decision function |foralls|, we can set about proving its
 soundness. Following the evens example, we want a function something like this.
 
 \begin{shade}
@@ -1850,8 +1866,10 @@ case.
 
 \subsection{Why Not Enumerate Environments?}\label{sec:no-enumerate-environments}
 
+A reasonable question to pose, after seeing the interface to the tautology prover, is why we have to separately 
+introduce fresh variables. Why can we not just write something like |∀ (e : Env n) → P someprop|?
 
-One of the reasons for not enumerating environments (for example, something like |∀ (e : Env n) → P someprop |) is that
+One of the reasons for not enumerating environments  is that
 referring to variables becomes a bit of a problem. 
 Some new syntax would have to be introduced, such as a constructor
 |Var : Fin n → Bool| which could be used to refer to an element of the environment by number. This is 
@@ -1859,7 +1877,7 @@ rather less elegant than the current implementation, which simply brings a few B
 the native Agda manner, using a telescope (i.e. |(p q r : Bool) → P(p ∧ q ⇒ r)|, as defined in Sec.~\ref{para:telescopes}). This has another advantage, namely
 that when writing down a proposition, you are forced to use only valid variables, which translate to in-scope De Bruijn indices.
 
-Another difficulty of enumerating environments is the generation of the proof obligation. Currently, a telescope with Boolean variables
+Another difficulty of enumerating environments is the generation of the proof goal. Currently, a telescope with Boolean variables
 can be generated easily via recursion (see the function |proofGoal|), as opposed to having to generate all possible 
 lists of assignments. Some investigation was done to try and show that environments (lists of Booleans) of length $n$ are enumerable,
 but the results were not as elegant as those presented in Sec.~\ref{sec:Boolean-tautologies}. Also, generating the environments by quantifying over
@@ -2047,12 +2065,11 @@ term2boolexpr n (con tf []) pf | yes p = Truth
 ...
 term2boolexpr n (def f []) ()
 term2boolexpr n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
-term2boolexpr n (def f (arg v r x ∷ [])) pf | yes p = Not (term2boolexpr n x pf)
-...
-term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) pf | no ¬p with f ≟-Name quote _∧_
+... | yes p = Not (term2boolexpr n x pf)
+... | no ¬p with f ≟-Name quote _∧_
 ...
 \end{spec}
-\caption{Illustrating the conversion of a |Term| into a |BoolExpr n|.}\label{fig:concrete2abstract}
+\caption{The gist of  the conversion of a |Term| into a |BoolExpr n|.}\label{fig:concrete2abstract}
 \end{shadedfigure}
 
 
@@ -2106,6 +2123,17 @@ automating certain tedious tasks, since the programmer now need not encode the B
 twice in a slightly different format. The conversion now happens automatically, without loss
 of expressive power or general applicability of the proofs resulting from |soundness|.
 Furthermore, by using the proof by reflection technique, the proof is generated automatically.
+
+It seems conceivable to imagine that in the future, using techniques such as those presented
+here, a framework for tactics might be within reach. Eventually we might be able to define an
+embedded language in Agda to inspect the shape of the proof that is needed, and look at a database
+of predefined proof recipes to see if one of them might discharge the obligation. An advantage of 
+this approach versus the tactic language in Coq, would be that the language of the propositions and
+tactics is the same.
+
+The attentive reader will remember that we previously studied a system capable of automatically
+quoting concrete Agda to a simple user-defined AST. Would that not be perfectly suited to quoting to 
+the |BoolExpr| type used here? This turns out to be the case: we exploit this possibility in the following section.
 
 \subsection{An Aside: Real-world Example of |Autoquote|}\label{sec:autoquote-example}
 
