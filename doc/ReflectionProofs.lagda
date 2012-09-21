@@ -22,6 +22,9 @@
 \usepackage{xspace}
 \usepackage[grumpy]{gitinfo}
 
+% microtype with settings.
+\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Font definitions.
 \usepackage{tgpagella}                  %% looks a little like palatino
@@ -192,7 +195,9 @@ reflection API in a future version of Agda.
 \vspace*{\fill}
 \clearpage
 
+\microtypesetup{protrusion=false} % disables protrusion locally in the document
 \tableofcontents
+\microtypesetup{protrusion=true}
 \clearpage
 
 
@@ -4024,7 +4029,7 @@ transformation, SKI translation (\texttt{SKI.agda}), quoting and type
 checking (\texttt{Autoquote.agda} and \texttt{TypeCheck.agda},
 respectively), all in the appropriately-named files. Examples of use
 for all the relevant modules are also provided, in the
-\texttt{Example*} modules. The \texttt{Util} folder contains a few
+\texttt{Example...} modules. The \texttt{Util} folder contains a few
 helper functions. In \texttt{WTWellfounded.agda}, finally, the
 well-foundedness of the |WT'| data type, under the natural measure, is
 proven.
