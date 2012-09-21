@@ -168,10 +168,10 @@ This project explores the recent addition to Agda enabling
 Haskell. It illustrates several applications of reflection that arise
 in dependently typed programming, and details the limitations of the
 current implementation of reflection. Examples of type-safe metaprograms
-are given, which illustrate the power of reflection coupled with a dependently 
+are given, that illustrate the power of reflection coupled with a dependently 
 typed language. Among other things the
-limitation inherent in having |quote| and |unquote| implemented as
-keywords is discussed. The fact that lambda terms are returned without
+limitations inherent in having |quote| and |unquote| implemented as
+keywords are highlighted. The fact that lambda terms are returned without
 typing information is discussed, and a solution is presented. Also
 provided is a detailed users' guide to the reflection API and a
 library of working code examples to illustrate how various common
@@ -195,7 +195,7 @@ reflection API in a future version of Agda.
 \newcommand{\researchquestion}{%
 \begin{quote}
 ``What are interesting applications of the new reflection API?
-Which tedious and mundane tasks can we automate? What advantages
+Which tedious tasks can we automate? What advantages
 does the combination of dependent types and reflection give us?
  Finally, is
 the reflection API adequate as it stands to facilitate our needs or does it require extension? If
@@ -259,28 +259,31 @@ Chapter~\ref{chap:introducing-agda}.
   context of this new technology.
   
 \item We show how to
-  write \emph{type-safe meta-programs}. To illustrate this
+  write \emph{type-safe metaprograms}. To illustrate this
   point, we will develop a type-safe translation from the simply typed
   lambda calculus to programs in continuation-passing style (CPS), followed
 by a type-safe translation of closed lambda terms into SKI combinator calculus (Chapter~\ref{sec:type-safe-metaprogramming}). 
 In
-doing this, structurally recursive, total, well-typed and terminating CPS and SKI transformations are defined.
+doing this, structurally recursive, total, well-typed CPS and SKI transformations are defined.
  
 \item Finally, we also discuss some of the
   \emph{limitations of the current implementation} of reflection (Chapter~\ref{sec:generic-programming}),
-  motivated by attempts to automate certain aspects of 
+  brought to light by attempts to automate certain aspects of 
   generic programming.
 \end{itemize}
 
 The code and examples presented in this paper all compile using the
-latest development version of Agda (currently 2.3.1), with some minor modifications to the compiler (see Sec.~\ref{appendix:lambda-types}). All code, including this report, are available on
+latest development version of Agda (currently 2.3.1), with some minor
+modifications to the compiler (see
+Appendix~\ref{appendix:lambda-types}). All code, including this
+report, are available on
 GitHub\footnote{\ghurl}.
 This thesis is also a Literate Agda file, which means the code snippets can be extracted, compiled 
 and played around with.
 
 \chapter{Introducing Agda}\label{chap:introducing-agda}
 
-Besides being a common Swedish female name and referring to a certain
+Besides being a common Swedish female name and alluding to a certain
 hen\footnote{\ldots{}bearing in mind that \emph{coq} means rooster in
 French\ldots} in Swedish pop culture\footnote{See Cornelis Vreeswijk's
 song about Agda, a hen, at
@@ -312,15 +315,15 @@ the fact that
 Agda's syntax is inspired by Haskell
 makes it a reasonable choice to explain
  most of the concepts here 
- in terms of Haskell.
+ from a Haskell programmer's point of view.
  Consequently, users familiar with programming in
 Haskell should be able to hit the ground running in Agda. 
 
 \section{First Steps in Agda}
 
-Our short tutorial will start slowly; we will start by looking at how textbooks define natural numbers, in so-called Peano style. The colon
+Our short tutorial starts slowly; we will look at how textbooks define natural numbers, in so-called Peano style. A single colon
 means ``is of type'', so in Fig.~\ref{fig:peano}, |zero| is of type |Natural|. The constructor |suc| has type |Natural -> Natural|, which means that
-it takes a natural as argument and produces a new natural. This new natural is also the successor of the old natural. This inductive style of data type definitions is a common
+it takes a natural as argument and produces a new natural. This new natural is also the successor of the old natural. This inductive style of data type definitions is a frequently used
 technique in both Haskell and Agda.
 
 \begin{shadedfigure}
@@ -334,7 +337,9 @@ data Natural : Set where
 
 The definition of naturals here looks a lot like the GADT (generalised algebraic
 data type \cite{citeulike:2082722}) rendition in Haskell would; this is no coincidence. Notice that we have to define that |Natural| is of type
-|Set|. In Agda, |Set| is the type of types. Types are themselves also simply values. Just as in Haskell,
+|Set|. In Agda, |Set| is the type of types: types are themselves also simply values.
+
+ Just as in Haskell,
 we can also use pattern matching to do operations on natural numbers. Let us look 
 at the definition of addition of natural numbers.
 
@@ -394,7 +399,7 @@ head₁ (x ∷ xs) = x
 \end{spec}
 \end{shade}
 
-\paragraph{Implicit Arguments}\label{para:implicit} This is getting somewhere, but we have
+\paragraph{Implicit Arguments}\label{para:implicit} This is getting somewhere, and we have
 again introduced a new concept: implicit arguments.  The distinction
 between explicit (usual arguments to functions, as seen in Haskell,
 for example) and implicit arguments is merely that the latter are tagged as
@@ -407,14 +412,14 @@ functions cause a dictionary to be passed around implicitly. In the |head₁| ex
 give the type of the elements of the list, since Agda can infer this information from
 whatever list we pass.
 
-\paragraph{Totality} However, this definition of |head₁| still will not be accepted by Agda. Another
+\paragraph{Totality} Much as we would like, this definition of |head₁| still will not be accepted by Agda. Another
 concept is that of \emph{totality}: a function is \emph{total} when it is both terminating
-and defined on all inputs. Termination is checked by making sure that recursive calls are always 
+and defined on all inputs. All functions are required to be total. Termination is checked by making sure that recursive calls are always 
 done on \emph{structurally smaller} arguments -- as is the case in the addition example.
 Furthermore, a function is considered to be defined on all inputs when the patterns it matches on
 cover all the possibilities. What we mean by this is that an alternative should be given for each
 possible constructor -- something which is violated by the most recent |head₁| attempt: it is missing a
-case for the empty list. This is something Haskell does not care about; it simply smirks and crashes if we try to normalise |head []|.
+case for the empty list. This is something Haskell does not care about; it simply smirks and throws an exception if we try to normalise |head []|.
 
 If we have to define |head₂| for the empty list too, we will have to resort to a |Maybe| type. The definition of
 |Maybe| is omitted, because it is hardly surprising to a Haskell programmer.
@@ -428,11 +433,11 @@ head₂ (x ∷ xs)     = just x
 \end{code}
 \end{shade}
 
-Of course, this |Maybe| is something of a hack;  it would be preferable to 
+Of course, this |Maybe| is something of an annoyance;  it would be preferable to 
 guarantee that the empty list is not valid input to the |head₂| function. This
-is where a dependently typed language really starts to shine. We will now move on to the 
+is where a dependently typed language really comes into its own. We will now move on to the 
 \emph{de facto} example of a dependent type, the vector -- like a list, but with
-a certain length.
+a fixed length.
 
 \begin{shade}
 \begin{code}
@@ -442,12 +447,20 @@ data Vector (A : Set) : Natural -> Set where
 \end{code}
 \end{shade}
 
-\paragraph{Indexed data types} We now have an argument both to the left and the right of the colon in the type signature
-of the data definition. Left-hand arguments are called parameters, and scope over all the constructors. Right-hand
-arguments are called indices, and only scope over single constructors, and as such need to be introduced there using 
-a telescope. The |_∷_| constructor has a size parameter, which is an example of such an index.
-This dependent type has the advantage that we can distinguish vectors of different sizes by their type, 
-which allows us to write functions like the following, our final (and most successful) attempt: |head₃|.
+\paragraph{Indexed data types} We now have an argument both to the
+left and the right of the colon in the type signature of the data
+definition. Left-hand arguments are called parameters, and scope over
+all the constructors. Right-hand arguments are called indices, and
+only scope over single constructors, and as such need to be introduced
+there using a telescope. The |_∷_| constructor has a size parameter,
+which is an example of such an index.  This dependent type has the
+advantage that we can distinguish vectors of different sizes by their
+type, at compile time, without knowing their value.
+
+
+Now we can
+ write functions like the following, our final
+(and most successful) attempt: |head₃|.
 
 
 \begin{shade}
@@ -457,9 +470,9 @@ head₃ (x ∷ xs) = x
 \end{code}
 \end{shade}
 
-We also see that only vectors for which one can provide a value $n$ such that |suc n| is the length of the
+We also see that only vectors with a value $n$ such that |succ n| is the length of the
 vector, are valid inputs. This way, we guarantee that empty vectors cannot be beheaded. Agda is also convinced
-that this function is total, so we are done: we have a safe |head₃| function.
+that this function is total, so we are done: we have a safe |head| function.
 
 This is the most common example of why DTP is the best thing since sliced bread:
 we cannot ask for the head of an empty vector, since we will get a compile time error
@@ -473,22 +486,25 @@ project which may not be completely intuitive.
 
 \section{More on Pattern Matching}\label{sec:patternmatching}
 So far we have seen the very basics of Agda. A few aspects deserve more attention, though, one prime
-example being Agda's pattern matching system.
+example being Agda's pattern matching facilities.
 
 
 One of Haskell's selling points is the ability to do pattern matching. This makes writing
 structurally recursive functions both easy and the Natural Way of Doing Things\texttrademark. Agda shares this
-ability and idiomatic programming style, but has a much more powerful version of pattern matching, namely
+idiomatic programming style, but has a much more powerful version of pattern matching, namely
 dependent pattern matching.
 
 \subsection{Absurd Patterns}
+
+Something that the Agda pattern matching system has which is completely different
+from Haskell, is the idea of absurd patterns. The pattern matching in Agda is dependent.
 This means that based on the (rich) type information available about
 terms, certain combinations of arguments are automatically regarded as
 impossible, or \emph{absurd}, to use Agda lingo.
 
-
+We will see what this means by way of an example.
 Another interesting data type is that of finite natural numbers. The usual definition of naturals, |Natural|, has 
-no maximum value, but we can define a data type, called |Fin n|, that only has values smaller than |n|.
+no maximum value, but we can define a data type, called |Fin n|, that only contains values smaller than |n|.
 
 \begin{shade}
 \begin{code}
@@ -521,7 +537,7 @@ fact that given the specialisation of the function in the case where
 |zero| is the first argument, it can be inferred that the next
 argument should be of type |Fin zero|, which obviously has no
 inhabitants (no natural numbers are strictly smaller than
-|zero|). 
+|zero|). This is why we need not provide this branch.
 
 We now can convince Agda that even though there are no alternatives provided
 for the |n == zero|  case, the function is still total.
@@ -537,7 +553,7 @@ trigger pattern matching failures.
 \subsection{Inferable Patterns}
 
 
-Another Agda pattern matching feature we will often encounter later on in this project is
+Another Agda pattern matching feature we will often encounter  is
 dotted patterns. Because pattern matching is dependent, information about certain arguments
 can often be inferred from others.  Using a dotted pattern means certain parameters are inferable or equal to others. 
 
@@ -581,11 +597,11 @@ Other than the features explicitly mentioned in this chapter so far,
 the usual constructs such as records, modules and let-bindings are present and
 behave as expected. Bear in mind that type signatures may also
 include let-bindings. Definitions of functions and data types are also
-very similar to those found in Haskell, except that in contrast with Haskell, one is forced to use GADT-like
+very similar to those found in Haskell, except that in contrast with Haskell, you have to use GADT-like
 notation for data constructors. 
 
  Agda is, practically speaking, like
-Haskell with a type system on steroids\footnote{For example, the Agda type system does $\beta$-reduction on terms --
+Haskell with a type system on steroids\footnote{For example, the Agda type system does $\beta\text{-}$reduction on terms --
 evaluation -- which is something seen as possible, but quite exotic, in Haskell-land.}. The discussion of how and why this 
  is so is considered out of the scope of this 
 project, but suffice it to say that tearing down the distinction between values and types allows
@@ -609,7 +625,7 @@ In this section, we will give a short explanation of how this correspondence wor
 what it means for programmers. I refrain from attempting to give a comprehensive explanation
 of intuitionistic logic and why the
 exact correspondence between natural deduction and simply typed $\lambda$-calculus exists. The
-inquisitive reader is advised to take a look at  the Lectures on the \ch by S\o rensen and Urzyczyn \cite{sorensen1998lectures}.
+disillusioned  reader is advised to take a look at  the Lectures on the \ch by S\o rensen and Urzyczyn \cite{sorensen1998lectures}.
 
 \paragraph{Programs as Proofs}
 
@@ -617,17 +633,18 @@ Intuitionistic logic is at the heart of Agda as a logical framework. Intuitionis
 logic is similar to classical logic, and works as expected (including implication, conjunction, etc.)
 except for one difference: the axiom $A = \neg \neg A$ is not present. Intuitionistic
 logic is also referred to as constructive logic, since only when one provides a constructive 
-proof of a proposition, is it regarded as a theorem\footnote{In parlance, \emph{theorem} refers to a true and proven proposition, whereas \emph{nontheorem} refers to a 
+proof of a proposition, is it regarded as a theorem\footnote{In mathematical parlance, \emph{theorem} refers to a true and proven proposition, whereas \emph{nontheorem} refers to a 
 false proposition.}. For that reason,  \emph{reductio ad absurdum} does not yield 
-valid proofs -- only when it is shown how a proof term that witnesses the proposition is it acceptable.
+valid proofs -- only when a proof term that witnesses the proposition is provided, is it acceptable.
 
 By the \ch, propositions are types. A logical proposition, such as $a => b$ translates to
 a type |a -> b|. Now, $a => b$ is a theorem if and only if the type |a -> b| is inhabited.  One of the most intuitive
 illustrations of this is the proposition $A => B => A$. This can be read as ``if we assume $A$ is true, and we furthermore assume that $B$ is true, then we can conclude $A$.''
 Obviously this is a theorem, but let us translate the proposition to a type. It becomes |a -> b -> a|; an example of a 
 function with such a type is |const|, the function that returns its first argument regardless of what its second is. Clearly,
-if we see the first argument with type |a| as a proof of $A$, then it is obvious that regardless of what proof is given as the second 
-argument, we fulfil our proof obligation |a| by returning the first argument unchanged.
+if we see the first argument with type |a| as a proof of $A$, then it is obvious that regardless of what  is given as the second 
+argument, we fulfil our proof obligation |a| by returning the first argument unchanged. It was, after all,
+a proof of $A$.
 
 Keeping this correspondence in mind, we can give analogues of mathematical logic in type theory. The trivial theorem, |true|, translates to 
 the type |⊤|, which has one inhabitant, |tt|. The simplest nontheorem |false| translates to |⊥|, the type with no inhabitants. Therefore,
@@ -641,7 +658,7 @@ proof objects in the
 same language as is used to express computation. In many other
 theorem proving systems, such as Coq, there is a separate tactic
 language for writing proofs \cite{coquand2006emacs}. However, both systems are
-based on intuitionistic logic, therefore the same concepts as described in this section hold.
+based on intuitionistic logic, therefore the same concepts  hold.
 
 
 
@@ -651,8 +668,7 @@ mentioned. This is no arbitrary choice, for without this property,
 Agda would not be a sound logical framework. 
 Not enforcing the termination aspect of totality would make it easy
 to define a proof of falsity, as we have
-done in the function |falsity|. Naturally the logic would not be sound
-in this case.
+done in the function |falsity|. 
 
 \begin{shade}
 \begin{spec}
@@ -661,19 +677,19 @@ falsity = falsity
 \end{spec}
 \end{shade}
 
-This is allowed because it would take an infinite amount of evaluation time to discover that this function is
-in fact not making any progress. This is why the requirement exists that at least one of the arguments to the 
+This is why the termination criterion is that at least one of the arguments to the 
 recursive call be \emph{structurally smaller}. Compare the addition of naturals example where |suc n| is pattern matched, and |n| is passed
 as a recursive argument -- |n| is structurally smaller than |suc n|.
 
 \paragraph{Covering} Being defined on all possible inputs is also an aspect of totality. If this requirement were 
 dropped, a number of desirable properties for a logic would not hold any longer. The most obvious example is that
-all of a sudden, run time exceptions are possible: if a function is not defined on a given input but that value
-is, at some point, passed as an argument, bad things will happen (compare Haskell and a run time pattern matching failure).
+all of a sudden, run time exceptions are possible: if a function is not defined on a given input
+but we apply that argument anyway,
+ bad things will happen (compare Haskell and a run time pattern matching failure).
 Because functions can also return types (which are just more values) and thus be used in type signatures, we would not want
 it to be possible for type checking to break as a result of an incomplete function definition. 
 
-Finally, though, Agda allows us to define functions and proofs side-by-side, allowing concurrent development of
+Finally,  Agda allows us to define functions and proofs side-by-side, allowing concurrent development of
 programs and proofs of properties about those programs hand-in-hand.  The Emacs mode, which is typically used
 to interactively develop proofs and programs, has a concept of \emph{holes} -- we are free to place a question mark 
 anywhere in the file, and compile. This question mark turns into something which looks a bit like |(HOLE n)|, which we call a goal. When the
@@ -683,16 +699,16 @@ that point are available.
 Admittedly, this section is by no means comprehensive as far as explaining the \ch goes.
 More information about how to use Agda as a proof assistant is available \cite{Norell:2009:DTP:1481861.1481862,coquand2006emacs}. For
 background reading on the \ch a reference should be made to S\o rensen et al \cite{sorensen1998lectures}.
-We will now look at some specific tricks which are peculiar to Agda; hopefully
+We will now look at some tricks which are peculiar to Agda; hopefully
 dealing with those now will make code snippets introduced later a little more comprehensible. 
 
 
 \section{Implicit Record-type Arguments}\label{sec:implicit-unit}
 
 Previously, in Sec.~\ref{para:implicit}, we saw how certain arguments which are considered obvious, can be marked implicit. This technique 
-makes calls to functions more concise, since some arguments are not explicitly listed. This technique of hiding arguments is particularly
-useful when the value of the argument can be inferred. This section demonstrates the technique. Furthermore  it turns out that record types have 
-advantageous properties when it comes to inferring their value.
+makes calls to functions more concise, since some arguments are not explicitly listed. When the value of an argument can be inferred, this technique becomes particularly
+useful. Furthermore, it turns out that record types have 
+advantageous properties when it comes to inferring their values. This section demonstrates the technique. 
 
 If a particular argument is a record type, and it has
 only one possible inhabitant, Agda can automatically infer its
@@ -727,7 +743,7 @@ Therefore, the only possible value is one using the constructor
 left and right-hand arguments' types, we see that in both cases they
 have type |⊤|. The unit type also is defined as a record with only one
 constructor, namely |tt|. This means that the only value possible is
-|tt , tt|, which is why we can use the underscore-notation, meaning
+|tt , tt|, which is why we can use the underscore notation, meaning
 Agda should infer the argument for us.
 
 The fact that pairs and unit are defined as records in the standard
@@ -744,7 +760,7 @@ assert to Agda that a function that receives a certain type always
 gets an inhabited value. We call this assertion an \emph{irrefutable pattern}, see Fig.~\ref{fig:implicit0}. Here, we 
 pattern match on |(tt , tt)|, and Agda is convinced that no other options are possible.
 
-Since this inference is possible, we can also make this argument implicit, which effectively
+Since inference is possible, we can also make this argument implicit, which effectively
 hides from the user that a value is being inferred and passed, as in Fig. \ref{fig:implicit0}. This saves us an underscore.
     
     \begin{shadedfigure}[h]
@@ -759,19 +775,19 @@ bar' = foo'
         \label{fig:implicit0}
     \end{shadedfigure}
 
-This is possible, since the type |⊤ × ⊤| only has one inhabitant, namely |(tt , tt)|. If
+This is possible, since the type |⊤ × ⊤| only has one inhabitant. If
 multiple values were valid, the above code would have resulted in an unsolved meta in the definition of |bar'|. That brings
 us to one of the drawbacks of this solution which has been used quite often. Mainly, the technique has been used to ``hide''
 a proof witness of, for example, an input term being of the right shape.
 The problem with this trick is that if an implicit
- argument is ambiguous, or worse, if it is a type with no inhabitants\footnote{A type with no inhabitants is a false proposition.}, the compiler will not fail
+ argument is ambiguous, or worse, if it is a type with no inhabitants\footnote{A type with no inhabitants represents a false proposition.}, the compiler will not fail
 with a type error, but merely with a warning that there is an unsolved meta. The corresponding piece of code will be highlighted yellow
 in the Emacs Agda mode, but the user will not be given any fatal error.
 The problem is then that an inattentive programmer might miss this innocuous-looking error, while it actually represents an error in a proof.
 Luckily Agda prevents us from importing modules with unsolved metas, mitigating the danger of hiding proofs this way.
 
 Now that we have seen some idiosyncrasies which could otherwise cause confusion later on, it is time to move on to
-the real reason for introducing Agda; let us start using the possibilities we have thanks to dependent types!
+the real reason for introducing Agda. Let us start using the possibilities we have thanks to dependent types!
 Of course, a full introduction to the Agda language including all its
 curiosities and features is out of the scope of such a crash course. In closing,
 the inquisitive reader is invited to work through Norell's
@@ -784,7 +800,7 @@ excellent tutorial
 Since version 2.2.8, Agda includes a reflection API \cite{agda-relnotes-228}, which allows converting
 parts of a program's code into abstract syntax, in other words a data structure
 in Agda itself, that can be inspected or modified like any other data structure.
-The idea of reflection is nothing new: already in the 1980s Lisp included a similar
+The idea of reflection is old: already in the 1980s Lisp included a similar
 feature, called quoting, which allowed run time modification of a program's code, by
 the program itself. This has given rise to powerful techniques for reusing code and
 generating frequently needed but slightly different expressions automatically. What
@@ -792,13 +808,6 @@ can be done with Lisp, can be done better using Agda; at least, so we hope. This
 looks at the current state of the admittedly work-in-progress reflection API, and
 illustrates how to use it. It should be a good starting point for someone already comfortable with
 Agda to find inspiration on how to make reflection work to their advantage.
-
-
-\section{The Basics}\label{sec:thebasics}
-
-Before going into too much detail about how reflection works and what data
-types are involved, we will look at a few simple code snippets which should serve
-to illustrate the basics of using the reflection API.
 
 Agda's reflection API defines several data types which represent terms,
 types, and sorts. These definitions take into account various
@@ -808,9 +817,17 @@ included in Sec.~\ref{sec:reflection-datatypes}. % Fig.~\ref{fig:reflection}.
 In addition to these data
 types that represent \emph{terms}, there is limited support for
 reflecting \emph{definitions} as opposed to terms. Inspection of definitions
-is detailed in Sec.~\ref{sec:inspecting-definitions}.
-\paragraph{Caveat}\label{para:caveat} One rather serious word of caution is to be made here.
-The code presented in this thesis does not, actually, work out of the box as advertised. For this
+is detailed in Sec.~\ref{sec:inspecting-definitions}. Continue reading for a
+practical guide to reflection (Sec.~\ref{sec:thebasics}).
+
+\section{The Basics}\label{sec:thebasics}
+
+Before going into too much detail about how reflection works and what data
+types are involved, we will look at a few simple code snippets which should serve
+to illustrate the basics of using the reflection API.
+
+\paragraph{Caveat}\label{para:caveat} One rather serious word of admission is to be made here.
+The code presented in this thesis does not work out of the box as advertised. For this
 code to compile, some minor changes to the Agda compiler are necessary.
 For reasons which will be made clear in Chapter~\ref{sec:type-safe-metaprogramming}, the abstract 
 data type representing terms inside the Agda compiler (the one in Fig.~\ref{fig:reflection}) needed to be extended with
@@ -822,7 +839,7 @@ but at the time of writing a personal fork of the compiler's repository was used
   Agda standard library with the modifications necessary to work with it, is available at \url{https://darcs.denknerd.org}.}.
 
 
-There are several new keywords that can be used to quote and unquote
+\paragraph{The Keywords} There are several new keywords that can be used to quote and unquote
 |Term| values: |quote|, |quoteTerm|, |quoteGoal|, and |unquote|. The
 |quote| keyword allows the user to access the internal representation of
 any identifier, or name. This internal representation can be used to query the
@@ -830,7 +847,7 @@ type or definition of the identifier.
 
 
 The easiest example of quotation uses the |quoteTerm| keyword to turn
-a fragment of concrete syntax into a |Term| data type. Note that the
+a fragment of concrete syntax into a |Term| value. Note that the
 |quoteTerm| keyword reduces like any other function in Agda. As an
 example, the following unit test type checks:
 
@@ -850,10 +867,10 @@ nearest-bound variable, thus |var 0|, applied to an empty list of arguments.
 \paragraph{The |el| constructor} The test |example₀| also shows us that
 the quoted lambda binds a variable with some type.
  The |el| constructor we see 
-represents the type of the argument to the lambda. The first argument represents the sort, if it is known.
+represents the type of the argument to the lambda. The first argument to |el| represents the sort, if it is known.
 Furthermore
 the type of $x$ is Boolean, represented as |def (quote Bool) []|. This means
-the |Bool| type (which is a definition, hence |def|) is applied to zero arguments.
+the |Bool| type (which is a definition, hence |def|) with no arguments.
 
 
 Furthermore, |quoteTerm| type checks and normalises its term before
@@ -865,9 +882,9 @@ example₁   = refl
 \end{code}
 \end{shade}
 
-See how the value zero is applied to the identity function, resulting in only the value zero.
+See how the zero is applied to the identity function, resulting in only the value zero.
 The quoted representation of a natural zero is |con (quote zero) []|, where |con| means that we
-are introducing a constructor. No arguments are applied, hence the empty list.
+are introducing a constructor. The constructor |zero| takes no arguments, hence the empty list.
 
 The |quoteGoal| keyword is slightly different. It is best explained using an
 example:
@@ -894,8 +911,8 @@ function from naturals to naturals.
 
 \begin{shade}
 \begin{code}
-example₂   : type (quote ℕ.suc)
-           ≡ el (lit 0)     (pi (arg visible relevant
+example₂   : type          (quote ℕ.suc)
+           ≡ el (lit 0)    (pi    (arg visible relevant
                                       (el (lit 0) (def (quote ℕ) [])))
                                       (el (lit 0) (def (quote ℕ) [])))
 example₂ = refl
@@ -911,6 +928,10 @@ The |unquote| keyword converts a |Term| data type back to concrete
 syntax. Just as |quoteTerm| and |quoteGoal|, it type checks and
 normalises the |Term| before it is spliced into the program text.
 
+This short introduction should already be enough to start developing
+simple reflective programs. The rest of this chapter goes into more detail
+regarding the data structures involved in Agda's reflection API, and later, 
+gives a detailed account of real-world use-case.
 
 \section{The Structures of Reflection}\label{sec:reflection-datatypes}
 
@@ -926,47 +947,47 @@ Agda terms.
 \begin{shadedfigure}[p]
 %if style == poly
 \begin{spec}
-      postulate Name : Set
+      postulate Name          : Set
 
     -- Arguments may be implicit, explicit, or inferred
-      data Visibility : Set where
+      data Visibility         : Set where
         visible hidden instance : Visibility
 
     -- Arguments can be relevant or irrelevant.
-      data Relevance : Set where
+      data Relevance          : Set where
         relevant irrelevant : Relevance
 
     -- Arguments.
-      data Arg A : Set where
+      data Arg A              : Set where
         arg : (v : Visibility) (r : Relevance) (x : A) → Arg A
     -- Terms.
       mutual
-        data Term : Set where
+        data Term             : Set where
         -- A bound variable applied to a list of arguments
-          var     : (x : ℕ) (args : List (Arg Term)) → Term
+          var        : (x : ℕ) (args : List (Arg Term))            →         Term
         -- Constructor applied to a list of arguments
-          con     : (c : Name) (args : List (Arg Term)) → Term
+          con        : (c : Name) (args : List (Arg Term))         →         Term
         -- Identifier applied to a list of arguments
-          def     : (f : Name) (args : List (Arg Term)) → Term
+          def        : (f : Name) (args : List (Arg Term))         →         Term
         -- Lambda abstraction (typed -- see Appendix~\ref{appendix:lambda-types}).
-          lam     : (v : Visibility) (σ : Type) (t : Term) → Term
+          lam        : (v : Visibility) (σ : Type) (t : Term)      →         Term
         -- Dependent function types
-          pi      : (t₁ : Arg Type) (t₂ : Type) → Term
+          pi         : (t₁ : Arg Type) (t₂ : Type)                 →         Term
         -- Sorts
-          sort    : Sort → Term
+          sort       : Sort                                        →         Term
         -- Anything else
-          unknown : Term
+          unknown    :                                                       Term
 
-        data Type : Set where
+        data Type             : Set where
           el : (s : Sort) (t : Term) → Type
 
-        data Sort : Set where
+        data Sort             : Set where
         -- A Set of a given (possibly neutral) level.
-          set     : (t : Term) → Sort
+          set        : (t : Term)       →       Sort
         -- A Set of a given concrete level.
-          lit     : (n : ℕ) → Sort
+          lit        : (n : ℕ)          →       Sort
         -- Anything else.
-          unknown : Sort
+          unknown    :                          Sort
   \end{spec}
 %endif
   \caption{The data types for reflecting terms.}
@@ -979,13 +1000,16 @@ The constructors |con| and |def| are introduced for constructors and definitions
 applied to a list of arguments. 
 Lambda abstractions bind one variable. A variable is represented by a De Bruijn index and may be applied to multiple arguments. Included is the type signature of the argument, represented by a |Type|.
 The |pi| constructor represents function types, or telescopes. It can be seen as a lambda for types instead of terms. 
-Finally the constructor |unknown| is
-used for things which are not or cannot be represented in this AST (such as function definitions or holes).
+Finally the constructor |unknown| stands for things which are not or
+cannot be represented in this AST\footnote{AST stands for
+\emph{abstract syntax tree}; this abbreviation will be used
+hereafter.} (such as function definitions or holes).
 
 As explained in the previous section, the |el| constructor constructs values in |Type|. It has two arguments:
 one for the sort of the type, the other for the |Term| representing the type.
 
-Aside from the necessary types, the |Reflection| module of the Agda standard library (version 0.6 was used here) also exports a number of
+Aside from the necessary data structures, the |Reflection| module of the Agda standard library\footnote{The standard library version 0.6 was used here; later versions 
+might expose more functionality.} also exports a number of
 functions. We provide a list of them in Fig. \ref{fig:reflection-functions}, along with
 a description of their use.
 
@@ -1003,7 +1027,7 @@ constructors       : Data-type    → List Name
 \end{shadedfigure}
 
 
-The |definition| function returns the definition of a given identifier. The type is defined as follows.
+The |definition| function returns the definition of a given identifier. The type |Definition| is defined as follows.
 
 \begin{shade}
 \begin{spec}
@@ -1022,7 +1046,8 @@ it we can get a list of constructors, by calling the suitably-named |constructor
 illustration in Sec.~\ref{sec:inspecting-definitions}.
 
 Finally, we have decidable equality on the following types: |Visibility|, |Relevance|, |List Arg|s, |Arg Type|s, |Arg Term|s,  |Name|s,  |Term|s, |Sort|s  and |Type|s. 
-Typically, this is useful for deciding which constructor is present in some expression, by comparing to known |Name|s.
+Typically, this is useful for deciding which constructor is present in
+some expression, by comparing to known |Name|s. Such a comparison is illustrated in the function |convert|, below.
 
 \begin{shade}
 \begin{spec}
@@ -1034,15 +1059,15 @@ convert (def c args) with c ≟-Name quote foo
 \end{shade}
 
 Aside from these functions and types, the |Reflection| module also contains a few 
-lemmas for decidable equality on terms and types. These are rather boring though, 
+lemmas for decidable equality on terms and types. These are rather boring, 
 and the user will probably never have to use them directly.
 
 \subsection{Inspecting Definitions}\label{sec:inspecting-definitions}
 
 With the functions provided by |Reflection| we can get a little more insight into definitions of data types. 
 For example, we can
- get a list of constructors for some data type. The following code snippet
-illustrates how this is done, and what the format of the answer is.
+ get a list of constructors for some data type. The following code snippets
+illustrate how this is done, and what the format of the answer is.
 
 \ignore{
 \begin{code}
@@ -1089,7 +1114,7 @@ consExample = refl
 \end{shade}
 
 Now we have in |ℕcons| a list of the names of the constructors of the data type |ℕ|, which we
-could use to do more interesting things which depend on the structure of a data type. One example
+could use to do more interesting things depending on the structure of a data type. One example
 might be to compute a generic representation which is isomorphic to the naturals,
 as is often done using
 Template Haskell. For example, in the Regular library for generic programming \cite{van2010lightweight}, a
@@ -1118,14 +1143,14 @@ open import Metaprogramming.Autoquote hiding (convertManages ; doConvert) renami
 \end{shade}
 }
 
-If we had to write a huge function, with many pattern matching cases and nested |with| statements to handle different 
+If, each time we wanted to quote, we had to write a huge function, with many pattern matching cases and nested |with| statements to handle different 
 shapes of ASTs, we would quickly become discouraged. This nearly happened while doing this project, which is why
 |Autoquote| was conceived. Quoting some expression grammar is a mundane task we are frequently faced with if we 
 are foolhardy enough to use reflection. The (partial) solution to this problem -- something which at least mitigates 
 the agony -- is presented in this section.
 
-Imagine we have some AST, for example |Expr|, such as in Fig.~\ref{fig:exprdata}.
-This is a rather simple data structure representing terms which can contain Peano style natural
+Imagine we have some AST, for example |Expr|, in Fig.~\ref{fig:exprdata}.
+This is a rather simple inductive data structure representing terms which can contain Peano style natural
 numbers, variables (indexed by an Agda natural) and additions.
 
 \begin{shadedfigure}
@@ -1142,21 +1167,17 @@ data Expr : Set where
 We might conceivably want to convert a piece of Agda concrete syntax, such as $5 + x$, to this
 AST, using reflection. This typically involves ugly and verbose functions such
 as the one from Sec.~\ref{sec:Boolean-tautologies} with many |with|-clauses and frankly, too
-much tedium to be anything to be proud of. Ideally, we could 
+much tedium to be anything to be proud of. We need to check that the |Term| has a reasonable shape, and contains valid operators. This turns out to be something we frequently want to do.
+Ideally, we would 
  provide a mapping from concrete constructs such as the |_+_| function to elements of our
 AST, and get a conversion function for free.
-
-A common annoyance when using Agda's reflection is that we often end up writing similar-looking
-functions for checking if a |Term| is of a specific shape, and if so,
-translating |Term|s into some AST. This headache motivated my development of
+ This motivated my development of
 |Autoquote| in the course of this project. What |Autoquote| does is abstract over this process, and
-provide an interface which, when provided with a mapping from concrete
-names to constructors in this AST, automatically quotes expressions
-that fit. Here, \emph{fitting} is defined as only having variables, or names which are listed
+provide an interface which, when provided with such a mapping, automatically quotes expressions
+that fit. Here, \emph{fitting} is defined as only having variables, or names that are listed
 in this mapping. Other terms are rejected.
-
-A system is presented here, which takes an elegant-looking mapping and automatically converts
-concrete Agda to a simple non-inductive type. The mapping table for |Expr| is
+The user provides an elegant-looking mapping and |Autoquote| automatically converts
+concrete Agda to  simple non-inductive types. The mapping table for |Expr| is
 shown in Fig.~\ref{fig:exprTable}.
 
 \begin{shadedfigure}[h]
@@ -1170,9 +1191,9 @@ exprTable = (Var ,
 \caption{The mapping table for converting to the imaginary |Expr| AST. }\label{fig:exprTable}
 \end{shadedfigure}
 
-What this means is that any variables encountered should be stored as |Variable| elements,
+How this should be interpreted is that any variables encountered should be stored as |Var|s, and
 the |_+_| operator should be a |Pl| constructor. In each case we are required to manually specify the
-arity of the constructor, or how many arguments it expects.
+arity of the constructor:    how many arguments it expects.
 A |zero|, from the |Data.Nat| standard library, should be treated as our |Z| constructor, and
 a |suc| translates to |S|. These constructors expect 0 respectively 1 argument.
 
@@ -1188,9 +1209,9 @@ to contain functions with types in |Set|. This was necessary, since the standard
 |N-ary| can hold functions of arbitrary level (i.e. |Set n|). Therefore, the level of the 
 |N-ary| argument inside |ConstructorMapping| could not be inferred (since this depends on which function
 one tries to store in that field). This yields an unsolved constraint
-which prevents the module from being imported without using the unsound type-in-type option.
+which prevented the module from being imported without using the unsound type-in-type option.
 
-Using this |N-ary| we can now define an entry in our mapping |Table| as having an arity, and mapping
+Using this |N-ary| we can now define an entry in our |Table| as having an arity, and mapping
 a |Name| (which is Agda's internal representation of an identifier, see Fig.~\ref{fig:reflection}) to a
 constructor in the AST to which we would like to cast the |Term|. The definition of |N-ary| restricts 
 the possible function types to zero or more arguments of type |A| to an element of type |B|. In |ConstructorMapping|, we
@@ -1219,10 +1240,10 @@ Table a = (ℕ → a) × List (ConstructorMapping a)
 \caption{The types and helper functions associated with the |Autoquote| library.}\label{fig:nary}
 \end{shadedfigure}
 
-With the above ingredients we can now define the function |convert|
+With the above ingredients we can now define the function |convert| shown
 below. It takes a mapping of type |Table a|, and a |Term| obtained
 from one of Agda's reflection keywords, and produces a value which
-might be a properly converted term of type $a$. Here, $a$ is the type
+might be a properly converted term of type |a|. Here, |a| is the type
 we would like to cast to, for example |Expr|.  We also have the
 helper function |lookupName|, which 
 finds the corresponding entry in the mapping table. If nothing usable
@@ -1255,13 +1276,14 @@ If |convert| encounters a variable, it just uses the constructor which stands fo
 the parameter is the De Bruijn index of the variable, which might or might not be in scope.
 This is something to check for afterwards, if a |just| value is returned.
 
-Note that  we will probably need to post-process the output of |convert|. For example, checking that all
-variables are in scope is a bit more work, but this will be illustrated later, in Sec.~\ref{sec:autoquote-example}.
+Note that  we will probably need to post-process the output of |convert|, but this will be illustrated later, in Sec.~\ref{sec:autoquote-example}.
 
 
 In the case of a constructor or a definition applied to arguments, the function |appCons| is called,
 which looks up a |Name| in the mapping and tries to recursively |convert| its arguments, then applies the corresponding constructor to
 these new arguments. Before this is done, the number of arguments is also compared to the defined arity of the function.
+
+The function |convertArgs| takes a list of term arguments (the type |Arg Term|) and tries to convert them into a list of AST values. 
 
 % the comment at the top of this code block fixes the indentation.
 % indentation is forgotten between code blocks, it seems.
@@ -1288,11 +1310,11 @@ these new arguments. Before this is done, the number of arguments is also compar
 \end{shade}
 
 If
-all of these steps are successful, the converted |Term| is returned as a |just e|, where |e| is the new, converted member
+all of these steps are successful, the converted |Term| is returned as  |just e|, where |e| is the new, converted member
 of the AST. For example, see the unit tests in Fig. \ref{fig:test-autoquote}. Convenience functions for dealing with failing
 conversions are also provided. The |doConvert| function makes the assumption that the conversion manages, which enables it 
-to return a value without the |just|. Furthermore, this assumption, defined in |convertManages|, is inferable. This is on
-account of it being a record type. This is explained in Sec.~\ref{sec:implicit-unit}.
+to return a value without the |just|. Furthermore, this assumption, defined in |convertManages|, which is an inferable proof. This is on
+account of it being a record type, which is explained in Sec.~\ref{sec:implicit-unit}.
 
 
 \begin{shade}
@@ -1339,7 +1361,7 @@ explained in Sec.~\ref{sec:inspecting-definitions} (the section on inspecting da
 and specifically the function |constructors| in combination with |type|) to try and discover the arity of the various constructors.
 Because of time constraints, however, this is left as a suggestion for future work on the |Autoquote| library.
 
-The |BoolExpr| AST used in \ref{sec:Boolean-tautologies} provides a
+The |BoolExpr| AST used in Sec.~\ref{sec:Boolean-tautologies} provides a
 good motivating example for using |Autoquote|, therefore a slightly
 more real-world example of |Autoquote| in use can be found in
 Sec.~\ref{sec:autoquote-example}. One might also use the ability of quoting 
@@ -1348,7 +1370,7 @@ such as the example in Norell et al \cite{bove2009brief}.
 
 Further examples of |Autoquote| functionality can be found in the module |Metaprogramming.ExampleAutoquote|.
 The module |Metaprogramming.Autoquote| contains 
-what could serve as a basis for a system for quoting concrete Agda into a user-defined AST.
+what could serve as a basis for a system for quoting concrete Agda into a more complex user-defined AST.
 Now that we have had a quick introduction to Agda in Chapter~\ref{chap:introducing-agda}, and defined
 this library, it is time to move on to putting it all to use.
 
@@ -1359,14 +1381,14 @@ The idea behind proof by reflection is simple: given that type theory
 is both a programming language and a proof system, it is possible to
 define functions that compute proofs. Reflection is an overloaded word
 in this context, since in programming language technology reflection
-is the capability of converting some piece of concrete program syntax
-into a syntax tree object that can be manipulated in the same
+is the capability of converting some piece of concrete code
+into an abstract syntax tree object that can be manipulated in the same
 system. Reflection in the proof technical sense is the method of
 mechanically constructing a proof of a theorem by inspecting its
 shape.
 Here we will see two case studies illustrating proof by
 reflection and how Agda's reflection mechanism can make the technique
-more usable and accessible.
+more accessible.
 
 
 
@@ -1377,8 +1399,8 @@ more usable and accessible.
 \section{Simple Example: Evenness}\label{sec:evenness}
 
 Sometimes, the best way to explain a complicated topic is to start by giving 
-some simpler examples, letting the reader figure out the pattern behind what is being
-done. Proof by reflection is no different: it is not a difficult technique, but can initially be
+some simple examples, letting the reader figure out the pattern behind what is being
+done themselves. Proof by reflection is no different: it is not a difficult technique, but can initially be
 counter intuitive. 
 
 To illustrate the concept of proof by reflection, we will cover an example taken from
@@ -1397,7 +1419,7 @@ data Even      : ℕ → Set where
 \end{shade}
 
 Using these rules to produce the proof that some large number $n$ is
-even can be very tedious: the proof that $2 \times n$ is even requires $n$
+even is tedious: the proof that $2 \times n$ is even requires $n$
 applications of the |isEven+2| constructor. For example, here is the
 proof that 6 is even:
 
@@ -1414,7 +1436,7 @@ returns the unit type when its input is even and bottom otherwise.
 In this context, |⊤| and |⊥| can be seen as the analogues of |true|
 and |false|, just as presented in Sec.~\ref{sec:plandpa}.
 The meaning of such a decision function is that there exists
-a proof that some number is even, if it is |0| or |2 + n|. That is the
+a proof that some number is even, if it is |0| or |2 + n|. Otherwise, no proof exists. That is the
 claim, at least. The idea
 of ``there exists'' is perfectly modelled by the unit and empty types,
 since the unit type has one inhabitant, the empty type none.
@@ -1429,7 +1451,7 @@ even? (suc (suc n))     = even? n
 \end{shade}
 
 
-Next we need to show that the |even?| function is \emph{sound}, that
+Next we need to show that the |even?| function is \emph{sound}; that
 our claim holds. To do so, we prove that when |even? n| returns |⊤|,
 the type |Even n| is
 inhabited, and since we are working in a constructive logic, the only
@@ -1454,11 +1476,11 @@ right-hand side of the function definition. The assumption, |even?
 absurd pattern, \texttt{()}.
 
 Now that this has been done, if we need a proof that some arbitrary
-$n$ is even, we only need to instantiate |soundnessEven|. Note that
+$n$ is even, we only need to call |soundnessEven|. Note that
 the value of $n$ is an implicit argument to |soundnessEven|. The only
 argument we need to provide to our |soundnessEven| lemma is a proof
 that |even? n| is inhabited. For any closed term, such as the numbers |28|
-or |8772|, this proof obligation can be reduced to proving 
+or |8772|, this proof obligation reduces to 
 |⊤|, which is proven by the single constructor it has, |tt|.
 
 \begin{shade}
@@ -1474,18 +1496,23 @@ isEven8772      = soundnessEven tt
 Now we can easily get a proof that arbitrarily large numbers are even,
 without having to explicitly write down a large proof tree. Note that
 it is not possible to write something with type |Even 27|, or any other uneven
-number, since the parameter |even? n| cannot be instantiated, thus
+number, since the parameter |even? n|  is equal to |⊥|,
+ thus
 |tt| would not be accepted where it is in the |Even 28| example. This will
 produce a |⊤ !=< ⊥| type error at compile time.\todo{wouter's nicer error?}
 
 Since the type |⊤| is a simple record type, Agda can infer the |tt|
 argument, as explained in Sec.~\ref{sec:implicit-unit}. This means we can turn the assumption |even? n| into an
-implicit argument, meaning a user could get away with writing just
+implicit argument, so a user could get away with writing just
 |soundnessEven| as the proof, letting the inferrer do the rest. For
-the sake of exposition this is not done here, but the complete implementation
+the sake of exposition this is not done here, but the final implementation
 available on GitHub does use this trick. A detailed explanation of this
 technique, which is used extensively in the final code, is given in
-Sec.~\ref{sec:implicit-unit}. An implementation of the above, including comments,
+Sec.~\ref{sec:implicit-unit}.  Note that it still has the minor danger of
+making errors look like innocuous warnings.
+
+
+An implementation of the above, including detailed comments,
 is to be found in the module |Proofs.IsEven|.
 
 This concludes the example of proving that certain naturals are even using proof by reflection.
@@ -1495,7 +1522,8 @@ The next step will be to use the same approach for a more involved and realistic
 
 Obviously, the first example of proof by reflection, the evenness of natural 
 numbers, was a rather trivial one. There was a reason for studying it, though, since
-we will now apply the same technique to a more interesting problem.
+we will now apply the same technique to a more interesting problem, making
+the relationship to the previous example clear at each step.
 
 Another application of proof by reflection 
 is Boolean expressions which are a tautology. We will prove this by evaluation of the
@@ -1518,7 +1546,7 @@ cases, where $n$ is the number of variables.
 
 To automate this process, we will follow a similar approach to
 the one given in the section on even natural numbers (Sec.~\ref{sec:evenness}). We start by defining an
-inductive data type to represent Boolean expressions with $n$ free
+inductive data type to represent Boolean expressions with at most $n$ free
 variables in Fig.~\ref{fig:boolexprn}.
 
 \begin{shadedfigure}[h]
@@ -1541,7 +1569,7 @@ There is nothing
 surprising about this definition; we use the type |Fin n| to ensure
 that variables (represented by |Atomic|) are always in scope. If we want to
 evaluate the expression, however, we will need some way to map variables to values.
-Enter |Env n|, it has fixed size $n$ since a |BoolExpr n| has $n$ free variables.
+Enter |Env n|: it has fixed size $n$ since a |BoolExpr n| has $n$ free variables.
 
 \begin{shade}
 \begin{code}
@@ -1550,7 +1578,7 @@ Env   = Vec Bool
 \end{code}
 \end{shade}
 
-Now we can define a decision function, which decides if a given
+Now we can define a decision function, which tells us if a given
 Boolean expression is true or not, under some assignment of variables. It does this by evaluating
 the formula's % the apostrophe is bonafide.
  AST, filling in for |Atomic| values the concrete values which are
@@ -1582,7 +1610,7 @@ Recall our decision function |even?| in the previous section. It returned
 we should just translate |true| to the unit type and false to the empty type, to get
 the analogue of the |even?| function.
 
-We call this function |P|, the string parameter serving to give a clearer type error
+We call this function |So|, the string parameter serving to give a clearer type error
 to the user, if possible.
 
 \begin{shade}
@@ -1633,8 +1661,8 @@ to lift our decision function to arbitrary environments.
 The way we do this is the function |foralls|. This function represents the  analogue
 of |even?| in this situation: it returns a type which is only inhabited if the argument Boolean
 expression is true under all variable assignments. This is done by generating a full binary tree
-of unit values |⊤|, the single possible value which only exists if the interpretation function |⟦_⊢_⟧|
-evaluates to |true| in every leaf. This corresponds precisely to $b$ being a tautology.
+of |⊤| or |⊥| types, depending on the result of |⟦_⊢_⟧| under each assignment.
+This corresponds precisely to $b$ being a tautology if and only if the tree is inhabited.
 
 The |Diff| argument is unfortunately needed to prove that |forallsAcc| will eventually produce a
 tree with depth equal to the number of free variables in an expression. 
@@ -1663,16 +1691,15 @@ foralls {n} b = forallsAcc b [] (zeroleast 0 n)
 \paragraph{What Is This |Diff| You Speak Of?}\label{sec:explain-diff}
 
 It has just been mentioned that the |Diff| argument is necessary in some
-of the recursive functions needed here. Here, a short description of what it is
+of the recursive functions. Here, a short description of what it is
 and why it is needed is given.
 
 In Sec.~\ref{sec:Boolean-tautologies} the function |forallsAcc| (among others)
 has a parameter of type |Diff n m|. Recalling the function's
-definition from Fig.~\ref{fig:forallsacc}, note that there are two variables, $n$ and $m$ giving the size of the environment
+definition from Fig.~\ref{fig:forallsacc}, note that there are two variables, $n$ and $m$ giving the current size of the environment
 and the maximum number of bound variables in the proposition, respectively. 
 
-This cannot be 
-right, since our interpretation function |⟦_⊢_⟧| requires that these $m$ and $n$ are equal.
+This is wrong, since our interpretation function |⟦_⊢_⟧| requires that these $m$ and $n$ are equal.
 We cannot, however, make them equal in the type signature for |proofGoal|, since we are 
 recursively building up the environment with an accumulating parameter. Because of this, we introduce |Diff| -- see Fig.~\ref{fig:diff-datatype}.
 
@@ -1688,8 +1715,7 @@ zeroleast : (k n : ℕ) → Diff k (k + n)
 \caption{The definition of the |Diff| data type.}\label{fig:diff-datatype}
 \end{shadedfigure}
 
-The |Diff| data type is defined as in Fig.~\ref{fig:diff-datatype},
-and was necessary because given a term of type |BoolExpr m|, being a
+The |Diff| data type  was necessary because given a term of type |BoolExpr m|, being a
 proposition with at most $m$ variables, it should be ensured that in
 the end an environment of size $m$ would be produced.  The necessity
 of $m \equiv n$ is obvious considering that the evaluation function
@@ -1697,7 +1723,7 @@ needs to be able to look up the variables in the Boolean expression.
 As |forallsAcc| is a recursive function that introduces new variables
 to the environment one at a time, we need some way to ``promise'' that
 in the end $m$ will be equal to $n$. As can be seen in the definition
-of the |Base| constructor, this is exactly what is happening.
+of the |Base| constructor, this is exactly what happens.
 
 The same thing is necessary in some of the other functions, given
 that they also recursively construct or look up proofs that need to
@@ -1725,8 +1751,7 @@ B|, where |B| is an expression in the image of the interpretation
 of this form.
 
 The function |proofGoal|, given a |BoolExpr n|, generates the
-corresponding proof obligation. That is, it gives back the type which
-should be equal to the theorem one wants to prove. It does this by
+corresponding proof obligation. That is, it gives back the type  equal to the theorem  under scrutiny. It does this by
 first introducing $m$ universally quantified Boolean
 variables. These variables are accumulated in an environment. Finally, when $m$
 binders have been introduced, the |BoolExpr| is evaluated under this
@@ -1778,7 +1803,7 @@ soundnessAcc {m} bexp {n} env (Step y) H =
 
 
 If we look closely at the definition of |soundnessAcc|, we see that it
-builds up the environment by assigning all possible values to variables. It eventually returns the
+builds up the environment by assigning some configuration to the variables. It eventually returns the
 leaf from |foralls| which is the proof that the formula is a tautology
 in that specific case. 
 \begin{shade}
@@ -1820,42 +1845,43 @@ someTauto    = soundness rep _
 \caption{An example Boolean formula, along with the transliteration to a proposition and the corresponding proof.}\label{fig:dup}
 \end{shadedfigure}
 
-\todo{talk about the fact that invalid proofs are merely unsolved metas here}
-This is particularly unfortunate when using this technique
-to hide an inferable proof of the soundness of a theorem, such as in the Boolean tautology example (Sec.~\ref{sec:Boolean-tautologies}).
+Having said that, the trick of letting Agda infer the proof argument to |soundness| is 
+still a little dangerous, as explained in Sec.~\ref{sec:implicit-unit}.
 The thing is, we do not want a user to get away with being able to prove that something which is not a
 tautology, is a tautology. Since the proof that under all environments the theorem evaluates
-to true is an implicit argument in this style, one is merely left with an unsolved meta (with an uninhabitable type |⊥|, to be fair), which
+to true is an inferred argument in this style, one is merely left with an unsolved meta (with an uninhabitable type, to be fair), which
 might seem a triviality if you do not read the compiler's output carefully. Luckily Agda disallows
 importing modules with unsolved metas, which means such a spurious proof will not be usable elsewhere
 in a real-life development. 
 
-The only part we still have to do manually is to convert the concrete
+Other than that potential pitfall, the only part we still have to do manually is to convert the concrete
 Agda representation (|p ∧ q ⇒ q|, in this case) into our abstract
 syntax (|rep| here). This is unfortunate, as we end up typing out the
 formula twice. We also have to count the number of variables
 ourselves and convert them the to De Bruijn indices. This is
 error-prone given how cluttered the abstract representation can get
-for formulae containing many variables. It would be desirable for this
+for formulae containing many variables. 
+
+It would be desirable for this
 process to be automated. In Sec.~\ref{sec:addrefl} a solution is
-presented using Agda's recent reflection API.
+presented that uses Agda's recent reflection API.
 
 \subsection{Why Not Propositional Equality?}\label{sec:no-propositional-equality}
 
 The question of why the |So| operator is used here to denote that a formula is 
 a tautology, as opposed to just writing the literal definition of tautology, namely
-|∀ (b : Bool) → Q(b) ≡ true| for some formula |Q| depending on |b|, was posed in the previous section.
+|∀ (b : Bool) → Q(b) ≡ true|, was asked in the previous section.
 The reason for this is mainly a technical one. It is possible to prove tautologies of this form, but
 using this format for reasoning about Boolean formulae becomes rather more involved.
 
 The reason for this is
-that the |So| operator returns a type, namely either unit or empty, which can
+that the |So| operator returns a type, namely either |⊤|, |⊥| or other record types, which can
 be passed around as an automatically-inferred implicit value (see Sec.~\ref{sec:implicit-unit} for a 
 detailed explanation about implicit inferred arguments), removing the need to put |refl| everywhere
 such a proof is needed -- a unit or pair type can be inferred if it exists\footnote{Compare the example
 implementation of a ring solver in Agda, which has |refl|s all over the place \cite{ringsolver}, which
 cannot be made implicit and thus omitted.}. Because of this, the
-recursive cases of functions such as |soundness| become a lot simpler: the interpretation
+recursive cases of |soundness| become a lot simpler: the interpretation
 of a sub-expression being true becomes the same as a unit type being inhabited, and the and-operator
 corresponds to a pair. If the propositional equality way was being used, many lemmas such as that 
 |a ∧ b ≡ true ⇒ a ≡ true ∧ b ≡ true| need to be proven, and they are continually needed to
@@ -1880,7 +1906,7 @@ that when writing down a proposition, you are forced to use only valid variables
 Another difficulty of enumerating environments is the generation of the proof goal. Currently, a telescope with Boolean variables
 can be generated easily via recursion (see the function |proofGoal|), as opposed to having to generate all possible 
 lists of assignments. Some investigation was done to try and show that environments (lists of Booleans) of length $n$ are enumerable,
-but the results were not as elegant as those presented in Sec.~\ref{sec:Boolean-tautologies}. Also, generating the environments by quantifying over
+but the results were not as elegant as those presented here. Also, generating the environments by quantifying over
 fresh variables and adding them to an accumulating environment saves 
 the hassle of creating a large binary tree with all the possible
 environments in the leaves.
@@ -1889,8 +1915,10 @@ environments in the leaves.
 
 \section{Adding Reflection}\label{sec:addrefl}
 
+It might come as a surprise that in a project focusing on reflection in Agda, in the programming language technology sense, has not yet
+found an application for reflection in this chapter. This is about to change. 
 We can get rid of the duplication seen in Fig.~\ref{fig:dup} using Agda's reflection API. 
-There we see that the same Boolean formula is represented twice: once in the type signature as an Agda
+There we see the same Boolean formula twice: once in the type signature as an Agda
 proposition and once in the |BoolExpr| AST. More
 specifically, we will use the |quoteGoal| keyword to inspect the
 current goal. Given the |Term| representation of the goal, we can
@@ -2049,9 +2077,9 @@ bound variables. This is ensured by the assumptions
 |isBoolExprQ| and friends.
 
 The |concrete2abstract| function is rather verbose, and is mostly omitted.
-A representative snippet is given in Fig. \pref{fig:concrete2abstract}. The attentive reader will notice that
+A representative snippet is given in Fig.~\ref{fig:concrete2abstract}. The attentive reader will notice that
 the function in the referenced figure is called |term2boolexpr|; this is because we also unwrap the outermost call to |P| 
-and the telescope quantifying over (introducing) the variables before doing the conversion, since these elements are unnecessary in the |BoolExpr| representation. 
+and the telescope quantifying over  the variables before doing the conversion, since these elements are unnecessary in the |BoolExpr| representation. 
 This can be seen as a helper function to |concrete2abstract| where the ``interesting'' (if the reader happens to be a flagellant) work happens.
 The functions |isBoolExprQ|
 and |isSoExprQ| simply traverse the |Term| to see if it fulfills the requirements of
@@ -2119,8 +2147,8 @@ fave       = quoteGoal e in proveTautology e
 
 
 This shows that the reflection capabilities recently added to Agda are quite useful for
-automating certain tedious tasks, since the programmer now need not encode the Boolean expression
-twice in a slightly different format. The conversion now happens automatically, without loss
+automating certain tedious tasks, since we now need not encode the Boolean expression
+twice, in  slightly different formats. The conversion now happens automatically, without loss
 of expressive power or general applicability of the proofs resulting from |soundness|.
 Furthermore, by using the proof by reflection technique, the proof is generated automatically.
 
@@ -2133,14 +2161,15 @@ tactics is the same.
 
 The attentive reader will remember that we previously studied a system capable of automatically
 quoting concrete Agda to a simple user-defined AST. Would that not be perfectly suited to quoting to 
-the |BoolExpr| type used here? This turns out to be the case: we exploit this possibility in the following section.
+the |BoolExpr| type used here? This turns out to be the case: we exploit this possibility in the rest of this chapter.
 
 \subsection{An Aside: Real-world Example of |Autoquote|}\label{sec:autoquote-example}
 
 The process of quoting to a |BoolExpr n| outlined in Sec.~\ref{sec:addrefl}
 quickly becomes an ugly mess, with functions checking properties of an expression (such
-as only certain functions like |_∧_| or |¬_| occurring in the |Term|) being repetitive and verbose. If one 
-then wanted to quote to some other AST, the whole process would have to be modified, which, the author can guarantee,
+as only certain functions like |_∧_| or |¬_| occurring in the |Term|) being repetitive and verbose. The code summarised 
+in Fig.~\ref{fig:concrete2abstract} is an example of such a mess. If one 
+then wanted to quote to some other AST, the whole process would have to be modified, which, I can guarantee,
 is a painful process.
 
 The actual conversion function also ends up having many branches, checking if all the
@@ -2150,10 +2179,10 @@ Sec.~\ref{sec:autoquote}; the same can be used here, both as an
 illustration of its use, and to avoid code duplication,
 thus making the code for |term2boolexpr| more concise.
 
-|Autoquote| only supports simple recursive data types, so the first problem we encounter is that
+|Autoquote| only supports simple inductive data types, so the first problem we encounter is that
 |BoolExpr n| has an argument of type |Fin n| to its constructor |Atomic| (see Fig.~\ref{fig:boolexprn}).
-Because of this, we introduce a simpler, intermediary data structure, to which we will convert
-from |Term|. This type, called |BoolInter|, is presented in Fig. \ref{fig:boolinter}.
+To work around this, we introduce a simpler, intermediary data structure, to which we will convert
+from |Term|. This type, called |BoolInter|, is presented in Fig. \ref{fig:boolinter}. It has no such constraints.
 
 \begin{shadedfigure}[h]
 \begin{code}
@@ -2171,10 +2200,12 @@ data BoolInter : Set where
 
 The mapping needed for |Autoquote| is as follows: we mention which constructor represents
 De Bruijn-indexed variables and what the arity is of the different constructors. This way
-only |Term|s with and, or, not, true or false are accepted. Using this mapping, we can construct
-the function |term2boolexpr'| which, for suitable |Term|s, gives us an expression in |BoolInter|. 
+only |Term|s containing variables or the operators and, or, not,
+implication, true or false are accepted. Using this mapping, we can
+construct the function |term2boolexpr'| that, for suitable |Term|s,
+gives us an expression in |BoolInter|. See Fig.~\ref{fig:booltable}.
 
-\begin{shade}
+\begin{shadedfigure}[h]
 \begin{code}
 boolTable : Table BoolInter
 boolTable = (Atomic ,
@@ -2190,12 +2221,13 @@ term2boolexpr'     : (t : Term)
                    → BoolInter
 term2boolexpr' t {pf} = doConvert boolTable t {pf}
 \end{code}
-\end{shade}
+\caption{The mapping table for quoting |BoolInter|.}\label{fig:booltable}
+\end{shadedfigure}
 
 Once we have a |BoolInter| expression, we just need to check that its
-variables are all in scope (this means that $\forall$ |Atomic| $x$ s.t. $x < n$, if we
+variables are all in scope (this means that $\forall$ |Atomic| $x  :     x < n$, if we
 want to convert to a |BoolExpr n|). This is done in |bool2fin|, assuming that |bool2finCheck|
-holds (the latter simply expresses the aforementioned in-scope property).
+holds (the latter simply expresses the in-scope property).
 
 \begin{shade}
 \begin{spec}
@@ -2219,7 +2251,7 @@ bool2fin n (Atomic x)  ()       | no ¬p
 
 With these ingredients, our |concrete2abstract| function presented in Sec.~\ref{sec:addrefl}
 can be rewritten to the following  drop-in replacement, illustrating how useful such an
-abstraction can be. 
+abstraction can be.  It uses the function |term2boolexpr'| defined in Fig.~\ref{fig:booltable}.
 
 \begin{shade}
 \begin{spec}
@@ -2246,8 +2278,8 @@ Finally, all developments regarding the proof by reflection technique, including
 the quoting code can be found in the modules |Proofs.TautologyProver| and |Metaprogramming.Autoquote|, respectively.
 There are also examples of using the tautology prover as a library in |Proofs.ExampleTautologies|, as well as two examples
 of using |Autoquote| in |Metaprogramming.ExampleAutoquote|. 
-An extensive illustration of what is possible using |Autoquote| can be
-found in |Proofs.TautologyProver|, for those interested.
+The more extensive illustration of what is possible using |Autoquote| can be
+found in |Proofs.TautologyProver|.
 
 
 \chapter{Type-safe Metaprogramming}\label{sec:type-safe-metaprogramming}
@@ -3200,7 +3232,7 @@ The developments mentioned here, as well as termination proofs, can be found in
 |Metaprogramming.CPS| and |Metaprogramming.WTWellFounded|.
 
 
-\section{Example: Translation to SKI Combinators}\label{sec:ski}
+\section{Example: SKI Combinators}\label{sec:ski}
 
 
 Another interesting application of our new well-typed program transformation framework is the proof

@@ -50,6 +50,7 @@
 %format module = "\bkw{module}"
 %format open = "\bkw{open}"
 %format import = "\bkw{import}"
+%format with = "\bkw{with}"
 %format public = "\bkw{public}"
 %format data = "\bkw{data}"
 %format where = "\bkw{where}"
