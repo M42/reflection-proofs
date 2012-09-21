@@ -45,20 +45,24 @@
 % This defines figures with backgrounds -- useful for code
 \usepackage{adjustbox}
 \usepackage{float} % enable H position specifier
-\newenvironment{shade}{
-
-\vskip 0.5\baselineskip
-\begin{adjustbox}{minipage=\linewidth,margin=0pt,padding=0pt,bgcolor=hlite}}{\end{adjustbox}
-\vskip 0.5\baselineskip
-
-}
-%\newenvironment{shade}{}{}
+% \newenvironment{shadedfigure}{\begin{figure}}{\end{figure}}
+% \newenvironment{shade}{}{}
 \newenvironment{shadedfigure}[1][tbhp]{%
     \begin{figure}[#1]
     \begin{adjustbox}{minipage=\linewidth-10pt,margin=5pt,bgcolor=hlite}
 }{%
     \end{adjustbox}
     \end{figure}
+}
+\newenvironment{shade}{
+
+\vskip 0.5\baselineskip
+\begin{adjustbox}{%
+minipage=\linewidth,margin=0pt,padding=0pt,bgcolor=hlite%
+}}{%
+\end{adjustbox}
+\vskip 0.5\baselineskip
+
 }
 
 \newcommand{\lagda}{\texttt{\--\--{}lagda}\xspace}
@@ -326,7 +330,7 @@ means ``is of type'', so in Fig.~\ref{fig:peano}, |zero| is of type |Natural|. T
 it takes a natural as argument and produces a new natural. This new natural is also the successor of the old natural. This inductive style of data type definitions is a frequently used
 technique in both Haskell and Agda.
 
-\begin{shadedfigure}
+\begin{shadedfigure}[h]
 \begin{code}
 data Natural : Set where
     zero     :                 Natural
@@ -1153,7 +1157,7 @@ Imagine we have some AST, for example |Expr|, in Fig.~\ref{fig:exprdata}.
 This is a rather simple inductive data structure representing terms which can contain Peano style natural
 numbers, variables (indexed by an Agda natural) and additions.
 
-\begin{shadedfigure}
+\begin{shadedfigure}[h]
 \begin{code}
 data Expr : Set where
   Var           : ℕ               →     Expr
@@ -1640,7 +1644,7 @@ intuitive propositional equality style, for example |(b : Bool) → b ∨ ¬ b �
 that notation more obviously reflects the meaning of ``being a tautology'', as opposed 
 to one having to understand the |So| function; this is justified in Sec.~\ref{sec:no-propositional-equality}.
 
-\begin{shadedfigure}
+\begin{shadedfigure}[h]
 \begin{code}
 exampletheorem : Set
 exampletheorem = (p₁ q₁ p₂ q₂ : Bool)   →   
@@ -2086,7 +2090,7 @@ and |isSoExprQ| simply traverse the |Term| to see if it fulfills the requirement
 being a Boolean expression preceded by a series of universally quantified Boolean variables, enclosed in a
 call to |P|.
 
-\begin{shadedfigure}
+\begin{shadedfigure}[h]
 \begin{spec}
 term2boolexpr n (con tf []) pf with tf ≟-Name quote true
 term2boolexpr n (con tf []) pf | yes p = Truth
@@ -3365,7 +3369,7 @@ mutual
 \end{shade}
 }
 
-\begin{shadedfigure}
+\begin{shadedfigure}[h]
 \begin{code}
   compile : {Γ : Ctx} {τ : Uu} {n : ℕ} → WT Γ τ n → Comb Γ τ
   compile          (Lit x)          = Lit x
@@ -3383,7 +3387,7 @@ If it is the variable bound by the lambda in question, we can replace the whole 
 combinator.
 
 
-\begin{shadedfigure}
+\begin{shadedfigure}[h]
 \begin{code}
   lambda : {σ τ : Uu}{Γ : Ctx}    → Comb (σ ∷ Γ) τ
                                   → Comb Γ (σ => τ)
