@@ -1313,7 +1313,8 @@ The function |convertArgs| takes a list of term arguments (the type |Arg Term|) 
   appCons (vc , tab) name args with lookupName tab name
   ... | just (arity       \# x  ↦ x₁)   with convertArgs (vc , tab) args
   ... | just (arity       \# x₁ ↦ x₂)   | just x       with length x ≟-ℕ arity
-  ... | just (.(length x) \# x₁ ↦ x₂)   | just x       | yes     = just (x₂ dollarn fromList x)
+  ... | just (.(length x) \# x₁ ↦ x₂)   | just x       | yes
+                                                       = just (x₂ dollarn fromList x)
   ... | just (arity       \# x₁ ↦ x₂)   | just x       | no      = nothing
   ... | just (arity       \# x  ↦ x₁)   | nothing      = nothing
   ... | nothing                         = nothing
@@ -1370,7 +1371,7 @@ something : {x y : ℕ}    → doConvert    exprTable
                                             (Var 0))
 something = refl
 \end{code}
-\caption{Examples of |Autoquote| in use. See Fig.~\ref{fig:exprTable} for the definition of |exprTable|, a typical |Name|-to-constructor mapping.}\label{fig:test-autoquote}
+\caption{An example of |Autoquote| in use. See Fig.~\ref{fig:exprTable} for the definition of |exprTable|, a typical |Name|-to-constructor mapping.}\label{fig:test-autoquote}
 \end{shadedfigure}
 
 
@@ -2258,9 +2259,9 @@ bool2finCheck n (Atomic x)   with suc x ≤? n
 bool2finCheck n (Atomic x)   | yes p    = ⊤
 bool2finCheck n (Atomic x)   | no ¬p    = ⊥
 
-bool2fin : (n : ℕ) → (t : BoolInter) → (bool2finCheck n t) → BoolExpr n
-bool2fin n Truth        pf                 = Truth
-bool2fin n (And t t₁)   (p₁ , p₂)          = And (bool2fin n t p₁) (bool2fin n t₁ p₂)
+bool2fin : (n : ℕ) (t : BoolInter) (bool2finCheck n t) → BoolExpr n
+bool2fin n Truth        pf            = Truth
+bool2fin n (And t t₁)   (p₁ , p₂)     = And (bool2fin n t p₁) (bool2fin n t₁ p₂)
 ...
 bool2fin n (Atomic x)  p₁       with suc x ≤? n
 bool2fin n (Atomic x)  p₁       | yes p    = Atomic (fromℕ≤ {x} p)
@@ -2553,7 +2554,7 @@ data _∈'_ {A : Set} (x : A) : List A → Set where
   there   : {xs : List A} {y : A} → x ∈ xs       → x ∈' y ∷ xs
 \end{code}
 \newcommand{\captindata}{The definition of the |_∈_| data type, used as a witness that a variable with some type points to a valid location in the context.}
-\caption[\captindata]{\captindata\ |_∷_| binds more strongly than |_∈_|.}\label{fig:in-data}
+\caption[\captindata]{\captindata\ Note that |_∷_| binds more strongly than |_∈_|.}\label{fig:in-data}
 \end{shadedfigure}
 
 It should be clear that a term in |WT' []| is closed, since if the context of a term is empty and given that all |WT'| terms
@@ -3806,19 +3807,19 @@ being considered finished, so it would be unfair to judge the current implementa
 fact, the author hopes that this work might motivate the Agda developers to include some more features, to
 make the system truly useful. }.
  
-A few statements about Agda's reflection API in light of this taxonomy can be made.\todo{wording?}
+A few statements about Agda's reflection API in light of this taxonomy can be made:
 \begin{itemize}
 \item It leans more towards analysis than generation,
-\item it supports encoding as an algebraic data type (as opposed to a string, for example),
-\item it involves manual staging annotations (with keywords such as |quote| and |unquote|),
+\item it supports encoding of terms in an algebraic data type (as opposed to a string, for example),
+\item it involves manual staging annotations (by using keywords such as |quote| and |unquote|),
 \item it is neither strictly static nor runtime, but compile time. This behaves much like a 
   static system (one which compiles an object program, as does for example YAcc \cite{johnson1975yacc})
-  would, but doesn't produce intermediate code which might be modified.
-  Note that this fact is essential for Agda to remain sound as a logical framework. 
+  would, but does not produce intermediate code which might be modified later by the user.
+  Note that this fact is essential for Agda to remain a sound logical framework. 
 \item it is homogeneous, in that the object language lives inside the metalanguage (as a native
   data type), 
 \item it is only two-stage: we cannot as yet produce an object program which is itself a metaprogram. This is
-  because we rely on built-in keywords such as |quote|, which cannot themselves be quoted.
+  because we rely on builtin keywords such as |quote|, which cannot themselves be represented.
 \end{itemize}
  
  
