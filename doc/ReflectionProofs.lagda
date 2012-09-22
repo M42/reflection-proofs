@@ -2354,7 +2354,7 @@ AST is that intermediary terms often pose a difficulty -- maybe mention the exam
 In this chapter we will explore how one can leverage the power of
 dependent types to achieve more type safety when writing metaprograms.
 
-\section{Preamble}\label{sec:preamble}\todo{title?}
+\section{Preamble}\label{sec:preamble}
 
 
 In this section about metaprogramming, the object language we will be
@@ -2474,7 +2474,6 @@ open import Metaprogramming.Util.Equal
 \end{code}
 \end{shade}
 }
-\todo{make |ℕ| implicit.}
 \begin{shadedfigure}[h]
 \begin{code}
 data WT' : Ctx → Uu → ℕ → Set where
