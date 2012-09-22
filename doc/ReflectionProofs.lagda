@@ -3338,7 +3338,7 @@ compile (Apply t u)    = ApplyC      (compile t) (compile u)
 compile (Lambda x t)   = lambda x    (compile t)
 
 lambda     : String -> Combinatory -> Combinatory
-lambda x t            | x ∉ vars t   = ApplyC K t
+lambda x t            | x ∉ vars t   = ApplyC     K t
 lambda x (VarC y)     | x == y       = I
 lambda x (ApplyC t u)                = ApplyC     (ApplyC  S
                                                            (lambda x t))
