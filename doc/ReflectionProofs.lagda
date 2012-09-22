@@ -3891,12 +3891,14 @@ allowed in definitions. Pattern-matching lambda expressions in Agda
 are simply syntactic sugar for local definitions. This precludes
 automating the Bove-Capretta method, and makes generic programming
 techniques all the more painful.
-\item Inspection of functions (e.g. clauses) not implemented, although
-inspection of data type definitions is quite complete.
+\item Inspection of functions (e.g. clauses) is not implemented, although
+inspection of data type definitions is quite comprehensive.
 \item By default, untyped terms are returned from the |quoteTerm|
 keyword. This has been solved in the patches presented in
 Appendix~\ref{appendix:lambda-types}, but these patches are yet to be
 included in the main development version of Agda.
+\item The |unquote| keyword is unaware of types, so even if a program transformation is
+  type-safe, in the end unquoting is still hit-and-miss.
 \end{itemize}
  
 
