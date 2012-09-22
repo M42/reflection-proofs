@@ -3315,22 +3315,63 @@ i     = \ x                   -> x
 \caption{The three combinators which make up SKI combinator calculus.}\label{fig:ski}
 \end{shadedfigure}
 
-Note that each of these 3 combinators are equivalent to closed lambda terms, but they form the basic building blocks (the basis, in fact)
+Note that each of these 3 combinators are equivalent to closed lambda terms, but they form the basic building blocks 
 of the SKI language. Basically, the SKI language is the same as the simply-typed lambda calculus, except without
 the possibility of introducing new lambda abstractions, just the option to use one of these 3 predefined combinators.
 The fact that any closed lambda term can be translated to SKI may seem counterintuitive, but that is all the more
 reason to go ahead and, in the style of programs-as-proofs, prove that one can always translate a closed lambda term into
-SKI by defining this translation for all possible terms of type |Well-typed-closed|. Because this is a dependently typed
+SKI by defining this translation on the type |Well-typed-closed|. Because this is a dependently typed
 language, we will have the guarantee that our function is total and terminating, and that the types of the terms are precisely
 preserved, which is a big advantage compared to the textbook implementations of SKI translation one finds written in Haskell,
-as there is nothing which says those functions cannot fail (except possibly for a proof on paper, but a machine-checked proof
-of the actual function at hand seems a lot more convincing to us).  
+where there is nothing that says those functions cannot fail, except possibly a proof on paper. We prefer a machine-checked proof
+of the actual function at hand, since one has to trust that the semantics of the function on paper and the implementation are
+the same. Being used to programs as proofs tends to make you paranoid about using other programming paradigms.
 
-We will first define a data type |Comb| in Fig.~\ref{fig:comb} which captures the SKI combinator language, extended with variables. One might be justified in starting
-to protest at this point, since we are introducing non-closedness into the language, but notice that, in the same way as the |WT'| type, we
-require variables to point to valid entries in the context, so that if we have a term of type |Comb []|, we know it contains no variables
-and thus is closed. We need these variables for intermediate results from the translation algorithm. This is also why we define the alias
-|Combinator|, which stands for a closed term in |Comb|, i.e. with an empty environment.
+We will first present and explain a pseudo-Haskell implementation of this translation; afterwards we will formalise it
+in Agda. The hand-waving implementation is provided in Fig.~\ref{fig:pseudo-haskell-ski}.
+
+\begin{shadedfigure}[H]
+\begin{spec}
+compile    : Lambda -> Combinatory
+compile (Var x)        = VarC x
+compile (Apply t u)    = ApplyC      (compile t) (compile u)
+compile (Lambda x t)   = lambda x    (compile t)
+
+lambda     : String -> Combinatory -> Combinatory
+lambda x t            | x ∉ vars t   = ApplyC K t
+lambda x (VarC y)     | x == y       = I
+lambda x (ApplyC t u)                = ApplyC     (ApplyC  S
+                                                           (lambda x t))
+                                                  (lambda x u)
+\end{spec}
+\caption{A pseudo-Haskell implementation of conversion from lambda terms to SKI calculus, using named variables.}\label{fig:pseudo-haskell-ski}
+\end{shadedfigure}
+
+We have the added complication that our |WT| type  uses De Bruijn indices, though. This means that each time we
+replace a lambda abstraction with some other construction, we are potentially breaking the variable
+references, since some of them (exactly those in the body of the destroyed lambda) will need decrementing.
+Also, it sounds difficult to do a check on the variable's name to see if we should introduce an |I| or |K| in
+the variable case, but we will see that it is actually not so involved, and that if we exploit the same context
+in the target language as in |WT|, it is not so bad.
+
+\todo{check wording here.}
+%%%%%%%%
+% the fact that the |Comb| language
+% also uses the same context as the |WT'| language is in fact a useful property. The code for the |compile| function,
+% which is pretty boring, is to be found in Fig.~\ref{fig:compile}, and the more interesting |lambda| function, which
+% does the swizzling of lambda abstractions and variable references, is in Fig.~\ref{fig:lambda}.
+%%%%%%%%
+
+We will first define a data type |Comb| in Fig.~\ref{fig:comb} which
+captures the SKI combinator language, extended with variables. One
+might be justified in starting to protest at this point, since we are
+introducing non-closedness into the language, but notice that, in the
+same way as the |WT'| type, we require variables to point to valid
+entries in the context, so that if we have a term of type |Comb []|,
+we know it contains no variables and thus is closed. We need these
+variables for intermediate results from the translation
+algorithm. This is also why we define the alias |Combinator|, which
+stands for a closed term in |Comb|, i.e. with an empty environment.
 
 Note also that we have as much type safety in |Comb| as we have in |WT'|, on account of the types of the arguments to the constructors
 needing to have sensible types.
@@ -3361,9 +3402,8 @@ data type |Comb|, modelling SKI combinator calculus. The |Var|
 constructor is less dangerous than it may seem.}\label{fig:comb}
 \end{shadedfigure}
 
-\todo{pseudo haskell naar voren halen}
 
-Translation of lambda terms into SKI is actually surprisingly (that is, if one is used to spending days grappling
+The translation of lambda terms into SKI is actually surprisingly (that is, if one is used to spending days grappling
 with the Agda compiler to get something seemingly trivial proven) straightforward. Since literals, variables and applications are
 supported, those can just be translated into the |Comb| equivalents without a problem, preserving the input context and type.
 The more complicated case occurs when we encounter a lambda abstraction.
@@ -3374,47 +3414,21 @@ variable name and the SKI-translated body, whenever we encountered an
 abstraction. What we would like it to do is pattern match on this new
 translated body, and if it encounters a |Var| constructor, check if
 the variable has the same name. If it does, we evidently have
-encountered a $\lambda x . x$ somewhere in the expression, which
+encountered a $\lambda t . t$ somewhere in the expression, which
 should just translate to the |I| combinator. If the variable has
 another name, apply the variable to a |K| combinator, since we have
-encountered a $\lambda x . y$, and if $y$ is just a variable, then it
+encountered a $\lambda t . s$, and if $s$ is just a variable, then it
 doesn't depend on the abstraction. In case we encounter an application
 as the body, we should recursively do the lambda-modification on the
 applicand and argument, then apply them both to the |S| combinator,
 since that will restore the analogue of the $\lambda x
-. \text{App}~y~z$ (bearing in mind that initially $y$ and $z$
+. ~s~\left<~t~\right>$ (bearing in mind that initially $s$ and $t$
 might depend on $x$, being expressions and not necessarily atomic
-variables), since |S ⟨ y ⟩ ⟨ z ⟩| indeed evaluates to |\ f
--> \ g -> \ x -> f x (g x)| applied to $y$ then $z$, which gives |\ x
--> y x (z x)| which precisely reflects that we want $y$ applied to
-$z$, and that they each might depend upon $x$.
+variables). We see that |S ⟨ s ⟩ ⟨ t ⟩| indeed evaluates to |\ f
+-> \ g -> \ x -> f x (g x)| applied to $s$ then $t$, which gives |\ x
+-> s x (t x)| which precisely reflects that we want $s$ applied to
+$z$, and that they each might depend upon $t$.
 
-Translating this fuzzy description into pseudo-Haskell, we get something like the code presented in Fig.~\ref{fig:pseudo-haskell-ski}.
-\begin{shadedfigure}[h]
-\begin{spec}
-compile : Lambda -> Combinatory
-compile (Var x)        = VarC x
-compile (Apply t u)    = ApplyC      (compile t) (compile u)
-compile (Lambda x t)   = lambda x    (compile t)
-
-lambda : String -> Combinatory -> Combinatory
-lambda x t            | x ∉ vars t   = ApplyC K t
-lambda x (VarC y)     | x == y       = I
-lambda x (ApplyC t u)                = ApplyC     (ApplyC  S
-                                                           (lambda x t))
-                                                  (lambda x u)
-\end{spec}
-\caption{A pseudo-Haskell implementation of conversion from lambda terms to SKI calculus, using named variables.}\label{fig:pseudo-haskell-ski}
-\end{shadedfigure}
-
-We have the added complication of using De Bruijn indices, though. This means that each time we
-replace a lambda abstraction with some other construction, we are potentially breaking the variable
-references, since some of them (exactly those in the body of the destroyed lambda) will need decrementing.
-Also, it sounds difficult to do a check on the variable's name to see if we should introduce an |I| or |K| in
-the variable case, but we will see that it is actually not so involved, and that the fact that the |Comb| language
-also uses the same context as the |WT'| language is in fact a useful property. The code for the |compile| function,
-which is pretty boring, is to be found in Fig.~\ref{fig:compile}, and the more interesting |lambda| function, which
-does the swizzling of lambda abstractions and variable references, is in Fig.~\ref{fig:lambda}.
 
 \ignore{
 \begin{shade}
@@ -3491,7 +3505,7 @@ unitTest1 = refl
 
 Here we see how the existing lambda expression quoting system is used to read a
 concrete Agda lambda expression into a |WT'| value, which is then |compile|d to
-produce an SKI term.
+produce an SKI term. The function |unitTest1| displays what the end result is.
 
 The resulting terms are sometimes rather unwieldy, as is illustrated
 in the examples provided in the module |Metaprogramming.ExampleSKI|, but this is to be expected,
@@ -3576,6 +3590,7 @@ These developments can be found in the module |Metaprogramming.SKI|, and a few e
 translated terms as well as a guide to how to use the provided code as a library, are to be found 
 in |Metaprogramming.ExampleSKI|. 
 
+\newpage
 \section{Parameters to Modules}\label{sec:universe-parameters}
 
 As promised, we provide here a summary of the parameters to the modules |Datatypes|, |TypeCheck|, |SKI| and |CPS|, because 
