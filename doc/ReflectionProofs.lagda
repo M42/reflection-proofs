@@ -2499,7 +2499,12 @@ The first thing to notice is that all terms in |WT'| are annotated with
 a context, a type (the outer type of
 the lambda expression), and a size.  The size is an arbitrary measure which should be strictly increasing
 for terms which are structurally larger. This will become useful later, when we need to show that certain functions
-preserve the size of terms, but other than that the size has no interesting meaning.
+preserve the size of terms, but other than that the size has no interesting meaning. It is tempting to make the size parameter
+implicit, in the hope that this will hide a lot of clutter. Unfortunately, in most of the functions in this chapter,
+the size of terms needs to be specified to enable Agda to solve constraints between input and output of transformation functions. This
+is why the choice has been made to keep the size argument explicit, and occasionally use the underscore to tell Agda to infer the
+size when possible.  After all, if we need to pattern match on implicit parameters and pass them along anyway, the clutter is only
+worse than if they were explicit.
 
 The type annotations are elements of |Uu|, defined in Fig.~\ref{fig:datauu}, which models base types and arrows.
 Contexts are simply lists of types, the position of elements of the list corresponding to
