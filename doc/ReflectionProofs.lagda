@@ -3860,7 +3860,7 @@ reflection API to automatically convert data type definitions which already had 
 the user, to values of this type-of-types. The expectation is that this should be possible, since we
 can easily inspect the constructors of data types, and that the use of |unquote| should be limited,
 since the type-of-types values are just Agda values. If one would like to have embedding and projection pairs, however,
-the same problem outlined in the previous section would arise: unquoting is not properly usable. Because of this,
+the same problem outlined in the previous section would arise: unquoting is not properly usable. Because of this and a lack of time,
 no further research was done to ascertain whether this is, in fact, feasible.
 
 
