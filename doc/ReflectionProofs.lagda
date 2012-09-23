@@ -3963,7 +3963,13 @@ The Ssreflect system \cite{gonthier:inria-00515548} for Coq  should also be ment
 refrain from making concrete statements, but the expectation is that the developments presented here should also be possible using Ssreflect.
  
  
- 
+%TODO type inference of SKI terms, Ruud's link. cite.
+%TODO Jeroen Fokker for completeness of SKI
+%TODO example where keywordness of unquote breaks abstraction, e.g. map unquote ...
+%todo related work: stephan monnier - type-safe .. in haskell
+%todo japanse thesis over CPS (related work)
+%TODO make it clear that auto Bove-Capretta is impossible, and that's a pity. because of no intro data
+%todo finalise chap 6 and 7 (discussion) 
  
 %todo right at the end, check if references to sections and figures are called Sec. and Fig. accordingly.
 
@@ -4126,7 +4132,7 @@ tokens are to be formatted. The required commands are:
 Once again, the actual code changes can be browsed on \url{https://darcs.denknerd.org}\footnote{The patches
  \href{https://darcs.denknerd.org/darcsweb.cgi?r=Agda;a=darcs_commitdiff;h=20120621153102-a1717-bcec6bef23583acfb7fd06e3291a57e90d1b4c0b.gz;}{20120621153102-a1717-bcec6bef23583acfb7fd06e3291a57e90d1b4c0b.gz}
 to \href{https://darcs.denknerd.org/darcsweb.cgi?r=Agda;a=darcs_commitdiff;h=20120625101400-a1717-6363a79683af6ad0752729ee24250e87d7af066b.gz;}{20120625101400-a1717-6363a79683af6ad0752729ee24250e87d7af066b.gz} are interesting as far as highlighting goes.}. Examples
-of using this system are to be found in the code for this paper: the Makefile specifies how to generate the formatting rules, and the main \LaTeX\ file shows how it is used.
+of using this system are to be found in the code for this paper: the Makefile specifies how to generate the formatting rules, and the main \LaTeX\ file shows how they are used.
 
 \chapter{Guide to Source Code}\label{chap:guide-to-source}
 
