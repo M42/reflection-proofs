@@ -616,7 +616,7 @@ very similar to those found in Haskell, except that in contrast with Haskell, yo
 notation for data constructors. 
 
  Agda is, practically speaking, like
-Haskell with a type system on steroids\footnote{For example, the Agda type system does $\beta\text{-}$reduction on terms --
+Haskell with a type system on steroids\footnote{For example, the Agda type system does $\beta\text{\--}$reduction on terms --
 evaluation -- which is something seen as possible, but quite exotic, in Haskell-land.}. The discussion of how and why this 
  is so is considered out of the scope of this 
 project, but suffice it to say that tearing down the distinction between values and types allows
@@ -1732,13 +1732,13 @@ recursively building up the environment with an accumulating parameter. Because 
 
 
 \begin{shadedfigure}[h]
-\begin{code}
+\begin{spec}
 data Diff' : ℕ → ℕ → Set where
   Base   : ∀ {n}                          → Diff' n n
   Step   : ∀ {n m} → Diff' (suc n) m      → Diff' n m
   
 zeroleast : (k n : ℕ) → Diff k (k + n)
-\end{code}
+\end{spec}
 \caption{The definition of the |Diff| data type.}\label{fig:diff-datatype}
 \end{shadedfigure}
 
@@ -3213,12 +3213,12 @@ projects the size of the expression from |WTwrap|.
 
 
 \begin{shade}
-\begin{code}
+\begin{spec}
 to'   : ∀ {Γ σ n} → WT Γ σ n → WTwrap
 to' {Γ}{σ}{n} wt = Γ , σ , n , wt
  
 sz    : WTwrap → ℕ
-\end{code}
+\end{spec}
 \end{shade}
 
 Now that we have this small bit of machinery, we can import the standard library's notion of well-foundedness and show that our measure,
