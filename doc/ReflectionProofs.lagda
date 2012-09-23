@@ -2956,7 +2956,8 @@ equivFact5      = refl
 This transformation can be done in a mechanical way, too. Also the type we
 expect the new function to have can be derived. This is discussed at length by
 Might \cite{might-cps},
- whose implementation was also used as inspiration for this type-safe version.
+ whose implementation was also used as inspiration for this type-safe version. Weirich also presented a version of CPS in Agda during a course in 2009 \cite{weirich-cps}, which also was instructive during these developments.
+
 Reynolds' overview \cite{Reynolds:1993:DC:198112.198114} provides a good source of information on the history of the CPS transformation, which turns out to have been
  independently discovered in many fields. The CPS transformation of lambda terms was apparently first documented  for Lisp programs by Fischer \cite{Fischer:1972:LCS:800235.807077}.
 
