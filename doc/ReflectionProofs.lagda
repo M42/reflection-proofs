@@ -32,7 +32,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Font definitions.
-\usepackage{tgpagella}                  %% looks a little like palatino
+%\usepackage{tgpagella}                  %% looks a little like palatino
 \usepackage[T1]{fontenc}
 \renewcommand{\ttdefault}{lmtt}         %% Latin Modern for teletype
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1214,7 +1214,7 @@ How this should be interpreted is that any variables encountered should be store
 the |_+_| operator should be a |Pl| constructor. In each case we are required to manually specify the
 arity of the constructor:    how many arguments it expects.
 A |zero|, from the |Data.Nat| standard library, should be treated as our |Z| constructor, and
-a |suc| translates to |S|. These constructors expect 0 respectively 1 argument.
+a |suc| translates to |S|. These constructors expect 0 and 1 argument, respectively.
 
 We will now look at the implementation of this library.
 
@@ -2632,7 +2632,7 @@ use of general recursion. This is in fact a topic of research in its own right, 
 of this project \cite{DBLP:journals/jfp/McBride03}.
 
 We choose instead to use the relatively straightforward structurally recursive algorithm for type checking lambda terms
-presented in Norell's tutorial on Agda \cite{Norell:2009:DTP:1481861.1481862}\todo{oorspronkelijk van McBride: epigram summer school AFP 2004 lecture notes}.
+presented in Norell's tutorial on Agda \cite{Norell:2009:DTP:1481861.1481862}. This algorithm was adapted from McBride's work in Epigram \cite{McBride:2004:EPP:2162138.2162141}.
 The function |infer| -- defined in the following paragraph, incrementally -- 
 provides a view on |Raw| lambda terms showing whether they are
 well-typed or not. This view is aptly called |Infer|, and is defined
@@ -2951,13 +2951,46 @@ This transformation can be done in a mechanical way, too. Also the type we
 expect the new function to have can be derived. This is discussed at length by
 Might \cite{might-cps}\todo{veel oudere referenties te vinden, misschien ook goed. griffin, danvy, heeft vast een goed overzicht}, whose implementation was also used as inspiration for this type-safe version.
 
+\paragraph{Pseudo code}
+We will start by generalising the previous example, and giving an informal definition of the CPS transformation. The code in Fig.~\ref{fig:pseudo-cps} is 
+pseudo-Haskell, and should clarify the rough approach to doing a CPS transformation, before we add visual noise in the form of type safety and termination
+guarantees.
+
+\begin{shadedfigure}[H]
+\begin{spec}
+M     : Expr -> Expr
+M     (Lam var expr)      = Lam var (Lam k' (T expr k'))       -- with |k'| fresh
+M     expr                = expr
+
+T     : Expr -> Expr -> Expr
+T     (App f e)    cont   = T f (Lam    f'                     -- with |f'| fresh
+                                        (T e (Lam    e'        -- with |e'| fresh
+                                                     (App (App f' e') cont))))
+T     expr         cont   = App cont (M expr)
+\end{spec}
+\caption{Pseudo-Haskell implementation of CPS transformation on a simple lambda language.}\label{fig:pseudo-cps}
+\end{shadedfigure}
+
+The function |M| adds a continuation parameter to lambda abstractions, and the |T| function takes an expression and continuation, and applies the continuation to the
+CPS-converted version of the expression.
+
+In the function |T|, we see that applications are the only constructs which need real modification. Both applicand and argument (|f| and |e| here, respectively) are recursively 
+CPS-transformed, and the recursive call is given new lambda abstractions as the continuation term. These continuations simply bind the CPS-transformed |f| and |e|, called |f'| and |e'| here, and
+apply them as before, but now applying the |cont| continuation term, too. 
+
+To make things more transparent, this pseudo code still uses a named variable representation; the algorithm in this section will finally use the
+De Bruijn representation, as defined earlier in this chapter (see Sec.~\ref{ssec:modelling-wtlambda}).
+
+\paragraph{Type transformation} 
+Since we are mechanically transforming terms, we can predict the type of transformed terms from their original type. After fixing 
+the types, we will be sure that the transformation is correct, since the resulting terms will have the expected type.
+
 The type of a CPS-transformed function can be computed as follows,
 where |RT| stands for return type. This |RT| is some base type, i.e. |O σ| for some $\sigma$,
 and is a user-defined parameter to the module |Metaprogramming.CPS| (as well as to the |Datatypes| module,
 but this parameter is automatically passed along to |Datatypes| in the |CPS| module). It denotes the desired
 return type from continuation functions.
 
-\todo{geef informeel CPS algoritme, net als bij SKI}
 
 Here we see the |Cont|
 constructor again. It is a tag we use to mark a type as going from
@@ -2974,6 +3007,7 @@ that the second argument will be a function from the original result type to our
 and finally dictate that the resulting function will also return a value in |RT| if given the correct
 first and second arguments. The |Cont| case stands for the type of a continuation function, which is obtained
 by going from the CPS-transformed original return type to the result type |RT|. 
+
 \ignore{
 \begin{shade}
 \begin{code}
@@ -2998,6 +3032,11 @@ semantically equal term with type |WT' (map cpsType Γ) RT|, the return type. In
 function must not rely on any variables which are not in the scope of the to-be-transformed function,
 and must produce a value of type |RT|.
 If these are then applied to each other, a value of type |RT| will be returned.
+
+\paragraph{The algorithm}
+
+We will now see the type-safe algorithm. Below, it is presented case by case. It should be noted that this is 
+still not the final version, since the |WT| type also has a size parameter. It is omitted here to keep clutter to a minimum; it will be added later, in Sec.~\ref{ssec:termination-bliss}.
 
 \begin{shade}
 \begin{spec}
@@ -3137,7 +3176,7 @@ allTsAcc : ∀ {Γ σ n} → (wt : WT' Γ σ n) → TAcc wt
 allTsAcc (Var x)                     = TBaseVar
 allTsAcc (Lit x₁)                    = TBaseLit
 allTsAcc {_} {τ => σ} (Lam .τ wt)    =
-          TLam            (allTsAcc (shift1 (Cont σ) wt) )
+          TLam            (allTsAcc (shift1 (Cont σ) wt))
 allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁} wt wt₁)    =
           TApp            (allTsAcc wt)
                           (allTsAcc (shift1 (σ => σ₁) wt₁))
@@ -3148,7 +3187,7 @@ But, horror! Agda now is suspicious that this function, |allTsAcc|, which is mea
 that |Tt| terminates given any |WT'| term, does not terminate either! We also cannot apply Bove and Capretta's trick
 again, since by the construction of |TAcc| that would give us a data type isomorphic to |TAcc|.
 
-As it turns out, there is another trick
+\paragraph{Well-foundedness} As it turns out, there is another trick
 up our sleeve: that of well-founded recursion. What we need to do is show that even though the recursion here is non
 structural, the terms do strictly decrease in size for some measure. Luckily we introduced a measure on |WT'| long ago, the last argument
 of type |ℕ|. Following Mertens' example \cite{mertens2010wellfoundedrecursion}\todo{ook paulson citeren? says wouter}
@@ -3169,7 +3208,7 @@ WTwrap = Σ ℕ (λ n → Σ Uu (λ σ → Σ Ctx (λ Γ → WT' Γ σ n)))
 \end{shade}
 
 What is happening here is that we have defined a few nested dependent pairs, thus ``hiding'' the pi-type, which is what was causing us
-the headache. We will also need a function |to| to convert from |WT'| into our wrapper type, but it is equally mundane. The function |sz|
+the headache. We will also need a function |to| to convert from |WT'| into our wrapper type, but it is rather mundane. The function |sz|
 projects the size of the expression from |WTwrap|.
 
 
@@ -3290,6 +3329,10 @@ T wt cont = Tt wt (allTsAcc wt (wf (to wt))) cont
 \end{spec}
 \end{shade}
 
+Note that the final implementation of |T| now includes the size parameters on |WT| and the termination predicate defined here.
+As is suggested by all the auxiliary parameters to |T|, such as sized |WT| terms, termination predicates, etc. it was indeed
+less than trivial to get the CPS transformation working in a dependently typed setting. Although the development process was rather
+painful, we do now have a verified CPS transformation. 
 
 The developments mentioned here, as well as termination proofs, can be found in
 |Metaprogramming.CPS| and |Metaprogramming.WTWellFounded|.
@@ -4042,7 +4085,7 @@ clone the complete modified compiler fork from there.
 
 
 Highlighting Agda source code is something which as yet only works after a module has been loaded,
-since then the role of various identifiers is known -- be it constructor, function or type. Because
+since then the r\^{o}le of various identifiers is known -- be it constructor, function or type. Because
 of this, L\"oh's great LHS2\TeX\ system \cite{lhs2tex} does not support automatic highlighting of Agda code, but
 the documentation suggests using the idiomatic \texttt{\%format x = "\textbackslash{}something\{x\}"} rules, which are
 basically \LaTeX\ preprocessing macros. 

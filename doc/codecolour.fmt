@@ -145,3 +145,4 @@
 %format ≟-Name = "\defin{≟\mkern-5mu{}\text{-}Name}"
 %format _≟-Name_ = "\defin{\_≟\mkern-5mu{}\text{-}Name\_}"
 %format appCons = "\defin{appCons}"
+%format M = "\defin{M}"
