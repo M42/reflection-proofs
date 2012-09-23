@@ -2864,7 +2864,6 @@ Agda.
 
 
 \section{Example: CPS Transformation}\label{sec:cps}
-\todo{give examples of CPS transformed terms.} % from Wouter's BG reading?
 
 Given the fact that we can now easily move from the world of concrete Agda syntax to a well-typed lambda calculus and back,
 the obvious next step is to do something with these well-typed terms. Doing anything with these terms constitutes
@@ -3329,13 +3328,15 @@ T wt cont = Tt wt (allTsAcc wt (wf (to wt))) cont
 \end{spec}
 \end{shade}
 
+The developments mentioned here, as well as termination proofs, can be found in
+|Metaprogramming.CPS| and |Metaprogramming.WTWellFounded|. Because terms tend to become pretty large, the examples are not
+shown here, but are presented in the module |Metaprogramming.ExampleCPS|.
+
 Note that the final implementation of |T| now includes the size parameters on |WT| and the termination predicate defined here.
 As is suggested by all the auxiliary parameters to |T|, such as sized |WT| terms, termination predicates, etc. it was indeed
 less than trivial to get the CPS transformation working in a dependently typed setting. Although the development process was rather
 painful, we do now have a verified CPS transformation. 
 
-The developments mentioned here, as well as termination proofs, can be found in
-|Metaprogramming.CPS| and |Metaprogramming.WTWellFounded|.
 
 
 \section{Example: SKI Combinators}\label{sec:ski}
