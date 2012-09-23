@@ -3193,7 +3193,9 @@ been inspired -- systems with varying power and scope.
  
  
 People sometimes jokingly say that the more advanced
-a given programming language becomes, the more it converges towards Lisp \cite{graham04}.
+a given programming language becomes, the more it converges towards Lisp \cite{graham04}, and that
+the more complex some piece of software becomes, the higher the likelihood of discovering somewhere in
+the source a badly-defined, ad hoc implementation of a Lisp interpreter.
 The fact is, though, that it is becoming increasingly common to generate pieces of code 
 from a general recipe, giving rise to possibly a more efficient specific implementation, 
 or at the very least not having to reinvent the wheel. Reflection is becoming more common, to
