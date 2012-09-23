@@ -32,6 +32,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Font definitions.
+% TODO re-enable Pagella!
 %\usepackage{tgpagella}                  %% looks a little like palatino
 \usepackage[T1]{fontenc}
 \renewcommand{\ttdefault}{lmtt}         %% Latin Modern for teletype
@@ -2959,7 +2960,8 @@ Might \cite{might-cps},
  whose implementation was also used as inspiration for this type-safe version. Weirich also presented a version of CPS in Agda during a course in 2009 \cite{weirich-cps}, which also was instructive during these developments.
 
 Reynolds' overview \cite{Reynolds:1993:DC:198112.198114} provides a good source of information on the history of the CPS transformation, which turns out to have been
- independently discovered in many fields. The CPS transformation of lambda terms was apparently first documented  for Lisp programs by Fischer \cite{Fischer:1972:LCS:800235.807077}.
+ independently discovered in many fields. The CPS transformation of lambda terms was apparently first documented  for Lisp programs by Fischer \cite{Fischer:1972:LCS:800235.807077}. More references can be
+found in Danvy et al \cite{Danvy:2007:OCT:1317177.1317182}, who present work on one-pass CPS transformations.
 
 \paragraph{Pseudo code}
 We will start by generalising the previous example, and giving an informal definition of the CPS transformation. The code in Fig.~\ref{fig:pseudo-cps} is 
