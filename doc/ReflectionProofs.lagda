@@ -3737,8 +3737,10 @@ to allow in a language, since they seem to drop out of the sky \cite{DBLP:conf/i
 data type definitions should be no different from other value definitions. Ideally, there would only be 
 one canonical data type definition, which expresses all possible inductive data types, and the |data| keyword we are
 used to would only be syntactic sugar for a new value in this canonical data type. This way, reflection
-would not even be necessary, since, like in Lisp, the data and functions are expressed in the same object language. This
-idea has not been investigated in Agda\todo{cite pierre-evariste}, but some of the necessary components are available, and a few shortcomings as well as
+would not even be necessary, since, like in Lisp, the data and functions are expressed in the same object language. Data type generic programming becomes 
+normal programming. In work by Chapman, Dagand, McBride and Morris this idea is explored, hinting at implementation in
+Epigram 2 \cite{Chapman:2010:GAL:1863543.1863547}. This
+idea has not been investigated in Agda, but some of the necessary components are available, and a few shortcomings as well as
 ideas for future work are outlined in Sec.~\ref{sec:ornamentation}.
 
 \section{Embedding-projection Pairs}\label{sec:ep-pairs}
@@ -3958,11 +3960,13 @@ Chlipala's work \cite{chlipala2011certified} proved an invaluable resource, both
 for doing this in Agda was Wojciech Jedynak's ring solver \cite{ringsolver}, which was the first example of Agda's reflection
 API in use that came to our attention. Compared to Jedynak's work, the proof generator presented here is more refined in terms of the interface
 presented to the user. The expectation is that approaches like these will become more commonplace for proving mundane components in 
-large proofs. The comparison to tactics in a language like Coq\todo{mention ssreflect} is a natural one, and we see both advantages and disadvantages of each system. Of course, 
+large proofs. The comparison to tactics in a language like Coq is a natural one, and we see both advantages and disadvantages of each system. Of course, 
 the tactic language in Coq is much more specialised and sophisticated when it comes to generating proofs, but it is a pity that in fact one has
 two separate languages in one, instead of the way it is in Agda, where metaprograms are written directly in the object language. Also, the 
 fact that proof generation in Agda is explicit may be something some people appreciate. Further work (in the far future) might be to 
 implement some sort of tactic framework for Agda, possibly with a DSL in the style of Coq's tactic language, around the reflection API.
+The Ssreflect system \cite{gonthier:inria-00515548} for Coq  should also be mentioned here; because of a lack of experience with Ssreflect, I 
+refrain from making concrete statements, but the expectation is that the developments presented here should also be possible using Ssreflect.
  
  
  
