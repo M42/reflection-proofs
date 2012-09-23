@@ -3386,13 +3386,14 @@ of the SKI language. Basically, the SKI language is the same as the simply-typed
 the possibility of introducing new lambda abstractions, just the option to use one of these 3 predefined combinators.
 The fact that any closed lambda term can be translated to SKI may seem counterintuitive, but that is all the more
 reason to go ahead and, in the style of programs-as-proofs, prove that one can always translate a closed lambda term into
-SKI by defining this translation on the type |Well-typed-closed|. Because this is a dependently typed
-language, we will have the guarantee that our function is total and terminating, and that the types of the terms are precisely
+SKI by defining this translation on the type |Well-typed-closed|. Because Agda is a sound logical framework,
+we will have the guarantee that our function is total, and that the types of the terms are precisely
 preserved, which is a big advantage compared to the textbook implementations of SKI translation one finds written in Haskell,
 where there is nothing that says those functions cannot fail, except possibly a proof on paper. We prefer a machine-checked proof
-of the actual function at hand, since one has to trust that the semantics of the function on paper and the implementation are
+of the actual function at hand, since even if one has such a paper-proof, you have to trust that the semantics of the function on paper and the implementation are
 the same. Being used to programs as proofs tends to make you paranoid about using other programming paradigms.
 
+\paragraph{Pseudo code}
 We will first present and explain a pseudo-Haskell implementation of this translation; afterwards we will formalise it
 in Agda. The hand-waving implementation is provided in Fig.~\ref{fig:pseudo-haskell-ski}.
 
@@ -3413,21 +3414,18 @@ lambda x (ApplyC t u)                = ApplyC     (ApplyC  S
 \caption{A pseudo-Haskell implementation of conversion from lambda terms to SKI calculus, using named variables.}\label{fig:pseudo-haskell-ski}
 \end{shadedfigure}
 
-We have the added complication that our |WT| type  uses De Bruijn indices, though. This means that each time we
-replace a lambda abstraction with some other construction, we are potentially breaking the variable
-references, since some of them (exactly those in the body of the destroyed lambda) will need decrementing.
-Also, it sounds difficult to do a check on the variable's name to see if we should introduce an |I| or |K| in
-the variable case, but we will see that it is actually not so involved, and that if we exploit the same context
-in the target language as in |WT|, it is not so bad.
+Compared to the pseudo code implementation, we have the added
+complication that our |WT| type uses De Bruijn indices. This
+means that each time we replace a lambda abstraction with some other
+construction, we are potentially breaking the variable references,
+since some of them (exactly those in the body of the destroyed lambda)
+will need decrementing.  Also, it sounds difficult to do a check on
+the variable's name to see if we should introduce an |I| or |K| in the
+variable case, but we will see that it is actually not so involved,
+and that if we exploit the same context in the target language as in
+|WT|, it is not so bad.
 
-\todo{check wording here.}
-%%%%%%%%
-% the fact that the |Comb| language
-% also uses the same context as the |WT'| language is in fact a useful property. The code for the |compile| function,
-% which is pretty boring, is to be found in Fig.~\ref{fig:compile}, and the more interesting |lambda| function, which
-% does the swizzling of lambda abstractions and variable references, is in Fig.~\ref{fig:lambda}.
-%%%%%%%%
-
+\paragraph{Formalisation}
 We will first define a data type |Comb| in Fig.~\ref{fig:comb} which
 captures the SKI combinator language, extended with variables. One
 might be justified in starting to protest at this point, since we are
@@ -3490,7 +3488,7 @@ applicand and argument, then apply them both to the |S| combinator,
 since that will restore the analogue of the $\lambda x
 . ~s~\left<~t~\right>$ (bearing in mind that initially $s$ and $t$
 might depend on $x$, being expressions and not necessarily atomic
-variables). We see that |S ⟨ s ⟩ ⟨ t ⟩| indeed evaluates to |\ f
+variables). Note that |S ⟨ s ⟩ ⟨ t ⟩| indeed evaluates to |\ f
 -> \ g -> \ x -> f x (g x)| applied to $s$ then $t$, which gives |\ x
 -> s x (t x)| which precisely reflects that we want $s$ applied to
 $z$, and that they each might depend upon $t$.
