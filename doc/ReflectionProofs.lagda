@@ -3740,11 +3740,12 @@ used to would only be syntactic sugar for a new value in this canonical data typ
 would not even be necessary, since, like in Lisp, the data and functions are expressed in the same object language. Data type generic programming becomes 
 normal programming. In work by Chapman, Dagand, McBride and Morris this idea is explored, hinting at implementation in
 Epigram 2 \cite{Chapman:2010:GAL:1863543.1863547}. This
-idea has not been investigated in Agda, but some of the necessary components are available, and a few shortcomings as well as
-ideas for future work are outlined in Sec.~\ref{sec:ornamentation}.
+idea has not been investigated in Agda, but some of the necessary components are available, which was another factor prompting
+the explorations detailed in this chapter.
 
-\section{Embedding-projection Pairs}\label{sec:ep-pairs}
+\section{Limitations}\label{sec:ep-pairs}
 
+This section details what the limitations of the current reflection API are. 
 Let us start with an example. Imagine a user has the following definition for a data type |Col|.
 
 \begin{shade}
@@ -3852,22 +3853,15 @@ possible, but the expectation is that this will require some changes to the refl
 a future version of Agda will support this.
 
 
-
-
-\section{Ornamentation, Levitation and Generic Representation}\label{sec:ornamentation}
-
-
-This formed the inspiration to try to define some similar type-of-types in Agda, and use the 
-\todo{crap}
+The other motivation for looking at Agda from a generic programming perspective was the data type of data types idea 
+mentioned earlier \cite{Chapman:2010:GAL:1863543.1863547}. 
+It would be rather exciting if we could use the
 reflection API to automatically convert data type definitions which already had been declared by
-the user, to values of this type-of-types. The expectation is that this should be possible, since one
-can relatively easily inspect the constructors of data types, and that the use of |unquote| should be limited,
+the user, to values of this type-of-types. The expectation is that this should be possible, since we
+can easily inspect the constructors of data types, and that the use of |unquote| should be limited,
 since the type-of-types values are just Agda values. If one would like to have embedding and projection pairs, however,
-the same problem outlined in the previous section would arise: unquoting is not properly usable.
-
-
-
-
+the same problem outlined in the previous section would arise: unquoting is not properly usable. Because of this,
+no further research was done to ascertain whether this is, in fact, feasible.
 
 
 
