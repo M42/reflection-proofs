@@ -3195,7 +3195,7 @@ been inspired -- systems with varying power and scope.
 People sometimes jokingly say that the more advanced
 a given programming language becomes, the more it converges towards Lisp \cite{graham04}, and that
 the more complex some piece of software becomes, the higher the likelihood of discovering somewhere in
-the source a badly-defined, ad hoc implementation of a Lisp interpreter.
+the source a badly defined, ad hoc implementation of a Lisp interpreter.
 The fact is, though, that it is becoming increasingly common to generate pieces of code 
 from a general recipe, giving rise to possibly a more efficient specific implementation, 
 or at the very least not having to reinvent the wheel. Reflection is becoming more common, to
@@ -3237,12 +3237,18 @@ domain of generic programming
 inspiration to try and implement some of the techniques in a
 dependently-typed setting.
  
-Program transformations and their correctness (by various definitions) have long been a subject of research \cite{Partsch:1983:PTS:356914.356917},
-and given more advanced languages with more powerful generative programming techniques, this will likely prove a continuing trend.
+Program transformations and their correctness (by various definitions)
+have long been a subject of research
+\cite{Partsch:1983:PTS:356914.356917}, and given more advanced
+languages with more powerful generative programming techniques, this
+will likely prove a continuing trend.
  
-As far as the proof techniques used in the section on proof by reflection (Chapter~\ref{sec:proof-by-reflection}) is concerned,  
-Chlipala's work \cite{chlipala2011certified} proved an invaluable resource, both for inspiration and guidance. One motivating example
-for doing this in Agda was Wojciech Jedynak's ring solver \cite{ringsolver}, which was the first example of Agda's reflection
+As far as the proof techniques used in the section on proof by
+reflection (Chapter~\ref{sec:proof-by-reflection}) are concerned,
+Chlipala's work \cite{chlipala2011certified} proved an invaluable
+resource, both for inspiration and guidance. One motivating example
+for doing this in Agda was Wojciech Jedynak's ring solver
+\cite{ringsolver}, which was the first example of Agda's reflection
 API in use that came to our attention.
  
  
