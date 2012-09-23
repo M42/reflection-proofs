@@ -12,7 +12,7 @@
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% stuff only for draft versions
+%% stuff only for DRAFT versions
 
 %%%%% microtype with settings.
 %\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
@@ -21,7 +21,7 @@
 \usepackage{todonotes}
 \usepackage{draftwatermark}
 \SetWatermarkLightness{0.95}
-%% end draft-version stuff.
+%% end DRAFT-version stuff. TODO
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \usepackage{dirtree}
@@ -1519,7 +1519,12 @@ it is not possible to write something with type |Even 27|, or any other uneven
 number, since the parameter |even? n|  is equal to |⊥|,
  thus
 |tt| would not be accepted where it is in the |Even 28| example. This will
-produce a |⊤ !=< ⊥| type error at compile time.\todo{wouter's nicer error?}
+produce a |⊤ !=< ⊥| type error at compile time.
+Note that it is possible to generate a user-friendly error of sorts, by replacing the |⊥| constructor in |even?| with
+a type called @NotEven@, for example. Of course it should still be an empty type, but possibly parameterised with a natural to
+indicate which value is non-even. This makes the soundness proof a little less straightforward, but in return the
+type error generated if a non-even number is used becomes more informative. This enhancement is demonstrated in Fig.~\ref{fig:error}, in the Boolean
+tautologies example.
 
 Since the type |⊤| is a simple record type, Agda can infer the |tt|
 argument, as explained in Sec.~\ref{sec:implicit-unit}. This means we can turn the assumption |even? n| into an
@@ -1633,7 +1638,8 @@ the analogue of the |even?| function.
 We call this function |So|, the string parameter serving to give a clearer type error
 to the user, if possible.
 
-\begin{shade}
+
+\begin{shadedfigure}[H]
 \begin{code}
 data Error (e : String) : Set where
 
@@ -1644,7 +1650,8 @@ So   err      false    = Error err
 P    : Bool → Set
 P    = So "Argument expression does not evaluate to true."
 \end{code}
-\end{shade}
+\caption{Helper type |Error|, enabling clearer type errors.}\label{fig:error}
+\end{shadedfigure}
 
 
 Now that we have these helper functions, it is easy to define what it
@@ -2349,8 +2356,6 @@ advantage is then that the type checker will catch errors in whichever
 method tries to build an invalid piece of abstract syntax at compile time. This is preferable
 to it giving an obscure error pointing at some generated code, leaving
 the programmer to figure out how to solve the problem.
-\todo{note in the conclusion of this chapter that a disadvantage of this strongly-typed
-AST is that intermediary terms often pose a difficulty -- maybe mention the example of De Bruijn SKI with erased lambdas}
 
 In this chapter we will explore how one can leverage the power of
 dependent types to achieve more type safety when writing metaprograms.
@@ -3581,17 +3586,41 @@ on the way. The function |combsz| which can be seen in the |ski2wt| type signatu
 simply calculates the natural representing the size of the final expression in |WT'|. This
 is necessary because the value cannot be inferred.
 
+\paragraph{In closing}
 We have now defined a round-trip, automatic translation from concrete Agda lambda terms, to well-typed
 lambda terms in our |WT'| representation, to SKI combinators as another data structure but preserving the type
 and scope guarantees provided by |WT'|, back into concrete Agda terms, which are the semantic equivalent
 of the original terms.
 
-These developments can be found in the module |Metaprogramming.SKI|, and a few example 
-translated terms as well as a guide to how to use the provided code as a library, are to be found 
+By way of closing remarks, it is true to say that this chapter makes a
+persuasive argument to embrace the strong guarantees one can make using
+rich data types in a dependently typed language. Like many things in
+life, this advantage is something of a trade-off: the construction of
+a total, simply recursive algorithm which at the same time preserves
+types of terms \emph{at every step} can be quite challenging. For example,
+the SKI algorithm shown here is pieced together from various sources,
+and initially, it seemed as if using De Bruijn representation was
+going to make things very complicated. The reason for this was that
+some implementations \cite{dolio} simply remove all lambda
+abstractions, and when encountering a variable, use the index to
+determine how many |K|'s should be used to produce a Frankensteinian
+indexing term. This is unfavourable for the large terms it generates,
+but also because the return type of the |compile| algorithm is
+predictable, but very changeable.  In the case of the CPS
+transformation, the type of the algorithm was less of a stumbling
+block, but as we saw in this chapter, termination posed rather a
+problem. This is something we take for granted when using dependent
+types to prove strong properties about our algorithms: the safety we
+get comes at the price of having to think a lot harder about each
+function, return type, clause, etc.
+
+
+For those interested in looking at the full source in more detail, these developments can be found in the module |Metaprogramming.SKI|, and a few example 
+translated terms as well as a guide to how to use the provided code as a library, reside
 in |Metaprogramming.ExampleSKI|. 
 
 \newpage
-\section{Parameters to Modules}\label{sec:universe-parameters}
+\section{Afterword: Parameters to Modules}\label{sec:universe-parameters}
 
 As promised, we provide here a summary of the parameters to the modules |Datatypes|, |TypeCheck|, |SKI| and |CPS|, because 
 these are designed to work with a user-defined universe. Aside from the universe, though, the user is also required to 
