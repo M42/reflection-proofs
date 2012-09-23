@@ -1,3 +1,66 @@
+@article{sorensen1998lectures,
+  title={Lectures on the Curry-Howard isomorphism},
+  author={S{\o}rensen, M.H. and Urzyczyn, P.},
+  year={1998},
+  publisher={Citeseer}
+}
+@article{DBLP:journals/iandc/CoquandH88,
+  author    = {Thierry Coquand and
+               G{\'e}rard P. Huet},
+  title     = {The Calculus of Constructions},
+  journal   = {Inf. Comput.},
+  volume    = {76},
+  number    = {2/3},
+  year      = {1988},
+  pages     = {95-120},
+  ee        = {http://dx.doi.org/10.1016/0890-5401(88)90005-3},
+  bibsource = {DBLP, http://dblp.uni-trier.de}
+}
+
+
+@inproceedings{Martin-Lof:1985:CMC:3721.3731,
+ author = {Martin-L\"{o}f, P.},
+ title = {Constructive mathematics and computer programming},
+ booktitle = {Proc. of a discussion meeting of the Royal Society of London on Mathematical logic and programming languages},
+ year = {1985},
+ isbn = {0-13-561465-1},
+ location = {London, United Kingdom},
+ pages = {167--184},
+ numpages = {18},
+ url = {http://dl.acm.org/citation.cfm?id=3721.3731},
+ acmid = {3731},
+ publisher = {Prentice-Hall, Inc.},
+ address = {Upper Saddle River, NJ, USA},
+}
+
+@techreport{citeulike:2082722,
+    abstract = {{Classical phantom types are datatypes in which type constraints are expressed using type variables that do not appear in the datatype cases themselves. They can be used to embed typed languages into Haskell or ML. However, while such encodings guarantee that only well-formed data can be constructed, they do not permit type-safe deconstruction without additional tagging and run-time checks. We introduce first-class phantom types, which make such constraints explicit via type equations. Examples of first-class phantom types include typed type representations and typed higher-order abstract syntax trees. These types can be used to support typed generic functions, dynamic typing, and staged compilation in higher-order, statically typed languages such as Haskell or Standard ML. In our system, type constraints can be equations between type constructors as well as type functions of higher-order kinds. We prove type soundness and decidability for a Haskell-like language extended by first-class phantom types.}},
+    author = {Cheney, James and Hinze, Ralf},
+    citeulike-article-id = {2082722},
+    institution = {Cornell University},
+    keywords = {functional-programming, haskell, type-theory},
+    posted-at = {2008-02-26 22:17:16},
+    priority = {4},
+    title = {{First-Class Phantom Types}},
+    year = {2003}
+}
+
+@inproceedings{Damas:1982:PTF:582153.582176,
+ author = {Damas, Lu\'is and Milner, Robin},
+ title = {Principal type-schemes for functional programs},
+ booktitle = {Proceedings of the 9th ACM SIGPLAN-SIGACT symposium on Principles of programming languages},
+ series = {POPL '82},
+ year = {1982},
+ isbn = {0-89791-065-6},
+ location = {Albuquerque, New Mexico},
+ pages = {207--212},
+ numpages = {6},
+ url = {http://doi.acm.org/10.1145/582153.582176},
+ doi = {10.1145/582153.582176},
+ acmid = {582176},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+} 
 @book{johnson1975yacc,
   title={Yacc: Yet another compiler-compiler},
   author={Johnson, S.C. and {Bell Telephone Laboratories, inc}},
@@ -34,6 +97,13 @@
   year={2012},
   howpublished={online, \url{http://code.haskell.org/~dolio/agda-share/html/SKI.html#131}},
   note={[online; accessed  12-Sep-2012]}
+}
+@misc{thorsten-communication,
+  title={{[Agda mailing list] More powerful quoting and reflection?}},
+  author={Thorsten Altenkirch},
+  year={2012},
+  howpublished={mailing list communication, \url{https://lists.chalmers.se/pipermail/agda/2012/004127.html}},
+  note={[online; accessed  14-Sep-2012]}
 }
 @misc{lhs2tex,
   title={{LHS2\TeX , a preprocessor to generate \LaTeX\ code from literate Haskell sources}},
@@ -98,7 +168,7 @@
 @article{DBLP:journals/jfp/McBride03,
   author    = {Conor McBride},
   title     = {First-order unification by structural recursion},
-  journal   = {J. Funct. Program.},
+  journal   = {{Journal of Functional Programming}},
   volume    = {13},
   number    = {6},
   year      = {2003},
@@ -145,7 +215,7 @@
 @article{mcbride2010ornamental,
   title={Ornamental algebras, algebraic ornaments},
   author={McBride, C.},
-  journal={Journal of Functional Programming},
+  journal={{Journal of Functional Programming}},
   year={2010}
 }
 
@@ -165,7 +235,7 @@
 @article{van2010lightweight,
   title={A lightweight approach to datatype-generic rewriting},
   author={Van Noort, T. and Rodriguez Yakushev, A. and Holdermans, S. and Jeuring, J. and Heeren, B. and Magalh{\~a}es, J.P.},
-  journal={Journal of Functional Programming},
+  journal={{Journal of Functional Programming}},
   volume={20},
   number={3-4},
   pages={375--413},
@@ -294,14 +364,36 @@ note={[online, accessed 20-Aug-2010]}}
 	Year = {2004}}
 
 	
+@inproceedings{bove2009brief,
+  author    = {Ana Bove and
+               Peter Dybjer and
+               Ulf Norell},
+  title     = {{A brief overview of Agda -- a functional language with dependent types}},
+  booktitle = {TPHOLs},
+  year      = {2009},
+  pages     = {73-78},
+  ee        = {http://dx.doi.org/10.1007/978-3-642-03359-9_6},
+  crossref  = {DBLP:conf/tphol/2009},
+  bibsource = {DBLP, http://dblp.uni-trier.de}
+}
 
-@article{bove2009brief,
-	Author = {Bove, A. and Dybjer, P. and Norell, U.},
-	Journal = {Theorem Proving in Higher Order Logics},
-	Pages = {73--78},
-	Publisher = {Springer},
-	Title = {{A brief overview of Agda--a functional language with dependent types}},
-	Year = {2009}}
+@proceedings{DBLP:conf/tphol/2009,
+  editor    = {Stefan Berghofer and
+               Tobias Nipkow and
+               Christian Urban and
+               Makarius Wenzel},
+  title     = {Theorem Proving in Higher Order Logics, 22nd International
+               Conference, TPHOLs 2009, Munich, Germany, August 17-20,
+               2009. Proceedings},
+  booktitle = {TPHOLs},
+  publisher = {Springer},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {5674},
+  year      = {2009},
+  isbn      = {978-3-642-03358-2},
+  ee        = {http://dx.doi.org/10.1007/978-3-642-03359-9},
+  bibsource = {DBLP, http://dblp.uni-trier.de}
+}
 
 @article{bove2005modelling,
 	Author = {Bove, A. and Capretta, V.},
@@ -329,7 +421,7 @@ note={[online, accessed 20-Aug-2010]}}
 	}
 @article{Rodriguez:2008:CLG:1543134.1411301,
  author = {Rodriguez, Alexey and Jeuring, Johan and Jansson, Patrik and Gerdes, Alex and Kiselyov, Oleg and Oliveira, Bruno C. d. S.},
- title = {Comparing libraries for generic programming in haskell},
+ title = {{Comparing libraries for generic programming in Haskell}},
  journal = {SIGPLAN Not.},
  issue_date = {February 2009},
  volume = {44},
@@ -365,7 +457,7 @@ note={[online, accessed 20-Aug-2010]}}
 
 @inproceedings{Smith:1984:RSL:800017.800513,
  author = {Smith, Brian Cantwell},
- title = {Reflection and semantics in LISP},
+ title = {{Reflection and semantics in LISP}},
  booktitle = {Proceedings of the 11th ACM SIGACT-SIGPLAN symposium on Principles of programming languages},
  series = {POPL '84},
  year = {1984},
@@ -485,7 +577,7 @@ note={[online, accessed 20-Aug-2010]}}
 	Year = {2010}}
 @inproceedings{Norell:2009:DTP:1481861.1481862,
  author = {Norell, Ulf},
- title = {Dependently typed programming in Agda},
+ title = {{Dependently typed programming in Agda}},
  booktitle = {Proceedings of the 4th international workshop on Types in language design and implementation},
  series = {TLDI '09},
  year = {2009},

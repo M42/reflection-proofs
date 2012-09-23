@@ -39,11 +39,11 @@ RT = O ReturnType
 -- the type of a function after being CPS transformed.
 cpsType : U' → U'
 cpsType (O x)     = O x
-cpsType (t => t₁) = cpsType t => ((cpsType t₁ => RT) => RT)
+cpsType (t => t₁) = cpsType t => (cpsType t₁ => RT) => RT
 cpsType (Cont t)  = cpsType t => RT
 
 -- translate the _∈_ objects to an environment where all the types have been transformed.
-cpsvar : ∀ {t g} → t ∈ g → (cpsType t) ∈ (map cpsType g)
+cpsvar : ∀ {t g} → t ∈ g → cpsType t ∈ map cpsType g
 cpsvar   here    = here
 cpsvar (there v) = there (cpsvar v)
 
@@ -177,6 +177,6 @@ allTsAcc (_⟨_⟩ {Γ}{σ}{σ₁}{n}{m} wt wt₁) (acc x) = TApp (allTsAcc wt (
 -- well-foundedness of the packed term, which the standard library kindly provides
 -- us in Induction.WellFounded
 T : {σ : U'} {Γ : Ctx} {n m : ℕ} → (wt : WT Γ σ n)
-                                 → (cont : WT (map cpsType Γ) (cpsType σ => RT) m)
+                                 → WT (map cpsType Γ) (cpsType σ => RT) m
                                  → WT (map cpsType Γ) RT (sizeCPS n wt (allTsAcc wt (wf (to wt))) m)
 T wt cont = T' wt (allTsAcc wt (wf (to wt))) cont

@@ -1,0 +1,26 @@
+\usetikzlibrary{decorations.pathmorphing} 
+\def\quotefont{\fontfamily{bch}}
+\newcommand*{\openquote} {\tikz[remember picture,overlay,xshift=-15pt,yshift=-10pt]
+     \node (OQ) {\quotefont\fontsize{60}{60}\selectfont\color{gray}{``}};\kern0pt} 
+\newcommand*{\closequote} {\tikz[remember picture,overlay,xshift=15pt,yshift=-5pt] 
+      \node (CQ) {\quotefont\fontsize{60}{60}\selectfont\color{gray}{''}};} 
+\makeatletter
+\newenvironment{cquote}[1]%
+{\def\@quotenaam{#1}\begin{tikzpicture}
+\node [fill=gray!50
+            ,inner xsep=10mm
+            ,inner ysep=5mm
+            ,minimum height=2cm
+            ,minimum width=\textwidth
+            ,decorate
+            ,decoration={random steps,segment length=15pt,amplitude=4pt}
+     ]%
+\bgroup\begin{minipage}{.83\textwidth}
+\openquote} 
+{\hfill\closequote
+        \begin{center}---\@quotenaam---\end{center}
+        \end{minipage}\egroup;
+\end{tikzpicture}
+}
+\makeatother
+
