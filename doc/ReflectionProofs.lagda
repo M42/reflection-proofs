@@ -130,6 +130,13 @@ open import Data.List hiding (_∷ʳ_)
 \usepackage{hyperref}
 \usepackage{url}
 
+%% Give citations etc a nicer look
+\hypersetup{
+  colorlinks,
+  citecolor=DarkBlue,
+  linkcolor=black,
+  urlcolor=DarkBlue}
+  
 \author{Paul van der Walt \and Wouter Swierstra}
 \date{\today}
 \newcommand{\mytitle}{Reflection in Agda}
@@ -2948,7 +2955,10 @@ equivFact5      = refl
 
 This transformation can be done in a mechanical way, too. Also the type we
 expect the new function to have can be derived. This is discussed at length by
-Might \cite{might-cps}\todo{veel oudere referenties te vinden, misschien ook goed. griffin, danvy, heeft vast een goed overzicht}, whose implementation was also used as inspiration for this type-safe version.
+Might \cite{might-cps},
+ whose implementation was also used as inspiration for this type-safe version.
+Reynolds' overview \cite{Reynolds:1993:DC:198112.198114} provides a good source of information on the history of the CPS transformation, which turns out to have been
+ independently discovered in many fields. The CPS transformation of lambda terms was apparently first documented  for Lisp programs by Fischer \cite{Fischer:1972:LCS:800235.807077}.
 
 \paragraph{Pseudo code}
 We will start by generalising the previous example, and giving an informal definition of the CPS transformation. The code in Fig.~\ref{fig:pseudo-cps} is 
@@ -2997,7 +3007,7 @@ some |t => RT|, where the |cpsType| function will be called
 recursively on |t|. Without this tag, it is difficult to keep track of
 which side of the function arrow to transform. It might be possible to get rid
 of this constructor, but so far I have not been able to do this. It is also a minor detail
-that does not make the application of reflection more or less relevant.\todo{heeft stephanie's die ook?}
+that does not make the application of reflection more or less relevant. %% Heeft Weirich's cps ook Cont? antwoord: JA
 
 The types we get back from the |cpsType| function are to be interpreted as doing
 nothing in the base type case, since the CPS transformation of an atomic value will
