@@ -3202,9 +3202,13 @@ again, since by the construction of |TAcc| that would give us a data type isomor
 \paragraph{Well-foundedness} As it turns out, there is another trick
 up our sleeve: that of well-founded recursion. What we need to do is show that even though the recursion here is non
 structural, the terms do strictly decrease in size for some measure. Luckily we introduced a measure on |WT'| long ago, the last argument
-of type |ℕ|. Following Mertens' example \cite{mertens2010wellfoundedrecursion}\todo{ook paulson citeren? says wouter}
+of type |ℕ|. Following Mertens' example \cite{mertens2010wellfoundedrecursion}
 we can build a well-foundedness proof for |WT'| in terms of our measure, which we can then add as an extra argument to the
-|allTsAcc| function.  The first pitfall we encounter is that we want to define some |Rel A| which we will prove is well-founded
+|allTsAcc| function.  
+The idea of proving well-foundedness in this fashion was first presented in Martin-L\"of type theory by Paulson \cite{Paulson:1986:CRO:20636.20638}; the 
+implementations of the less-than ordering and inverse image relations in Agda's standard library, which we will use, are based on this work.
+
+The first pitfall we encounter is that we want to define some |Rel A| which we will prove is well-founded
 on our data structure. The problem is that |Rel| is of type |Set -> Set₁| (not exactly, but for the purposes of argument), but |WT'| is not
 of type |Set|, but |Ctx → Uu → ℕ → Set|. If we try to define something like |\ {Γ σ n} → Rel (WT' Γ σ n)|, things also become sticky rather
 quickly.
