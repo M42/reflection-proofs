@@ -3947,7 +3947,12 @@ normal programming.
 
  
 Program transformations and their correctness (by various definitions) have long been a subject of research \cite{Partsch:1983:PTS:356914.356917},
-and given more advanced languages with more powerful generative programming techniques, this will likely prove a continuing trend. As such,
+and given more advanced languages with more powerful generative programming techniques, this will likely prove a continuing trend. 
+For example, Guillemette and Monnier have researched various type-preserving transformations in Haskell, using GADTs \cite{DBLP:conf/haskell/GuillemetteM07,Guillemette200723}. This work has even led 
+to a type-preserving compiler for System~F in Haskell, where the GHC type checker mechanically verifies that each phase of the compiler 
+preserves types properly \cite{DBLP:conf/icfp/GuillemetteM08}.
+
+As such,
 the contribution made in this project of a type-safe and total translation of simply-typed lambda calculus to a language of SKI combinator calculus
 and the continuation-passing style transformation are interesting case studies, especially since it has been shown that these
 translations are usable in combination with a reflective language, making the process of translation of programs straightforward for 
@@ -3971,7 +3976,6 @@ The Ssreflect system \cite{gonthier:inria-00515548} for Coq  should also be ment
 refrain from making concrete statements, but the expectation is that the developments presented here should also be possible using Ssreflect.
  
  
-%todo related work: stephan monnier - type-safe .. in haskell
 %todo japanse thesis over CPS (related work)
 %TODO make it clear that auto Bove-Capretta is impossible, and that's a pity. because of no intro data
 %todo finalise chap 6 and 7 (discussion) 
