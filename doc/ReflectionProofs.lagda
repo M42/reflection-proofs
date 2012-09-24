@@ -17,7 +17,6 @@
 %%%%% microtype with settings.
 %\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
 \newcommand{\microtypesetup}[1]{}
-
 \usepackage{todonotes}
 \usepackage{draftwatermark}
 \SetWatermarkLightness{0.95}
@@ -149,7 +148,6 @@ open import Data.List hiding (_∷ʳ_)
 
 
 \begin{document}
-%todo add citations to everything which seems like an unfounded statement.
 \setcounter{tocdepth}{1}
 
 %TODO make a fancy title page
@@ -2088,7 +2086,6 @@ term2boolexpr n unknown ()
 \end{code}
 }
 
-%TODO: make sure there are no overfull hboxes!
 The conversion between a |Term| and |BoolExpr| is achieved using the function \mbox{|concrete2abstract|}.
 \begin{shade}
 \begin{code}
@@ -2344,7 +2341,6 @@ automation of tasks otherwise requiring
     program''}.} code, such as 
 embedding-projection function pairs for generic programming. For example, this is demonstrated 
 by Norell and Jansson \cite{norell2004prototyping}.
-%TODO never use \cite{} as a part of speech.
 
 
 Clearly, the technique is a very useful one, but it does have a conspicuous cumbersomeness
@@ -3852,6 +3848,14 @@ user ask for the data type isomorphic to theirs, then write down the type signat
 |unquote| at compile time problem. Unfortunately, we would still run into the same problem later on, if we
 wanted to make a projection function.
 
+Another problem is that the fact that |quote| and cohorts are implemented as keywords,  causing a problem with
+abstraction in general, because something like |map quoteTerm| is impossible. Such a feature would make the reflection 
+system rather more powerful, since  currently the reflection system is only two-stage \cite{sheard-staged-programming}. 
+We have programs and metaprograms, but no way of writing metaprograms resulting in metaprograms. This would require being able 
+to quote the quoting keywords. Maybe the |Term| structure should be expanded with another constructor, |keyword|, although
+ a cleaner solution can probably be devised.
+
+
 Probably all these minor issues could be worked out so that automatic generic programming becomes
 possible, but the expectation is that this will require some changes to the reflection API. Possibly
 a future version of Agda will support this.
@@ -3967,7 +3971,6 @@ The Ssreflect system \cite{gonthier:inria-00515548} for Coq  should also be ment
 refrain from making concrete statements, but the expectation is that the developments presented here should also be possible using Ssreflect.
  
  
-%TODO example where keywordness of unquote breaks abstraction, e.g. map unquote ...
 %todo related work: stephan monnier - type-safe .. in haskell
 %todo japanse thesis over CPS (related work)
 %TODO make it clear that auto Bove-Capretta is impossible, and that's a pity. because of no intro data
