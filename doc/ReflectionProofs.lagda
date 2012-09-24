@@ -3744,7 +3744,7 @@ the explorations detailed in this chapter.
 
 \section{Limitations}\label{sec:ep-pairs}
 
-This section details what the limitations of the current reflection API are. Inspired by the ideas for generic programming automatically mentioned
+This section details what the limitations of the current reflection API are. Inspired by the ideas for automatic generic programming mentioned
 in the introduction to this chapter, we will try and see how far we get before running into trouble.
 Let us start with an example. Imagine a user has the following definition for a data type |Col|.
 
