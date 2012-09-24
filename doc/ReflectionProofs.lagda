@@ -17,7 +17,7 @@
 %%%%% microtype with settings.
 %\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
 \newcommand{\microtypesetup}[1]{}
-\usepackage{todonotes}
+%\usepackage{todonotes}
 \usepackage{draftwatermark}
 \SetWatermarkLightness{0.95}
 %% end DRAFT-version stuff. TODO
@@ -3950,7 +3950,8 @@ Program transformations and their correctness (by various definitions) have long
 and given more advanced languages with more powerful generative programming techniques, this will likely prove a continuing trend. 
 For example, Guillemette and Monnier have researched various type-preserving transformations in Haskell, using GADTs \cite{DBLP:conf/haskell/GuillemetteM07,Guillemette200723}. This work has even led 
 to a type-preserving compiler for System~F in Haskell, where the GHC type checker mechanically verifies that each phase of the compiler 
-preserves types properly \cite{DBLP:conf/icfp/GuillemetteM08}.
+preserves types properly \cite{DBLP:conf/icfp/GuillemetteM08}. Type preserving CPS transformations have also been studied, for example in Watanabe's
+thesis \cite{watanabe}. It presents, among other things, a type preserving CPS transformation of De Bruijn-style lambda calculus, implemented in Coq.
 
 As such,
 the contribution made in this project of a type-safe and total translation of simply-typed lambda calculus to a language of SKI combinator calculus
@@ -3976,7 +3977,6 @@ The Ssreflect system \cite{gonthier:inria-00515548} for Coq  should also be ment
 refrain from making concrete statements, but the expectation is that the developments presented here should also be possible using Ssreflect.
  
  
-%todo japanse thesis over CPS (related work)
 %TODO make it clear that auto Bove-Capretta is impossible, and that's a pity. because of no intro data
 %todo finalise chap 6 and 7 (discussion) 
  
@@ -4043,11 +4043,11 @@ advice, and his generally pleasant way of doing things. Marleen bravely
 proofread this work, gave much-needed moral support, much-appreciated longsuffering. Tim deserves
 ample thanks for noticing overworkedness and nipping it in the bud, taking
 me on an epic hike through the forest.  Justin did his bit by
-convincing me to go hitchhiking, which actually was surprisingly
+convincing me to go hitchhiking, which was surprisingly
 inspiring~-- a portion of this thesis was eventually
-written in a foreign city.  The Friday Pie Day club and its members are of course
+written in a foreign city.  The Friday Pie Day group is of course
 also worthy of mention, if only because of the added motivation I felt
-near the end of my research period to catch up on all the wasted time
+near the end of my project to catch up on all the wasted time
 spent drinking coffee and consuming calorific treats.
 
 The rest of you know who you are; tolerating an atypically stressed-out me. Thanks.
