@@ -2112,7 +2112,7 @@ the function in the referenced figure is called |term2boolexpr|; this is because
 and the telescope quantifying over  the variables before doing the conversion, since these elements are unnecessary in the |BoolExpr| representation. 
 This can be seen as a helper function to |concrete2abstract| where the ``interesting''  work happens.
 The functions in the type signature, |isBoolExprQ|
-and |isSoExprQ|, simply traverse the |Term| to see if it fulfills the requirements of
+and |isSoExprQ|, simply traverse the |Term| to see if it fulfils the requirements of
 being a Boolean expression preceded by a series of universally quantified Boolean variables, enclosed in a
 call to |P|.
 
@@ -2335,7 +2335,7 @@ recently in Haskell, using the Template Haskell compiler
 extension\cite{template-haskell}. It has enabled much
 automation of tasks otherwise requiring
 \emph{boilerplate}\footnote{According to the Oxford English
-  Dictionary, boilerplate is defined as \emph{``standardized pieces of
+  Dictionary, boilerplate is defined as \emph{``standardised pieces of
     text for use as clauses in contracts or as part of a computer
     program''}.} code, such as 
 embedding-projection function pairs for generic programming. For example, this is demonstrated 
@@ -2384,7 +2384,7 @@ the term $t$ has type $\sigma$.
 
 The typing rules are written using horizontal bars. Above the bar are
 the assumptions, and below the bar are conclusions we may draw if
-those assumptions hold.  The validity of a typing judgment is shown by
+those assumptions hold.  The validity of a typing judgement is shown by
 providing a typing derivation, constructed using the typing rules.
 See Fig.~\ref{fig:stlc-rules} for the typing rules.
 
@@ -2468,7 +2468,7 @@ For the running example in this section, we will look at
 simply-typed lambda calculus (STLC) with the usual type and scoping
 rules, as defined in Fig.~\ref{fig:stlc-data}.  All the modules that
 deal with lambda expressions (everything in the
-|Metaprogramming| namespace of the project) work on this |WT'| (which
+|Metaprogramming| name space of the project) work on this |WT'| (which
 stands for well-typed) data type. Notice how the constructors are basically
 a transliteration of the STLC typing rules introduced in Fig.~\ref{fig:stlc-rules},
 save the addition of a size parameter.
@@ -2535,7 +2535,7 @@ is the user-defined universe by which all the library modules in
 |Metaprogramming| are parameterised. This would allow a user to
 instantiate the type checking module, |Metaprogramming.TypeCheck|,
 with a universe
-which has a representation of natural numbers, or booleans, or both. Finally
+which has a representation of natural numbers, or Booleans, or both. Finally
 there is the |Cont| constructor, which will be used and explained later, in Sec.~\ref{sec:cps}.
 In the following snippets of code we will present the other
 helper functions a user needs to define as we encounter them, summarising finally what is necessary and why in Sec.~\ref{sec:universe-parameters}.
@@ -2627,7 +2627,7 @@ data Raw : Set where
 We do include some typing information in |Raw|s, but it is
 unverified. We require lambda terms and literals to be annotated
 with their type, because otherwise the type checker
-would become a type inferencer. While this is possible (Algorithm~W~\cite{Damas:1982:PTF:582153.582176} would suffice), it is a
+would become a type inferrer. While this is possible (Algorithm~W~\cite{Damas:1982:PTF:582153.582176} would suffice), it is a
 pain to implement in a language where only structural
 recursion is allowed by default. The difficulty is that the unification algorithm typically used with Algorithm~W makes
 use of general recursion. This is in fact a topic of research in its own right, and therefore outside the scope
@@ -2662,8 +2662,8 @@ The |Infer| view expresses that a term is either incorrectly typed
 using |bad|, which can be used on any term in |Raw|, or 
 well-typed, which is shown using the |ok| constructor. The constructor |ok| also
 requires the corresponding  witness
-in |WT'|; we have already agreed that if a term is
-representable in |WT'|, it must be both well-scoped and well-typed. Moreover, this correspondence is
+in |WT'|; we have already agreed that if a term can be
+represented in |WT'|, it must be both well-scoped and well-typed. Moreover, this correspondence is
 enforced by defining the view on |erase t|, the erasure of |t|, as opposed to an arbitrary |Raw| term. 
 
 The |infer| algorithm, which provides the |Infer| view and therefore generates
@@ -2678,14 +2678,14 @@ infer Γ (Lit ty x) = ok 1 (O ty) (Lit {x = ty} x)
 
 Of course, a literal on its own is always well-typed, and corresponds to a |WT'| with whatever type the literal has.
 A variable is similarly easy to type check, except that it should not point outside the context, that is, it should
-have a De Bruijn index smaller than or equal to its depth. Here we do a lookup of the variable and return whatever type the
-context says it has, or, if it is out-of-scope, we return |bad|.
+have a De Bruijn index smaller than or equal to its depth. Here we look up the variable and return whatever type the
+context says it has, or, if it is out-of-scope, |bad|.
 
 \begin{shade}
 \begin{code}
 infer Γ (Var x)                    with Γ ! x
-infer Γ (Var .(index p))           | inside σ p = ok 1 σ (Var p)
-infer Γ (Var .(length Γ + m))      | outside m = bad
+infer Γ (Var .(index p))           | inside σ p    = ok 1 σ (Var p)
+infer Γ (Var .(length Γ + m))      | outside m     = bad
 \end{code}
 \end{shade}
 
@@ -3173,7 +3173,7 @@ the proofs that |TAcc| can be constructed from the similar proofs on the argumen
 an index of type |WT'|, which is a term we promise the |Tt| algorithm will terminate on.
 
 We can now add this |TAcc| argument to all the calls in |Tt|, and Agda is now convinced the function terminates. All that is left is
-to prove that for all elements of |wt ∈ WT'| we can construct a |TAcc wt|. The proof is as obvious as the data type was: we simply recurse
+to prove that for all elements of |wt ∈ WT'| we can construct a |TAcc wt|. The proof is as obvious as the data type was: we simply do recursion
 on the arguments of the constructors.
 
 \begin{shade}
@@ -3273,7 +3273,7 @@ module <-on-sz-Well-founded where
 \end{spec}
 \end{shade}
 
-Next we must show that recursing on smaller or equal arguments is also fine, and that shifting the De Bruijn indices does not change the
+Next we must show that recursion on smaller or equal arguments is also fine, and that shifting the De Bruijn indices does not change the
 ordering of two |WTpack| elements (|shift-pack-size|). Note that |weak| is the generalised weakening function, which |shift1| uses to add one type variable on top of the context stack
 and increase the De Bruijn indices by 1.
 
@@ -3379,7 +3379,7 @@ i     = \ x                   -> x
 Note that each of these 3 combinators are equivalent to closed lambda terms, but they form the basic building blocks 
 of the SKI language. Basically, the SKI language is the same as the simply-typed lambda calculus, except without
 the possibility of introducing new lambda abstractions, just the option to use one of these 3 predefined combinators.
-The fact that any closed lambda term can be translated to SKI may seem counterintuitive, but that is all the more
+The fact that any closed lambda term can be translated to SKI may seem counter intuitive, but that is all the more
 reason to go ahead and, in the style of programs-as-proofs, prove that one can always translate a closed lambda term into
 SKI by defining this translation on the type |Well-typed-closed|. Because Agda is a sound logical framework,
 we will have the guarantee that our function is total, and that the types of the terms are precisely
@@ -3573,7 +3573,7 @@ produce an SKI term. The function |unitTest1| displays what the end result is.
 The resulting terms are sometimes rather unwieldy, as is illustrated
 in the examples provided in the module |Metaprogramming.ExampleSKI|, but this is to be expected,
 since the SKI calculus is obviously not very concise. If more readable terms were desired,
- one option to consider is  adding extra combinators, called supercombinators, such as, for example,
+ one option to consider is  adding extra combinators, called super-combinators, such as
 the |o| combinator, defined as follows \cite{dolio}.
 
 \begin{shade}
@@ -3583,17 +3583,17 @@ o = S ⟨ K ⟨ S ⟩ ⟩ ⟨ K ⟩
 \end{code}
 \end{shade}
 
-Notice that the |o| supercombinator is really just function composition, as can be
+Notice that the |o| super-combinator is really just function composition, as can be
 seen by the type signature. We take a function |f| and a function |g| as the first two arguments,
 then a value of type |A|, and then apply to this value |f| \emph{after} |g|, precisely the definition of
 function composition, usually denoted |_∘_|.
 
-Introducing this, and other, supercombinators, could considerably
+Introducing such super-combinators could considerably
 shorten the representations of SKI terms, but being outside the scope
 of this example, we will stick with only the |S|, |K| and |I|
 previously defined. It is, however, interesting to note that because 
 all lambda expressions can be translated to expressions
-using only |S|, |K| and |I|, these new supercombinators would simply be aliases
+using only |S|, |K| and |I|, these new super-combinators would simply be aliases
 for various combinations of the already-defined combinators.
 
 
@@ -3913,7 +3913,7 @@ This would seem to be the inspiration for the current reflection system recently
 in Agda, although we shall see that it is lacking in a number of fundamental capabilities.
 If we look at the taxonomy of reflective systems in programming language technology written up 
 by Sheard \cite{sheard-staged-programming}
-we see that we can make a few rough judgments about the metaprogramming facilities Agda currently 
+we see that we can make a few rough judgements about the metaprogramming facilities Agda currently 
 supports\footnote{Of course, having been implemented during a single  Agda Implementors' Meeting \cite{thorsten-communication}, the current implementation is more a proof-of-concept, and is still far from
 being considered finished, so it would be unfair to judge the current implementation all too harshly. In
 fact, I hope that this work might motivate the Agda developers to include some more features, to
@@ -3923,14 +3923,14 @@ make the system truly useful. }.
 \item Agda's current reflection API leans more towards analysis than generation,
 \item it supports encoding of terms in an algebraic data type (as opposed to a string, for example),
 \item it involves manual staging annotations (by using keywords such as |quote| and |unquote|),
-\item it is neither strictly static nor runtime, but compile time. It behaves much like a 
+\item it is neither strictly static nor run time, but compile time. It behaves much like a 
   static system (one which produces an object program, as does for example YAcc \cite{johnson1975yacc})
   would, but does not produce intermediate code which might be modified later by the user.
   Note that this fact is essential for Agda to remain a sound logical framework. 
 \item It is homogeneous, because a representation of the object language lives inside the metalanguage (as a native
   data type), 
 \item it is only two-stage: we cannot as yet produce an object program which is itself a metaprogram. This is
-  because we rely on builtin keywords such as |quote|, which cannot themselves be represented.
+  because we rely on built in keywords such as |quote|, which cannot themselves be represented.
 \end{itemize}
  
  
@@ -4041,7 +4041,7 @@ Obviously, a formidable number of people deserve thanks here, but I will refrain
 from mentioning everyone. Foremost, I would like to thank Wouter, my supervisor, for
 his infinite patience in explaining things, giving sound and complete
 advice, and his generally pleasant way of doing things. Marleen bravely
-proofread this work, gave much-needed moral support, much-appreciated longsuffering. Tim deserves
+proofread this work, gave much-needed moral support, much-appreciated long-suffering. Tim deserves
 ample thanks for noticing overworkedness and nipping it in the bud, taking
 me on an epic hike through the forest.  Justin did his bit by
 convincing me to go hitchhiking, which was surprisingly
