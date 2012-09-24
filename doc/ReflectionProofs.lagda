@@ -15,8 +15,8 @@
 %% stuff only for DRAFT versions
 
 %%%%% microtype with settings.
-%\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
-\newcommand{\microtypesetup}[1]{}
+\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
+%\newcommand{\microtypesetup}[1]{}
 %\usepackage{todonotes}
 \usepackage{draftwatermark}
 \SetWatermarkLightness{0.95}
@@ -756,8 +756,6 @@ before, this is the only valid constructor for the type |_×_|.}
 The function |foo| expects a value of type |⊤ × ⊤|, and returns a
 natural number.  We know, however, that | _×_ | is a record and only
 has the constructor | _,_ : A → B → A × B|. 
-%This pair type is a
-%special case of the dependent pair |Σ (A : Set) (B : A → Set) : Set|.
 Therefore, the only possible value is one using the constructor
 |_,_|. If we next look at the values for |A| and |B| here, namely the
 left and right-hand arguments' types, we see that in both cases they
@@ -2102,10 +2100,10 @@ concrete2abstract    :     (t     : Term)        → (n : ℕ)
 concrete2abstract t n {pf} {pf2} = term2boolexpr n (stripSo (stripPi t) pf) pf2
 \end{code}
 \end{shade}}\!\!
-Note that not every |Term| can be converted to a |BoolExpr|. The 
-|concrete2abstract| function requires additional assumptions about the
-|Term|: it should only contain functions such as |_∧_| or |_∨_|, and
-bound variables. This is ensured by the assumptions
+Note that not every |Term| can be converted to a |BoolExpr|. Looking at the type signature of the 
+|concrete2abstract| function, we see that it requires additional assumptions about the
+|Term|: it may only contain functions such as |_∧_| or |_∨_|, and
+bound variables. This is ensured by the predicates
 |isBoolExprQ| and friends.
 
 The |concrete2abstract| function is rather verbose, and is mostly omitted.
@@ -3723,22 +3721,22 @@ first described by Sheard and Peyton~Jones \cite{template-haskell}. It
 allows compile time metaprogramming, not unlike Agda's recent
 reflection API. One of the many useful applications of Template
 Haskell has been the automatic generation of embedding-projection
-function pairs for generic programming, saving a certain amount of
+function pairs for generic programming, saving on
 boilerplate code whenever a programmer wants to lift a new data
 structure to some generic universe
 \cite{DBLP:conf/mpc/HoldermansJLR06}.
 Unfortunately, as we will see in Sec.~\ref{sec:ep-pairs}, the reflection API in Agda is not yet
-powerful enough, in a number of ways, to be able to provide similar tools.
+powerful enough, in a number of ways, to be able to accomplish similar feats.
 
-Another source of inspiration for an application of the reflection API
+Another source of inspiration 
 comes from Epigram, and McBride's idea of ornamentation of data structures \cite{mcbride2010ornamental}.
 This idea, which is to be implemented in a future version of Epigram, can
 be summarised as arguing that data type definitions are something one does not want
 to allow in a language, since they seem to drop out of the sky \cite{DBLP:conf/icfp/McBride10}, and that actually,
 data type definitions should be no different from other value definitions. Ideally, there would only be 
-one canonical data type definition, which expresses all possible inductive data types, and the |data| keyword we are
-used to would only be syntactic sugar for a new value in this canonical data type. This way, reflection
-would not even be necessary, since, like in Lisp, the data and functions are expressed in the same object language. Data type generic programming becomes 
+one canonical data type definition, that can express all possible inductive data types;     the |data| keyword we are
+used to would only be syntactic sugar for introducing a new value in this canonical data type. This way, reflection
+would not even be necessary, since, like in Lisp, data and functions are expressed in the same object language. Data type generic programming becomes 
 normal programming. In work by Chapman, Dagand, McBride and Morris this idea is explored, hinting at implementation in
 Epigram 2 \cite{Chapman:2010:GAL:1863543.1863547}. This
 idea has not been investigated in Agda, but some of the necessary components are available, which was another factor prompting
@@ -3746,7 +3744,8 @@ the explorations detailed in this chapter.
 
 \section{Limitations}\label{sec:ep-pairs}
 
-This section details what the limitations of the current reflection API are. 
+This section details what the limitations of the current reflection API are. Inspired by the ideas for generic programming automatically mentioned
+in the introduction to this chapter, we will try and see how far we get before running into trouble.
 Let us start with an example. Imagine a user has the following definition for a data type |Col|.
 
 \begin{shade}
@@ -3756,14 +3755,14 @@ data Col : Set where
 \end{code}
 \end{shade}
 
-Obviously, this data type is isomorphic to |Fin 3|, the usual data type of bounded natural numbers
-indexed by an upper bound. It would be nice if we had a function which could, given the definition 
+Obviously, this data type is isomorphic to |Fin 3|, the usual data type of  natural numbers
+with an upper bound. It would be nice if we had a function which could, given the definition 
 of |Col|, or at least a pointer to that definition, return the data type (if any) which is isomorphic
 to the user's type. For now we will assume we have such a function~-- we will call it |isoDT|. It is definable using
-the current reflection machinery, but because it is not used eventually, we will omit it as being an exercise
-to the reader to fill in. The idea would be to look at the list of constructors, and try and categorise them. If they had no
+the current reflection machinery, but because we do not use it, we will omit it as being an exercise
+to the reader to fill in. The idea would be to look at the list of constructors, and try and categorise them. If they have no
 arguments, then the type is simply an enumeration, which can be modelled using |Fin|. If they do have arguments, a sum-of-products
-representation could be generated, depending on how many there are and what their type is. 
+representation could be generated, depending on how many there are and how many parameters they have.
 
 \begin{shade}
 \begin{spec}
@@ -3772,15 +3771,15 @@ isoDT = (HOLE 0)
 \end{spec}
 \end{shade}
 
-The next logical move would be to write some function, which, given the pointer to |Col|'s definition, and a 
-value in |Col|, automatically returns the corresponding value in the isomorphic data type. This should be 
+The next logical move would be to write a function, which, given the pointer to |Col|'s definition, and a 
+value in |Col|, automatically returns the corresponding value in the isomorphic data type. This is
 possible, since we have shown in Sec.~\ref{sec:inspecting-definitions} that we can get a list of the
 constructors of a data type. At the very least, a naive implementation of this function, which we will call |to|,
 could return the element in |Fin n| which corresponds to the index of the given constructor in the list of constructors.
-Note that this would only work for very trivial enumeration data types without parameters or indices. 
+Note that this would only work for trivial enumeration data types without parameters or indices. 
 However, even this simple idea quickly gets stuck. Let us try and write down a type signature for the |to| function.
 
-What we want is, given the |Name| of a type (which, in this case, is obtained with |quote Col|), a function
+What we want is, given the |Name| of a type obtained with |quote Col|, a function
 from that type to the generic type which is isomorphic to it.
 This means that |to (quote Col)| yields a function with type |Col -> Fin 3|, assuming that |Fin 3| is the isomorphic 
 generic counterpart to |Col|.
@@ -3806,7 +3805,7 @@ to : (n : Name) → (s : Set) → quote s ≡ def n [] → s → isoDT n
 \end{shade}
 
 Here we run into another problem: we are not allowed to call |quote s|, since at compile time $s$
-is not a defined name, but some parameter. A final attempt seems to work a little better, and at least
+is not a defined name, but some argument. A final attempt seems to work a little better, and at least
 compiles, although we are clutching at straws.
 
 \begin{shade}
@@ -3818,9 +3817,9 @@ testValue = to (quote Col) Col (HOLE 1)
 \end{spec}
 \end{shade}
 
-Here the problem is that |quoteTerm| indeed manages at compile time, but since, for the same reason
-that the last attempt failed, produces a useless term, namely |var 0 []|, or a reference to the nearest-bound
-variable, which results in a proof obligation |var 0 [] ≡ def Col []| in hole 1 which we of course cannot fulfil. 
+Here, the problem is that |quoteTerm| does manage at compile time, but produces a useless term, for the same reason
+that the last attempt failed. It returns |var 0 []|, in other words a reference to the nearest-bound
+variable, which results in a proof obligation |var 0 [] ≡ def Col []| in hole 1 which we obviously cannot fulfil. 
 
 A similar problem arises if we want to be able to ask for the list of constructors of some type 
 which is passed into a function as a parameter. 
@@ -3833,7 +3832,7 @@ cs type = ... quoteTerm type ...
 \end{spec}
 \end{shade}
 
-This gives the same problem as the previous snippet, where hole 1 was impossible, since the 
+This causes the same problem as the previous snippet, where hole 1 was impossible, since the 
 result from |quoteTerm| is simply |var n []|, for some $n$. What would be more useful, is if the
 result were a |Name|, such as |Col|, assuming that were the original parameter to |cs|. The call to |quote| would also not
 work here, because where it is used, |type| is not a defined identifier, but a variable, and |quote| can only
@@ -3850,8 +3849,8 @@ user ask for the data type isomorphic to theirs, then write down the type signat
 wanted to make a projection function.
 
 Another problem is that the fact that |quote| and cohorts are implemented as keywords,  causing a problem with
-abstraction in general, because something like |map quoteTerm| is impossible. Such a feature would make the reflection 
-system rather more powerful, since  currently the reflection system is only two-stage \cite{sheard-staged-programming}. 
+abstraction in general, because something like |map quoteTerm| is impossible. Enabling this would make the reflection 
+system quite a bit more powerful, since  currently the reflection system is only two-stage \cite{sheard-staged-programming}. 
 We have programs and metaprograms, but no way of writing metaprograms resulting in metaprograms. This would require being able 
 to quote the quoting keywords. Maybe the |Term| structure should be expanded with another constructor, |keyword|, although
  a cleaner solution can probably be devised.
@@ -3866,10 +3865,10 @@ The other motivation for looking at Agda from a generic programming perspective 
 mentioned earlier \cite{Chapman:2010:GAL:1863543.1863547}. 
 It would be rather exciting if we could use the
 reflection API to automatically convert data type definitions which already had been declared by
-the user, to values of this type-of-types. The expectation is that this should be possible, since we
+the user, to values of this data type of data types. The expectation is that this should be possible, since we
 can easily inspect the constructors of data types, and that the use of |unquote| should be limited,
 since the type-of-types values are just Agda values. If one would like to have embedding and projection pairs, however,
-the same problem outlined in the previous section would arise: unquoting is not properly usable. Because of this and a lack of time,
+the same problem outlined previously would arise: unquoting is not flexible enough. Because of this and a lack of time,
 no further research was done to ascertain whether this is, in fact, feasible.
 
 
@@ -3887,7 +3886,7 @@ related to generic programming.
  
  
 This project's main innovations are novel combinations of existing
-techniques; therefore quite a number of subjects are relevant to mention
+techniques; as a result, quite a number of subjects are relevant to mention
 here.
  
 As far as reflection in general goes, Demers and Malenfant \cite{demers1995reflection} wrote an informative historical overview on the topic.
@@ -3902,31 +3901,33 @@ a given programming language becomes, the more it converges towards Lisp \cite{g
 the more complex some piece of software becomes, the higher the likelihood of discovering somewhere in
 the source a badly defined, ad hoc implementation of a Lisp interpreter.
 The fact is, though, that it is becoming increasingly common to generate pieces of code 
-from a general recipe, giving rise to possibly a more efficient specific implementation, 
+from a general recipe, possibly giving rise to a more efficient specific implementation, 
 or at the very least not having to reinvent the wheel. Reflection is becoming more common, to
 various extents, in industry-standard languages such as Java, Objective-C, as well as theoretically more interesting
-languages, such as Haskell \cite{DBLP:journals/lisp/Stump09}.
+languages, such as Haskell \cite{DBLP:journals/lisp/Stump09}. Smalltalk, an early
+object-oriented programming language with advanced reflective features \cite{Goldberg:1983:SLI:273}, is the predecessor of Objective-C. As such, it
+is surprising that industry programming does not use more of these advanced reflective features which have already  been around for a 
+long time.
  
 This would seem to be the inspiration for the current reflection system recently introduced
 in Agda, although we shall see that it is lacking in a number of fundamental capabilities.
 If we look at the taxonomy of reflective systems in programming language technology written up 
 by Sheard \cite{sheard-staged-programming}
 we see that we can make a few rough judgments about the metaprogramming facilities Agda currently 
-supports\footnote{Of course, having been implemented during one AIM \cite{thorsten-communication}, the current implementation is more a proof-of-concept, and is still far from
+supports\footnote{Of course, having been implemented during a single  Agda Implementors' Meeting \cite{thorsten-communication}, the current implementation is more a proof-of-concept, and is still far from
 being considered finished, so it would be unfair to judge the current implementation all too harshly. In
-fact, the author hopes that this work might motivate the Agda developers to include some more features, to
+fact, I hope that this work might motivate the Agda developers to include some more features, to
 make the system truly useful. }.
  
-A few statements about Agda's reflection API in light of this taxonomy can be made:
 \begin{itemize}
-\item It leans more towards analysis than generation,
+\item Agda's current reflection API leans more towards analysis than generation,
 \item it supports encoding of terms in an algebraic data type (as opposed to a string, for example),
 \item it involves manual staging annotations (by using keywords such as |quote| and |unquote|),
-\item it is neither strictly static nor runtime, but compile time. This behaves much like a 
-  static system (one which compiles an object program, as does for example YAcc \cite{johnson1975yacc})
+\item it is neither strictly static nor runtime, but compile time. It behaves much like a 
+  static system (one which produces an object program, as does for example YAcc \cite{johnson1975yacc})
   would, but does not produce intermediate code which might be modified later by the user.
   Note that this fact is essential for Agda to remain a sound logical framework. 
-\item it is homogeneous, in that the object language lives inside the metalanguage (as a native
+\item It is homogeneous, because a representation of the object language lives inside the metalanguage (as a native
   data type), 
 \item it is only two-stage: we cannot as yet produce an object program which is itself a metaprogram. This is
   because we rely on builtin keywords such as |quote|, which cannot themselves be represented.
@@ -3938,10 +3939,10 @@ A few statements about Agda's reflection API in light of this taxonomy can be ma
 Other related work includes the large body of publications in the
 domain of data type generic programming
 \cite{Rodriguez:2008:CLG:1543134.1411301,mcbride2010ornamental}, where we found the
-inspiration to try and implement some of the techniques in a
+inspiration to try and implement prior techniques in a
 dependently-typed setting. Especially  work by McBride, et al involving ornamentation and levitation \cite{Chapman:2010:GAL:1863543.1863547} is
 intriguing, and something which would have been very interesting to do is to embed the data type of 
-data types in Agda and automatically convert data type declarations (which we can inspect) into values of
+data types in Agda and automatically convert existing |data| declarations (which we can inspect) into values of
 this type. This whole step would be unnecessary in a language which supports this \emph{data type of data types} a priori, 
 so that the conversion to and from this type would be unnecessary, and data type generic programming becomes
 normal programming.
@@ -3952,29 +3953,30 @@ and given more advanced languages with more powerful generative programming tech
 For example, Guillemette and Monnier have researched various type-preserving transformations in Haskell, using GADTs \cite{DBLP:conf/haskell/GuillemetteM07,Guillemette200723}. This work has even led 
 to a type-preserving compiler for System~F in Haskell, where the GHC type checker mechanically verifies that each phase of the compiler 
 preserves types properly \cite{DBLP:conf/icfp/GuillemetteM08}. Type preserving CPS transformations have also been studied, for example in Watanabe's
-thesis \cite{watanabe}. It presents, among other things, a type preserving CPS transformation of De Bruijn-style lambda calculus, implemented in Coq.
+thesis \cite{watanabe}. His work presents, among other things, a type preserving CPS transformation of De Bruijn-style lambda calculus, implemented in Coq.
 
 As such,
-the contribution made in this project of a type-safe and total translation of simply-typed lambda calculus to a language of SKI combinator calculus
-and the continuation-passing style transformation are interesting case studies, especially since it has been shown that these
+the contribution made in this project of a type-safe and total translation of simply-typed lambda calculus to a language of SKI combinator calculus,
+as well as the continuation-passing style transformation, are interesting case studies. 
+We have shown that these
 translations are usable in combination with a reflective language, making the process of translation of programs straightforward for 
-a user. Possible future work here includes extending the body of available translations using the well-typed model of lambda calculus here
+users. Possible future work includes extending the body of available translations using the well-typed model of lambda calculus presented here
 as an intermediary language (or at least as inspiration for some other, more specialised data structure). It might also serve as a motivation
 to make the |unquote| keyword type-aware. Currently, even if all the steps in a transformation are type-safe, at the last step the typing information
-is still thrown away, which seems like a pity. Probably it would be easy to make |unquote| aware of the expected type, thereby making the final
-link in the program transformation system type-safe.
+is still thrown away, which seems like a wasted opportunity. Probably it would be easy to make |unquote| aware of the expected type, thereby making the final
+link in the program transformation framework type-safe.
  
 As far as the proof techniques used in the section on proof by reflection (Chapter~\ref{sec:proof-by-reflection}) are concerned,  
 Chlipala's work \cite{chlipala2011certified} proved an invaluable resource, both for inspiration and guidance. One motivating example
-for doing this in Agda was Wojciech Jedynak's ring solver \cite{ringsolver}, which was the first example of Agda's reflection
+for doing this in Agda was Wojciech Jedynak's ring solver \cite{ringsolver}, which is the first example of Agda's reflection
 API in use that came to our attention. Compared to Jedynak's work, the proof generator presented here is more refined in terms of the interface
-presented to the user. The expectation is that approaches like these will become more commonplace for proving mundane components in 
-large proofs. The comparison to tactics in a language like Coq is a natural one, and we see both advantages and disadvantages of each system. Of course, 
-the tactic language in Coq is much more specialised and sophisticated when it comes to generating proofs, but it is a pity that in fact one has
+presented to the user. The expectation is that approaches like these will become more commonplace for proving mundane lemmas in 
+large proofs. The comparison to tactics in a language like Coq is a natural one, and we see both advantages and disadvantages of each style. Of course, 
+the tactic language in Coq is much more specialised and sophisticated when it comes to generating proofs, but it is a pity that there are
 two separate languages in one, instead of the way it is in Agda, where metaprograms are written directly in the object language. Also, the 
-fact that proof generation in Agda is explicit may be something some people appreciate. Further work (in the far future) might be to 
+fact that proof generation in Agda is explicit may be something some people appreciate. (Far) future work might be to 
 implement some sort of tactic framework for Agda, possibly with a DSL in the style of Coq's tactic language, around the reflection API.
-The Ssreflect system \cite{gonthier:inria-00515548} for Coq  should also be mentioned here; because of a lack of experience with Ssreflect, I 
+The Ssreflect extension for Coq \cite{gonthier:inria-00515548}  should also be mentioned here; because of a lack of experience with Ssreflect, I 
 refrain from making concrete statements, but the expectation is that the developments presented here should also be possible using Ssreflect.
  
  
@@ -4002,8 +4004,8 @@ do all that we would like with the API as it stands are best summarised as follo
 \item One cannot call |unquote| on non-constructor terms,
 i.e. |unquote (lam2term t)| where $t$ is some parameter or variable.
 \item It is impossible to introduce definitions, and therefore also
-impossible to define pattern-matching, since pattern-matching is only
-allowed in definitions. Pattern-matching lambda expressions in Agda
+impossible to define pattern matching, since pattern matching is only
+allowed in definitions. Pattern matching lambda expressions in Agda
 are simply syntactic sugar for local definitions. This precludes
 automating the Bove-Capretta method, and makes generic programming
 techniques all the more painful.
@@ -4065,17 +4067,15 @@ done.
 
 The compiler can be found at \url{https://darcs.denknerd.org/Agda}, and the modified standard library
 (modified to work with the updated data types in the compiler) can be found at \url{https://darcs.denknerd.org/agda-stdlib}.
-The instructions for installation of Agda from source, on the Agda wiki\cite{agda-wiki-installation}, can be followed
-unmodified.
-
-The modifications made are the following.
+The instructions for installation of Agda from source, on the Agda wiki \cite{agda-wiki-installation}, can be followed
+unmodified. The modifications made are the following.
 
 \begin{itemize}
 
 \item The output of the reflection system (in other words the |Term| data type)
 was modified to include type annotations on lambda abstractions. See Sec.~\ref{appendix:lambda-types}.
-\item For convenience of producing syntax-highlighted documents from Literate Agda,
-the compiler was extended to output a list of formatting rules based on the identifiers currently in scope. See Sec.~\ref{appendix:lhs-syntax}.
+\item The compiler was extended to output a list of formatting rules based on the identifiers currently in scope. This is useful for producing 
+                              syntax\--highlighted documents from Lit\-er\-ate Agda. See Sec.~\ref{appendix:lhs-syntax}.
 \end{itemize}
 
 
@@ -4085,11 +4085,11 @@ the compiler was extended to output a list of formatting rules based on the iden
 As mentioned in Sec.~\ref{sec:thebasics} it was necessary to slightly modify the
 representation of |Term|s that the reflection system returns to the user. What was
 needed was to annotate lambda abstractions with the type of their argument, since without
-this, type inferencing would be necessary. However possible, this would introduce unneeded complexity
+this, type inferencing would be necessary. Even though this is possible, it would introduce unneeded complexity
 and open the can of worms that is type unification. As it turns out, the termination of
-type unification algorithms is something rather nontrivial to prove, even if solutions exist, such as McBride's \cite{DBLP:journals/jfp/McBride03}.
+type unification algorithms is something rather nontrivial to prove, even if solutions such as McBride's \cite{DBLP:journals/jfp/McBride03} do exist.
 To avoid this, the |Term| data structure internal to the Agda compiler was augmented with an
-optional field of type |Type|, which allowed two advantages. Firstly, it became possible to
+optional field of type |Type|, which allowed two advantages. Firstly, it is now possible to
 distinguish between, for example, |ℕ| and |Bool| variables in the same expression. Secondly, it
 allowed us to suffice with only providing a type checker, as opposed to a full type inferencing
 function along with a type unifier, which poses a problem to the termination checker.
@@ -4097,13 +4097,14 @@ function along with a type unifier, which poses a problem to the termination che
 
 The changes required to the Agda compiler were rather small; the main thing that was needed was to extend
 the |Term| data type with a |Maybe Type| field to hold the extra parameter, and at most points where pattern 
-matching of generation of such terms was done, an extra field needed to be added. Only the |checkExpr| function, 
+matching on, or generation of such terms was done, an extra field needed to be added. Only the |checkExpr| function, 
 which does type checking when a concrete Agda lambda term is encountered, needed to be adjusted, so that
 the inferred type of the argument to the lambda would be attached to the abstract syntax tree.
 
 The actual code changes can be browsed on \url{https://darcs.denknerd.org}\footnote{The following patches
 are interesting as far as typed lambda expressions go: from \href{https://darcs.denknerd.org/darcsweb.cgi?r=Agda;a=commit;h=20120724095751-a1717-7409480a0680c0e9b220070a0265970cb403c87e.gz}{20120724095751-a1717-7409480a0680c0e9b220070a0265970cb403c87e.gz}
-to \href{https://darcs.denknerd.org/darcsweb.cgi?r=Agda;a=commit;h=20120802164956-a1717-213a839b6a17498d7fb0da67ea64c9603ca5409c.gz}{20120802164956-a1717-213a839b6a17498d7fb0da67ea64c9603ca5409c.gz}.}, but is not included here for brevity. One can also 
+to \href{https://darcs.denknerd.org/darcsweb.cgi?r=Agda;a=commit;h=20120802164956-a1717-213a839b6a17498d7fb0da67ea64c9603ca5409c.gz}{20120802164956-a1717-213a839b6a17498d7fb0da67ea64c9603ca5409c.gz}.}, 
+but are not included here for brevity. You can also 
 clone the complete modified compiler fork from there.
 
 
@@ -4111,11 +4112,11 @@ clone the complete modified compiler fork from there.
 \section{Automated Highlighting for Literate Agda}\label{appendix:lhs-syntax}
 
 
-Highlighting Agda source code is something which as yet only works after a module has been loaded,
+In the Emacs Agda mode, highlighting Agda source code currently only works after a module has been loaded,
 since then the r\^{o}le of various identifiers is known~-- be it constructor, function or type. Because
 of this, L\"oh's great LHS2\TeX\ system \cite{lhs2tex} does not support automatic syntax highlighting of Agda code, but
-the documentation suggests using the idiomatic \texttt{\%format x = "\textbackslash{}something\{x\}"} rules, which are
-basically \LaTeX\ preprocessing macros. 
+the documentation suggests using formatting rules, which are 
+basically \LaTeX\ preprocessing macros. For example, \texttt{\%format x = "\textbackslash{}something\{x\}"}.
 
 A small modification to the Agda compiler added an extension,
 available via the \lagda flag, which first loads
@@ -4124,7 +4125,7 @@ list of identifiers which are in scope, as a list of LHS2\TeX\ format
 rules. The output of such a command, invoked using the usual
 parameters plus the \lagda flag can be piped into
 some file and then included in the main \texttt{lagda} file, as is
-done for this paper. The user is expected to define a number of
+done for this report. The user is expected to define a number of
 \LaTeX\ commands, though, which specify how the various source code
 tokens are to be formatted. The required commands are:
 
@@ -4143,9 +4144,9 @@ of using this system are to be found in the code for this paper: the Makefile sp
 
 \chapter{Guide to Source Code}\label{chap:guide-to-source}
 
-This project is currently hosted at GitHub\footnote{\ghurl}. There, a 
-few files containing Agda code, the implementations of the presented algorithms, as well as the source for this
-paper, which is itself Literate Agda, can be found. Here a short summary is given of what each source file contains, see
+This project is currently hosted at GitHub\footnote{\ghurl}. There you can find a 
+few files containing the implementations of the presented algorithms, as well as the source for this
+paper, which is itself Literate Agda. Here a short summary is given of what each source file contains; see
 the directory tree presented in Fig.~\pref{fig:dir}.
 
 \begin{shadedfigure}[h]
@@ -4191,24 +4192,24 @@ file \texttt{ReflectionProofs.lagda} is the main \LaTeX\ file used to
 generate this paper.
 
 The \texttt{Metaprogramming} directory contains all the code relating
-to metaprogramming, namely the modules for CPS (\texttt{CPS.agda})
-transformation, SKI translation (\texttt{SKI.agda}), quoting and type
-checking (\texttt{Autoquote.agda} and \texttt{TypeCheck.agda},
-respectively), all in the appropriately-named files. Examples of use
+to metaprogramming, namely the modules for CPS 
+transformation (\texttt{CPS.agda}), SKI translation (\texttt{SKI.agda}), quoting (\texttt{Auto\-quote.agda}) and type
+checking (\texttt{Type\-Check\-.\-agda}),
+ all in the appropriately-named files. Examples of use
 for all the relevant modules are also provided, in the
 \texttt{Example...} modules. The \texttt{Util} folder contains a few
 helper functions. In \texttt{WTWellfounded.agda}, finally, the
-well-foundedness of the |WT'| data type, under the natural measure, is
+well-founded\-ness of the |WT'| data type, under the natural measure, is
 proven.
 
 The \texttt{Proofs} directory contains the proof by reflection
-experiments. \texttt{IsEven.agda} is where one can find the first
+experiments. The file \texttt{IsEven.agda} is where one can find the first
 example implementation of the even natural numbers proof generator,
 explained in Sec.~\ref{sec:evenness}. The file
-\texttt{TautologyProver.agda} implements the system described in
+\texttt{Tautology\-Prover.agda} implements the system described in
 Sec.~\ref{sec:Boolean-tautologies} for quoting and proving Boolean
-tautologies. The \texttt{Util} folder contains some file with
-uninteresting lemmas and alias definitions.
+tautologies. The \texttt{Util} folder contains some modules with
+boring lemmas and alias definitions.
 
 \newpage
 % \phantomsection \label{listoffig}
