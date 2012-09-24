@@ -32,8 +32,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Font definitions.
-% TODO re-enable Pagella!
-%\usepackage{tgpagella}                  %% looks a little like palatino
+\usepackage{tgpagella}                  %% looks a little like palatino
 \usepackage[T1]{fontenc}
 \renewcommand{\ttdefault}{lmtt}         %% Latin Modern for teletype
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2617,7 +2616,7 @@ less constrained data type to |WT'|, if possible. To this end, we introduce the 
 type |Raw|, given in Fig.~\ref{fig:raw},  which is a model of
 lambda terms with De Bruijn indices that should look a lot more
 familiar to Haskell users, since most models of lambda expressions in
-Haskell-land are untyped (although this is possible using GADTs). %todo cite?
+Haskell-land are untyped (although this is possible using GADTs, see Cheney and Hinze \cite{citeulike:2082722}).
 
 \begin{shadedfigure}[h]
 \begin{spec}
@@ -3362,10 +3361,11 @@ painful, we do now have a verified CPS transformation.
 Another interesting application of our new well-typed program transformation framework is the proof
 of a rather old result in computer science, revisited. This result says that any closed lambda term
 (meaning being typable under the empty environment) can be translated to a simple
-combinatorial logic, having only 3 primitives, and application \cite{curry1972combinatory}. The basis of that language is 
-the three combinators, |S|, |K| and |I|\footnote{In fact, even |I| can be expressed in terms of |S| and |K|: |I ≡ S ⟨ K ⟩ ⟨ x ⟩|, where the |x| may be an arbitrary combinator term, making 
-the minimal basis |S, K|. }. 
-The 3 combinators of the SKI calculus are presented in Fig.~\ref{fig:ski}.
+combinatorial logic, having only a few primitives, and application. One such basis exists, using
+three combinators\footnote{In fact, even |I| can be expressed in terms of |S| and |K|: |I ≡ S ⟨ K ⟩ ⟨ x ⟩|, where the |x| may be an arbitrary combinator term, making 
+the minimal basis |S, K|. This was noted by Sch\"onfinkel \cite{schonfinkel1924bausteine}.}, |{S, K, I}|, as proven by Curry \cite{curry1972combinatory}. 
+The 3 combinators of the SKI calculus are presented in Fig.~\ref{fig:ski}. As shown by Fokker \cite{DBLP:journals/fac/Fokker92}, it is possible to cut down this basis even further,
+resulting in a 1-element basis. Since this only makes the combinator terms more verbose, we will stick to the basis |{S, K, I}|.
 
 \begin{shadedfigure}[h]
 \begin{spec}
@@ -3439,6 +3439,10 @@ stands for a closed term in |Comb|, i.e. with an empty environment.
 
 Note also that we have as much type safety in |Comb| as we have in |WT'|, on account of the types of the arguments to the constructors
 needing to have sensible types.
+We could have chosen to use an untyped combinator language, and only do type checking 
+after the translation is complete. In fact, type inference for SKI calculus has already been
+researched by Hindley \cite{hindley1969}.
+
 \ignore{
 \begin{shade}
 \begin{code}
@@ -3963,15 +3967,12 @@ The Ssreflect system \cite{gonthier:inria-00515548} for Coq  should also be ment
 refrain from making concrete statements, but the expectation is that the developments presented here should also be possible using Ssreflect.
  
  
-%TODO type inference of SKI terms, Ruud's link. cite.
-%TODO Jeroen Fokker for completeness of SKI
 %TODO example where keywordness of unquote breaks abstraction, e.g. map unquote ...
 %todo related work: stephan monnier - type-safe .. in haskell
 %todo japanse thesis over CPS (related work)
 %TODO make it clear that auto Bove-Capretta is impossible, and that's a pity. because of no intro data
 %todo finalise chap 6 and 7 (discussion) 
  
-%todo right at the end, check if references to sections and figures are called Sec. and Fig. accordingly.
 
 Returning to our research question,  repeated here to jog the memory,  a summary of findings is made.
 
