@@ -146,3 +146,5 @@
 %format _≟-Name_ = "\defin{\_≟\mkern-5mu{}\text{-}Name\_}"
 %format appCons = "\defin{appCons}"
 %format M = "\defin{M}"
+%format n<1+m+n = "\defin{n\mkern-5mu{}<\mkern-5mu{}1\mkern-5mu{}+\mkern-5mu{}m\mkern-5mu{}+\mkern-5mu{}n}"
+%format n<1+n+m = "\defin{n\mkern-5mu{}<\mkern-5mu{}1\mkern-5mu{}+\mkern-5mu{}n\mkern-5mu{}+\mkern-5mu{}m}"
