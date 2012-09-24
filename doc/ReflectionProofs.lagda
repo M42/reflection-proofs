@@ -324,7 +324,7 @@ interpretation of a programming language as a logic framework is that types expr
 are proven by providing an implementation.  This correspondence is outlined further in Sec.~\ref{sec:plandpa}.
 
 In Agda, types of functions are allowed
-to \emph{depend upon} values -- the main difference between
+to \emph{depend upon} values~-- the main difference between
 a dependently typed programming language and a simply-typed language is
 that the divide between the world of values and that of types is torn down.
 
@@ -372,7 +372,7 @@ zero       +'   m  = m
 \end{shade}
 
 \paragraph{Mixfix} Notice how we write |_+_| for the name of the function, then later drop the underscores. This notation
-is referred to as mixfix -- in Agda we are allowed to define operators using 
+is referred to as mixfix~-- in Agda we are allowed to define operators using 
 underscores to denote where we expect arguments.
 Other than that, addition is fairly straightforward, using the inductive style
 of programming we will come to know and love. 
@@ -390,7 +390,7 @@ data List' (A : Set) : Set where
 \end{shade}
 
 The first thing to note is that we are allowed to use Unicode symbols
-for function and constructor names -- the combination of mixfix and Unicode make Agda
+for function and constructor names~-- the combination of mixfix and Unicode make Agda
 very liberal in what is accepted as an identifier.
 The next thing to note is that the |List| data type is parameterised by
 an argument, |A|, of type |Set|. Recall that  |Set| is the type of types, 
@@ -435,10 +435,10 @@ whatever list we pass.
 \paragraph{Totality} Much as we would like, this definition of |head₁| still will not be accepted by Agda. Another
 concept is that of \emph{totality}: a function is \emph{total} when it is both terminating
 and defined on all inputs. All functions are required to be total. Termination is checked by making sure that recursive calls are always 
-done on \emph{structurally smaller} arguments -- as is the case in the addition example.
+done on \emph{structurally smaller} arguments~-- as is the case in the addition example.
 Furthermore, a function is considered to be defined on all inputs when the patterns it matches on
 cover all the possibilities. What we mean by this is that an alternative should be given for each
-possible constructor -- something which is violated by the most recent |head₁| attempt: it is missing a
+possible constructor~-- something which is violated by the most recent |head₁| attempt: it is missing a
 case for the empty list. This is something Haskell does not care about; it simply smirks and throws an exception if we try to normalise |head []|.
 
 If we have to define |head₂| for the empty list too, we will have to resort to a |Maybe| type. The definition of
@@ -456,7 +456,7 @@ head₂ (x ∷ xs)     = just x
 Of course, this |Maybe| is something of an annoyance;  it would be preferable to 
 guarantee that the empty list is not valid input to the |head₂| function. This
 is where a dependently typed language really comes into its own. We will now move on to the 
-\emph{de facto} example of a dependent type, the vector -- like a list, but with
+\emph{de facto} example of a dependent type, the vector~-- like a list, but with
 a fixed length.
 
 \begin{shade}
@@ -621,8 +621,8 @@ very similar to those found in Haskell, except that in contrast with Haskell, yo
 notation for data constructors. 
 
  Agda is, practically speaking, like
-Haskell with a type system on steroids\footnote{For example, the Agda type system does $\beta\text{\--}$reduction on terms --
-evaluation -- which is something seen as possible, but quite exotic, in Haskell-land.}. The discussion of how and why this 
+Haskell with a type system on steroids\footnote{For example, the Agda type system does $\beta\text{\--}$reduction on terms~--
+evaluation~-- which is something seen as possible, but quite exotic, in Haskell-land.}. The discussion of how and why this 
  is so is considered out of the scope of this 
 project, but suffice it to say that tearing down the distinction between values and types allows
 powerful new techniques, such as invariant-guaranteeing data types. We will see many examples of
@@ -655,7 +655,7 @@ except for one difference: the axiom $A = \neg \neg A$ is not present. Intuition
 logic is also referred to as constructive logic, since only when one provides a constructive 
 proof of a proposition, is it regarded as a theorem\footnote{In mathematical parlance, \emph{theorem} refers to a true and proven proposition, whereas \emph{nontheorem} refers to a 
 false proposition.}. For that reason,  \emph{reductio ad absurdum} does not yield 
-valid proofs -- only when a proof term that witnesses the proposition is provided, is it acceptable.
+valid proofs~-- only when a proof term that witnesses the proposition is provided, is it acceptable.
 
 By the \ch, propositions are types. A logical proposition, such as $a => b$ translates to
 a type |a -> b|. Now, $a => b$ is a theorem if and only if the type |a -> b| is inhabited.  One of the most intuitive
@@ -699,7 +699,7 @@ falsity = falsity
 
 This is why the termination criterion is that at least one of the arguments to the 
 recursive call be \emph{structurally smaller}. Compare the addition of naturals example where |suc n| is pattern matched, and |n| is passed
-as a recursive argument -- |n| is structurally smaller than |suc n|.
+as a recursive argument~-- |n| is structurally smaller than |suc n|.
 
 \paragraph{Covering} Being defined on all possible inputs is also an aspect of totality. If this requirement were 
 dropped, a number of desirable properties for a logic would not hold any longer. The most obvious example is that
@@ -711,7 +711,7 @@ it to be possible for type checking to break as a result of an incomplete functi
 
 Finally,  Agda allows us to define functions and proofs side-by-side, allowing concurrent development of
 programs and proofs of properties about those programs hand-in-hand.  The Emacs mode, which is typically used
-to interactively develop proofs and programs, has a concept of \emph{holes} -- we are free to place a question mark 
+to interactively develop proofs and programs, has a concept of \emph{holes}~-- we are free to place a question mark 
 anywhere in the file, and compile. This question mark turns into something which looks a bit like |(HOLE n)|, which we call a goal. When the
 cursor is placed inside a goal, queries such as the  type of the value expected there or the objects in the environment at 
 that point are available. 
@@ -1170,8 +1170,8 @@ open import Metaprogramming.Autoquote hiding (convertManages ; doConvert) renami
 If, each time we wanted to quote, we had to write a huge function, with many pattern matching cases and nested |with| statements to handle different 
 shapes of ASTs, we would quickly become discouraged. This nearly happened while doing this project, which is why
 |Autoquote| was conceived. Quoting some expression grammar is a mundane task we are frequently faced with if we 
-are foolhardy enough to use reflection. The (partial) solution to this problem -- something which at least mitigates 
-the agony -- is presented in this section.
+are foolhardy enough to use reflection. The (partial) solution to this problem~-- something which at least mitigates 
+the agony~-- is presented in this section.
 
 Imagine we have some AST, for example |Expr|, in Fig.~\ref{fig:exprdata}.
 This is a rather simple inductive data structure representing terms which can contain Peano style natural
@@ -1664,7 +1664,7 @@ means to be a tautology. We quantify over a few Boolean variables, and
 wrap the formula in our |P| decision function. If the resulting type is
 inhabited, the argument to |P| is a tautology, i.e., for each
 assignment of the free variables the entire equation still evaluates
-to |true|. An example encoding of such a theorem is Fig.~\ref{fig:exampletheorem} -- notice
+to |true|. An example encoding of such a theorem is Fig.~\ref{fig:exampletheorem}~-- notice
 how similar it looks to the version expressed in mathematical notation, in equation~\ref{eqn:tauto-example}.
 
 One might wonder why propositions are not encoded in the slightly more 
@@ -1733,7 +1733,7 @@ and the maximum number of bound variables in the proposition, respectively.
 
 This is wrong, since our interpretation function |⟦_⊢_⟧| requires that these $m$ and $n$ are equal.
 We cannot, however, make them equal in the type signature for |proofGoal|, since we are 
-recursively building up the environment with an accumulating parameter. Because of this, we introduce |Diff| -- see Fig.~\ref{fig:diff-datatype}.
+recursively building up the environment with an accumulating parameter. Because of this, we introduce |Diff|~-- see Fig.~\ref{fig:diff-datatype}.
 
 
 \begin{shadedfigure}[h]
@@ -1910,7 +1910,7 @@ The reason for this is
 that the |So| operator returns a type, namely either |⊤|, |⊥| or other record types, which can
 be passed around as an automatically-inferred implicit value (see Sec.~\ref{sec:implicit-unit} for a 
 detailed explanation about implicit inferred arguments), removing the need to put |refl| everywhere
-such a proof is needed -- a unit or pair type can be inferred if it exists\footnote{Compare the example
+such a proof is needed~-- a unit or pair type can be inferred if it exists\footnote{Compare the example
 implementation of a ring solver in Agda, which has |refl|s all over the place \cite{ringsolver}, which
 cannot be made implicit and thus omitted.}. Because of this, the
 recursive cases of |soundness| become a lot simpler: the interpretation
@@ -2636,7 +2636,7 @@ of this project \cite{DBLP:journals/jfp/McBride03}.
 
 We choose instead to use the relatively straightforward structurally recursive algorithm for type checking lambda terms
 presented in Norell's tutorial on Agda \cite{Norell:2009:DTP:1481861.1481862}. This algorithm was adapted from McBride's work in Epigram \cite{McBride:2004:EPP:2162138.2162141}.
-The function |infer| -- defined in the following paragraph, incrementally -- 
+The function |infer|~-- defined in the following paragraph, incrementally~-- 
 provides a view on |Raw| lambda terms showing whether they are
 well-typed or not. This view is aptly called |Infer|, and is defined
 in Fig.~\ref{fig:infer-datatype}.
@@ -3546,7 +3546,7 @@ the context, |_∈_|, but then an additional concept of uniqueness would have be
 De Bruijn representation provide for free. There also exist
 a few methods for directly translating from lambda terms to SKI combinators based only on De Bruijn variable
 identifiers \cite{dolio}, but apart from producing bloated SKI terms (since at least $n$ |K| combinators are introduced if
-the variable's identifier is $n$ -- a sort of $n$-ary constant function is built up), implementing this algorithm
+the variable's identifier is $n$~-- a sort of $n$-ary constant function is built up), implementing this algorithm
 in a well-typed setting is nearly impossible as a result of the fact that the intermediary terms returned by the 
 recursive calls when abstractions or variables are encountered have radically different (although predictable) types.
 These reasons lead to the belief that the algorithm presented here is the most elegant of the options explored.
@@ -3758,7 +3758,7 @@ data Col : Set where
 Obviously, this data type is isomorphic to |Fin 3|, the usual data type of bounded natural numbers
 indexed by an upper bound. It would be nice if we had a function which could, given the definition 
 of |Col|, or at least a pointer to that definition, return the data type (if any) which is isomorphic
-to the user's type. For now we will assume we have such a function -- we will call it |isoDT|. It is definable using
+to the user's type. For now we will assume we have such a function~-- we will call it |isoDT|. It is definable using
 the current reflection machinery, but because it is not used eventually, we will omit it as being an exercise
 to the reader to fill in. The idea would be to look at the list of constructors, and try and categorise them. If they had no
 arguments, then the type is simply an enumeration, which can be modelled using |Fin|. If they do have arguments, a sum-of-products
@@ -3893,7 +3893,7 @@ As far as reflection in general goes, Demers and Malenfant \cite{demers1995refle
 What we are referring to as reflection dates back to work by Brian Smith \cite{Smith:1984:RSL:800017.800513}
 and was initially presented in the Lisp family of languages in the 80s. Since then,
 many developments in the functional, logic as well as object-oriented programming worlds have 
-been inspired -- systems with varying power and scope.
+been inspired~-- systems with varying power and scope.
  
  
 People sometimes jokingly say that the more advanced
@@ -4040,7 +4040,7 @@ proofread this work, gave much-needed moral support, much-appreciated longsuffer
 ample thanks for noticing overworkedness and nipping it in the bud, taking
 me on an epic hike through the forest.  Justin did his bit by
 convincing me to go hitchhiking, which actually was surprisingly
-inspiring -- a portion of this thesis was eventually
+inspiring~-- a portion of this thesis was eventually
 written in a foreign city.  The Friday Pie Day club and its members are of course
 also worthy of mention, if only because of the added motivation I felt
 near the end of my research period to catch up on all the wasted time
@@ -4109,7 +4109,7 @@ clone the complete modified compiler fork from there.
 
 
 Highlighting Agda source code is something which as yet only works after a module has been loaded,
-since then the r\^{o}le of various identifiers is known -- be it constructor, function or type. Because
+since then the r\^{o}le of various identifiers is known~-- be it constructor, function or type. Because
 of this, L\"oh's great LHS2\TeX\ system \cite{lhs2tex} does not support automatic highlighting of Agda code, but
 the documentation suggests using the idiomatic \texttt{\%format x = "\textbackslash{}something\{x\}"} rules, which are
 basically \LaTeX\ preprocessing macros. 
