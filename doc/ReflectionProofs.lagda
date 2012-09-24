@@ -31,7 +31,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Font definitions.
-\usepackage{tgpagella}                  %% looks a little like palatino
+\usepackage{tgpagella}                  %% looks a little like palatino -- thanks Zapf!
 \usepackage[T1]{fontenc}
 \renewcommand{\ttdefault}{lmtt}         %% Latin Modern for teletype
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -490,7 +490,7 @@ head₃ (x ∷ xs) = x
 \end{code}
 \end{shade}
 
-We also see that only vectors with a value $n$ such that |succ n| is the length of the
+We also see that only vectors with a value |n| such that |succ n| is the length of the
 vector, are valid inputs. This way, we guarantee that empty vectors cannot be beheaded. Agda is also convinced
 that this function is total, so we are done: we have a safe |head| function.
 
@@ -718,7 +718,7 @@ that point are available.
 
 Admittedly, this section is by no means comprehensive as far as explaining the \ch goes.
 More information about how to use Agda as a proof assistant is available \cite{Norell:2009:DTP:1481861.1481862,coquand2006emacs}. For
-background reading on the \ch a reference should be made to S\o rensen et al \cite{sorensen1998lectures}.
+background reading on the \ch a reference should be made to S\o rensen \emph{et al.} \cite{sorensen1998lectures}.
 We will now look at some tricks which are peculiar to Agda; hopefully
 dealing with those now will make code snippets introduced later a little more comprehensible. 
 
@@ -747,7 +747,7 @@ bar = foo _
 \end{code}
         \caption[Illustrating the automatic inference of record type
 arguments.]{Illustrating the automatic inference of record type
-arguments. Note that it is possible to replace $u$ on the LHS of |foo| with
+arguments. Note that it is possible to replace |u| on the LHS of |foo| with
 the irrefutable pattern |u₁ , u₂|, since, as has been mentioned
 before, this is the only valid constructor for the type |_×_|.}
         \label{code:implicit-example}
@@ -887,7 +887,7 @@ the quoted lambda binds a variable with some type.
  The |el| constructor we see 
 represents the type of the argument to the lambda. The first argument to |el| represents the sort, if it is known.
 Furthermore
-the type of $x$ is Boolean, represented as |def (quote Bool) []|. This means
+the type of |x| is Boolean, represented as |def (quote Bool) []|. This means
 the |Bool| type (which is a definition, hence |def|) with no arguments.
 
 
@@ -916,7 +916,7 @@ exampleQuoteGoal = quoteGoal e in (HOLE 0)
 
 The |quoteGoal| keyword binds the variable |e| to the |Term|
 representing the type of the current goal. In this example, the value
-of $e$ in the hole will be |def ℕ []|, i.e., the |Term| representing
+of |e| in the hole will be |def ℕ []|, i.e., the |Term| representing
 the type |ℕ|.
 
 Another function that deals with types is the aptly-named |type| function. Given
@@ -1389,7 +1389,7 @@ good motivating example for using |Autoquote|, therefore a slightly
 more real-world example of |Autoquote| in use can be found in
 Sec.~\ref{sec:autoquote-example}. One might also use the ability of quoting 
 arithmetic equations shown here in combination with a monoid solver,
-such as the example in Norell et al \cite{bove2009brief}.
+such as the example in Norell \emph{et al.} \cite{bove2009brief}.
 
 Further examples of |Autoquote| functionality can be found in the module |Metaprogramming.ExampleAutoquote|.
 The module |Metaprogramming.Autoquote| contains 
@@ -1499,8 +1499,8 @@ right-hand side of the function definition. The assumption, |even?
 absurd pattern, \texttt{()}.
 
 Now that this has been done, if we need a proof that some arbitrary
-$n$ is even, we only need to call |soundnessEven|. Note that
-the value of $n$ is an implicit argument to |soundnessEven|. The only
+|n| is even, we only need to call |soundnessEven|. Note that
+the value of |n| is an implicit argument to |soundnessEven|. The only
 argument we need to provide to our |soundnessEven| lemma is a proof
 that |even? n| is inhabited. For any closed term, such as the numbers |28|
 or |8772|, this proof obligation reduces to 
@@ -1597,7 +1597,7 @@ There is nothing
 surprising about this definition; we use the type |Fin n| to ensure
 that variables (represented by |Atomic|) are always in scope. If we want to
 evaluate the expression, however, we will need some way to map variables to values.
-Enter |Env n|: it has fixed size $n$ since a |BoolExpr n| has $n$ free variables.
+Enter |Env n|: it has fixed size |n| since a |BoolExpr n| has $n$ free variables.
 
 \begin{shade}
 \begin{code}
@@ -1688,11 +1688,11 @@ to lift our decision function to arbitrary environments.
 
 
 
-The way we do this is the function |foralls|. This function represents the  analogue
+The way we do this is the function |foralls|, see Fig.~\ref{fig:forallsacc}. This function represents the  analogue
 of |even?| in this situation: it returns a type which is only inhabited if the argument Boolean
 expression is true under all variable assignments. This is done by generating a full binary tree
 of |⊤| or |⊥| types, depending on the result of |⟦_⊢_⟧| under each assignment.
-This corresponds precisely to $b$ being a tautology if and only if the tree is inhabited.
+This corresponds precisely to |b| being a tautology if and only if the tree is inhabited.
 
 The |Diff| argument is unfortunately needed to prove that |forallsAcc| will eventually produce a
 tree with depth equal to the number of free variables in an expression. 
@@ -2955,7 +2955,7 @@ Might \cite{might-cps},
 
 Reynolds' overview \cite{Reynolds:1993:DC:198112.198114} provides a good source of information on the history of the CPS transformation, which turns out to have been
  independently discovered in many fields. The CPS transformation of lambda terms was apparently first documented  for Lisp programs by Fischer \cite{Fischer:1972:LCS:800235.807077}. More references can be
-found in Danvy et al \cite{Danvy:2007:OCT:1317177.1317182}, who present work on one-pass CPS transformations.
+found in Danvy \emph{et al.} \cite{Danvy:2007:OCT:1317177.1317182}, who present work on one-pass CPS transformations.
 
 \paragraph{Pseudo code}
 We will start by generalising the previous example, and giving an informal definition of the CPS transformation. The code in Fig.~\ref{fig:pseudo-cps} is 
@@ -3940,7 +3940,7 @@ Other related work includes the large body of publications in the
 domain of data type generic programming
 \cite{Rodriguez:2008:CLG:1543134.1411301,mcbride2010ornamental}, where we found the
 inspiration to try and implement prior techniques in a
-dependently-typed setting. Especially  work by McBride, et al involving ornamentation and levitation \cite{Chapman:2010:GAL:1863543.1863547} is
+dependently-typed setting. Especially  work by McBride, \emph{et al.} involving ornamentation and levitation \cite{Chapman:2010:GAL:1863543.1863547} is
 intriguing, and something which would have been very interesting to do is to embed the data type of 
 data types in Agda and automatically convert existing |data| declarations (which we can inspect) into values of
 this type. This whole step would be unnecessary in a language which supports this \emph{data type of data types} a priori, 
@@ -4027,8 +4027,6 @@ niche applications.
  
  
  
-%todo acknowledgements
-\ignore{
 \clearpage
  
  
@@ -4041,7 +4039,7 @@ Obviously, a formidable number of people deserve thanks here, but I will refrain
 from mentioning everyone. Foremost, I would like to thank Wouter, my supervisor, for
 his infinite patience in explaining things, giving sound and complete
 advice, and his generally pleasant way of doing things. Marleen bravely
-proofread this work, gave much-needed moral support, much-appreciated long-suffering. Tim deserves
+proofread this work, gave much-needed moral support, was  long-suffering: much appreciated. Tim deserves
 ample thanks for noticing overworkedness and nipping it in the bud, taking
 me on an epic hike through the forest.  Justin did his bit by
 convincing me to go hitchhiking, which was surprisingly
@@ -4053,7 +4051,6 @@ spent drinking coffee and consuming calorific treats.
 
 The rest of you know who you are; tolerating an atypically stressed-out me. Thanks.
 \vspace*{\stretch{4}}
-}
  
 \appendix
  
