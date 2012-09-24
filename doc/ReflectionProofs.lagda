@@ -3977,8 +3977,6 @@ The Ssreflect system \cite{gonthier:inria-00515548} for Coq  should also be ment
 refrain from making concrete statements, but the expectation is that the developments presented here should also be possible using Ssreflect.
  
  
-%TODO make it clear that auto Bove-Capretta is impossible, and that's a pity. because of no intro data
-%todo finalise chap 6 and 7 (discussion) 
  
 
 Returning to our research question,  repeated here to jog the memory,  a summary of findings is made.
