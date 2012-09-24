@@ -1869,7 +1869,8 @@ afterwards, as in the example of Fig.~\ref{fig:dup}.
 \begin{shadedfigure}[h]
 \begin{code}
 rep          : BoolExpr 2
-rep          = Imp (And (Atomic (suc zero)) (Atomic zero)) (Atomic zero)
+rep          = Imp    (And (Atomic (suc zero)) (Atomic zero)) 
+                      (Atomic zero)
 
 someTauto    : (p q : Bool)         → P( p ∧ q ⇒ q )
 someTauto    = soundness rep _
@@ -1877,7 +1878,7 @@ someTauto    = soundness rep _
 \caption{An example Boolean formula, along with the transliteration to a proposition and the corresponding proof.}\label{fig:dup}
 \end{shadedfigure}
 
-Having said that, the trick of letting Agda infer the proof argument to |soundness| is 
+Having said that, the trick of letting Agda infer the proof argument to pass to |soundness| is 
 still a little dangerous, as explained in Sec.~\ref{sec:implicit-unit}.
 The thing is, we do not want a user to get away with being able to prove that something which is not a
 tautology, is a tautology. Since the proof that under all environments the theorem evaluates
@@ -2101,7 +2102,7 @@ concrete2abstract    :     (t     : Term)        → (n : ℕ)
 concrete2abstract t n {pf} {pf2} = term2boolexpr n (stripSo (stripPi t) pf) pf2
 \end{code}
 \end{shade}}\!\!
-Note that not every |Term| can be converted to a |BoolExpr|. The
+Note that not every |Term| can be converted to a |BoolExpr|. The 
 |concrete2abstract| function requires additional assumptions about the
 |Term|: it should only contain functions such as |_∧_| or |_∨_|, and
 bound variables. This is ensured by the assumptions
@@ -2112,8 +2113,8 @@ A representative snippet is given in Fig.~\ref{fig:concrete2abstract}. The atten
 the function in the referenced figure is called |term2boolexpr|; this is because we also unwrap the outermost call to |P| 
 and the telescope quantifying over  the variables before doing the conversion, since these elements are unnecessary in the |BoolExpr| representation. 
 This can be seen as a helper function to |concrete2abstract| where the ``interesting''  work happens.
-The functions |isBoolExprQ|
-and |isSoExprQ| simply traverse the |Term| to see if it fulfills the requirements of
+The functions in the type signature, |isBoolExprQ|
+and |isSoExprQ|, simply traverse the |Term| to see if it fulfills the requirements of
 being a Boolean expression preceded by a series of universally quantified Boolean variables, enclosed in a
 call to |P|.
 
@@ -4010,7 +4011,7 @@ techniques all the more painful.
 inspection of data type definitions is quite comprehensive.
 \item By default, untyped terms are returned from the |quoteTerm|
 keyword. This has been solved in the patches presented in
-Appendix~\ref{appendix:lambda-types}, but these patches are yet to be
+Appendix~\ref{appendix:lambda-types}, but these are yet to be
 included in the main development version of Agda.
 \item The |unquote| keyword is unaware of types, so even if a program transformation is
   type-safe, in the end unquoting is still hit-and-miss.
@@ -4107,12 +4108,12 @@ clone the complete modified compiler fork from there.
 
 
 
-\section{Automatic Syntax Highlighting for Literate Agda}\label{appendix:lhs-syntax}
+\section{Automated Highlighting for Literate Agda}\label{appendix:lhs-syntax}
 
 
 Highlighting Agda source code is something which as yet only works after a module has been loaded,
 since then the r\^{o}le of various identifiers is known~-- be it constructor, function or type. Because
-of this, L\"oh's great LHS2\TeX\ system \cite{lhs2tex} does not support automatic highlighting of Agda code, but
+of this, L\"oh's great LHS2\TeX\ system \cite{lhs2tex} does not support automatic syntax highlighting of Agda code, but
 the documentation suggests using the idiomatic \texttt{\%format x = "\textbackslash{}something\{x\}"} rules, which are
 basically \LaTeX\ preprocessing macros. 
 
