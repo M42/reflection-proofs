@@ -1,5 +1,7 @@
 Reflection in Agda
 ==================
+MSc project in Computing Science  
+[Department of Computing Science, Utrecht University](http://www.cs.uu.nl)  
 Project supervisor: [Wouter Swierstra](http://www.staff.science.uu.nl/~swier004/)
 
 This is a project exploring the uses and limitations of the reflection API recently included in [Agda](http://wiki.portal.chalmers.se/agda/), the dependently typed programming language slash interactive theorem prover.
