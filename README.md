@@ -10,7 +10,7 @@ This repository contains two main components, Proofs and Metaprogramming. Proofs
 
 The Metaprogramming collection of sources illustrates how various tasks (such as program transformation) can be carried out in a type-preserving way, without losing any shiny automation that reflection allows us to implement. Two example  program transformations of simply typed lambda calculus with De Bruijn indices are implemented: a translation to SKI combinators, and a CPS (continuation-passing style) transformation.
 
-Also included in this repository is the final thesis for the project, which goes into a lot of detail on the techniques used, and might be useful should anyone want to use the reflection API for their own purposes, since many common pitfalls are highlighted and solved. A library, Autoquote, is also included, which automates quoting of Agda terms to basic inductive data types for your own AST.
+Also included in this repository is the final thesis for the project, which goes into a lot of detail on the techniques used, and might be useful should anyone want to use the reflection API for their own purposes, since many common pitfalls are highlighted and solved. The library `Autoquote` is also included, which automates quoting of Agda terms to basic inductive data types for your own AST.
 
 Questions and comments are of course welcome; my email address is my first name at my domain dot org, which can be found in my GitHub profile.
 
