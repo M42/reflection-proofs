@@ -51,7 +51,7 @@
 \def\CC{{C\nolinebreak[4]\hspace{ -.05em}\raisebox{.2ex}{\small\bf ++}}}
 \colorlet{hlite}{CornflowerBlue!15!white}
 \newcommand{\hlitem}[1]{\item[\colorbox{hlite}{#1}]~\\}
-\newcommand{\ch}{Curry-Howard isomorphism\xspace}
+\newcommand{\ch}{Curry--Howard isomorphism\xspace}
 % This defines figures with backgrounds -- useful for code
 \usepackage{adjustbox}
 \usepackage{float} % enable H position specifier
@@ -677,6 +677,8 @@ Keeping this correspondence in mind, we can give analogues of mathematical logic
 the type |⊤|, which has one inhabitant, |tt|. The simplest nontheorem |false| translates to |⊥|, the type with no inhabitants. Therefore,
 a proof for |⊥| can never be constructed. Other equivalents are |_∧_| and |_×_| (@Pair@ in Haskell), which are only proven if both left and right components
 are inhabited. Disjunction (a.k.a. the |_∨_| operator in logic) translates to the |_⊎_| data type (known as @Either@ in Haskell), which has constructors for left \emph{or} right.
+This interpretation of types as propositions is also known as the Brouwer--Heyting--Kolmogorov interpretation, and was proposed by Brouwer and Heyting and independently by Kolmogorov \cite{DBLP:journals/tcs/Troelstra99}. For
+an interesting history of logic in computer science, and a clear explanation of the \ch, Wadler's article is a good bet \cite{wadler2000proofs}.
 
 Now that we have an intuition for the \ch, we can continue
 looking at various aspects of Agda as a proof assistant. One point
