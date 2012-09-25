@@ -281,10 +281,11 @@ Chapter~\ref{chap:introducing-agda}.
 \item We show how to
   write \emph{type-safe metaprograms}. To illustrate this
   point, we will develop a type-safe translation from the simply typed
-  lambda calculus to programs in continuation-passing style (CPS), followed
-by a type-safe translation of closed lambda terms into SKI combinator calculus (Chapter~\ref{sec:type-safe-metaprogramming}). 
-In
-doing this, structurally recursive, total, well-typed CPS and SKI transformations are defined.
+  lambda calculus to programs in continuation-passing style (CPS),
+  followed by a type-safe translation of closed lambda terms into SKI
+  combinator calculus (Chapter~\ref{sec:type-safe-metaprogramming}).  In
+  doing this, structurally recursive, total, type preserving CPS and SKI
+  transformations are defined.
  
 \item Finally, we also discuss some of the
   \emph{limitations of the current implementation} of reflection (Chapter~\ref{sec:generic-programming}),
@@ -296,7 +297,7 @@ The code and examples presented in this paper all compile using the
 latest development version of Agda (currently 2.3.1), with some minor
 modifications to the compiler (see
 Appendix~\ref{appendix:lambda-types}). All code, including this
-report, are available on
+report, is available on
 GitHub\footnote{\ghurl}.
 This thesis is also a Literate Agda file, which means the code snippets can be extracted, compiled 
 and played around with.
@@ -321,16 +322,16 @@ framework.
 In informal terms, the \ch  states that there is a correspondence
 between types and propositions on the one hand, and programs and proofs on the other hand \cite{sorensen1998lectures}. The
 interpretation of a programming language as a logic framework is that types express theorems which 
-are proven by providing an implementation.  This correspondence is outlined further in Sec.~\ref{sec:plandpa}.
+can be proven by providing an implementation.  This correspondence is outlined further in Sec.~\ref{sec:plandpa}.
 
 In Agda, types of functions are allowed
 to \emph{depend upon} values~-- the main difference between
-a dependently typed programming language and a simply-typed language is
+a dependently typed programming language and a simply typed language is
 that the divide between the world of values and that of types is torn down.
 
 
 This chapter aims to provide a crash course on Agda. 
-The reader is assumed to be fluent in GHC Haskell;
+The reader is presumed to be fluent in GHC Haskell;
 the fact that
 Agda's syntax is inspired by Haskell
 makes it a reasonable choice to explain
@@ -373,12 +374,12 @@ zero       +'   m  = m
 
 \paragraph{Mixfix} Notice how we write |_+_| for the name of the function, then later drop the underscores. This notation
 is referred to as mixfix~-- in Agda we are allowed to define operators using 
-underscores to denote where we expect arguments.
+underscores to denote where they expect arguments.
 Other than that, addition is fairly straightforward, using the inductive style
 of programming we will come to know and love. 
 
 We will now look at the
-definition of list in Agda. This is already starting to look
+definition of lists in Agda. This is already starting to look
 slightly different to the corresponding Haskell implementation.
 
 \begin{shade}
@@ -397,8 +398,8 @@ an argument, |A|, of type |Set|. Recall that  |Set| is the type of types,
 so |List| is parameterised by a type for the values it should contain. 
 
 Our shiny new data types are clamouring to be used, so why not define a |head| function
-on |List|? The function |head₀| is supposed to give the first element of a list. A Haskell
-programmer would probably  write something like this.
+on |List|? The function |head| is supposed to give the first element of a list. A Haskell
+programmer would probably  write something like |head₀|.
 
 \begin{shade}
 \begin{spec}
@@ -407,7 +408,7 @@ head₀ (x ∷ xs) = x
 \end{spec}
 \end{shade}
 
-\paragraph{Telescopes}\label{para:telescopes} There are a number of problems with this definition! The first thing Agda will 
+\paragraph{Telescopes}\label{para:telescopes} There are a number of problems with the definition of |head₀|! The first thing Agda will 
 complain about, is that |A| is undefined in the type signature. The solution is simple: we
 introduce a \emph{telescope}. A telescope is like a lambda function, except that it is a function
 on types (also known as values of type |Set|). The result of this attempt is |head₁|.
@@ -438,8 +439,8 @@ and defined on all inputs. All functions are required to be total. Termination i
 done on \emph{structurally smaller} arguments~-- as is the case in the addition example.
 Furthermore, a function is considered to be defined on all inputs when the patterns it matches on
 cover all the possibilities. What we mean by this is that an alternative should be given for each
-possible constructor~-- something which is violated by the most recent |head₁| attempt: it is missing a
-case for the empty list. This is something Haskell does not care about; it simply smirks and throws an exception if we try to normalise |head []|.
+possible constructor~-- something which is violated by the |head₁| attempt: it is missing a
+case for the empty list. This is something Haskell does not care about; it simply smirks and throws an exception if we try to normalise the expression |head []|.
 
 If we have to define |head₂| for the empty list too, we will have to resort to a |Maybe| type. The definition of
 |Maybe| is omitted, because it is hardly surprising to a Haskell programmer.
@@ -472,7 +473,7 @@ left and the right of the colon in the type signature of the data
 definition. Left-hand arguments are called parameters, and scope over
 all the constructors. Right-hand arguments are called indices, and
 only scope over single constructors, and as such need to be introduced
-there using a telescope. The |_∷_| constructor has a size parameter,
+per constructor using a telescope. The |_∷_| constructor has a size parameter,
 which is an example of such an index.  This dependent type has the
 advantage that we can distinguish vectors of different sizes by their
 type, at compile time, without knowing their value.
@@ -490,11 +491,11 @@ head₃ (x ∷ xs) = x
 \end{code}
 \end{shade}
 
-We also see that only vectors with a value |n| such that |succ n| is the length of the
+We see that only vectors with a value |n| such that |succ n| is the length of the
 vector, are valid inputs. This way, we guarantee that empty vectors cannot be beheaded. Agda is also convinced
 that this function is total, so we are done: we have a safe |head| function.
 
-This is the most common example of why DTP is the best thing since sliced bread:
+This is probably the most common example of why DTP is the best thing since sliced bread:
 we cannot ask for the head of an empty vector, since we will get a compile time error
 that there is no possible value of |n| such that |succ n == zero|. Compare this to the |head| function
 defined in Haskell's Prelude, where a run time exception is generated if an empty list is passed in. How primitive!
@@ -552,7 +553,7 @@ natural (succ n)   (succ m)    = succ (natural n m)
 \end{shade}
 
 
-Basically, the dependent in dependent pattern matching refers to the
+Basically, the \emph{dependent} in dependent pattern matching refers to the
 fact that given the specialisation of the function in the case where
 |zero| is the first argument, it can be inferred that the next
 argument should be of type |Fin zero|, which obviously has no
@@ -673,7 +674,7 @@ are inhabited. Disjunction (a.k.a. the |_∨_| operator in logic) translates to 
 
 Now that we have an intuition for the \ch, we can continue
 looking at various aspects of Agda as a logical framework. One point
-worth noting, is that in Agda, one directly manipulates and constructs
+worth noting is that in Agda, one directly manipulates and constructs
 proof objects in the
 same language as is used to express computation. In many other
 theorem proving systems, such as Coq, there is a separate tactic
@@ -699,7 +700,7 @@ falsity = falsity
 
 This is why the termination criterion is that at least one of the arguments to the 
 recursive call be \emph{structurally smaller}. Compare the addition of naturals example where |suc n| is pattern matched, and |n| is passed
-as a recursive argument~-- |n| is structurally smaller than |suc n|.
+as a recursive argument~-- |n| is indeed structurally smaller than |suc n|.
 
 \paragraph{Covering} Being defined on all possible inputs is also an aspect of totality. If this requirement were 
 dropped, a number of desirable properties for a logic would not hold any longer. The most obvious example is that
@@ -716,7 +717,7 @@ anywhere in the file, and compile. This question mark turns into something which
 cursor is placed inside a goal, queries such as the  type of the value expected there or the objects in the environment at 
 that point are available. 
 
-Admittedly, this section is by no means comprehensive as far as explaining the \ch goes.
+Admittedly, this section is by no means a comprehensive explanation of the \ch.
 More information about how to use Agda as a proof assistant is available \cite{Norell:2009:DTP:1481861.1481862,coquand2006emacs}. For
 background reading on the \ch a reference should be made to S\o rensen \emph{et al.} \cite{sorensen1998lectures}.
 We will now look at some tricks which are peculiar to Agda; hopefully
@@ -727,13 +728,13 @@ dealing with those now will make code snippets introduced later a little more co
 
 Previously, in Sec.~\ref{para:implicit}, we saw how certain arguments which are considered obvious, can be marked implicit. This technique 
 makes calls to functions more concise, since some arguments are not explicitly listed. When the value of an argument can be inferred, this technique becomes particularly
-useful. Furthermore, it turns out that record types have 
+useful. Furthermore, it turns out that records have 
 advantageous properties when it comes to inferring their values. This section demonstrates the technique. 
 
-If a particular argument is a record type, and it has
+If a particular argument is a record, and it has
 only one possible inhabitant, Agda can automatically infer its
 value. Thus, it also need not be passed as an explicit argument at the
-call-site. The code snippet in Fig. \ref{code:implicit-example} illustrates how record type
+call-site. The code snippet in Fig. \ref{code:implicit-example} illustrates how record-type
 arguments having only one alternative can be automatically inferred.
 
 
@@ -745,9 +746,9 @@ foo u = 5
 bar : ℕ
 bar = foo _
 \end{code}
-        \caption[Illustrating the automatic inference of record type
-arguments.]{Illustrating the automatic inference of record type
-arguments. Note that it is possible to replace |u| on the LHS of |foo| with
+        \caption[Illustrating the automatic inference of record-type
+arguments.]{Illustrating the automatic inference of record-type
+arguments. Note that it is possible to replace |u| in |foo| with
 the irrefutable pattern |u₁ , u₂|, since, as has been mentioned
 before, this is the only valid constructor for the type |_×_|.}
         \label{code:implicit-example}
@@ -759,7 +760,7 @@ has the constructor | _,_ : A → B → A × B|.
 Therefore, the only possible value is one using the constructor
 |_,_|. If we next look at the values for |A| and |B| here, namely the
 left and right-hand arguments' types, we see that in both cases they
-have type |⊤|. The unit type also is defined as a record with only one
+have type |⊤|. The unit type is also defined as a record with only one
 constructor, namely |tt|. This means that the only value possible is
 |tt , tt|, which is why we can use the underscore notation, meaning
 Agda should infer the argument for us.
@@ -819,7 +820,7 @@ Since version 2.2.8, Agda includes a reflection API \cite{agda-relnotes-228}, wh
 parts of a program's code into abstract syntax, in other words a data structure
 in Agda itself, that can be inspected or modified like any other data structure.
 The idea of reflection is old: already in the 1980s Lisp included a similar
-feature, called quoting, which allowed run time modification of a program's code, by
+feature, called \emph{quoting} and \emph{unquoting}, which allowed run time modification of a program's code, by
 the program itself. This has given rise to powerful techniques for reusing code and
 generating frequently needed but slightly different expressions automatically. What
 can be done with Lisp, can be done better using Agda; at least, so we hope. This chapter
@@ -834,9 +835,9 @@ terms. An overview of the core data types involved is
 included in Sec.~\ref{sec:reflection-datatypes}. % Fig.~\ref{fig:reflection}. 
 In addition to these data
 types that represent \emph{terms}, there is limited support for
-reflecting \emph{definitions} as opposed to terms. Inspection of definitions
-is detailed in Sec.~\ref{sec:inspecting-definitions}. Continue reading for a
-practical guide to reflection (Sec.~\ref{sec:thebasics}).
+reflecting \emph{definitions}. Inspection of definitions
+is detailed in Sec.~\ref{sec:inspecting-definitions}. Continue reading Sec.~\ref{sec:thebasics} for a
+practical guide to reflection.
 
 \section{The Basics}\label{sec:thebasics}
 
@@ -886,6 +887,7 @@ nearest-bound variable, thus |var 0|, applied to an empty list of arguments.
 the quoted lambda binds a variable with some type.
  The |el| constructor we see 
 represents the type of the argument to the lambda. The first argument to |el| represents the sort, if it is known.
+In |example₀|, it is |unknown|.
 Furthermore
 the type of |x| is Boolean, represented as |def (quote Bool) []|. This means
 the |Bool| type (which is a definition, hence |def|) with no arguments.
@@ -919,13 +921,13 @@ representing the type of the current goal. In this example, the value
 of |e| in the hole will be |def ℕ []|, i.e., the |Term| representing
 the type |ℕ|.
 
-Another function that deals with types is the aptly-named |type| function. Given
+Another function that deals with types is the aptly named |type| function. Given
 a |Name|, such as the result of |quote example₀|, |type| returns the |Type| value representing the
 type of that identifier. This indeed implies one cannot ask the type of an arbitrary
-|Term|, since one would need to introduce it as a definition first, to be able to get its |Name|.
+|Term|, since one would need to introduce it as a definition first, to be able to get a |Name| associated with it.
 In |example₂| we see what |type| returns when asked about the successor function (a function with
 type |ℕ → ℕ|), and in |example₃| we verify that the term shown is in fact the same as a
-function from naturals to naturals. The |el| constructor, which has already been introduced,
+function from naturals to naturals. The |el| constructor
 is illustrated clearly here. The first argument to |el| is the sort of the type, where in |example₂|
 the |lit 0| term denotes a type in |Set₀| (which is equal to |Set|). The second argument to |el| is, as we already saw, the |Term|-representation
 of the type.
@@ -1000,7 +1002,7 @@ Agda terms.
           unknown    :                                                       Term
 
         data Type             : Set where
-          el : (s : Sort) (t : Term) → Type
+          el         : (s : Sort) (t : Term)                       →         Type
 
         data Sort             : Set where
         -- A Set of a given (possibly neutral) level.
@@ -1019,13 +1021,14 @@ A variable has a De Bruijn index, represented by a natural number,
 and may be applied to arguments.
 The constructors |con| and |def| are introduced for constructors and definitions, respectively,
 applied to a list of arguments. 
-Lambda abstractions bind one variable. A variable is represented by a De Bruijn index and may be applied to multiple arguments. Included is the type signature of the argument, represented by a |Type|.
+Lambda abstractions bind one variable. 
+Included is the type signature of the argument, represented by a |Type|.
 The |pi| constructor represents function types, or telescopes (the dependent equivalent of an arrow). 
-. It can be seen as a lambda for types instead of terms. 
+ It can be seen as a lambda abstraction for types instead of terms. 
 Finally the constructor |unknown| stands for things which are not or
 cannot be represented in this AST\footnote{AST stands for
 \emph{abstract syntax tree}; this abbreviation will be used
-hereafter.} (such as function definitions or holes).
+hereafter.}, such as function definitions or holes.
 
 As explained in the previous section, the |el| constructor constructs values in |Type|. It has two arguments:
 one for the sort of the type, the other for the |Term| representing the type.
@@ -1039,7 +1042,7 @@ a description of their use.
 \begin{spec}
 _≟-Name_           : Decidable {A = Name} _≡_
 -- The other decidable properties are omitted for 
--- brevity, but are similarly-named.
+-- brevity, but are similarly named.
 
 type               : Name         → Type
 definition         : Name         → Definition
@@ -1064,7 +1067,7 @@ data Definition : Set where
 \end{shade}
 
 At the time of writing the only constructor we can do anything with is |data-type|: using
-it we can get a list of constructors, by calling the suitably-named |constructors| function. See the
+it we can get a list of constructors, by calling the suitably named |constructors| function. See the
 illustration in Sec.~\ref{sec:inspecting-definitions}.
 
 Finally, we have decidable equality on the following types: |Visibility|, |Relevance|, |List Arg|s, |Arg Type|s, |Arg Term|s,  |Name|s,  |Term|s, |Sort|s  and |Type|s. 
@@ -1165,9 +1168,9 @@ open import Metaprogramming.Autoquote hiding (convertManages ; doConvert) renami
 \end{shade}
 }
 
-If, each time we wanted to quote, we had to write a huge function, with many pattern matching cases and nested |with| statements to handle different 
+If, each time we wanted to quote a term, we had to write a huge function, with many pattern matching cases and nested |with| statements to handle different 
 shapes of ASTs, we would quickly become discouraged. This nearly happened while doing this project, which is why
-|Autoquote| was conceived. Quoting some expression grammar is a mundane task we are frequently faced with if we 
+|Autoquote| was conceived. Quoting some expression with a given grammar is a mundane task we are frequently faced with if we 
 are foolhardy enough to use reflection. The (partial) solution to this problem~-- something which at least mitigates 
 the agony~-- is presented in this section.
 
@@ -1187,9 +1190,11 @@ data Expr : Set where
 \end{shadedfigure}
 
 We might conceivably want to convert a piece of Agda concrete syntax, such as $5 + x$, to this
-AST, using reflection. This typically involves ugly and verbose functions such
-as the one from Sec.~\ref{sec:Boolean-tautologies} with many |with|-clauses and frankly, too
-much tedium to be anything to be proud of. We need to check that the |Term| has a reasonable shape, and contains valid operators. This turns out to be something we frequently want to do.
+AST, using reflection. This typically involves ugly and verbose functions like
+the one from Sec.~\ref{sec:Boolean-tautologies} with many |with| clauses and frankly, too
+much tedium to be anything to be proud of. 
+
+We need to check that the |Term| has a reasonable shape, and contains valid operators.
 Ideally, we would 
  provide a mapping from concrete constructs such as the |_+_| function to elements of our
 AST, and get a conversion function for free.
@@ -1199,7 +1204,7 @@ provide an interface which, when provided with such a mapping, automatically quo
 that fit. Here, \emph{fitting} is defined as only having variables, or names that are listed
 in this mapping. Other terms are rejected.
 The user provides an elegant-looking mapping and |Autoquote| automatically converts
-concrete Agda to  simple non-inductive types. The mapping table for |Expr| is
+concrete Agda to  simple inductive types. The mapping table for |Expr| is
 shown in Fig.~\ref{fig:exprTable}.
 
 \begin{shadedfigure}[h]
@@ -1225,7 +1230,7 @@ We will now look at the implementation of this library.
 
 The type |Table a|, in Fig.~\ref{fig:nary}, is what we use for specifying what the AST we are expecting should look like. The function |N-ary| provides
 a way of storing a function with a variable number of arguments in our map, and |_dollarn_| is how we
-apply the ``stored'' function to a |Vec n| of arguments, where $n$ is the arity of the function. Note that
+apply the ``stored'' function to a |Vec n| of arguments, where |n| is the arity of the function. Note that
 this is a copy of the standard library |Data.Vec.N-ary|, but has been instantiated here specifically
 to contain functions with types in |Set|. This was necessary, since the standard library version of
 |N-ary| can hold functions of arbitrary level (i.e. |Set n|). Therefore, the level of the 
@@ -1263,7 +1268,7 @@ Table a = (ℕ → a) × List (ConstructorMapping a)
 \end{shadedfigure}
 
 With the above ingredients we can now define the function |convert| shown
-below. It takes a mapping of type |Table a|, and a |Term| obtained
+in Fig.~\ref{fig:convert}. It takes a mapping of type |Table a|, and a |Term| obtained
 from one of Agda's reflection keywords, and produces a value which
 might be a properly converted term of type |a|. Here, |a| is the type
 we would like to cast to, for example |Expr|.  We also have the
@@ -1278,7 +1283,7 @@ example, presented in Fig.~\ref{fig:exprTable}.
 Note that |convert| is not intended to
 be called directly; a convenience function |doConvert| is defined later.
 
-\begin{shade}
+\begin{shadedfigure}
 \begin{spec}
 lookupName : {a : Set}      → List     (ConstructorMapping a)
                             → Name
@@ -1291,15 +1296,13 @@ mutual
   convert (vc , tab) (def f args)       = appCons (vc , tab) f args
   convert (vc , tab)     _              = nothing
 \end{spec}
-\end{shade}
+\caption{The function |convert|.}\label{fig:convert}
+\end{shadedfigure}
 
 
 If |convert| encounters a variable, it just uses the constructor which stands for variables. Note that
 the parameter is the De Bruijn index of the variable, which might or might not be in scope.
 This is something to check for afterwards, if a |just| value is returned.
-
-Note that  we will probably need to post-process the output of |convert|, but this will be illustrated later, in Sec.~\ref{sec:autoquote-example}.
-
 
 In the case of a constructor or a definition applied to arguments, the function |appCons| is called,
 which looks up a |Name| in the mapping and tries to recursively |convert| its arguments, then applies the corresponding constructor to
@@ -1307,11 +1310,10 @@ these new arguments. Before this is done, the number of arguments is also compar
 
 The function |convertArgs| takes a list of term arguments (the type |Arg Term|) and tries to convert them into a list of AST values. 
 
-% the comment at the top of this code block fixes the indentation.
+% a comment at the top of this code block fixes the indentation.
 % indentation is forgotten between code blocks, it seems.
 \begin{shade}
 \begin{spec}
--- mutual continues...
   appCons : {a : Set} → Table a → Name → List (Arg Term) → Maybe a
   appCons (vc , tab) name args with lookupName tab name
   ... | just (arity       \# x  ↦ x₁)   with convertArgs (vc , tab) args
@@ -1331,6 +1333,8 @@ The function |convertArgs| takes a list of term arguments (the type |Arg Term|) 
   ... | nothing      = nothing
 \end{spec}
 \end{shade}
+
+Note that  we will probably need to post-process the output of |convert|, but this will be illustrated later, in Sec.~\ref{sec:autoquote-example}.
 
 If
 all of these steps are successful, the converted |Term| is returned as  |just e|, where |e| is the new, converted member
@@ -1358,8 +1362,8 @@ doConvert tab t {()    }      | nothing
 \end{shade}
 
 The use of |convertManages| and |doConvert| is illustrated in Fig.~\ref{fig:test-autoquote}. 
-This approach, using |convertManages| as an assumption, is a lot simpler than writing a predicate function with the same pattern matching 
-structure as |convert| by hand. In practice, |with|-clauses are often expanded unpredictably. The net effect
+This approach, using |convertManages| as an assumption, is a lot simpler than writing by hand a predicate function with the same pattern matching 
+structure as |convert|. Adding to the complication, |with| clauses are often expanded unpredictably in practise. The net effect
 of writing a pair of functions in this style is the same as the ``usual'' way of writing a predicate
 function by hand, in that a compile time error is generated if the function |doConvert| is 
 invoked on an argument with the wrong shape. Compare these relatively elegant functions to the verbose |term2boolexpr| and |isBoolExprQ| functions in Sec.~\ref{sec:addrefl}.
@@ -1427,7 +1431,7 @@ done themselves. Proof by reflection is no different: it is not a difficult tech
 counter intuitive. 
 
 To illustrate the concept of proof by reflection, we will cover an example taken from
-Chlipala~\cite{chlipala2011certified}, where we develop a procedure to automatically
+Chlipala~\cite{chlipala2011certified}, where a procedure is developed to automatically
 prove that a number is even. We start by defining the
 property |Even| below. There are two constructors: the first
 constructor says that zero is even; the second constructor states that
@@ -1459,7 +1463,7 @@ returns the unit type when its input is even and bottom otherwise.
 In this context, |⊤| and |⊥| can be seen as the analogues of |true|
 and |false|, just as presented in Sec.~\ref{sec:plandpa}.
 The meaning of such a decision function is that there exists
-a proof that some number is even, if it is |0| or |2 + n|. Otherwise, no proof exists. That is the
+a proof that some number is even, if it is $0$ or $2 + n$, for even $n$. Otherwise, no proof exists. That is the
 claim, at least. The idea
 of ``there exists'' is perfectly modelled by the unit and empty types,
 since the unit type has one inhabitant, the empty type none.
@@ -1523,10 +1527,10 @@ number, since the parameter |even? n|  is equal to |⊥|,
  thus
 |tt| would not be accepted where it is in the |Even 28| example. This will
 produce a |⊤ !=< ⊥| type error at compile time.
-Note that it is possible to generate a user-friendly error of sorts, by replacing the |⊥| constructor in |even?| with
-a type called @NotEven@, for example. Of course it should still be an empty type, but possibly parameterised with a natural to
-indicate which value is non-even. This makes the soundness proof a little less straightforward, but in return the
-type error generated if a non-even number is used becomes more informative. This enhancement is demonstrated in Fig.~\ref{fig:error}, in the Boolean
+Note that it is possible to generate a user-friendly ``error'' of sorts, by replacing the |⊥| constructor in |even?| with
+a type with a descriptive name such as @NotEven@. Of course it should still be an empty type, but possibly parameterised with a natural to
+indicate which value is odd. This makes the soundness proof a little less straightforward, but in return the
+type error generated if an odd number is used becomes more informative. This enhancement is demonstrated in Fig.~\ref{fig:error}, in the Boolean
 tautologies example.
 
 Since the type |⊤| is a simple record type, Agda can infer the |tt|
@@ -1549,7 +1553,7 @@ The next step will be to use the same approach for a more involved and realistic
 \section{Second Example: Boolean Tautologies}\label{sec:Boolean-tautologies}
 
 Obviously, the first example of proof by reflection, the evenness of natural 
-numbers, was a rather trivial one. There was a reason for studying it, though, since
+numbers, was a rather trivial one. There was a good reason for studying it, though, since
 we will now apply the same technique to a more interesting problem, making
 the relationship to the previous example clear at each step.
 
@@ -1588,7 +1592,7 @@ data BoolExpr (n : ℕ) : Set where
   Imp           : BoolExpr n → BoolExpr n      →   BoolExpr n
   Atomic        : Fin n                        →   BoolExpr n
 \end{code}
-\caption{Inductive definition of Boolean expressions having $n$ free variables.}\label{fig:boolexprn}
+\caption{Inductive definition of Boolean expressions with $n$ free variables.}\label{fig:boolexprn}
 \end{shadedfigure}
 
 
@@ -1597,7 +1601,7 @@ There is nothing
 surprising about this definition; we use the type |Fin n| to ensure
 that variables (represented by |Atomic|) are always in scope. If we want to
 evaluate the expression, however, we will need some way to map variables to values.
-Enter |Env n|: it has fixed size |n| since a |BoolExpr n| has $n$ free variables.
+Enter |Env n|: it has fixed size |n| since a |BoolExpr n| has at most $n$ free variables.
 
 \begin{shade}
 \begin{code}
@@ -1623,13 +1627,13 @@ open import Proofs.Util.Handy
 \begin{shade}
 \begin{code}
 ⟦_⊢_⟧ : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
-⟦ env     ⊢ Truth       ⟧ = true
-⟦ env     ⊢ Falsehood   ⟧ = false
-⟦ env     ⊢ And be be₁  ⟧ =     ⟦ env ⊢ be ⟧     ∧      ⟦ env ⊢ be₁ ⟧
-⟦ env     ⊢ Or be be₁   ⟧ =     ⟦ env ⊢ be ⟧     ∨      ⟦ env ⊢ be₁ ⟧
-⟦ env     ⊢ Not be      ⟧ = ¬   ⟦ env ⊢ be ⟧
-⟦ env     ⊢ Imp be be₁  ⟧ =     ⟦ env ⊢ be ⟧     ⇒      ⟦ env ⊢ be₁ ⟧
-⟦ env     ⊢ Atomic n    ⟧ = lookup n env
+⟦ env     ⊢ Truth           ⟧ = true
+⟦ env     ⊢ Falsehood       ⟧ = false
+⟦ env     ⊢ And   be   be₁  ⟧ =     ⟦ env ⊢ be ⟧     ∧      ⟦ env ⊢ be₁ ⟧
+⟦ env     ⊢ Or    be   be₁  ⟧ =     ⟦ env ⊢ be ⟧     ∨      ⟦ env ⊢ be₁ ⟧
+⟦ env     ⊢ Not   be        ⟧ = ¬   ⟦ env ⊢ be ⟧
+⟦ env     ⊢ Imp   be   be₁  ⟧ =     ⟦ env ⊢ be ⟧     ⇒      ⟦ env ⊢ be₁ ⟧
+⟦ env     ⊢ Atomic n        ⟧ = lookup n env
 \end{code}
 \end{shade}
 
@@ -1674,25 +1678,24 @@ to one having to understand the |So| function; this is justified in Sec.~\ref{se
 \begin{code}
 exampletheorem : Set
 exampletheorem = (p₁ q₁ p₂ q₂ : Bool)   →   
-                 P  (         (p₁ ∨ q₁) ∧ (p₂ ∨ q₂)
-                        ⇒     (q₁ ∨ p₁) ∧ (q₂ ∨ p₂))
+                 P  (         (p₁ ∨ q₁) ∧ (p₂ ∨ q₂) ⇒ (q₁ ∨ p₁) ∧ (q₂ ∨ p₂))
 \end{code}
 \caption{Encoding of an example tautology.}\label{fig:exampletheorem}
 \end{shadedfigure}
 
 Here a complication arises, though. We are quantifying over a list of Boolean values \emph{outside}
-of the decision function |P|, so proving |P| to be sound will not suffice. We just defined a decision function (|⟦_⊢_⟧|)
+of the decision function |P|, so proving |P| to be sound will not suffice. We just defined an evaluation function |⟦_⊢_⟧|
 to take an environment, an expression, and return a Boolean. In Fig.~\ref{fig:exampletheorem}, though,
 we effectively quantified over all possible environments. We are going to need a way
 to lift our decision function to arbitrary environments.
 
 
 
-The way we do this is the function |foralls|, see Fig.~\ref{fig:forallsacc}. This function represents the  analogue
+The way we do this is the function |foralls|, in Fig.~\ref{fig:forallsacc}. This function represents the real analogue
 of |even?| in this situation: it returns a type which is only inhabited if the argument Boolean
 expression is true under all variable assignments. This is done by generating a full binary tree
 of |⊤| or |⊥| types, depending on the result of |⟦_⊢_⟧| under each assignment.
-This corresponds precisely to |b| being a tautology if and only if the tree is inhabited.
+This corresponds precisely to the expression being a tautology if and only if the tree is inhabited.
 
 The |Diff| argument is unfortunately needed to prove that |forallsAcc| will eventually produce a
 tree with depth equal to the number of free variables in an expression. 
@@ -1720,13 +1723,13 @@ foralls {n} b = forallsAcc b [] (zeroleast 0 n)
 
 \paragraph{What Is This |Diff| You Speak Of?}\label{sec:explain-diff}
 
-It has just been mentioned that the |Diff| argument is necessary in some
+We just saw that the |Diff| argument is necessary in some
 of the recursive functions. Here, a short description of what it is
 and why it is needed is given.
 
 In Sec.~\ref{sec:Boolean-tautologies} the function |forallsAcc| (among others)
 has a parameter of type |Diff n m|. Recalling the function's
-definition from Fig.~\ref{fig:forallsacc}, note that there are two variables, $n$ and $m$ giving the current size of the environment
+definition from Fig.~\ref{fig:forallsacc}, note that there are two variables, $n$ and $m$, giving the current size of the environment
 and the maximum number of bound variables in the proposition, respectively. 
 
 This is wrong, since our interpretation function |⟦_⊢_⟧| requires that these $m$ and $n$ are equal.
@@ -1833,7 +1836,7 @@ soundnessAcc {m} bexp {n} env (Step y) H =
 
 
 If we look closely at the definition of |soundnessAcc|, we see that it
-builds up the environment by assigning some configuration to the variables. It eventually returns the
+builds up the environment by assigning some configuration of |true| and |false| to the variables. It eventually returns the
 leaf from |foralls| which is the proof that the formula is a tautology
 in that specific case. 
 \begin{shade}
@@ -1856,7 +1859,7 @@ representation of the formula under consideration, and |p| is the evidence
 that all branches of the proof tree are true. Agda is convinced
 that the representation does in fact correspond to the concrete
 formula, and also that |soundness| gives a valid proof. In fact, we need not
-even give |p| explicitly; since the only valid values of |p| are pairs of |tt|,
+even give |p| explicitly; since the only valid values of |p| are nested pairs of |tt|,
 the argument can be inferred automatically, if its type is inhabited.
 
 If the module
@@ -1902,12 +1905,12 @@ presented that uses Agda's recent reflection API.
 The question of why the |So| operator is used here to denote that a formula is 
 a tautology, as opposed to just writing the literal definition of tautology, namely
 |∀ (b : Bool) → Q(b) ≡ true|, was asked in the previous section.
-The reason for this is mainly a technical one. It is possible to prove tautologies of this form, but
-using this format for reasoning about Boolean formulae becomes rather more involved.
+The reason for this is mainly a technical one. While it is possible to prove tautologies of this form, 
+using this format for reasoning about Boolean formulae becomes rather awkward.
 
 The reason for this is
 that the |So| operator returns a type, namely either |⊤|, |⊥| or other record types, which can
-be passed around as an automatically-inferred implicit value (see Sec.~\ref{sec:implicit-unit} for a 
+be passed around as an automatically inferred implicit value (see Sec.~\ref{sec:implicit-unit} for a 
 detailed explanation about implicit inferred arguments), removing the need to put |refl| everywhere
 such a proof is needed~-- a unit or pair type can be inferred if it exists\footnote{Compare the example
 implementation of a ring solver in Agda, which has |refl|s all over the place \cite{ringsolver}, which
@@ -1927,7 +1930,7 @@ A reasonable question to pose, after seeing the interface to the tautology prove
 introduce fresh variables. Why can we not just write something like |∀ (e : Env n) → P someprop|?
 
 One of the reasons for not enumerating environments  is that
-referring to variables becomes a bit of a problem. 
+referring to variables inside |someprop| becomes a bit of a problem. 
 Some new syntax would have to be introduced, such as a constructor
 |Var : Fin n → Bool| which could be used to refer to an element of the environment by number. This is 
 rather less elegant than the current implementation, which simply brings a few Boolean variables into scope in
@@ -2110,11 +2113,10 @@ The |concrete2abstract| function is rather verbose, and is mostly omitted.
 A representative snippet is given in Fig.~\ref{fig:concrete2abstract}. The attentive reader will notice that
 the function in the referenced figure is called |term2boolexpr|; this is because we also unwrap the outermost call to |P| 
 and the telescope quantifying over  the variables before doing the conversion, since these elements are unnecessary in the |BoolExpr| representation. 
-This can be seen as a helper function to |concrete2abstract| where the ``interesting''  work happens.
+The function |term2boolexpr| can be seen as a helper function to |concrete2abstract| where the ``interesting''  work happens.
 The functions in the type signature, |isBoolExprQ|
 and |isSoExprQ|, simply traverse the |Term| to see if it fulfils the requirements of
-being a Boolean expression preceded by a series of universally quantified Boolean variables, enclosed in a
-call to |P|.
+being a Boolean expression enclosed in a call to |P|, preceded by a series of universally quantified Boolean variables.
 
 \begin{shadedfigure}[h]
 \begin{spec}
@@ -2203,7 +2205,7 @@ then wanted to quote to some other AST, the whole process would have to be modif
 is a painful process.
 
 The actual conversion function also ends up having many branches, checking if all the
-constructors and definitions are ones we recognise, etc. This process can be made a lot less ugly and a lot more reusable.
+constructors and definitions are recognised, etc. This process can be made a lot less ugly and a lot more reusable.
 Recall the |Autoquote| module developed in
 Sec.~\ref{sec:autoquote}; the same can be used here, both as an
 illustration of its use, and to avoid code duplication,
@@ -2301,7 +2303,7 @@ concrete2abstract' t {pf} {pf2} fin = bool2fin     (freeVars t)
 \end{shade}
 
 Clearly, the |Autoquote| module can save a lot
-of repetitive coding for converting |Term|s into some richer, more structured
+of repetitive coding for converting |Term|s into some  more structured
 AST, such as |BoolExpr n|. 
 
 Finally, all developments regarding the proof by reflection technique, including
@@ -2315,14 +2317,14 @@ found in |Proofs.TautologyProver|.
 \chapter{Type-safe Metaprogramming}\label{sec:type-safe-metaprogramming}
 
 Another area in which an application for the new reflection API was found is that
-of type-safe metaprogramming, taking advantage of Agda's very powerful type system.
+of type-safe metaprogramming, taking advantage of Agda's powerful type system.
 
 Metaprogramming is a technique which is already widely used, for example in the Lisp
 community, and involves converting terms in the concrete syntax of a
 programming language into an abstract syntax tree that can be
 inspected and/or manipulated, and possibly be
 made
-concrete again. As such it can be evaluated as if it were code the
+concrete again. Afterwards it can be evaluated as if it were code the
 programmer had written directly. In Agda the reflection happens at
 compile time, allowing for the strong static typing we have come to know and love.
 If run time reflection were possible, any program compiled with Agda would need to
@@ -2332,12 +2334,12 @@ a compromise of sorts is required.
 
 Reflection is well-supported and widely used in Lisp and more
 recently in Haskell, using the Template Haskell compiler
-extension\cite{template-haskell}. It has enabled much
+extension \cite{template-haskell}. It has enabled much
 automation of tasks otherwise requiring
 \emph{boilerplate}\footnote{According to the Oxford English
   Dictionary, boilerplate is defined as \emph{``standardised pieces of
     text for use as clauses in contracts or as part of a computer
-    program''}.} code, such as 
+    program.''}} code, such as generating
 embedding-projection function pairs for generic programming. One such example is due to
  Norell and Jansson \cite{norell2004prototyping}.
 
@@ -2403,11 +2405,11 @@ See Fig.~\ref{fig:stlc-rules} for the typing rules.
   \subfigure{
     \inference[\bracket{app}]{\Gamma ||- e_1 : \sigma -> \tau \\ \Gamma ||- e_2 : \sigma}{\Gamma ||- e_1 e_2 : \tau} %application
     }
-\caption{The typing rules for simply-typed lambda calculus.}\label{fig:stlc-rules}
+\caption{The typing rules for simply typed lambda calculus.}\label{fig:stlc-rules}
 \end{shadedfigure}
 
 Of special interest are terms which we call \emph{closed}. Closed is
-defined as being typable under the empty context, |[]|. These terms do not refer
+defined as being typable under the empty context, |[]|. Such terms do not refer
 to variables which were not introduced by lambda abstractions in that same term (a.k.a. terms free of free variables), and
 are also sometimes referred to as \emph{combinators}.
 
@@ -2419,8 +2421,8 @@ replaced in favour of De Bruijn indices.
 
 
 Since we assume familiarity with lambda calculus in general, only
-a short introduction will be given here regarding De Bruijn-indexed
-lambda terms, as opposed to the ``usual'' named representation which
+a short introduction will be given here regarding nameless De Bruijn-indexed
+lambda terms \cite{de1972lambda}, as opposed to the ``usual'' named representation which
 is surprisingly enough still the standard for most textbooks on the
 subject.  Surprisingly, because named representation of lambda terms
 has all sorts of intricate issues such as preventing capture of free
@@ -2429,7 +2431,10 @@ variable names when adding abstractions, to name but a few. Algorithms for
 transforming and generating lambda terms are often riddled with
 ``bookkeeping'' to prevent such unwanted behaviour. For example, whole
 libraries \cite{Weirich:2011:BU:2034574.2034818} have been developed
-to do these sort of operations generically and out-of-the-box. This
+to work out of the box and do these sort of operations generically. 
+On the other hand, De Bruijn representation has the drawback that variable
+names are context sensitive. 
+This
 discussion is, however tempting it may be to speak derisively about
 named lambda representation, rather outside the scope of this project,
 so we will restrict ourselves to a short presentation of the De Bruijn
@@ -2465,7 +2470,7 @@ In all of the algorithms presented in this chapter, De Bruijn representation wil
 \subsection{Modelling Well-typed $\lambda$-calculus}\label{ssec:modelling-wtlambda}
 
 For the running example in this section, we will look at
-simply-typed lambda calculus (STLC) with the usual type and scoping
+simply typed lambda calculus (STLC) with the usual type and scoping
 rules, as defined in Fig.~\ref{fig:stlc-data}.  All the modules that
 deal with lambda expressions (everything in the
 |Metaprogramming| name space of the project) work on this |WT'| (which
@@ -2499,7 +2504,7 @@ data WT' : Ctx → Uu → ℕ → Set where
                    → Uel x
                    → WT' Γ           (O x)           1
 \end{code}
-\caption{The simply-typed lambda calculus with De Bruijn indices.}\label{fig:stlc-data}
+\caption{The simply typed lambda calculus with De Bruijn indices.}\label{fig:stlc-data}
 \end{shadedfigure}
 
 The first thing to notice is that all terms in |WT'| are annotated with
@@ -2543,7 +2548,7 @@ helper functions a user needs to define as we encounter them, summarising finall
 Finally there are the arguments of type |τ ∈ Γ| to the |Var| constructor. These are evidence that the variable identifier
 in question points to a valid entry of type |τ| in the context, |Γ|. Values of this type are basically annotated naturals corresponding to the
 De Bruijn index of the variable. This data type is defined in
-Fig.~\ref{fig:in-data}, and from such a value, one can query either the index (as a natural or |Fin s|, $s$ being the length
+Fig.~\ref{fig:in-data}, and from such a value, one can query either the index (as a natural or |Fin s|, |s| being the length
 of the list) in the context (which is
 equal to their De Bruijn index, given how entering the body of a lambda abstraction pushes a new entry onto the context) or
 the type of the variable they represent. Note that because of this the |Var| constructor is not parameterised with an explicit argument other
@@ -2603,7 +2608,7 @@ testing purposes. We will explain the other elements present in |Lit|, such as t
 Given these constructors, terms of type |WT'| can only be instantiated if they are well-scoped, thanks to the proofs |τ ∈ Γ| in the variable constructors. They are also
 guaranteed to be well-typed, because all the terms are required to ``fit'' (for example in the outer types of lambda abstractions and applications).
 
-\subsection{Inferring Types}\label{ssec:inferring-types}
+\section{Type Checking}\label{ssec:inferring-types}
 
 Because it usually is impractical to require direct construction of
 |WT'| terms, we would also like to  offer a way of translating from some
@@ -2621,7 +2626,7 @@ data Raw : Set where
   App  : Raw       → Raw             → Raw
   Lit  : (x : U)   → Uel x           → Raw
 \end{spec}
-\caption{The |Raw| data type, or a model of simply-typed lambda expressions without any typing or scoping constraints.}\label{fig:raw}
+\caption{The |Raw| data type, or a model of simply typed lambda expressions without any typing or scoping constraints.}\label{fig:raw}
 \end{shadedfigure}
 
 We do include some typing information in |Raw|s, but it is
@@ -2642,8 +2647,8 @@ in Fig.~\ref{fig:infer-datatype}.
 
 The |Infer| view makes use of the |erase| helper function, which
 returns the \emph{erasure} of a |WT| term. The erasure of a typed term is
-simple the same term with typing information erased. Because |erase| is implemented
-exactly as you would expect, its definition is omitted.
+simply the same term with typing information erased. Because |erase| is implemented
+exactly as expected, its definition is omitted.
 
 
 \begin{shadedfigure}[h]
@@ -2651,7 +2656,7 @@ exactly as you would expect, its definition is omitted.
 erase   : ∀ {Γ τ n} → WT Γ τ n → Raw
 
 data Infer (Γ : Ctx) : Raw → Set where
-  ok    : (n : ℕ) (τ : Uu) (t : WT' Γ τ n)       → Infer Γ (erase t)
+  ok    : {n : ℕ} (τ : Uu) (t : WT' Γ τ n)       → Infer Γ (erase t)
   bad   : {e : Raw}                              → Infer Γ e
 \end{spec}
 \caption{The view on |Raw| lambda terms denoting whether they are well-typed or not.}\label{fig:infer-datatype}
@@ -2672,58 +2677,58 @@ The |infer| algorithm, which provides the |Infer| view and therefore must genera
 \begin{shade}
 \begin{code}
 infer : (Γ : Ctx)(e : Raw) → Infer Γ e
-infer Γ (Lit ty x) = ok 1 (O ty) (Lit {x = ty} x)
+infer Γ (Lit ty x) = ok (O ty) (Lit {x = ty} x)
 \end{code}
 \end{shade}
 
 Of course, a literal on its own is always well-typed, and corresponds to a |WT'| with whatever type the literal has.
-A variable is similarly easy to type check, except that it should not point outside the context, that is, it should
+A variable is similarly easy to type check, except that it should not point outside the context. That is, it should
 have a De Bruijn index smaller than or equal to its depth. Here we look up the variable and return whatever type the
-context says it has, or, if it is out-of-scope, |bad|.
+context says it has, or, if it is out of scope, |bad|.
 
 \begin{shade}
 \begin{code}
 infer Γ (Var x)                    with Γ ! x
-infer Γ (Var .(index p))           | inside σ p    = ok 1 σ (Var p)
+infer Γ (Var .(index p))           | inside σ p    = ok σ (Var p)
 infer Γ (Var .(length Γ + m))      | outside m     = bad
 \end{code}
 \end{shade}
 
-The case for abstractions is well-typed if the body of the lambda is well-typed, under a context extended with the
-type of the variable the lambda binds (indeed, binding a variable adds it to the context for the body of the abstraction,
-its index being 0, since it is the ``most recent'' binding). The type of the abstraction is, as argued above, a function from
-the type of the binding to the type of the body.
+Abstractions are well-typed if the body of the lambda is well-typed, under a context extended with the
+type of the variable the lambda binds. Indeed, binding a variable adds it to the context for the body of the abstraction,
+with index  0, since it is the ``most recent'' binding. The type of the abstraction is, as argued above, a function from
+the type of the binding to the type of the body, |σ => τ| here.
 
 \begin{shade}
 \begin{code}
 infer Γ (Lam σ e)              with infer (σ ∷ Γ) e
-infer Γ (Lam σ .(erase t))     | ok n τ t    = ok _ (σ => τ) (Lam σ t)
+infer Γ (Lam σ .(erase t))     | ok τ t      = ok (σ => τ) (Lam σ t)
 infer Γ (Lam σ e)              | bad         = bad
 \end{code}
 \end{shade}
 
-The application case is the most verbose, since we need to check the type of the applicand (called $e$ in the code), and assuming it
-has an arrow type (otherwise something is wrong), we then have to check that the argument (called $e_1$ in the code) has the same type as
+The application case is the most verbose, since we need to check the type of the applicand (called |e| in the code), and assuming it
+has an arrow type (otherwise something is wrong), we then have to check that the argument (called |e₁| in the code) has the same type as
 the left-hand side of the arrow. If all goes well, we are done.
 
 \begin{shade}
 \begin{code}
 infer Γ (App e e₁)             with infer Γ e
-infer Γ (App .(erase t) e₁)    | ok n (Cont a) t       = bad
-infer Γ (App .(erase t) e₁)    | ok n (O x) t          = bad
-infer Γ (App .(erase t) e₁)    | ok n (τ => τ₁) t      with infer Γ e₁
+infer Γ (App .(erase t) e₁)    | ok (Cont a) t       = bad
+infer Γ (App .(erase t) e₁)    | ok (O x) t          = bad
+infer Γ (App .(erase t) e₁)    | ok (τ => τ₁) t      with infer Γ e₁
 infer Γ (App .(erase t₁) .(erase t₂))    
-                               | ok n (σ => τ) t₁      
-                               | ok n₂ σ' t₂           with σ =?= σ'
+                               | ok (σ => τ) t₁      
+                               | ok σ' t₂            with σ =?= σ'
 infer Γ (App .(erase t₁) .(erase t₂))     
-                               | ok n (.σ' => τ) t₁    
-                               | ok n₂ σ' t₂    
-                               | yes                   = ok _ τ (t₁ ⟨ t₂ ⟩ )
+                               | ok (.σ' => τ) t₁    
+                               | ok σ' t₂    
+                               | yes                 = ok τ (t₁ ⟨ t₂ ⟩ )
 infer Γ (App .(erase t₁) .(erase t₂))    
-                               | ok n (σ => τ) t₁      
-                               | ok n₂ σ' t₂    
+                               | ok (σ => τ) t₁      
+                               | ok σ' t₂    
                                | no                    = bad
-infer Γ (App .(erase t) e₁)    | ok n (τ => τ₁) t      
+infer Γ (App .(erase t) e₁)    | ok (τ => τ₁) t      
                                | bad                   = bad
 infer Γ (App e e₁)             | bad                   = bad
 \end{code}
@@ -2737,12 +2742,12 @@ The code which does all of this can be found in |Metaprogramming.TypeCheck|, the
 It is a fine coincidence
 that the data type |Raw| closely matches the |Term| AST defined
 in the Agda compiler limited to lambda-related constructors, so it is relatively simple to massage the output of |quoteTerm| into
-an element of |Raw|, if possible. The code which does this (mostly the function |term2raw|) is to be found in |Metaprogramming.TypeCheck|. Since the
+an element of |Raw|, if it contains only a lambda expression. The code which does this (mostly the function |term2raw|) is to be found in |Metaprogramming.TypeCheck|. Since the
 conversion code is uninteresting and quite similar to the code presented in Sec.~\ref{sec:autoquote}, it is omitted.
 
 Since we have a conversion function from |Term| to |Raw| at our
 disposal, as well as a type checker, it is tempting to write something
-like the following, |typed1|.
+like  |typed1|.
 
 \ignore{
 \begin{shade}
@@ -2775,7 +2780,8 @@ accept. In |seeTyped1| we can inspect the resulting |WT'| term.
 
 \subsection{Unquoting |WT'|}\label{sec:doing-something-useful}
 
-Conversely, we would also like to construct a term in |WT'| and use the |unquote| keyword to
+Previously we saw how to quote lambda expressions to |WT| and then type check them.
+Conversely, we would also like to be able to construct a term in |WT'| and use the |unquote| keyword to
 turn it back into concrete syntax, otherwise there would not be much practical use in being
 able to do transformations on |WT'| terms.
 
@@ -2854,7 +2860,7 @@ unittest = refl
 \end{shade}
 
 Note that the types are also preserved, since, even though we drop the annotations on the lambda terms when interpreting, we do give |concrete| a
-type signature which reflects the intended type of the lambda term. Therefore, the unit test would have failed if we omitted the |ℕ| annotations on the
+type signature which reflects the intended type of the lambda term. The unit test would have failed if we omitted the |ℕ| annotations on the
 variables, or changed them to another type.
 
 It would be nice to also have included the call to |unquote| inside the definition of |lam2term|, which would result in
@@ -2951,7 +2957,7 @@ equivFact5      = refl
 This transformation can be done in a mechanical way, too. Also the type we
 expect the new function to have can be derived. This is discussed at length by
 Might \cite{might-cps},
- whose implementation was also used as inspiration for this type-safe version. Weirich also presented a version of CPS in Agda during a course in 2009 \cite{weirich-cps}, which also was instructive during these developments.
+ whose implementation was also used as inspiration for this type-safe version. Weirich also presented a version of CPS in Agda during a course in 2009 \cite{weirich-cps}, which  was instructive during these developments.
 
 Reynolds' overview \cite{Reynolds:1993:DC:198112.198114} provides a good source of information on the history of the CPS transformation, which turns out to have been
  independently discovered in many fields. The CPS transformation of lambda terms was apparently first documented  for Lisp programs by Fischer \cite{Fischer:1972:LCS:800235.807077}. More references can be
@@ -2959,7 +2965,7 @@ found in Danvy \emph{et al.} \cite{Danvy:2007:OCT:1317177.1317182}, who present 
 
 \paragraph{Pseudo code}
 We will start by generalising the previous example, and giving an informal definition of the CPS transformation. The code in Fig.~\ref{fig:pseudo-cps} is 
-pseudo-Haskell, and should clarify the rough approach to doing a CPS transformation, before we add visual noise in the form of type safety and termination
+pseudo-Haskell, and should clarify the rough approach to doing a CPS transformation, before we add visual noise in the form of type preservation and termination
 guarantees.
 
 \begin{shadedfigure}[H]
@@ -2981,7 +2987,7 @@ The function |M| adds a continuation parameter to lambda abstractions, and the |
 CPS-converted version of the expression.
 
 In the function |T|, we see that applications are the only constructs which need real modification. Both applicand and argument (|f| and |e| here, respectively) are recursively 
-CPS-transformed, and the recursive call is given new lambda abstractions as the continuation term. These continuations simply bind the CPS-transformed |f| and |e|, called |f'| and |e'| here, and
+CPS transformed, and the recursive call is given new lambda abstractions as the continuation term. These continuations simply bind the CPS-transformed |f| and |e|, called |f'| and |e'| here, and
 apply them as before, but now applying the |cont| continuation term, too. 
 
 To make things more transparent, this pseudo code still uses a named variable representation; the algorithm in this section will finally use the
@@ -3011,8 +3017,10 @@ nothing in the base type case, since the CPS transformation of an atomic value w
 still be the atomic value, and in the arrow case, we transform the left of the arrow, then assume
 that the second argument will be a function from the original result type to our new result type,
 and finally dictate that the resulting function will also return a value in |RT| if given the correct
-first and second arguments. The |Cont| case stands for the type of a continuation function, which is obtained
-by going from the CPS-transformed original return type to the result type |RT|. 
+first and second arguments.
+
+% The |Cont| case stands for the type of a continuation function, which is obtained
+%by going from the CPS-transformed original return type to the result type |RT|. 
 
 \ignore{
 \begin{shade}
@@ -3041,7 +3049,7 @@ If these are then applied to each other, a value of type |RT| will be returned.
 
 \paragraph{The algorithm}
 
-We will now see the type-safe algorithm. Below, it is presented case by case. It should be noted that this is 
+We will now see the type-preserving algorithm. Below, it is presented case by case. It should be noted that this is 
 still not the final version, since the |WT| type also has a size parameter. It is omitted here to keep clutter to a minimum; it will be added later, in Sec.~\ref{ssec:termination-bliss}.
 
 \begin{shade}
@@ -3061,7 +3069,7 @@ the case of variables, some housekeeping needs to be done. We are actually chang
 in the context (by applying |cpsType| to them), and we need to show that the same type, but CPS
 transformed, will be in the same spot as the old type was. Therefore, a proof is given that if some variable with type |σ| is inside the
 environment |Γ|, then it will also be inside the new environment |map cpsType Γ| at the same index, but having value |cpsType σ|. The
-signature of |cpsvar| is given for reference; the proof is trivial.
+signature of |cpsvar| is given for reference; its proof is trivial.
 
 
 \begin{shade}
@@ -3073,11 +3081,11 @@ Tt (Var inpf  )                                cont = cont ⟨ Var (cpsvar inpf)
 \end{spec}
 \end{shade}
 
-The case for lambdas is slightly more involved: When it sees a lambda
+The case for abstractions is slightly more involved: when |T'| sees a lambda
 term, it adds a fresh continuation parameter, having type |Cont t2|,
 and then transforms the body of the lambda term into continuation
 passing style, asking it to invoke |Var 0| on the result, which is the
-newly-introduced continuation parameter. Variables are unchanged,
+newly introduced continuation parameter. Variables are unchanged,
 except that their indices all need updating, since we have introduced
 a new lambda, so all the variables under that new lambda need an
 index-increase of 1. The function |shift1| does this. This is
@@ -3085,7 +3093,7 @@ a special case of a process called \emph{weakening}, which refers to adding
 new variables to the context without changing the semantics of the term. 
 Generalised weakening is implemented in a function called |weak|, which 
 is excluded for brevity. This function adds a variable in an arbitrary position
-of the context, not just the top, as |shift1| does.
+of the context, not just the top, as |shift1| does, and adjusts the De Bruijn indices.
 
 Note that even
 though we are introducing two abstractions, only one is new, since we
@@ -3112,7 +3120,7 @@ Finally, we have the application case. Here, the values of both the applicand an
 converted into CPS.
 
 The transform converts each with |Tt|, and then catches their results in
-newly-created continuations; note that both of the lambda abstractions are
+newly created continuations; note that both of the lambda abstractions are
 continuations.
 
 
@@ -3143,8 +3151,8 @@ We can trivially see that the |shift1| function does nothing to the size of the 
 intuition. As such, we will have to prove, by hand, that the algorithm is structurally recursive on its call graph.
 
 Luckily, Bove and Capretta \cite{bove2005modelling}
-come to the rescue by providing a recipe for this proof. Their method for mechanically taking a non-structurally recursive algorithm and producing an auxiliary data type
-on which the algorithm is structurally recursive (the call graph, basically),  which depends on a proof that the
+come to the rescue by providing a recipe for this proof. Their method for mechanically taking a generally recursive algorithm  and producing an auxiliary data type
+on which the algorithm \emph{is} structurally recursive (the call graph, basically),  which depends on a proof that the
 algorithm terminates on whatever input the user would like to call it on, is perfectly suited to this sort of situation. The curious 
 reader is referred to Bove and Capretta's work for a thorough guide to this useful method.
 
@@ -3154,17 +3162,17 @@ will do the job just fine.
 \begin{shade}
 \begin{spec}
 data TAcc : {Γ : Ctx} {σ : Uu} {n : ℕ} → WT' Γ σ n → Set where
-  TBaseLit      : ∀     {Γ σ x} → TAcc (Lit {Γ} {σ} x)
-  TBaseVar      : ∀     {Γ σ x} → TAcc (Var {Γ} {σ} x)
+  TBaseLit      : ∀     {Γ σ x}     → TAcc (Lit {Γ} {σ} x)
+  TBaseVar      : ∀     {Γ σ x}     → TAcc (Var {Γ} {σ} x)
   TLam          : ∀     {Γ t1 t2 n} {a : WT' (t1 ∷ Γ) t2 n}
-         → TAcc (shift1 (Cont t2) a)
-         → TAcc {Γ} {t1 => t2} (Lam {Γ} t1 a)
+                                    → TAcc (shift1 (Cont t2) a)
+                                    → TAcc {Γ} {t1 => t2} (Lam {Γ} t1 a)
   TApp          : ∀         {Γ σ σ₁ sza szb}
                             {a : WT' Γ (σ => σ₁) sza}
                             {b : WT' Γ σ szb}
-         → TAcc {Γ} {σ => σ₁} a
-         → TAcc (shift1 (σ => σ₁) b)
-         → TAcc (a ⟨ b ⟩)
+                                    → TAcc {Γ} {σ => σ₁} a
+                                    → TAcc (shift1 (σ => σ₁) b)
+                                    → TAcc (a ⟨ b ⟩)
 \end{spec}
 \end{shade}
 
@@ -3194,13 +3202,13 @@ that |Tt| terminates given any |WT'| term, does not terminate either! We also ca
 again, since by the construction of |TAcc| that would give us a data type isomorphic to |TAcc|.
 
 \paragraph{Well-foundedness} As it turns out, there is another trick
-up our sleeve: that of well-founded recursion. What we need to do is show that even though the recursion here is non
+up our sleeve: that of well-founded recursion. What we need to do is show that even though the recursion here is not
 structural, the terms do strictly decrease in size for some measure. Luckily we introduced a measure on |WT'| long ago, the last argument
 of type |ℕ|. Following Mertens' example \cite{mertens2010wellfoundedrecursion}
 we can build a well-foundedness proof for |WT'| in terms of our measure, which we can then add as an extra argument to the
 |allTsAcc| function.  
 The idea of proving well-foundedness in this fashion was first presented in Martin-L\"of type theory by Paulson \cite{Paulson:1986:CRO:20636.20638}; the 
-implementations of the less-than ordering and inverse image relations in Agda's standard library, which we will use, are based on this work.
+implementations of the less-than ordering and inverse image relations in Agda's standard library, which we will use, are based on his work.
 
 The first pitfall we encounter is that we want to define some |Rel A| which we will prove is well-founded
 on our data structure. The problem is that |Rel| is of type |Set -> Set₁| (not exactly, but for the purposes of argument), but |WT'| is not
@@ -3218,7 +3226,7 @@ WTwrap = Σ ℕ (λ n → Σ Uu (λ σ → Σ Ctx (λ Γ → WT' Γ σ n)))
 \end{shade}
 
 What is happening here is that we have defined a few nested dependent pairs, thus ``hiding'' the pi-type, which is what was causing us
-the headache. We will also need a function |to| to convert from |WT'| into our wrapper type, but it is rather mundane. The function |sz|
+the headache. We will also need a function to inject |WT'| into our wrapper type |WTwrap|, called |to|, but it is rather mundane. The function |sz|
 projects the size of the expression from |WTwrap|.
 
 
@@ -3255,10 +3263,10 @@ open import Induction.WellFounded
 \end{code}
 \end{shade}
 
-Now we use a lemma called Inverse-image from the |Induction.WellFounded| standard library module which shows that
+Now we use a lemma called inverse image from the |Induction.WellFounded| standard library module which shows that
 if we have some measure on a carrier, and a way to map some new type to this carrier type, we can
 lift the well-foundedness to the new type. We instantiate this lemma using our |WTwrap| wrapper, less-than on
-naturals, and a function |sz| which simply reads the size-index which we already included in |WT'| in Fig.~\ref{fig:stlc-data}.
+naturals, and a function |sz| which simply reads the size index which we already included in |WT'| in Fig.~\ref{fig:stlc-data}.
 
 \begin{shade}
 \begin{spec}
@@ -3274,6 +3282,7 @@ module <-on-sz-Well-founded where
 \end{shade}
 
 Next we must show that recursion on smaller or equal arguments is also fine, and that shifting the De Bruijn indices does not change the
+relative
 ordering of two |WTpack| elements (|shift-pack-size|). Note that |weak| is the generalised weakening function, which |shift1| uses to add one type variable on top of the context stack
 and increase the De Bruijn indices by 1.
 
@@ -3290,15 +3299,17 @@ and increase the De Bruijn indices by 1.
 
 Note that for this to work, the natural number parameter to |WT'|, which stands for a measure of expression size, is
 necessary, since if this was missing we would have to define a fold on |WT'| resulting in size instead of the simple projection
-which the measure currently is, and my intuition says that would make our
-well-foundedness proofs rather more involved (and possibly non-terminating too, bringing the problem full-circle). This 
+the measure currently is, and my intuition says that this would make our
+well-foundedness proofs rather more involved (and possibly nonterminating too, bringing the problem full-circle). This 
 is the motivation for adding such a |ℕ| parameter to |WT'|. It might be possible to eliminate this parameter from |WT|, but
 it was challenging enough to develop the well-foundedness proof as it is, so this further refinement is left as future work.
 
 
 Once we have these ingredients, we can assemble it all to show that all calls to |Tt| with any |WT'| terminate, and that
-the function that returns this proof itself also terminates. This leads to the following definition of function |Tt| which maps
-expressions and continuations to CPS-style expressions. Our |allTsAcc| function now looks like this, showing only the ``interesting'' clauses.
+the function |allTsAcc|  also terminates. 
+%This leads to the following definition of function |Tt| which maps
+%expressions and continuations to CPS-style expressions. 
+Our |allTsAcc| function now looks like this, showing only the ``interesting'' clauses.
 
 \begin{shade}
 \begin{spec}
@@ -3317,7 +3328,7 @@ expressions and continuations to CPS-style expressions. Our |allTsAcc| function 
 \end{spec}
 \end{shade}
 
-We now can export the final |Tt| translation function as follows, so the user of the library need not worry about
+We now can export the final |Tt| translation function as |T|, so the user of the library need not worry about
 termination proofs. The function |Tt| terminates on all inputs anyway.
 
 \ignore{
@@ -3346,14 +3357,14 @@ shown here, but are presented in the module |Metaprogramming.ExampleCPS|.
 Note that the final implementation of |T| now includes the size parameters on |WT| and the termination predicate defined here.
 As is suggested by all the auxiliary parameters to |T|, such as sized |WT| terms, termination predicates, etc. it was indeed
 less than trivial to get the CPS transformation working in a dependently typed setting. Although the development process was rather
-painful, we do now have a verified CPS transformation. 
+painful, we do now have a verified type-preserving CPS transformation. 
 
 
 
 \section{Example: SKI Combinators}\label{sec:ski}
 
 
-Another interesting application of our new well-typed program transformation framework is the proof
+Another interesting application of our new type preserving program transformation framework is the proof
 of a rather old result in computer science, revisited. This result says that any closed lambda term
 (meaning being typable under the empty environment) can be translated to a simple
 combinatorial logic, having only a few primitives, and application. One such basis exists, using
@@ -3377,10 +3388,10 @@ i     = \ x                   -> x
 \end{shadedfigure}
 
 Note that each of these 3 combinators are equivalent to closed lambda terms, but they form the basic building blocks 
-of the SKI language. Basically, the SKI language is the same as the simply-typed lambda calculus, except without
+of the SKI language. Basically, the SKI language is the same as the simply typed lambda calculus, except without
 the possibility of introducing new lambda abstractions, just the option to use one of these 3 predefined combinators.
 The fact that any closed lambda term can be translated to SKI may seem counter intuitive, but that is all the more
-reason to go ahead and, in the style of programs-as-proofs, prove that one can always translate a closed lambda term into
+reason to go ahead and, in the style of programs as proofs, prove that one can always translate a closed lambda term into
 SKI by defining this translation on the type |Well-typed-closed|. Because Agda is a sound logical framework,
 we will have the guarantee that our function is total, and that the types of the terms are precisely
 preserved, which is a big advantage compared to the textbook implementations of SKI translation one finds written in Haskell,
@@ -3395,7 +3406,7 @@ in Agda. The hand-waving implementation is provided in Fig.~\ref{fig:pseudo-hask
 \begin{shadedfigure}[H]
 \begin{spec}
 compile    : Lambda -> Combinatory
-compile (Var x)        = VarC x
+compile (Var' x)       = VarC x
 compile (Apply t u)    = ApplyC      (compile t) (compile u)
 compile (Lambda x t)   = lambda x    (compile t)
 
@@ -3416,15 +3427,16 @@ construction, we are potentially breaking the variable references,
 since some of them (exactly those in the body of the destroyed lambda)
 will need decrementing.  Also, it sounds difficult to do a check on
 the variable's name to see if we should introduce an |I| or |K| in the
-variable case, but we will see that it is actually not so involved,
-and that if we exploit the same context in the target language as in
-|WT|, it is not so bad.
+variable case, but we will see that it is actually not so bad
+if we exploit the same context in the target language as in
+|WT|.
 
+% hyphenation: http://www.grammarmudge.cityslide.com/articles/article/426348/2805.htm
 \paragraph{Formalisation}
 We will first define a data type |Comb| in Fig.~\ref{fig:comb} which
 captures the SKI combinator language, extended with variables. One
 might be justified in starting to protest at this point, since we are
-introducing non-closedness into the language, but notice that, in the
+introducing nonclosedness into the language, but notice that, in the
 same way as the |WT'| type, we require variables to point to valid
 entries in the context, so that if we have a term of type |Comb []|,
 we know it contains no variables and thus is closed. We need these
@@ -3436,7 +3448,8 @@ Note also that we have as much type safety in |Comb| as we have in |WT'|, on acc
 needing to have sensible types.
 We could have chosen to use an untyped combinator language, and only do type checking 
 after the translation is complete. In fact, type inference for SKI calculus has already been
-researched by Hindley \cite{hindley1969}.
+researched by Hindley \cite{hindley1969}. The way we do it though, we are forced to have all 
+intermediate terms preserve the types.
 
 \ignore{
 \begin{shade}
@@ -3466,15 +3479,15 @@ constructor is less dangerous than it may seem.}\label{fig:comb}
 \end{shadedfigure}
 
 
-The translation of lambda terms into SKI is actually surprisingly (that is, if one is used to spending days grappling
+The translation of lambda terms into SKI presented in Fig.~\ref{fig:compile} is actually surprisingly (that is, if one is used to spending days grappling
 with the Agda compiler to get something seemingly trivial proven) straightforward. Since literals, variables and applications are
 supported, those can just be translated into the |Comb| equivalents without a problem, preserving the input context and type.
 The more complicated case occurs when we encounter a lambda abstraction.
 
 If we were using named representation of STLC, we could write a
-function, call it |lambda|, to be invoked with its corresponding
+function, called |lambda|, to be invoked with its corresponding
 variable name and the SKI-translated body, whenever we encountered an
-abstraction. What we would like it to do is pattern match on this new
+abstraction (our version of |lambda| is in Fig.~\ref{fig:lambda}). What we would like it to do is pattern match on this new
 translated body, and if it encounters a |Var| constructor, check if
 the variable has the same name. If it does, we evidently have
 encountered a $\lambda t . t$ somewhere in the expression, which
@@ -3487,10 +3500,10 @@ applicand and argument, then apply them both to the |S| combinator,
 since that will restore the analogue of the $\lambda x
 . ~s~\left<~t~\right>$ (bearing in mind that initially $s$ and $t$
 might depend on $x$, being expressions and not necessarily atomic
-variables). Note that |S ⟨ s ⟩ ⟨ t ⟩| indeed evaluates to |\ f
+variables). Note that |S ⟨ s' ⟩ ⟨ t ⟩| indeed evaluates to |\ f
 -> \ g -> \ x -> f x (g x)| applied to $s$ then $t$, which gives |\ x
--> s x (t x)| which precisely reflects that we want $s$ applied to
-$z$, and that they each might depend upon $t$.
+-> s' x (t x)| which precisely reflects that we want $s$ applied to
+$t$, and that they each might depend upon $x$.
 
 
 \ignore{
@@ -3512,12 +3525,12 @@ mutual
 \caption{The proof that any |WT'| term can be translated into the |Comb| language.}\label{fig:compile}
 \end{shadedfigure}
 
-Notice in Fig.~\ref{fig:lambda} that when we encounter a variable as the only thing in the body
+In our version of |lambda|, in Fig.~\ref{fig:lambda}, we see that when we encounter a variable as the only thing in the body
 of the lambda, and if it is not the variable which is bound by the lambda under consideration,
-that we decrement the De Bruijn index as promised, by peeling off a |there| constructor off the index-proof.
+we decrement the De Bruijn index as promised, by peeling off a |there| constructor off the index-proof.
 If it is the variable bound by the lambda in question, we can replace the whole lambda expression with the identity
 combinator.
-Note also that the type of the |lambda| function is |Comb → Comb|, so we will never encounter a |Lam| in its result.
+Note also that the type of |lambda| is |Comb → Comb|, so we will never encounter a |Lam| in its result.
 
 
 \begin{shadedfigure}[h]
@@ -3545,7 +3558,7 @@ the context, |_∈_|, but then an additional concept of uniqueness would have be
 De Bruijn representation provide for free. There also exist
 a few methods for directly translating from lambda terms to SKI combinators based only on De Bruijn variable
 identifiers \cite{dolio}, but apart from producing bloated SKI terms (since at least $n$ |K| combinators are introduced if
-the variable's identifier is $n$~-- a sort of $n$-ary constant function is built up), implementing this algorithm
+the variable's index is $n$~-- a sort of $n$-ary constant function is built up), implementing this algorithm
 in a well-typed setting is nearly impossible as a result of the fact that the intermediary terms returned by the 
 recursive calls when abstractions or variables are encountered have radically different (although predictable) types.
 These reasons lead to the belief that the algorithm presented here is the most elegant of the options explored.
@@ -3572,7 +3585,7 @@ produce an SKI term. The function |unitTest1| displays what the end result is.
 
 The resulting terms are sometimes rather unwieldy, as is illustrated
 in the examples provided in the module |Metaprogramming.ExampleSKI|, but this is to be expected,
-since the SKI calculus is obviously not very concise. If more readable terms were desired,
+since the SKI calculus is obviously not very concise. If more readable terms are desired,
  one option to consider is  adding extra combinators, called super-combinators, such as
 the |o| combinator, defined as follows \cite{dolio}.
 
@@ -3639,7 +3652,7 @@ ski2wt (Lit x₁)                = Lit x₁
 \end{shadedfigure}
 
 Note that because |WT'| is
-just as well-typed as the |Comb| type, we are not losing any type safety
+just as strictly typed as the |Comb| type, we are not losing any type safety
 on the way. The function |combsz| which can be seen in the |ski2wt| type signature
 simply calculates the natural representing the size of the final expression in |WT'|. This
 is necessary because the value cannot be inferred.
@@ -3663,8 +3676,7 @@ some implementations \cite{dolio} simply remove all lambda
 abstractions, and when encountering a variable, use the index to
 determine how many |K|'s should be used to produce a Frankensteinian
 indexing term. This is unfavourable for the large terms it generates,
-but also because the return type of the |compile| algorithm is
-predictable, but very changeable.  In the case of the CPS
+but also because the return type of the |compile| algorithm is, though predictable, very changeable.  In the case of the CPS
 transformation, the type of the algorithm was less of a stumbling
 block, but as we saw in this chapter, termination posed rather a
 problem. This is something we take for granted when using dependent
@@ -3680,7 +3692,7 @@ in |Metaprogramming.ExampleSKI|.
 \newpage
 \section{Afterword: Parameters to Modules}\label{sec:universe-parameters}
 
-As promised, we provide here a summary of the parameters to the modules |Datatypes|, |TypeCheck|, |SKI| and |CPS|, because 
+As promised, we provide a summary of the parameters to the modules |Datatypes|, |TypeCheck|, |SKI| and |CPS| here, because 
 these are designed to work with a user-defined universe. Aside from the universe, though, the user is also required to 
 provide a few easy-to-define helper functions. These functions are necessary because invariably, they rely on pattern matching,
 which is something which is only possible if the to-be-used universe \emph{and all of its constructors} are in scope.
@@ -3707,7 +3719,7 @@ Finally, a function which, given an Agda term standing for a basic value, such a
 
  An
 example of implementing such functions and instantiating the parameterised modules is found in |Metaprogramming.ExampleUniverse|. 
-Defining an arbitrary universe should be straightforward after looking at this example. 
+Defining an arbitrary universe should be straightforward after looking at that example. 
 
 
 \chapter{Generic Programming}\label{sec:generic-programming}
@@ -3940,7 +3952,7 @@ Other related work includes the large body of publications in the
 domain of data type generic programming
 \cite{Rodriguez:2008:CLG:1543134.1411301,mcbride2010ornamental}, where we found the
 inspiration to try and implement prior techniques in a
-dependently-typed setting. Especially  work by McBride, \emph{et al.} involving ornamentation and levitation \cite{Chapman:2010:GAL:1863543.1863547} is
+dependently typed setting. Especially  work by McBride, \emph{et al.} involving ornamentation and levitation \cite{Chapman:2010:GAL:1863543.1863547} is
 intriguing, and something which would have been very interesting to do is to embed the data type of 
 data types in Agda and automatically convert existing |data| declarations (which we can inspect) into values of
 this type. This whole step would be unnecessary in a language which supports this \emph{data type of data types} a priori, 
@@ -3950,13 +3962,13 @@ normal programming.
  
 Program transformations and their correctness (by various definitions) have long been a subject of research \cite{Partsch:1983:PTS:356914.356917},
 and given more advanced languages with more powerful generative programming techniques, this will likely prove a continuing trend. 
-For example, Guillemette and Monnier have researched various type-preserving transformations in Haskell, using GADTs \cite{DBLP:conf/haskell/GuillemetteM07,Guillemette200723}. This work has even led 
-to a type-preserving compiler for System~F in Haskell, where the GHC type checker mechanically verifies that each phase of the compiler 
+For example, Guillemette and Monnier have researched various type preserving transformations in Haskell, using GADTs \cite{DBLP:conf/haskell/GuillemetteM07,Guillemette200723}. This work has even led 
+to a type preserving compiler for System~F in Haskell, where the GHC type checker mechanically verifies that each phase of the compiler 
 preserves types properly \cite{DBLP:conf/icfp/GuillemetteM08}. Type preserving CPS transformations have also been studied, for example in Watanabe's
 thesis \cite{watanabe}. His work presents, among other things, a type preserving CPS transformation of De Bruijn-style lambda calculus, implemented in Coq.
 
 As such,
-the contribution made in this project of a type-safe and total translation of simply-typed lambda calculus to a language of SKI combinator calculus,
+the contribution made in this project of a type-safe and total translation of simply typed lambda calculus to a language of SKI combinator calculus,
 as well as the continuation-passing style transformation, are interesting case studies. 
 We have shown that these
 translations are usable in combination with a reflective language, making the process of translation of programs straightforward for 
@@ -4001,7 +4013,7 @@ do all that we would like with the API as it stands are best summarised as follo
  
 %Reflection API limitations:
 \begin{itemize}
-\item One cannot call |unquote| on non-constructor terms,
+\item One cannot call |unquote| on nonconstructor terms,
 i.e. |unquote (lam2term t)| where $t$ is some parameter or variable.
 \item It is impossible to introduce definitions, and therefore also
 impossible to define pattern matching, since pattern matching is only
@@ -4192,7 +4204,7 @@ The \texttt{Metaprogramming} directory contains all the code relating
 to metaprogramming, namely the modules for CPS 
 transformation (\texttt{CPS.agda}), SKI translation (\texttt{SKI.agda}), quoting (\texttt{Auto\-quote.agda}) and type
 checking (\texttt{Type\-Check\-.\-agda}),
- all in the appropriately-named files. Examples of use
+ all in the appropriately named files. Examples of use
 for all the relevant modules are also provided, in the
 \texttt{Example...} modules. The \texttt{Util} folder contains a few
 helper functions. In \texttt{WTWellfounded.agda}, finally, the
