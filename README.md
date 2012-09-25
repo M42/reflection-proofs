@@ -18,4 +18,4 @@ https://denknerd.org
 Using the package
 -------------------
 
-The code included in this repository can be used as a convenient starting point for doing your own reflective development; all of it should compile fine in bleeding edge darcs Agda (currently version 2.3.1). You could conceivably also want to prove the evenness of certain naturals, or maybe do a CPS transformation on some of your lambda expressions. Examples of how to achieve this are given in the modules prefixed with @Examples@, so have a peek how that works there.
+The code included in this repository can be used as a convenient starting point for doing your own reflective development; all of it should compile fine in bleeding edge darcs Agda (currently version 2.3.1). You could conceivably also want to prove the evenness of certain naturals, or maybe do a CPS transformation on some of your lambda expressions. Examples of how to achieve this are given in the modules prefixed with `Example`, so have a peek how that works there.
