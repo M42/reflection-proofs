@@ -653,13 +653,16 @@ disillusioned  reader is advised to take a look at  the Lectures on the \ch by S
 
 \paragraph{Programs as Proofs}
 
-Intuitionistic logic is at the heart of Agda as a proof assistant. Intuitionistic
-logic is similar to classical logic, and works as expected (including implication, conjunction, etc.)
-except for one difference: the axiom $A = \neg \neg A$ is not present. Intuitionistic
-logic is also referred to as constructive logic, since only when one provides a constructive 
-proof of a proposition, is it regarded as a theorem\footnote{In mathematical parlance, \emph{theorem} refers to a true and proven proposition, whereas \emph{nontheorem} refers to a 
-false proposition.}. For that reason,  \emph{reductio ad absurdum} does not yield 
-valid proofs~-- only when a proof term that witnesses the proposition is provided, is it acceptable.
+Intuitionistic logic is at the heart of Agda as a proof assistant. 
+It
+is similar to classical logic, and works as expected (including implication, conjunction, etc.),
+but there is a big difference:  $A = \neg \neg A$ is not a theorem\footnote{In mathematical parlance, a \emph{theorem} is a true and proven proposition, whereas  a \emph{nontheorem} is a
+false proposition.}. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+In intuitionistic
+logic, only once one provides a constructive 
+proof of a proposition, is it regarded as a theorem.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 By the \ch, propositions are types. A logical proposition, such as $a => b$ translates to
 a type |a -> b|. Now, $a => b$ is a theorem if and only if the type |a -> b| is inhabited.  One of the most intuitive
