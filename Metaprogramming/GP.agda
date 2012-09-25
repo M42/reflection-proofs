@@ -93,7 +93,7 @@ cons2name : (c : Col) → Name
 cons2name R = quote R
 cons2name G = quote G
 cons2name B = quote B
-cons2name _ = ?
+cons2name _ = {!!}
 
 -- this is something we need to do because the unquote keyword cannot
 -- handle terms, just constructors. kind-of logical since the process isn't
@@ -117,7 +117,7 @@ unquote' unknown = {!!}
 
 mappingFrom : (c : Col)
                 → {pf2 : isIn 0 (length (constructors (dt (definition (quote Col)) tt))) (cons2name c) (  constructors (dt (definition (quote Col)) tt)) }
-                → Fin 3
+                → Fin 4
 mappingFrom c {pf2} = indexIn 0 (length (constructors (dt (definition (quote Col)) tt))) (cons2name c) ((constructors (dt (definition (quote Col)) tt))) pf2
 
 _!_ : {n : ℕ} {A : Set} → Vec A n → Fin n → A
@@ -125,7 +125,7 @@ _!_ : {n : ℕ} {A : Set} → Vec A n → Fin n → A
 [] ! ()
 (x ∷ vs) ! suc f = vs ! f
 
-mappingTo : Fin 3 → Col
+mappingTo : Fin 4 → Col
 mappingTo f with fromList (constructors (dt (definition (quote Col)) tt))
 ... | a     with Data.Vec.map (λ name → (def name [])) a
 ... | b     with b ! f
@@ -149,7 +149,7 @@ record usefulProofs : Set₁ where
     isin : {c : Col} → isIn 0 (length (constructors (dt (definition (quote Col)) tt))) (cons2name c) (constructors (dt (definition (quote Col)) tt))
   
 -- will need something like a record with the necessary proofs (like isIn)
-Iso-Col-Fin : {up : usefulProofs} → Iso (Col) (Fin 3)
+Iso-Col-Fin : {up : usefulProofs} → Iso (Col) (Fin 4)
 Iso-Col-Fin {up} = record {
     from    = λ c → mappingFrom c {usefulProofs.isin up {c}}
   ; to      = mappingTo

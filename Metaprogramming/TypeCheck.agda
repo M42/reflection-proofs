@@ -132,21 +132,21 @@ term2raw unknown           {()}
 -- it fails, in which case we return a `bad`.
 -- see thesis for detailed explanation.
 infer : (Γ : Ctx)(e : Raw) → Infer Γ e
-infer Γ (Lit ty x) = ok 1 (O ty) (Lit {x = ty} x)
+infer Γ (Lit ty x) = ok (O ty) (Lit {x = ty} x)
 infer Γ (Var x) with Γ ! x
-infer Γ (Var .(index p))      | inside σ p = ok 1 σ (Var p)
+infer Γ (Var .(index p))      | inside σ p = ok σ (Var p)
 infer Γ (Var .(length Γ + m)) | outside m = bad
 infer Γ (App e e₁) with infer Γ e
-infer Γ (App .(erase t) e₁) | ok n (Cont a) t = bad
-infer Γ (App .(erase t) e₁) | ok n (O x) t = bad
-infer Γ (App .(erase t) e₁) | ok n (τ => τ₁) t with infer Γ e₁
-infer Γ (App .(erase t₁) .(erase t₂)) | ok n (σ => τ) t₁   | ok n₂ σ' t₂ with σ =?= σ'
-infer Γ (App .(erase t₁) .(erase t₂)) | ok n (.σ' => τ) t₁ | ok n₂ σ' t₂ | yes = ok _ τ (t₁ ⟨ t₂ ⟩ )
-infer Γ (App .(erase t₁) .(erase t₂)) | ok n (σ => τ) t₁   | ok n₂ σ' t₂ | no  = bad
-infer Γ (App .(erase t) e₁) | ok n (τ => τ₁) t | bad = bad
+infer Γ (App .(erase t) e₁) | ok (Cont a) t = bad
+infer Γ (App .(erase t) e₁) | ok (O x) t = bad
+infer Γ (App .(erase t) e₁) | ok (τ => τ₁) t with infer Γ e₁
+infer Γ (App .(erase t₁) .(erase t₂)) | ok (σ => τ) t₁   | ok σ' t₂ with σ =?= σ'
+infer Γ (App .(erase t₁) .(erase t₂)) | ok (.σ' => τ) t₁ | ok σ' t₂ | yes = ok τ (t₁ ⟨ t₂ ⟩ )
+infer Γ (App .(erase t₁) .(erase t₂)) | ok (σ => τ) t₁   | ok σ' t₂ | no  = bad
+infer Γ (App .(erase t) e₁) | ok (τ => τ₁) t | bad = bad
 infer Γ (App e e₁) | bad = bad
 infer Γ (Lam σ e) with infer (σ ∷ Γ) e
-infer Γ (Lam σ .(erase t)) | ok n τ t = ok _ (σ => τ) (Lam σ t)
+infer Γ (Lam σ .(erase t)) | ok τ t = ok (σ => τ) (Lam σ t)
 infer Γ (Lam σ e) | bad = bad
 
 
@@ -154,7 +154,7 @@ infer Γ (Lam σ e) | bad = bad
 -- type checking.
 typechecks : Raw → Set
 typechecks r with infer [] r
-typechecks .(erase t) | ok n τ t   = ⊤
+typechecks .(erase t) | ok   τ t   = ⊤
 typechecks r          | bad        = ⊥
 
 
@@ -162,20 +162,20 @@ typechecks r          | bad        = ⊥
 -- give the type of the expression.
 typeOf : (r : Raw) → {pf : typechecks r} → U'
 typeOf r {pf} with infer [] r
-typeOf .(erase t) | ok n τ t = τ
+typeOf .(erase t) | ok   τ t = τ
 typeOf r {()}     | bad
 
 -- return the size of a well-typed term, similar method as typeOf
 sizeOf : (r : Raw) → {pf : typechecks r} → ℕ
 sizeOf r {pf} with infer [] r
-sizeOf .(erase t) | ok n τ t = n
+sizeOf .(erase t) | ok {n} τ t = n
 sizeOf r {()} | bad
 
 -- convert a Raw to a WT, assuming type checking worked. This way we
 -- prevent needing to return a `bad`.
 raw2wt : (r : Raw) → {pf : typechecks r} → Well-typed-closed (typeOf r {pf}) (sizeOf r {pf})
 raw2wt r {pf} with infer [] r
-raw2wt .(erase t) | ok n₁ τ t = t
+raw2wt .(erase t) | ok τ t = t
 raw2wt r {()}     | bad
 
 -- given a WT, return the concrete Agda type associated with it. This is

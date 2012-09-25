@@ -158,7 +158,7 @@ erase (Lit {_}{σ} x)  = Lit σ x
 -- terms such as App (Var 0) (Var 0) without any context (one may only introduce
 -- variables inside abstractions, otherwise scoping breaks).
 data Infer (Γ : Ctx) : Raw → Set where
-  ok    : (n : ℕ)(τ : U') (t : WT Γ τ n)  → Infer Γ (erase t)
+  ok    : {n : ℕ}(τ : U') (t : WT Γ τ n)  → Infer Γ (erase t)
   bad   : {e : Raw}              → Infer Γ e
 
 -- We capture that two sets are isomorphic using the following record.
