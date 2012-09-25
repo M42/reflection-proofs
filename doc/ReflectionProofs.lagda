@@ -317,14 +317,14 @@ is developed at the Chalmers University of Technology
 \cite{norell:thesis}; thanks to the \ch, it is
 both a functional\footnote{Functional as in practically usable.}
 functional\footnote{Functional as in Haskell.} programming language
-and a framework for intuitionistic logic. It is comparable with
+and a proof assistant for intuitionistic logic. It is comparable with
 Coquand's calculus of constructions, the logic behind Coq \cite{DBLP:journals/iandc/CoquandH88}. Coq is
-similarly both a programming language and an intuitionistic logic
-framework.
+similarly both a programming language and proof assistant.
+
 
 In informal terms, the \ch  states that there is a correspondence
 between types and propositions on the one hand, and programs and proofs on the other hand \cite{sorensen1998lectures}. The
-interpretation of a programming language as a logic framework is that types express theorems which 
+interpretation of a programming language as a logic is that types express theorems which 
 can be proven by providing an implementation.  This correspondence is outlined further in Sec.~\ref{sec:plandpa}.
 
 In Agda, types of functions are allowed
@@ -641,7 +641,7 @@ tricks, the utility or sense of which might not at first be apparent.
 
 \section{A Programming Language \emph{and} Proof Assistant}\label{sec:plandpa}
 
-It has already been briefly mentioned that Agda is both a logical framework and a programming language,
+It has already been briefly mentioned that Agda is both a proof assistant and a programming language,
 as a result of the \ch. This correspondence lays down a relationship between programs as proofs and
 types as theorems. 
 
@@ -653,7 +653,7 @@ disillusioned  reader is advised to take a look at  the Lectures on the \ch by S
 
 \paragraph{Programs as Proofs}
 
-Intuitionistic logic is at the heart of Agda as a logical framework. Intuitionistic
+Intuitionistic logic is at the heart of Agda as a proof assistant. Intuitionistic
 logic is similar to classical logic, and works as expected (including implication, conjunction, etc.)
 except for one difference: the axiom $A = \neg \neg A$ is not present. Intuitionistic
 logic is also referred to as constructive logic, since only when one provides a constructive 
@@ -676,7 +676,7 @@ a proof for |⊥| can never be constructed. Other equivalents are |_∧_| and |_
 are inhabited. Disjunction (a.k.a. the |_∨_| operator in logic) translates to the |_⊎_| data type (known as @Either@ in Haskell), which has constructors for left \emph{or} right.
 
 Now that we have an intuition for the \ch, we can continue
-looking at various aspects of Agda as a logical framework. One point
+looking at various aspects of Agda as a proof assistant. One point
 worth noting is that in Agda, one directly manipulates and constructs
 proof objects in the
 same language as is used to express computation. In many other
@@ -689,7 +689,7 @@ based on intuitionistic logic, therefore the same concepts  hold.
 
 \paragraph{Termination} In the previous section, the necessity of defining total functions was
 mentioned. This is no arbitrary choice, for without this property,
-Agda would not be a sound logical framework. 
+Agda's logic would not be sound.
 Not enforcing the termination aspect of totality would make it easy
 to define a proof of falsity, as we have
 done in the function |falsity|. 
@@ -3395,7 +3395,7 @@ of the SKI language. Basically, the SKI language is the same as the simply typed
 the possibility of introducing new lambda abstractions, just the option to use one of these 3 predefined combinators.
 The fact that any closed lambda term can be translated to SKI may seem counter intuitive, but that is all the more
 reason to go ahead and, in the style of programs as proofs, prove that one can always translate a closed lambda term into
-SKI by defining this translation on the type |Well-typed-closed|. Because Agda is a sound logical framework,
+SKI by defining this translation on the type |Well-typed-closed|. Because Agda is a sound proof assistant,
 we will have the guarantee that our function is total, and that the types of the terms are precisely
 preserved, which is a big advantage compared to the textbook implementations of SKI translation one finds written in Haskell,
 where there is nothing that says those functions cannot fail, except possibly a proof on paper. We prefer a machine-checked proof
@@ -3941,7 +3941,7 @@ make the system truly useful. }.
 \item it is neither strictly static nor run time, but compile time. It behaves much like a 
   static system (one which produces an object program, as does for example YAcc \cite{johnson1975yacc})
   would, but does not produce intermediate code which might be modified later by the user.
-  Note that this fact is essential for Agda to remain a sound logical framework. 
+  Note that this fact is essential for Agda to remain sound.
 \item It is homogeneous, because a representation of the object language lives inside the metalanguage (as a native
   data type), 
 \item it is only two-stage: we cannot as yet produce an object program which is itself a metaprogram. This is
