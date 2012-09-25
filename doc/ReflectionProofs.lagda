@@ -16,6 +16,9 @@
 
 %%%%% microtype with settings.
 \usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
+
+
+\microtypecontext{spacing=nonfrench}
 %\newcommand{\microtypesetup}[1]{}
 %\usepackage{todonotes}
 \usepackage{draftwatermark}
@@ -2195,7 +2198,7 @@ The attentive reader will remember that we previously studied a system capable o
 quoting concrete Agda to a simple user-defined AST. Would that not be perfectly suited to quoting to 
 the |BoolExpr| type used here? This turns out to be the case: we exploit this possibility in the rest of this chapter.
 
-\subsection{An Aside: Real-world Example of |Autoquote|}\label{sec:autoquote-example}
+\subsection{An Aside: Real-world Example of Automatic Quoting}\label{sec:autoquote-example}
 
 The process of quoting to a |BoolExpr n| outlined in Sec.~\ref{sec:addrefl}
 quickly becomes an ugly mess, with functions checking properties of an expression (such
@@ -4089,7 +4092,7 @@ was modified to include type annotations on lambda abstractions. See Sec.~\ref{a
 
 
 
-\section{Annotating $\lambda$ Abstractions with Type}\label{appendix:lambda-types}
+\section{Annotating Lambda Abstractions with Type}\label{appendix:lambda-types}
 
 As mentioned in Sec.~\ref{sec:thebasics} it was necessary to slightly modify the
 representation of |Term|s that the reflection system returns to the user. What was
