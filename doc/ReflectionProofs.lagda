@@ -182,10 +182,10 @@ open import Data.List hiding (_∷ʳ_)
 \begin{abstract}
 This project explores the recent addition to Agda enabling
 \emph{reflection}, in the style of Lisp, MetaML, and Template
-Haskell. It illustrates several applications of reflection that arise
+Haskell. It illustrates several possible applications of reflection that arise
 in dependently typed programming, and details the limitations of the
 current implementation of reflection. Examples of type-safe metaprograms
-are given, that illustrate the power of reflection coupled with a dependently 
+are given that illustrate the power of reflection coupled with a dependently 
 typed language. Among other things the
 limitations inherent in having |quote| and |unquote| implemented as
 keywords are highlighted. The fact that lambda terms are returned without
@@ -357,7 +357,7 @@ data Natural : Set where
 
 The definition of naturals here looks a lot like the GADT (generalised algebraic
 data type \cite{citeulike:2082722}) rendition in Haskell would; this is no coincidence. Notice that we have to define that |Natural| is of type
-|Set|. In Agda, |Set| is the type of types: types are themselves also simply values.
+|Set|. In Agda, |Set| is the type of types: types are also simply values.
 
  Just as in Haskell,
 we can also use pattern matching to do operations on natural numbers. Let us look 
@@ -390,7 +390,7 @@ data List' (A : Set) : Set where
 \end{shade}
 
 The first thing to note is that we are allowed to use Unicode symbols
-for function and constructor names~-- the combination of mixfix and Unicode make Agda
+for function and constructor names~-- the combination of mixfix and Unicode makes Agda
 very liberal in what is accepted as an identifier.
 The next thing to note is that the |List| data type is parameterised by
 an argument, |A|, of type |Set|. Recall that  |Set| is the type of types, 
@@ -432,8 +432,8 @@ functions cause a dictionary to be passed around implicitly. In the |head₁| ex
 give the type of the elements of the list, since Agda can infer this information from
 whatever list we pass.
 
-\paragraph{Totality} Much as we would like, this definition of |head₁| still will not be accepted by Agda. Another
-concept is that of \emph{totality}: a function is \emph{total} when it is both terminating
+\paragraph{Totality} In spite of our enthusiasm, this definition of |head₁| still will not be accepted by Agda. Another
+important concept is that of \emph{totality}: a function is \emph{total} when it is both terminating
 and defined on all inputs. All functions are required to be total. Termination is checked by making sure that recursive calls are always 
 done on \emph{structurally smaller} arguments~-- as is the case in the addition example.
 Furthermore, a function is considered to be defined on all inputs when the patterns it matches on
@@ -668,8 +668,8 @@ a proof of $A$.
 
 Keeping this correspondence in mind, we can give analogues of mathematical logic in type theory. The trivial theorem, |true|, translates to 
 the type |⊤|, which has one inhabitant, |tt|. The simplest nontheorem |false| translates to |⊥|, the type with no inhabitants. Therefore,
-a proof for |⊥| can never be constructed. Other equivalents are |_∧_| and |(_×_)|, which is only proven if both left and right components
-are inhabited. Disjunction (a.k.a. the |_∨_| operator in logic) translates to the |_⊎_| data type (known as @Either@ in Haskell), which has constructors for left or right.
+a proof for |⊥| can never be constructed. Other equivalents are |_∧_| and |_×_| (@Pair@ in Haskell), which are only proven if both left and right components
+are inhabited. Disjunction (a.k.a. the |_∨_| operator in logic) translates to the |_⊎_| data type (known as @Either@ in Haskell), which has constructors for left \emph{or} right.
 
 Now that we have an intuition for the \ch, we can continue
 looking at various aspects of Agda as a logical framework. One point
@@ -2326,7 +2326,7 @@ concrete again. As such it can be evaluated as if it were code the
 programmer had written directly. In Agda the reflection happens at
 compile time, allowing for the strong static typing we have come to know and love.
 If run time reflection were possible, any program compiled with Agda would need to
-include the complete typing system, a problem which doesn't exist in Lisp, for example,
+include the complete typing system, a problem which does not exist in Lisp, 
  since it is dynamically typed, which makes run time reflection possible. In Agda, therefore,
 a compromise of sorts is required.
 
@@ -2338,8 +2338,8 @@ automation of tasks otherwise requiring
   Dictionary, boilerplate is defined as \emph{``standardised pieces of
     text for use as clauses in contracts or as part of a computer
     program''}.} code, such as 
-embedding-projection function pairs for generic programming. For example, this is demonstrated 
-by Norell and Jansson \cite{norell2004prototyping}.
+embedding-projection function pairs for generic programming. One such example is due to
+ Norell and Jansson \cite{norell2004prototyping}.
 
 
 Clearly, the technique is a very useful one, but it does have a conspicuous cumbersomeness
@@ -2504,7 +2504,7 @@ data WT' : Ctx → Uu → ℕ → Set where
 
 The first thing to notice is that all terms in |WT'| are annotated with
 a context, a type (the outer type of
-the lambda expression), and a size.  The size is an arbitrary measure which should be strictly increasing
+the lambda expression), and a size.  The size is an arbitrary measure which should be strictly larger
 for terms which are structurally larger. This will become useful later, when we need to show that certain functions
 preserve the size of terms, but other than that the size has no interesting meaning. It is tempting to make the size parameter
 implicit, in the hope that this will hide a lot of clutter. Unfortunately, in most of the functions in this chapter,
@@ -2600,8 +2600,8 @@ of type |τ|.
 There is also a |Lit| constructor, for introducing literal values (such as the number 5) into expressions. Among other things, this is useful for
 testing purposes. We will explain the other elements present in |Lit|, such as the |O|-constructor and the |Uel| function, in Sec.~\ref{sec:doing-something-useful}.
 
-This way, terms of type |WT'| can only be constructed if they are well-scoped, thanks to the proofs |τ ∈ Γ| in the variable constructors. They are also
-guaranteed to be well-typed, thanks to all the terms being required to ``fit'' (for example in the outer types of lambda abstractions and applications).
+Given these constructors, terms of type |WT'| can only be instantiated if they are well-scoped, thanks to the proofs |τ ∈ Γ| in the variable constructors. They are also
+guaranteed to be well-typed, because all the terms are required to ``fit'' (for example in the outer types of lambda abstractions and applications).
 
 \subsection{Inferring Types}\label{ssec:inferring-types}
 
@@ -2633,7 +2633,7 @@ recursion is allowed by default. The difficulty is that the unification algorith
 use of general recursion. This is in fact a topic of research in its own right, and therefore outside the scope
 of this project \cite{DBLP:journals/jfp/McBride03}.
 
-We choose instead to use the relatively straightforward structurally recursive algorithm for type checking lambda terms
+We choose instead to use the relatively straightforward, structurally recursive algorithm for type checking lambda terms
 presented in Norell's tutorial on Agda \cite{Norell:2009:DTP:1481861.1481862}. This algorithm was adapted from McBride's work in Epigram \cite{McBride:2004:EPP:2162138.2162141}.
 The function |infer|~-- defined in the following paragraph, incrementally~-- 
 provides a view on |Raw| lambda terms showing whether they are
@@ -2666,7 +2666,7 @@ in |WT'|; we have already agreed that if a term can be
 represented in |WT'|, it must be both well-scoped and well-typed. Moreover, this correspondence is
 enforced by defining the view on |erase t|, the erasure of |t|, as opposed to an arbitrary |Raw| term. 
 
-The |infer| algorithm, which provides the |Infer| view and therefore generates
+The |infer| algorithm, which provides the |Infer| view and therefore must generate
 |WT'| terms corresponding to  |Raw| terms, is presented here, in sections.
 
 \begin{shade}
@@ -2708,7 +2708,7 @@ the left-hand side of the arrow. If all goes well, we are done.
 
 \begin{shade}
 \begin{code}
-infer Γ (App e e₁) with infer Γ e
+infer Γ (App e e₁)             with infer Γ e
 infer Γ (App .(erase t) e₁)    | ok n (Cont a) t       = bad
 infer Γ (App .(erase t) e₁)    | ok n (O x) t          = bad
 infer Γ (App .(erase t) e₁)    | ok n (τ => τ₁) t      with infer Γ e₁
@@ -2742,7 +2742,7 @@ conversion code is uninteresting and quite similar to the code presented in Sec.
 
 Since we have a conversion function from |Term| to |Raw| at our
 disposal, as well as a type checker, it is tempting to write something
-like the following, |typedgoal1|.
+like the following, |typed1|.
 
 \ignore{
 \begin{shade}
@@ -2753,23 +2753,23 @@ open TC
 }
 \begin{shade}
 \begin{code}
-testgoal1 : Raw
-testgoal1 = term2raw (quoteTerm λ (b : ℕ → ℕ) → (λ (x : ℕ) → b x))
+testgoal1   : Raw
+testgoal1   = term2raw (quoteTerm λ (b : ℕ → ℕ) → (λ (x : ℕ) → b x))
 
-typedgoal1 : Well-typed-closed (typeOf testgoal1) _
-typedgoal1 = raw2wt testgoal1
+typed1      : Well-typed-closed (typeOf testgoal1) _
+typed1      = raw2wt testgoal1
 
-seeTypedgoal1 : typedgoal1 ≡
+seeTyped1 : typed1 ≡
        Lam      (O Nat => O Nat)
                 (Lam      (O Nat)
                           (Var (there here) ⟨ Var here ⟩))
-seeTypedgoal1 = refl
+seeTyped1 = refl
 \end{code}
 \end{shade}
 
 What we now have, is an automatic quoting of lambda terms into well-typed |WT'| terms. Note that we are required to annotate the binders
 with types, because otherwise the |quoteTerm| keyword will return a lambda term with |unknown| as the type annotation, which our type checker will not
-accept. In |seeTypedgoal1| we can inspect the resulting |WT'| term.
+accept. In |seeTyped1| we can inspect the resulting |WT'| term.
 
 
 
@@ -2845,8 +2845,8 @@ Once we have these functions, it is easy to introduce a concrete function from a
 
 \begin{shade}
 \begin{code}
-concrete :          lam2type typedgoal1
-concrete = unquote (lam2term typedgoal1)
+concrete :                  lam2type      typed1
+concrete = unquote     (    lam2term      typed1)
 
 unittest : concrete ≡ λ (a : ℕ → ℕ) → λ (b : ℕ) → a b
 unittest = refl
