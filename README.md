@@ -16,6 +16,11 @@ Paul van der Walt
 https://denknerd.org
 
 Using the package
--------------------
+-----------------
 
 The code included in this repository can be used as a convenient starting point for doing your own reflective development; all of it should compile fine in bleeding edge darcs Agda (currently version 2.3.1). You could conceivably also want to prove the evenness of certain naturals, or maybe do a CPS transformation on some of your lambda expressions. Examples of how to achieve this are given in the modules prefixed with `Example`, so have a peek how that works there.
+
+Note on compiler modifications
+------------------------------
+
+At the time of writing, the code presented here does not work as advertised: a slightly modified version of the Agda compiler is required. Why this is needed, and what modifications are involved, is explained in detail in the [thesis](https://github.com/downloads/toothbrush/reflection-proofs/ReflectionProofs-draft.pdf) this code supports – please have a look at Appendix A.1 there before telling me my code doesn't compile.
