@@ -139,7 +139,6 @@ open import Data.List hiding (_∷ʳ_)
 \newcommand{\HRule}{\noindent\rule{\linewidth}{1.5pt}}
 \newcommand{\mytitle}{Reflection in Agda}
 \newcommand{\chicken}{img/mork40d-chicken-temp.png}
-\renewcommand{\chicken}{please}
 \title{\mytitle}
 %%\institute{
 %%\href{mailto:paul@@denknerd.org}{\nolinkurl{paul@@denknerd.org}}, \href{mailto:W.S.Swierstra@@uu.nl}{\nolinkurl{W.S.Swierstra@@uu.nl}}\\
