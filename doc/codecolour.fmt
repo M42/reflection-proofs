@@ -1,8 +1,6 @@
 %%% needed packages.
 
 \usepackage{bm}
-\usepackage{color}
-\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
 
 \definecolor{bordeaux}{rgb}{0.8,0.02,0.27}
 \colorlet{darkbordeaux}{bordeaux!65!black}

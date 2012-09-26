@@ -1,6 +1,8 @@
 \documentclass[a4paper]{report}
 %\documentclass[a4paper]{llncs}
 
+\usepackage{color}
+\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
 
 %include polycode.fmt
 %if style == newcode

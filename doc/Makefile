@@ -1,6 +1,6 @@
 include agda_src.mk
 
-LHSFILE=ReflectionProofs.lagda#$(wildcard *.lagda)
+LHSFILE=$(wildcard *.lagda)
 TEXFILE=$(LHSFILE:.lagda=.tex)
 PDF=$(TEXFILE:.tex=.pdf)
 FMTS=$(wildcard *.fmt)
