@@ -29,6 +29,7 @@
 \usepackage{dirtree}
 \usepackage{subfigure}
 \usepackage{xspace}
+\usepackage{textcomp}
 \usepackage[grumpy]{gitinfo}
 
 
@@ -139,9 +140,11 @@ open import Data.List hiding (_∷ʳ_)
   linkcolor=black,
   urlcolor=DarkBlue}
   
-\author{Paul van der Walt \and Wouter Swierstra}
 \date{\today}
+\newcommand{\HRule}{\noindent\rule{\linewidth}{1.5pt}}
 \newcommand{\mytitle}{Reflection in Agda}
+\newcommand{\chicken}{img/mork40d-chicken-temp.png}
+\renewcommand{\chicken}{please}
 \title{\mytitle}
 %%\institute{
 %%\href{mailto:paul@@denknerd.org}{\nolinkurl{paul@@denknerd.org}}, \href{mailto:W.S.Swierstra@@uu.nl}{\nolinkurl{W.S.Swierstra@@uu.nl}}\\
@@ -153,30 +156,29 @@ open import Data.List hiding (_∷ʳ_)
 \begin{document}
 \setcounter{tocdepth}{1}
 
-%TODO make a fancy title page
 \begin{titlepage}
 %% Inspired by an example in the LaTeX Companion Second Edition
 %% page 858
-\newcommand{\HRule}{\noindent\rule{\linewidth}{1.5pt}}
-\vspace*{\stretch{1}}
 \HRule
 \begin{flushright}
-
-\LARGE Paul van der Walt <\href{mailto:paul@@denknerd.org}{\nolinkurl{paul@@denknerd.org}}>\\
-\Large \textsc{Supervisors:} Wouter Swierstra and Johan Jeuring \\[5mm]
-\Huge \textbf{\mytitle}
-\\[2mm]
-\normalsize MSc thesis Computing Science\\
-\normalsize ICA-3120805\\
-\normalsize rev. \texttt{\href{\ghloc/commit/\gitHash}{\gitAbbrevHash}}, \today
+\Huge \textbf{\mytitle}\\
+\LARGE Paul van der Walt\\%
+%\hfill\textless\href{mailto:paul@@denknerd.org}{{paul@@denknerd.org}}\textgreater\\
+\begin{center}%
+\IfFileExists{\chicken}{\includegraphics[width=0.9\textwidth]{\chicken}}{\fbox{\phantom{\rule{0.9\textwidth}{0.9\textwidth}}}}%
+\end{center}
+%\\[2mm]
+\large {[}\emph{Supervisors}{]} Wouter Swierstra and Johan Jeuring \\%[5mm]
+\large M.Sc. thesis Computing Science\\
+\large ICA-3120805\\
+\large rev. \texttt{\href{\ghloc/commit/\gitHash}{\gitAbbrevHash}}, \today
 \end{flushright}
 \HRule
-\vspace*{\stretch{2}}
+\vfill
 \begin{center}
-\IfFileExists{img/uusol-links.pdf}{\includegraphics[width=8cm]{img/uusol-links.pdf}}{\Large Utrecht University}
+\IfFileExists{img/uusol-links.pdf}{\includegraphics[width=6.5cm]{img/uusol-links.pdf}}{\Large Utrecht University}
 \vskip 3mm
-{\large
-  Department of Computing Science}
+{\large Department of Computing Science}
 \end{center}
 \end{titlepage}
 
