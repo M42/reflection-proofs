@@ -29,7 +29,7 @@
 \usepackage{dirtree}
 \usepackage{subfigure}
 \usepackage{xspace}
-\usepackage{textcomp}
+\usepackage{textcomp} % text-mode <> characters
 \usepackage[grumpy]{gitinfo}
 
 
