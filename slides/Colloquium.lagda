@@ -181,36 +181,22 @@ someTauto    = soundness rep _
 but duplication!!
 
 
+\begin{spec}
+someTauto2   : (p : Bool)         → P (p ∨ ¬ p)
+someTauto2   = quoteGoal e in (HOLE 0)
+\end{spec}
+
+\begin{spec}
+e ≡ pi (... Bool...) -- intro variable p
+    (def So (arg (def _∨_ (   arg (var 0 []) ∷
+                              arg (def ¬_  (arg     (var 0 [])
+                              ∷ [])) ∷ [])) ∷ []))
+\end{spec}
+
 \begin{code}
 someTauto2   : (p : Bool)         → P (p ∨ ¬ p)
-someTauto2   = quoteGoal e in {!!}
+someTauto2   = quoteGoal e in proveTautology e
 \end{code}
-pi
-(arg visible
- relevant
- (el (lit 0)
-  (def Data.Bool.Bool List.[])))
-(el (lit 0)
- (def Proofs.Util.Types.So
-  (arg visible
-   relevant unknown
-   List.∷
-   arg visible
-   relevant
-   (def Data.Bool._∨_
-    (arg visible
-     relevant
-     (var 0 List.[])
-     List.∷
-     arg visible
-     relevant
-     (def Data.Bool.¬_
-      (arg visible
-       relevant
-       (var 0 List.[])
-       List.∷ List.[]))
-     List.∷ List.[]))
-   List.∷ List.[])))
 
 \begin{frame}
   \frametitle{Decision Function}
