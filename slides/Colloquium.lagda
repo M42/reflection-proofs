@@ -43,7 +43,8 @@ open import Data.Nat
 open import Data.Empty
 open import Data.Unit
 open import Data.Fin hiding (_+_)
-open import Data.Vec
+open import Data.Vec hiding (_∈_)
+open import Data.List
 open import Data.Bool renaming (not to ¬_)
 open import Proofs.Util.Handy
 open import Proofs.Util.Types
@@ -198,6 +199,100 @@ someTauto2   : (p : Bool)         → P (p ∨ ¬ p)
 someTauto2   = quoteGoal e in proveTautology e
 \end{code}
 
+
+
+\ignore{
+\begin{code}
+
+open import Data.Sum
+open import Data.Product
+open import Reflection
+open import Metaprogramming.Autoquote renaming (_#_↦_ to _\#_↦_)
+
+\end{code}
+}
+autoquote, another contribution.
+\begin{code}
+boolTbl : Table BoolIntermediate
+boolTbl = (Atomic ,
+                  2 \# (quote _∧_      ) ↦ And
+            ∷     2 \# (quote _∨_      ) ↦ Or
+            ∷     1 \# (quote  ¬_      ) ↦ Not
+            ∷     0 \# (quote true     ) ↦ Truth
+            ∷     0 \# (quote false    ) ↦ Falsehood
+            ∷     2 \# (quote _⇒_      ) ↦ Imp ∷ [])
+
+term2bool_auto     : (t : Term)
+                   → {pf : convertManages boolTbl t}
+                   → BoolIntermediate
+term2bool_auto t {pf} = doConvert boolTbl t {pf}
+\end{code}
+\ignore{
+\begin{code}
+open import Metaprogramming.ExampleUniverse
+open DT renaming (U' to Uu)
+open import Metaprogramming.Util.Equal
+\end{code}
+}
+
+
+* refresher: what is De Bruijn representation
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{c||c}
+    Named & De Bruijn \\
+    \hline
+    $\lambda x . x$ & $\lambda . 0$\\
+    $\lambda x . \lambda y . x y$ & $\lambda . \lambda . 1~0$\\
+    \end{tabular}
+  \caption{A few sample translations from named lambda terms to De Bruijn-indexed terms.}\label{tab:debruijn}
+  \end{table}
+  
+
+Term only has annotations on the variable bindings -- we check that
+the term is well-typed and produce a |WT|.
+Once we have a |WT|, we can do type-preserving tranformations
+on lambda terms.
+
+initially no annotations though -- contribution to compiler's code.
+
+
+  
+\begin{code}
+data WT' : Ctx → Uu → Set where
+  Var   : ∀ {Γ} {τ}
+                   → τ ∈ Γ
+                   → WT' Γ           τ              
+  Lam   : ∀ {Γ} σ {τ}
+                   → WT' (σ ∷ Γ)     τ             
+                   → WT' Γ           (σ => τ)     
+  _⟨_⟩  : ∀ {Γ} {σ τ}
+                   → WT' Γ           (σ => τ)    
+                   → WT' Γ           σ          
+                   → WT' Γ           τ         
+  Lit   : ∀ {Γ} {x}
+                   → Uel x
+                   → WT' Γ           (O x)    
+\end{code}
+
+examples:
+* CPS (explain what that is, plus example)
+* SKI (also explain)
+
+- give type signatures of compile and T...
+
+* contribution here:
+ > type-preserving transformation framework
+ > total, structurally recursive, type-safe CPS
+ > total, structurally recursive, type-safe SKI
+
+
+
+
+
+insert diagram of well-typed things here?
+
 \begin{frame}
   \frametitle{Decision Function}
   
@@ -219,9 +314,6 @@ someTauto2   = quoteGoal e in proveTautology e
 \end{frame}
 
 
-
-\begin{frame}[fragile]
-\end{frame}
 
 
 

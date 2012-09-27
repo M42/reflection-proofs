@@ -2467,7 +2467,7 @@ Table~\ref{tab:debruijn}.
 Obviously, $\lambda y . y$ and $\lambda x . x$ are essentially the same lambda term, but represented differently.
 This is a ``problem'' we do not encounter using De Bruijn indices, since lambda expressions have one canonical representation.
 Also, because of the fact that a variable's index may not be higher than its depth, it is trivial to check that
-terms are closed, %\footnote{A closed term means one which contains no free variables.}, 
+terms are closed,
 which makes the De Bruijn representation
 ideal for representing combinators.
 In all of the algorithms presented in this chapter, De Bruijn representation will be used.
@@ -2485,13 +2485,11 @@ a transliteration of the STLC typing rules introduced in Fig.~\ref{fig:stlc-rule
 save the addition of a size parameter.
 
 \ignore{
-\begin{shade}
 \begin{code}
 open import Metaprogramming.ExampleUniverse
 open DT renaming (U' to Uu)
 open import Metaprogramming.Util.Equal
 \end{code}
-\end{shade}
 }
 \begin{shadedfigure}[h]
 \begin{code}
