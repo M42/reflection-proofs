@@ -1683,7 +1683,7 @@ to one having to understand the |So| function; this is justified in Sec.~\ref{se
 \begin{shadedfigure}[h]
 \begin{code}
 exampletheorem : Set
-exampletheorem = (p₁ q₁ p₂ q₂ : Bool)   →   
+exampletheorem = (p₁ q₁ p₂ q₂ : Bool)   →
                  P  (         (p₁ ∨ q₁) ∧ (p₂ ∨ q₂) ⇒ (q₁ ∨ p₁) ∧ (q₂ ∨ p₂))
 \end{code}
 \caption{Encoding of an example tautology.}\label{fig:exampletheorem}
