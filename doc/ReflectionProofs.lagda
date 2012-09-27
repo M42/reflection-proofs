@@ -18,9 +18,9 @@
 %%%%% microtype with settings.
 \usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
 \microtypecontext{spacing=nonfrench}
-\usepackage{draftwatermark}
-\SetWatermarkLightness{0.95}
-%% end DRAFT-version stuff. TODO
+%\usepackage{draftwatermark}
+%\SetWatermarkLightness{0.95}
+%% end DRAFT-version stuff.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \usepackage{dirtree}
