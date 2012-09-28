@@ -434,16 +434,13 @@ open import Metaprogramming.Util.Equal
 
   
 
-initially no annotations though -- contribution to compiler's code.
+
+\subsection{Definitions}
+
 
 \begin{frame}
-  \frametitle{STLC definition}
   \begin{itemize}
-  \item Recall the STLC typing rules;
-  \item Rather a literal translation here.
-  \item DTP allows us define very precise data structures
-  \item Badly typed term impossible in |WT| 
-
+  \item Recall the STLC typing rules; rather a literal translation here.
   \item Using |WT| we can do type-preserving transformations
   \end{itemize}
 \begin{code}
@@ -464,7 +461,7 @@ Well-typed-closed = WT []
 \end{frame}
 
 \begin{frame}
-  \frametitle{From |Term| to |WT| }
+  \frametitle{From Term to WT}
   \begin{itemize}
   \item Before we can do type-preserving transformations, we need |WT| terms
   \item The |quoteTerm| keyword first type checks, normalises, then returns |Term| 
@@ -472,14 +469,27 @@ Well-typed-closed = WT []
   \item Note: compiler modification was necessary here
   \end{itemize}
 \begin{code}
-testgoal1 : Raw -- :: (n -> n) -> n -> n
+testgoal1 : Raw -- :: (n → n) → n → n
 testgoal1 = term2raw (quoteTerm λ (b : ℕ → ℕ) → (λ (x : ℕ) → b x))
 
 typedgoal1 : Well-typed-closed (typeOf testgoal1) _
 typedgoal1 = raw2wt testgoal1
 \end{code}
 \end{frame}
-  
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
+
+Now we can start defining translations!
 
 examples:
 * CPS (explain what that is, plus example)
@@ -541,28 +551,6 @@ T            : {σ : U'} {Γ : Ctx}
              →          WT    (map cpsType Γ)      RT
 \end{spec}
 insert diagram of well-typed things here?
-
-\begin{frame}
-  \frametitle{Decision Function}
-  
-\end{frame}
-
-\begin{frame}
-  \frametitle{Soundness}
-  
-\end{frame}
-
-\begin{frame}
-  \frametitle{Usage}
-  
-\end{frame}
-
-\begin{frame}
-  \frametitle{Argh, duplication!}
-  
-\end{frame}
-
-
 
 
 
