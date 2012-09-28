@@ -29,6 +29,8 @@
 \newcommand{\bkw}[1]{\ensuremath{\bm{\mathsf{#1}}}}
 
 \newcommand{\textsigma}{\ensuremath{\sigma}}
+\newcommand{\textalpha}{\ensuremath{\alpha}}
+\renewcommand{\textbeta}{\ensuremath{\beta}}
 
 
 \newcommand{\textlambda}{\ensuremath{\lambda}}
@@ -156,3 +158,4 @@
 %format ⟩    = "\con{⟩}"
 %format _⟨_⟩    = "\con{\_⟨\_⟩}"
 %format boolTbl = "\defin{boolTable}"
+%format => = "\con{=\mkern-10mu\text{>}}"
