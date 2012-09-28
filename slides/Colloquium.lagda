@@ -4,6 +4,8 @@
 %include generated-colour.fmt
 %include codecolour.fmt
 
+\usepackage[T1]{fontenc}
+
 \usetheme{Berlin}
 \newcommand{\ignore}[1]{}
 
@@ -188,10 +190,10 @@ someTauto2   = quoteGoal e in (HOLE 0)
 \end{spec}
 
 \begin{spec}
-e ≡ pi (... Bool...) -- intro variable p
-    (def So (arg (def _∨_ (   arg (var 0 []) ∷
-                              arg (def ¬_  (arg     (var 0 [])
-                              ∷ [])) ∷ [])) ∷ []))
+e ≡    pi (... Bool...) -- intro variable p
+          (def So (arg (def _∨_ (   arg (var 0 []) ∷
+                                    arg (def ¬_  (arg     (var 0 [])
+                                    ∷ [])) ∷ [])) ∷ []))
 \end{spec}
 
 \begin{code}
@@ -214,7 +216,7 @@ open import Metaprogramming.Autoquote renaming (_#_↦_ to _\#_↦_)
 autoquote, another contribution.
 \begin{code}
 boolTbl : Table BoolIntermediate
-boolTbl = (Atomic ,
+boolTbl =   (Atomic ,
                   2 \# (quote _∧_      ) ↦ And
             ∷     2 \# (quote _∨_      ) ↦ Or
             ∷     1 \# (quote  ¬_      ) ↦ Not
@@ -230,7 +232,7 @@ term2bool_auto t {pf} = doConvert boolTbl t {pf}
 \ignore{
 \begin{code}
 open import Metaprogramming.ExampleUniverse
-open DT renaming (U' to Uu)
+open DT hiding (Well-typed-closed) renaming (U' to Uu) 
 open import Metaprogramming.Util.Equal
 \end{code}
 }
@@ -271,9 +273,8 @@ data WT' : Ctx → Uu → Set where
                    → WT' Γ           (σ => τ)    
                    → WT' Γ           σ          
                    → WT' Γ           τ         
-  Lit   : ∀ {Γ} {x}
-                   → Uel x
-                   → WT' Γ           (O x)    
+
+Well-typed-closed = WT []
 \end{code}
 
 examples:
@@ -288,9 +289,53 @@ examples:
  > total, structurally recursive, type-safe SKI
 
 
+\ignore{
+\begin{code}
+open import Relation.Binary.PropositionalEquality
+open SKI'
+\end{code}}
 
+\begin{spec}
+data Comb : Ctx → Uu → Set where
+  Var    : ∀ {Γ} → (τ : Uu) → τ ∈ Γ         → Comb Γ τ
+  _⟨_⟩   : ∀ {Γ σ τ}
+         → Comb Γ (σ => τ) → Comb Γ σ       → Comb Γ τ
+  S      : ∀ {Γ A B C}
+         → Comb Γ ((A => B => C) => (A => B) => A => C)
+  K      : ∀ {Γ A B}                        → Comb Γ (A => B => A)
+  I      : ∀ {Γ A}                          → Comb Γ (A => A)
+  
+Combinator = Comb []
+\end{spec}
 
+\begin{spec}
+topCompile : {τ : U'} → Well-typed-closed τ → Combinator τ
+\end{spec}
 
+\begin{code}
+const₂       : {α β : Uu} →           Well-typed-closed        (α => β => β) _
+const₂        = Lam _ (Lam _ (Var here))
+
+constSKI     : {α β : Uu} →           Combinator               (α => β => β)
+constSKI     = K ⟨ I ⟩
+
+see          : {α β : Uu}    →       topCompile (const₂ {α} {β})
+                             ≡       constSKI
+see          = refl
+\end{code}
+
+\begin{spec}
+cpsType : U' → U'
+cpsType (O x)     = O x
+cpsType (t => t₁) = cpsType t => (cpsType t₁ => RT) => RT
+\end{spec}
+
+\begin{spec}
+T            : {σ : U'} {Γ : Ctx}
+             → (wt :    WT    Γ                    σ                   )
+             →          WT    (map cpsType Γ)      (cpsType σ => RT)
+             →          WT    (map cpsType Γ)      RT
+\end{spec}
 insert diagram of well-typed things here?
 
 \begin{frame}
