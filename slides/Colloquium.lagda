@@ -7,6 +7,7 @@
 \usepackage[T1]{fontenc}
 
 \usetheme{Berlin}
+\newcommand{\ppause}{\pause \vspace{-3em}}
 \newcommand{\ignore}[1]{}
 
 \ignore{
@@ -14,10 +15,20 @@
 module slides.Colloquium where
 \end{code}
 }
+\ignore{
+\begin{code}
+
+open import Data.Sum
+open import Data.Product
+open import Reflection
+open import Metaprogramming.Autoquote renaming (_#_↦_ to _\#_↦_)
+
+\end{code}
+}
 
 \title{Reflection in Agda}
 \author[Paul van der Walt]{Paul van der Walt}
-\institute[Dept. CS @@ UU.nl]{Supervisors: Wouter Swierstra and Johan Jeuring\\ Department of Computing Science, Utrecht University}
+\institute[Dept. of CS @@ UU.nl]{Supervisors: Wouter Swierstra and Johan Jeuring\\ Department of Computing Science, Utrecht University}
 \date{4$^{\text{th}}$ of October, 2012}
 
 \begin{document}
@@ -27,17 +38,25 @@ module slides.Colloquium where
 \maketitle
 \end{frame}
 
+\setcounter{tocdepth}{1}
+\begin{frame}
+  \tableofcontents
+\end{frame}
+
 \section{Introduction}
 
 
 
 \begin{frame}
   \frametitle{Introduction}
-  Test
+  \begin{itemize}
+  \item Agda: dependently typed functional programming language
+  \item Functions must be \emph{total}
+  \end{itemize}
 \end{frame}
 
 
-\section{Definitions}
+\subsection{Definitions}
 
 \ignore{
   \begin{code}
@@ -84,7 +103,6 @@ data Even      : ℕ → Set where
 
 \begin{frame}
   \frametitle{A Proof}
-
 \begin{code}
 isEven10 : Even 10
 isEven10 =      isEven+2
@@ -94,37 +112,83 @@ isEven10 =      isEven+2
                          (isEven+2
                            isEven0))))
 \end{code}
+  \begin{itemize}
+  \item Rather cumbersome!
+  \item Solution: proof by reflection
+  \end{itemize}
 
 \end{frame}
 
 
 \begin{frame}
   \frametitle{Proof by Reflection}
+  \begin{itemize}
+  \item \emph{Build} proof by inspecting terms
+  \item Here: what is $n \rightarrow$  build proof
+  \item Basic idea:
+    \begin{enumerate}
+    \item Decision procedure
+    \item Soundness of decision procedure
+    \item Generate proof for each instance
+    \end{enumerate}
+  \end{itemize}
   
 \end{frame}
 
+\section{Proof by Reflection}
+
+\subsection{Evenness example}
 
 
 
+\begin{frame}
+  \frametitle{Evenness decision}
+  \begin{itemize}
+  \item Step 1: decision procedure
+  \item Intermezzo: Curry--Howard isomorphism (whiteboard)
+  \end{itemize}
 \begin{code}
 even? : ℕ → Set
 even? 0                 = ⊤
 even? 1                 = ⊥
 even? (suc (suc n))     = even? n
 \end{code}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Soundness}
+  \begin{itemize}
+  \item Step 2: soundness of decision
+  \item Remember C--H says: proven once implemented
+  \item Thus, soundness \emph{builds} the proof tree, iff it exists
+  \end{itemize}
 \begin{code}
 soundnessEven : (n : ℕ) → even? n → Even n
 soundnessEven 0              tt        = isEven0
 soundnessEven 1              ()
 soundnessEven (suc (suc n))  s         = isEven+2 (soundnessEven n s)
 \end{code}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Usage}
+  \begin{itemize}
+  \item Step 3: apply definition of soundness
+  \item Step 4: profit!
+  \end{itemize}
 \begin{code}
 isEven28        : Even 28
-isEven28        = soundnessEven 28 tt
+isEven28        = soundnessEven 28       tt
 
 isEven8772      : Even 8772
-isEven8772      = soundnessEven 8772 tt
+isEven8772      = soundnessEven 8772     tt
 \end{code}
+\end{frame}
+
+
+
+
+
 \ignore{
 \begin{code}
 open import Proofs.Util.Lemmas
@@ -136,6 +200,22 @@ soundness  b p  = soundnessImplicit b {p}
 \end{code}
 }
 
+\subsection{Booleans example}
+
+\begin{frame}
+  \frametitle{Boolean tautologies}
+  \begin{itemize}
+  \item Many possible applications of proof by reflection
+  \item Another example: prove that a formula is a tautology
+  \item E.g. $p ∨ ¬ p$; always true
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Introducing |BoolExpr|}
+  \begin{itemize}
+  \item Boolean formulae with max. $n$ free variables
+  \end{itemize}
 \begin{spec}
 data BoolExpr (n : ℕ) : Set where
   Truth         :                                  BoolExpr n
@@ -146,10 +226,21 @@ data BoolExpr (n : ℕ) : Set where
   Imp           : BoolExpr n → BoolExpr n      →   BoolExpr n
   Atomic        : Fin n                        →   BoolExpr n
 \end{spec}
+\end{frame}
+
+\ignore{
 \begin{spec}
 Env   : ℕ → Set
 Env   = Vec Bool
 \end{spec}
+}
+
+\begin{frame}
+  \frametitle{Decision}
+  \begin{itemize}
+  \item Decision is evaluation
+  \item But, map |true| to |⊤| and |false| to |⊥| (Agda propositions)
+  \end{itemize}
 \begin{spec}
 ⟦_⊢_⟧ : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
 ⟦ env     ⊢ Truth           ⟧ = true
@@ -160,18 +251,41 @@ Env   = Vec Bool
 ⟦ env     ⊢ Imp   be   be₁  ⟧ =     ⟦ env ⊢ be ⟧     ⇒      ⟦ env ⊢ be₁ ⟧
 ⟦ env     ⊢ Atomic n        ⟧ = lookup n env
 \end{spec}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Problem statement}
+  \begin{itemize}
+  \item What do we want to prove?
+  \end{itemize}
 \begin{spec}
 someTauto    : (p q : Bool)         → P( p ∧ q ⇒ q )
 someTauto    = (HOLE 0)
 \end{spec}
+\end{frame}
 
-
+\begin{frame}
+  \frametitle{Proving soundness}
+  \begin{itemize}
+  \item How will we prove soundness?
+  \item Turns out to be involved.
+  \end{itemize}
 \begin{spec}
 soundness       : {n : ℕ} → (b : BoolExpr n) → foralls b
                 → proofGoal n b
 \end{spec}
+Here, |proofGoal n b| returns a type with $n$ fresh Booleans, like
 
+\begin{spec}
+(p q r : Bool) → P b
+\end{spec}
+\end{frame}
 
+\begin{frame}
+  \frametitle{Usage}
+  \begin{itemize}
+  \item Assuming we have |soundness|, we can easily prove tautologies.
+  \end{itemize}
 \begin{code}
 rep          : BoolExpr 2
 rep          = Imp    (And (Atomic (suc zero)) (Atomic zero)) 
@@ -180,40 +294,39 @@ rep          = Imp    (And (Atomic (suc zero)) (Atomic zero))
 someTauto    : (p q : Bool)         → P( (p ∧ q) ⇒ q )
 someTauto    = soundness rep _
 \end{code}
+\pause
+\begin{itemize}
+\item But, oh no! The duplication!
+\end{itemize}
+\end{frame}
 
-but duplication!!
+\subsection{Enter reflection!}
 
-
+\begin{frame}
+  \frametitle{Reflecting in Agda}
+  \begin{itemize}
+  \item The API lets us do |quote|, |unquote| or |quoteGoal|
+  \end{itemize}
 \begin{spec}
 someTauto2   : (p : Bool)         → P (p ∨ ¬ p)
 someTauto2   = quoteGoal e in (HOLE 0)
 \end{spec}
-
+\pause
 \begin{spec}
-e ≡    pi (... Bool...) -- intro variable p
-          (def So (arg (def _∨_ (   arg (var 0 []) ∷
-                                    arg (def ¬_  (arg     (var 0 [])
-                                    ∷ [])) ∷ [])) ∷ []))
+e :   Term
+e ≡   pi    (... Bool...) -- intro variable p
+            (def So (arg (def _∨_ (   arg (var 0 []) ∷
+                                      arg (def ¬_  (arg     (var 0 [])
+                                      ∷ [])) ∷ [])) ∷ []))
 \end{spec}
+\end{frame}
 
-\begin{code}
-someTauto2   : (p : Bool)         → P (p ∨ ¬ p)
-someTauto2   = quoteGoal e in proveTautology e
-\end{code}
-
-
-
-\ignore{
-\begin{code}
-
-open import Data.Sum
-open import Data.Product
-open import Reflection
-open import Metaprogramming.Autoquote renaming (_#_↦_ to _\#_↦_)
-
-\end{code}
-}
-autoquote, another contribution.
+\begin{frame}
+  \begin{itemize}
+  \item How can we distil a |BoolExpr| from a |Term|?
+  \item Enter |Autoquote|!
+  \item Provide a mapping: 
+  \end{itemize}
 \begin{code}
 boolTbl : Table BoolIntermediate
 boolTbl =   (Atomic ,
@@ -223,12 +336,76 @@ boolTbl =   (Atomic ,
             ∷     0 \# (quote true     ) ↦ Truth
             ∷     0 \# (quote false    ) ↦ Falsehood
             ∷     2 \# (quote _⇒_      ) ↦ Imp ∷ [])
+\end{code}
+\end{frame}
 
+\begin{frame}
+  \begin{itemize}
+  \item We now use the |doConvert| function
+  \end{itemize}
+\begin{code}
 term2bool_auto     : (t : Term)
                    → {pf : convertManages boolTbl t}
                    → BoolIntermediate
 term2bool_auto t {pf} = doConvert boolTbl t {pf}
 \end{code}
+  
+\end{frame}
+
+\begin{frame}
+  \frametitle{Assembling the pieces}
+  \begin{itemize}
+  \item We can now automatically quote to |BoolExpr|, 
+  \item then get a proof using |soundness|.
+  \end{itemize}
+\begin{code}
+someTauto2   : (p : Bool)         → P (p ∨ ¬ p)
+someTauto2   = quoteGoal e in proveTautology e
+\end{code}
+\end{frame}
+
+
+
+
+\section{Metaprogramming}
+
+
+
+\begin{frame}
+  \frametitle{Definitions}
+
+  \begin{quotation}
+Metaprogramming is the writing of computer programs that write or manipulate other programs (or themselves) as their data\ldots
+  \end{quotation}
+  \begin{quotation}
+Reflection is when a programming language (object language) can be its own metalanguage.
+  \end{quotation}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Powerful type system}
+  \begin{itemize}
+  \item Reflection has existed for a long time
+  \item Used extensively in Lisp
+  \item What advantage does Agda offer?
+  \item \emph{Dependent types}
+  \end{itemize}
+\end{frame}
+
+\subsection{Metaprogramming framework}
+
+\begin{frame}
+  \begin{itemize}
+  \item Our object language: simply typed lambda calculus
+  \item Application, abstraction, variables
+  \item De Bruijn representation
+  \end{itemize}
+\end{frame}
+
+
+
+
 \ignore{
 \begin{code}
 open import Metaprogramming.ExampleUniverse
@@ -238,29 +415,37 @@ open import Metaprogramming.Util.Equal
 }
 
 
-* refresher: what is De Bruijn representation
-
-\begin{table}[h]
-  \centering
-  \begin{tabular}{c||c}
-    Named & De Bruijn \\
-    \hline
-    $\lambda x . x$ & $\lambda . 0$\\
-    $\lambda x . \lambda y . x y$ & $\lambda . \lambda . 1~0$\\
+\begin{frame}
+  \frametitle{Refreshing our memory}
+  \begin{itemize}
+  \item What is the De Bruijn representation?
+  \item Nameless variables
+  \item Identified by number of abstractions ($\lambda$s) between call and binding site
+  \end{itemize}
+  \begin{center}
+    \begin{tabular}{c||c}
+      Named & De Bruijn \\
+      \hline
+      $\lambda x . x$ & $\lambda . 0$\\
+      $\lambda x . \lambda y . x y$ & $\lambda . \lambda . 1~0$\\
     \end{tabular}
-  \caption{A few sample translations from named lambda terms to De Bruijn-indexed terms.}\label{tab:debruijn}
-  \end{table}
-  
+  \end{center}
+\end{frame}
 
-Term only has annotations on the variable bindings -- we check that
-the term is well-typed and produce a |WT|.
-Once we have a |WT|, we can do type-preserving tranformations
-on lambda terms.
+  
 
 initially no annotations though -- contribution to compiler's code.
 
+\begin{frame}
+  \frametitle{STLC definition}
+  \begin{itemize}
+  \item Recall the STLC typing rules;
+  \item Rather a literal translation here.
+  \item DTP allows us define very precise data structures
+  \item Badly typed term impossible in |WT| 
 
-  
+  \item Using |WT| we can do type-preserving transformations
+  \end{itemize}
 \begin{code}
 data WT' : Ctx → Uu → Set where
   Var   : ∀ {Γ} {τ}
@@ -276,6 +461,25 @@ data WT' : Ctx → Uu → Set where
 
 Well-typed-closed = WT []
 \end{code}
+\end{frame}
+
+\begin{frame}
+  \frametitle{From |Term| to |WT| }
+  \begin{itemize}
+  \item Before we can do type-preserving transformations, we need |WT| terms
+  \item The |quoteTerm| keyword first type checks, normalises, then returns |Term| 
+  \item Contribution: a translator |Term -> WT| to quote typed lambda terms
+  \item Note: compiler modification was necessary here
+  \end{itemize}
+\begin{code}
+testgoal1 : Raw -- :: (n -> n) -> n -> n
+testgoal1 = term2raw (quoteTerm λ (b : ℕ → ℕ) → (λ (x : ℕ) → b x))
+
+typedgoal1 : Well-typed-closed (typeOf testgoal1) _
+typedgoal1 = raw2wt testgoal1
+\end{code}
+\end{frame}
+  
 
 examples:
 * CPS (explain what that is, plus example)

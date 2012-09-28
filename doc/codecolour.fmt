@@ -159,3 +159,4 @@
 %format _⟨_⟩    = "\con{\_⟨\_⟩}"
 %format boolTbl = "\defin{boolTable}"
 %format => = "\con{=\mkern-10mu\text{>}}"
+%format someTauto2 = "\defin{someTauto2}"
