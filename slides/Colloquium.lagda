@@ -4,10 +4,11 @@
 %include generated-colour.fmt
 %include codecolour.fmt
 
+\usepackage{tgpagella}
 \usepackage[T1]{fontenc}
 
 \usetheme{Berlin}
-\newcommand{\ppause}{\pause \vspace{-3em}}
+\newcommand{\ppause}{\pause \vspace{ -2em}}
 \newcommand{\ignore}[1]{}
 
 \ignore{
@@ -27,7 +28,7 @@ open import Metaprogramming.Autoquote renaming (_#_↦_ to _\#_↦_)
 }
 
 \title{Reflection in Agda}
-\author[Paul van der Walt]{Paul van der Walt}
+\author{Paul van der Walt}
 \institute[Dept. of CS @@ UU.nl]{Supervisors: Wouter Swierstra and Johan Jeuring\\ Department of Computing Science, Utrecht University}
 \date{4$^{\text{th}}$ of October, 2012}
 
@@ -212,7 +213,7 @@ soundness  b p  = soundnessImplicit b {p}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Introducing |BoolExpr|}
+  \frametitle{Introducing BoolExpr}
   \begin{itemize}
   \item Boolean formulae with max. $n$ free variables
   \end{itemize}
@@ -357,12 +358,37 @@ term2bool_auto t {pf} = doConvert boolTbl t {pf}
   \begin{itemize}
   \item We can now automatically quote to |BoolExpr|, 
   \item then get a proof using |soundness|.
+
+  \item Automatic proof generation.
   \end{itemize}
 \begin{code}
 someTauto2   : (p : Bool)         → P (p ∨ ¬ p)
 someTauto2   = quoteGoal e in proveTautology e
 \end{code}
 \end{frame}
+
+\begin{frame}
+  \frametitle{Interim Summary}
+  Contributions:
+  \begin{itemize}
+  \item Automatic quoting to simple AST @Autoquote@
+  \item Illustration of proof by reflection
+  \item Guide to using Agda's reflection API (example code + chapter in thesis)
+  \end{itemize}
+\end{frame}
+
+
+
+
+\ignore{
+\begin{code}
+open import Relation.Binary.PropositionalEquality
+open import Metaprogramming.ExampleUniverse
+open DT hiding (Well-typed-closed) renaming (U' to Uu) 
+open import Metaprogramming.Util.Equal
+open TC
+open SKI'
+\end{code}}
 
 
 
@@ -408,9 +434,6 @@ Reflection is when a programming language (object language) can be its own metal
 
 \ignore{
 \begin{code}
-open import Metaprogramming.ExampleUniverse
-open DT hiding (Well-typed-closed) renaming (U' to Uu) 
-open import Metaprogramming.Util.Equal
 \end{code}
 }
 
@@ -444,7 +467,7 @@ open import Metaprogramming.Util.Equal
   \item Using |WT| we can do type-preserving transformations
   \end{itemize}
 \begin{code}
-data WT' : Ctx → Uu → Set where
+data WT' : Ctx →                     Uu → Set where
   Var   : ∀ {Γ} {τ}
                    → τ ∈ Γ
                    → WT' Γ           τ              
@@ -468,47 +491,99 @@ Well-typed-closed = WT []
   \item Contribution: a translator |Term -> WT| to quote typed lambda terms
   \item Note: compiler modification was necessary here
   \end{itemize}
-\begin{code}
-testgoal1 : Raw -- :: (n → n) → n → n
-testgoal1 = term2raw (quoteTerm λ (b : ℕ → ℕ) → (λ (x : ℕ) → b x))
-
-typedgoal1 : Well-typed-closed (typeOf testgoal1) _
-typedgoal1 = raw2wt testgoal1
-\end{code}
 \end{frame}
 
 
-
-
-
-
-
-
-
-
-
-\end{document}
-
-Now we can start defining translations!
-
-examples:
-* CPS (explain what that is, plus example)
-* SKI (also explain)
-
-- give type signatures of compile and T...
-
-* contribution here:
- > type-preserving transformation framework
- > total, structurally recursive, type-safe CPS
- > total, structurally recursive, type-safe SKI
-
-
-\ignore{
+\begin{frame}
+  \frametitle{What a WT looks like}
 \begin{code}
-open import Relation.Binary.PropositionalEquality
-open SKI'
-\end{code}}
+testgoal1 : Raw -- :: (n → n) → n → n
+testgoal1 = term2raw (quoteTerm 
+    λ (b : ℕ → ℕ) → (λ (x : ℕ) → b x))
 
+typedgoal1 : Well-typed-closed (typeOf testgoal1) _
+typedgoal1 = raw2wt testgoal1
+
+seeTG1     :    typedgoal1 
+           ≡    Lam       (O Nat => O Nat)
+                          (Lam       (O Nat)
+                                     (Var (there here) ⟨ Var here ⟩))
+seeTG1 = refl
+\end{code}
+\end{frame}
+
+\subsection{Type-aware framework}
+
+\begin{frame}
+  \frametitle{Transformation framework}
+  insert diagram here
+\end{frame}
+
+
+\subsection{Example transformations}
+
+\begin{frame}
+  \frametitle{Example 1: Continuation-passing style}
+  \begin{itemize}
+  \item Control is passed explicitly in the form of a \emph{continuation}
+  \item Add extra argument to functions: a continuation
+  \item \texttt{return} becomes the continuation
+  \item A number of things become explicit:
+    \begin{enumerate}
+    \item procedure returns, which become apparent as calls to a continuation; 
+    \item intermediate values, which are all given names;
+    \item order of argument evaluation, which is made explicit;
+    \item tail calls, simply calling a procedure with the same continuation, unmodified.
+    \end{enumerate}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{itemize}
+  \item Implemented in function |T|
+  \item Basically: give abstractions extra argument, the continuation
+  \end{itemize}
+\begin{spec}
+T            : {σ : Uu} {Γ : Ctx}
+             → (wt :    WT    Γ                    σ)
+             →          WT    (map cpsType Γ)      (cpsType σ => RT)
+             →          WT    (map cpsType Γ)      RT
+\end{spec}
+  
+\begin{spec}
+cpsType : Uu → Uu
+cpsType (O x)         = O x
+cpsType (t => t₁)     = cpsType t => (cpsType t₁ => RT) => RT
+\end{spec}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Example of CPS}
+  \begin{code}
+   -- insert example here. 
+  \end{code}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Example 2: SKI}
+  \begin{itemize}
+  \item Extremely simple version of untyped lambda calculus
+  \item Only 3 combinators, and application
+  \item Elements are closed terms, can be assigned a type
+  \item Basically: remove abstractions
+  \end{itemize}
+  \begin{spec}
+S        = λ x y z         → x z (y z)
+K        = λ x y           → x
+I        = λ x             → x
+  \end{spec}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{SKI in Agda}
 \begin{spec}
 data Comb : Ctx → Uu → Set where
   Var    : ∀ {Γ} → (τ : Uu) → τ ∈ Γ         → Comb Γ τ
@@ -516,43 +591,69 @@ data Comb : Ctx → Uu → Set where
          → Comb Γ (σ => τ) → Comb Γ σ       → Comb Γ τ
   S      : ∀ {Γ A B C}
          → Comb Γ ((A => B => C) => (A => B) => A => C)
-  K      : ∀ {Γ A B}                        → Comb Γ (A => B => A)
-  I      : ∀ {Γ A}                          → Comb Γ (A => A)
+  K      : ∀ {Γ A B}                        
+         → Comb Γ (A => B => A)
+  I      : ∀ {Γ A}                          
+         → Comb Γ (A => A)
   
 Combinator = Comb []
 \end{spec}
+\end{frame}
 
+\begin{frame}
+  \begin{itemize}
+  \item Implemented translation in |compile|
+  \item Specialised to closed terms in |topCompile|
+  \item Contribution: type-preserving, total, structurally recursive translation
+  \end{itemize}
 \begin{spec}
 topCompile : {τ : U'} → Well-typed-closed τ → Combinator τ
 \end{spec}
+\end{frame}
 
+\begin{frame}
+  \frametitle{Example of SKI}
 \begin{code}
 const₂       : {α β : Uu} →           Well-typed-closed        (α => β => β) _
-const₂        = Lam _ (Lam _ (Var here))
+const₂       = Lam _ (Lam _ (Var here))
 
 constSKI     : {α β : Uu} →           Combinator               (α => β => β)
 constSKI     = K ⟨ I ⟩
 
-see          : {α β : Uu}    →       topCompile (const₂ {α} {β})
+seeSKI       : {α β : Uu}    →       topCompile (const₂ {α} {β})
                              ≡       constSKI
-see          = refl
+seeSKI       = refl
 \end{code}
-
-\begin{spec}
-cpsType : U' → U'
-cpsType (O x)     = O x
-cpsType (t => t₁) = cpsType t => (cpsType t₁ => RT) => RT
-\end{spec}
-
-\begin{spec}
-T            : {σ : U'} {Γ : Ctx}
-             → (wt :    WT    Γ                    σ                   )
-             →          WT    (map cpsType Γ)      (cpsType σ => RT)
-             →          WT    (map cpsType Γ)      RT
-\end{spec}
-insert diagram of well-typed things here?
+  
+\end{frame}
 
 
+\begin{frame}
+  \frametitle{Interim Summary}
+  Contributions:
+  \begin{itemize}
+  \item Type-aware program transformation framework
+  \item Examples of use: CPS and SKI
+  \item Type-preserving, total, structurally recursive CPS and SKI algorithms
+  \end{itemize}
+\end{frame}
 
+\section{Discussion}
+
+\begin{frame}
+  \begin{description}
+  \item[C] Illustration of reflection in dependently typed setting
+  \item[C] Proof generation
+  \item[C] Automatic quoting of user-defined AST 
+  \item[C] Type-preserving program transformations
+  \item[W] \emph{But}, reflection is not yet mature!
+    \begin{itemize}
+    \item |quote|, |unquote| are keywords
+    \item Cannot generate definitions (|data|, functions)
+    \item Can only inspect |data| definitions
+    \item Type-unaware |unquote|
+    \end{itemize}
+  \end{description}
+\end{frame}
 
 \end{document}
