@@ -641,19 +641,20 @@ seeSKI       = refl
 \section{Discussion}
 
 \begin{frame}
-  \begin{description}
-  \item[C] Illustration of reflection in dependently typed setting
-  \item[C] Proof generation
-  \item[C] Automatic quoting of user-defined AST 
-  \item[C] Type-preserving program transformations
-  \item[W] \emph{But}, reflection is not yet mature!
+  \begin{itemize}
+  \item Illustration of reflection in dependently typed setting
+  \item Proof generation
+  \item Automatic quoting of user-defined AST 
+  \item Type-preserving program transformations
+    \pause
+  \item \emph{But}, reflection is not yet mature!
     \begin{itemize}
     \item |quote|, |unquote| are keywords
     \item Cannot generate definitions (|data|, functions)
     \item Can only inspect |data| definitions
     \item Type-unaware |unquote|
     \end{itemize}
-  \end{description}
+  \end{itemize}
 \end{frame}
 
 \end{document}
