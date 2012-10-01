@@ -30,7 +30,7 @@
 
 \newcommand{\textsigma}{\ensuremath{\sigma}}
 \newcommand{\textalpha}{\ensuremath{\alpha}}
-\renewcommand{\textbeta}{\ensuremath{\beta}}
+%\renewcommand{\textbeta}{\ensuremath{\beta}}
 
 
 \newcommand{\textlambda}{\ensuremath{\lambda}}
