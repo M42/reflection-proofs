@@ -158,17 +158,22 @@ open import Data.List hiding (_∷ʳ_)
 \HRule
 \begin{flushright}
 \Huge \textbf{\mytitle}\\
-\LARGE Paul van der Walt\\%
+\LARGE Paul van der Walt\\[1.5pt]%
+\vskip 5mm
 %\hfill\textless\href{mailto:paul@@denknerd.org}{{paul@@denknerd.org}}\textgreater\\
 \begin{center}%
-\IfFileExists{\chicken}{\includegraphics[width=0.9\textwidth]{\chicken}}{\fbox{\phantom{\rule{0.9\textwidth}{0.9\textwidth}}}}%
+\IfFileExists{\chicken}{\includegraphics[width=\textwidth]{\chicken}}{\fbox{\phantom{\rule{\textwidth}{\textwidth}}}}%
 \end{center}
 %\\[2mm]
-\large {[}\emph{Supervisors}{]} Wouter Swierstra and Johan Jeuring \\%[5mm]
-\large M.Sc. thesis Computing Science\\
-\large ICA-3120805\\
-\large rev. \texttt{\href{\ghloc/commit/\gitHash}{\gitAbbrevHash}}, \today
+\large M.Sc. thesis %Computing Science %\\
+%\large
+ICA-3120805\\
+\large {[}\emph{Supervisors}{]} Wouter Swierstra and Johan Jeuring \\[7mm]
 \end{flushright}
+\begin{center}%
+\large rev. \texttt{\href{\ghloc/commit/\gitHash}{\gitAbbrevHash}}, \today%
+\end{center}%
+\vskip -3mm
 \HRule
 \vfill
 \begin{center}
