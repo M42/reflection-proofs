@@ -4239,6 +4239,14 @@ boring lemmas and alias definitions.
 % for LNCS bibliography:
 % \bibliographystyle{splncs}%this one doesn't sort automatically. :(
 
+\newpage
+
+\thispagestyle{empty}
+\vspace*{\stretch{1}}
+\begin{center}
+\includegraphics[width=5cm]{img/refl-chicken.png}
+\end{center}
+\vspace*{\stretch{1}}
 
 
 
