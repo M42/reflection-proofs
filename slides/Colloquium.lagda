@@ -433,14 +433,6 @@ Reflection is when a programming language (object language) can be its own metal
 \end{frame}
 
 
-
-
-\ignore{
-\begin{code}
-\end{code}
-}
-
-
 \begin{frame}
   \frametitle{Refreshing our memory}
   \begin{itemize}
@@ -569,7 +561,11 @@ cpsType (t => t₁)     = cpsType t => (cpsType t₁ => RT) => RT
 \begin{frame}
   \frametitle{Example of CPS}
   \begin{code}
-   -- insert example here. 
+   original    =    λ g a → g a
+   cps         =    T original id
+   cps         ≡    (λ f' →
+                         (λ e' →
+                              f' e' id) a) g
   \end{code}
 \end{frame}
 
@@ -666,3 +662,8 @@ seeSKI       = refl
 \end{frame}
 
 \end{document}
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-parse-self: t
+%%% TeX-master: t
+%%% End: 
