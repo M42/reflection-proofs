@@ -7,12 +7,26 @@
 \renewcommand{\textbeta}{\ensuremath{\beta}}
 
 
-\usepackage{tgpagella}
 \usepackage[T1]{fontenc}
+\usepackage{ulem}
 
-\usetheme{Berlin}
+\usetheme{Copenhagen}
+\usecolortheme{dolphin}
 \newcommand{\ppause}{\pause \vspace{ -2em}}
 \newcommand{\ignore}[1]{}
+\defbeamertemplate*{title page}{customized}[1][]
+{
+  \begin{center}
+  \usebeamerfont{title}\inserttitle\par
+  \usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par
+  \usebeamerfont{author}\usebeamercolor[fg]{textnormal}\insertauthor\par
+  \bigskip
+  \usebeamerfont{institute}\insertinstitute\par
+  \usebeamerfont{date}\insertdate\par
+  \bigskip
+  \usebeamercolor[fg]{titlegraphic}\inserttitlegraphic
+\end{center}
+}
 
 \ignore{
 \begin{code}
@@ -32,8 +46,9 @@ open import Metaprogramming.Autoquote renaming (_#_↦_ to _\#_↦_)
 
 \title{Reflection in Agda}
 \author{Paul van der Walt}
-\institute[Dept. of CS @@ UU.nl]{Supervisors: Wouter Swierstra and Johan Jeuring\\ Department of Computing Science, Utrecht University}
-\date{4$^{\text{th}}$ of October, 2012}
+\institute[Dept. of CS @@ UU.nl]{{[}\textit{Supervisors}{]} Wouter Swierstra and Johan Jeuring\\ Utrecht University Department of Computing Science}
+\titlegraphic{\includegraphics[width=4cm]{../doc/img/hen-and-chick.png}}
+\date{October 4$^{\text{th}}$, 2012}
 
 \begin{document}
 
@@ -54,8 +69,9 @@ open import Metaprogramming.Autoquote renaming (_#_↦_ to _\#_↦_)
 \begin{frame}
   \frametitle{Introduction}
   \begin{itemize}
-  \item Agda: dependently typed functional programming language
-  \item Functions must be \emph{total}
+    \item Agda: dependently typed functional programming language
+    \item Functions must be \emph{total}
+    \item Syntax similar to Haskell
   \end{itemize}
 \end{frame}
 
@@ -123,6 +139,7 @@ isEven10 =      isEven+2
 
 \end{frame}
 
+\section{Proof by Reflection}
 
 \begin{frame}
   \frametitle{Proof by Reflection}
@@ -139,7 +156,6 @@ isEven10 =      isEven+2
   
 \end{frame}
 
-\section{Proof by Reflection}
 
 \subsection{Evenness example}
 
@@ -300,7 +316,7 @@ someTauto    = soundness rep _
 \end{code}
 \pause
 \begin{itemize}
-\item But, oh no! The duplication!
+\item But, oh! The \sout{humanity} duplication!
 \end{itemize}
 \end{frame}
 
@@ -328,7 +344,7 @@ e ≡   pi    (... Bool...) -- intro variable p
 \begin{frame}
   \begin{itemize}
   \item How can we distil a |BoolExpr| from a |Term|?
-  \item Enter |Autoquote|!
+  \item Meet @Autoquote@!
   \item Provide a mapping: 
   \end{itemize}
 \begin{code}
@@ -359,7 +375,7 @@ term2bool_auto t {pf} = doConvert boolTbl t {pf}
 \begin{frame}
   \frametitle{Assembling the pieces}
   \begin{itemize}
-  \item We can now automatically quote to |BoolExpr|, 
+  \item We can now automatically quote to |BoolExpr|,
   \item then get a proof using |soundness|.
 
   \item Automatic proof generation.
@@ -374,7 +390,7 @@ someTauto2   = quoteGoal e in proveTautology e
   \frametitle{Interim Summary}
   Contributions:
   \begin{itemize}
-  \item Automatic quoting to simple AST @Autoquote@
+  \item Automatic quoting to simple AST using @Autoquote@
   \item Illustration of proof by reflection
   \item Guide to using Agda's reflection API (example code + chapter in thesis)
   \end{itemize}
@@ -401,7 +417,7 @@ open SKI'
 
 
 \begin{frame}
-  \frametitle{Definitions}
+  \frametitle{Onward: Metaprogramming}
 
   \begin{quotation}
 Metaprogramming is the writing of computer programs that write or manipulate other programs (or themselves) as their data\ldots
