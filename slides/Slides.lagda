@@ -30,7 +30,7 @@
 
 \ignore{
 \begin{code}
-module slides.Colloquium where
+module slides.Slides where
 \end{code}
 }
 \ignore{
