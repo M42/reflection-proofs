@@ -99,7 +99,7 @@
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{424.5, 96.5}, {51, 14}}</string>
+			<string>{{384, 96.413818}, {51, 14}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -212,7 +212,7 @@ WORLD}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{306, 227}, {44, 14}}</string>
+			<string>{{354.5, 227.25}, {44, 14}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -282,9 +282,9 @@ WORLD}</string>
 			<integer>27</integer>
 			<key>Points</key>
 			<array>
-				<string>{271.9404, 219.61452}</string>
-				<string>{328, 245}</string>
-				<string>{381.77878, 223.12389}</string>
+				<string>{320.07068, 220.56064}</string>
+				<string>{374, 247}</string>
+				<string>{430.42221, 223.59409}</string>
 			</array>
 			<key>Style</key>
 			<dict>
@@ -299,6 +299,8 @@ WORLD}</string>
 						<key>r</key>
 						<string>0.36413</string>
 					</dict>
+					<key>CornerRadius</key>
+					<real>15</real>
 					<key>HeadArrow</key>
 					<string>FilledArrow</string>
 					<key>LineType</key>
@@ -325,14 +327,16 @@ WORLD}</string>
 			<integer>26</integer>
 			<key>Points</key>
 			<array>
-				<string>{330.78723, 59.623558}</string>
-				<string>{422, 110.41382}</string>
-				<string>{270.76984, 196.34583}</string>
+				<string>{323.3461, 61.543968}</string>
+				<string>{381, 110.41382}</string>
+				<string>{313.25366, 190.1256}</string>
 			</array>
 			<key>Style</key>
 			<dict>
 				<key>stroke</key>
 				<dict>
+					<key>CornerRadius</key>
+					<real>100</real>
 					<key>HeadArrow</key>
 					<string>FilledArrow</string>
 					<key>LineType</key>
@@ -359,8 +363,8 @@ WORLD}</string>
 			<integer>25</integer>
 			<key>Points</key>
 			<array>
-				<string>{282.74887, 134.06873}</string>
-				<string>{258.78738, 186.4928}</string>
+				<string>{296.7977, 134.50002}</string>
+				<string>{296.89548, 184.75018}</string>
 			</array>
 			<key>Style</key>
 			<dict>
@@ -440,8 +444,8 @@ WORLD}</string>
 			<integer>23</integer>
 			<key>Points</key>
 			<array>
-				<string>{153.25003, 110}</string>
-				<string>{232.99997, 110}</string>
+				<string>{153.25003, 110.00542}</string>
+				<string>{236, 110.01408}</string>
 			</array>
 			<key>Style</key>
 			<dict>
@@ -461,7 +465,7 @@ WORLD}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{233.5, 86}, {120.5, 48}}</string>
+			<string>{{236.5, 86}, {120.5, 48}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>ID</key>
@@ -493,8 +497,8 @@ WORLD}</string>
 			<integer>20</integer>
 			<key>Points</key>
 			<array>
-				<string>{142.2144, 94.963547}</string>
-				<string>{245.89183, 56.673866}</string>
+				<string>{142.44365, 95.102104}</string>
+				<string>{248.45551, 56.528263}</string>
 			</array>
 			<key>Style</key>
 			<dict>
@@ -514,7 +518,7 @@ WORLD}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{149.84927, 63.093781}, {79, 14}}</string>
+			<string>{{151.22601, 63.08493}, {79, 14}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -575,7 +579,7 @@ WORLD}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{224.5, 15}, {138.5, 48}}</string>
+			<string>{{227.5, 15}, {138.5, 48}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>ID</key>
@@ -655,8 +659,8 @@ WORLD}</string>
 			<integer>14</integer>
 			<key>Points</key>
 			<array>
-				<string>{101.49653, 184.49998}</string>
-				<string>{101.48945, 134.50002}</string>
+				<string>{101.49963, 184.49998}</string>
+				<string>{101.49886, 134.50002}</string>
 			</array>
 			<key>Style</key>
 			<dict>
@@ -676,7 +680,7 @@ WORLD}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{151.5, 196}, {55, 14}}</string>
+			<string>{{171.75, 196}, {55, 14}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -734,8 +738,8 @@ WORLD}</string>
 			<integer>12</integer>
 			<key>Points</key>
 			<array>
-				<string>{222.49998, 209}</string>
-				<string>{127.50002, 209}</string>
+				<string>{271, 209.21675}</string>
+				<string>{127.5, 209.03325}</string>
 			</array>
 			<key>Style</key>
 			<dict>
@@ -755,7 +759,7 @@ WORLD}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{302, 189}, {57, 14}}</string>
+			<string>{{350.5, 189.25}, {57, 14}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FitText</key>
@@ -825,9 +829,9 @@ WORLD}</string>
 			<integer>10</integer>
 			<key>Points</key>
 			<array>
-				<string>{379.62842, 198.88664}</string>
-				<string>{329, 185}</string>
-				<string>{273.2937, 201.60809}</string>
+				<string>{428.05963, 199.29663}</string>
+				<string>{375, 185}</string>
+				<string>{321.69586, 201.57211}</string>
 			</array>
 			<key>Style</key>
 			<dict>
@@ -842,6 +846,8 @@ WORLD}</string>
 						<key>r</key>
 						<string>0.36413</string>
 					</dict>
+					<key>CornerRadius</key>
+					<real>33</real>
 					<key>HeadArrow</key>
 					<string>FilledArrow</string>
 					<key>LineType</key>
@@ -889,7 +895,7 @@ WORLD}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{378, 178.5}, {77, 61}}</string>
+			<string>{{426.5, 178.75}, {77, 61}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FontInfo</key>
@@ -910,6 +916,11 @@ WORLD}</string>
 			<string>Circle</string>
 			<key>Style</key>
 			<dict>
+				<key>shadow</key>
+				<dict>
+					<key>Draws</key>
+					<string>NO</string>
+				</dict>
 				<key>stroke</key>
 				<dict>
 					<key>Color</key>
@@ -945,7 +956,13 @@ Agda}</string>
 			<key>Shape</key>
 			<string>Circle</string>
 			<key>Style</key>
-			<dict/>
+			<dict>
+				<key>shadow</key>
+				<dict>
+					<key>Draws</key>
+					<string>NO</string>
+				</dict>
+			</dict>
 			<key>Text</key>
 			<dict>
 				<key>Text</key>
@@ -959,7 +976,7 @@ Agda}</string>
 		</dict>
 		<dict>
 			<key>Bounds</key>
-			<string>{{223, 185}, {51, 48}}</string>
+			<string>{{271.5, 185.25}, {51, 48}}</string>
 			<key>Class</key>
 			<string>ShapedGraphic</string>
 			<key>FontInfo</key>
@@ -980,6 +997,11 @@ Agda}</string>
 			<string>Circle</string>
 			<key>Style</key>
 			<dict>
+				<key>shadow</key>
+				<dict>
+					<key>Draws</key>
+					<string>NO</string>
+				</dict>
 				<key>stroke</key>
 				<dict>
 					<key>Color</key>
@@ -1111,7 +1133,7 @@ Agda}</string>
 	<key>MasterSheets</key>
 	<array/>
 	<key>ModificationDate</key>
-	<string>2012-10-02 09:34:28 +0000</string>
+	<string>2012-10-02 11:29:28 +0000</string>
 	<key>Modifier</key>
 	<string>Paul van der Walt</string>
 	<key>NotesVisible</key>
