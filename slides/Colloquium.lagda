@@ -519,7 +519,12 @@ seeTG1 = refl
 
 \begin{frame}
   \frametitle{Transformation framework}
-  insert diagram here
+  \begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{transformation-framework}
+    \caption{Possible transitions between representations}
+    \label{fig:transition-diagram}
+  \end{figure}
 \end{frame}
 
 
