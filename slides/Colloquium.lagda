@@ -646,7 +646,7 @@ seeSKI       = refl
   \item Proof generation
   \item Automatic quoting of user-defined AST 
   \item Type-preserving program transformations
-    \pause
+  \pause
   \item \emph{But}, reflection is not yet mature!
     \begin{itemize}
     \item |quote|, |unquote| are keywords
