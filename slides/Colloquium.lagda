@@ -4,6 +4,9 @@
 %include generated-colour.fmt
 %include codecolour.fmt
 
+\renewcommand{\textbeta}{\ensuremath{\beta}}
+
+
 \usepackage{tgpagella}
 \usepackage[T1]{fontenc}
 

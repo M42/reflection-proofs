@@ -16,9 +16,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% stuff only for DRAFT versions
 %%%%% microtype with settings.
-%\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
-%\microtypecontext{spacing=nonfrench}
-\newcommand{\microtypesetup}[1]{\fbox{NO MICROTYPE!\phantom{\rule{\textwidth}{\textwidth}}}}
+\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
+\microtypecontext{spacing=nonfrench}
+%\newcommand{\microtypesetup}[1]{\fbox{NO MICROTYPE!\phantom{\rule{\textwidth}{\textwidth}}}}
 
 %\usepackage{draftwatermark}
 %\SetWatermarkLightness{0.95}
