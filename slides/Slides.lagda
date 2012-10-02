@@ -347,6 +347,10 @@ e ≡   pi    (... Bool...) -- intro variable p
   \item Meet @Autoquote@!
   \item Provide a mapping: 
   \end{itemize}
+\begin{spec}
+open import Metaprogramming.Autoquote
+\end{spec}
+\vskip -3mm
 \begin{code}
 boolTbl : Table BoolIntermediate
 boolTbl =   (Atomic ,
@@ -364,9 +368,9 @@ boolTbl =   (Atomic ,
   \item We now use the |doConvert| function
   \end{itemize}
 \begin{code}
-term2bool_auto     : (t : Term)
-                   → {pf : convertManages boolTbl t}
-                   → BoolIntermediate
+term2bool_auto     :         (t : Term)
+                   →         {pf : convertManages boolTbl t}
+                   →         BoolIntermediate
 term2bool_auto t {pf} = doConvert boolTbl t {pf}
 \end{code}
   
@@ -452,9 +456,8 @@ Reflection is when a programming language (object language) can be its own metal
 \begin{frame}
   \frametitle{Refreshing our memory}
   \begin{itemize}
-  \item What is the De Bruijn representation?
-  \item Nameless variables
-  \item Identified by number of abstractions ($\lambda$s) between call and binding site
+  \item What is De Bruijn's representation?
+  \item Nameless variables, identified by number of abstractions ($\lambda$s) between call and binding site
   \end{itemize}
   \begin{center}
     \begin{tabular}{c||c}
@@ -498,100 +501,58 @@ Well-typed-closed = WT []
   \frametitle{From Term to WT}
   \begin{itemize}
   \item Before we can do type-preserving transformations, we need |WT| terms
-  \item The |quoteTerm| keyword first type checks, normalises, then returns |Term| 
-  \item Contribution: a translator |Term -> WT| to quote typed lambda terms
-  \item Note: compiler modification was necessary here
+  \item The |quoteTerm| keyword first type checks, normalises, then
+    returns a |Term| 
+  \item Contribution: a translator |Term -> Raw|, then |Raw -> WT| to quote typed lambda terms
   \end{itemize}
+\begin{spec}
+data Raw : Set where
+  Var  : ℕ              → Raw
+  App  : Raw   → Raw    → Raw
+  Lam  : Uu    → Raw    → Raw
+\end{spec}
 \end{frame}
 
 
 \begin{frame}
   \frametitle{What a WT looks like}
 \begin{code}
-testgoal1 : Raw -- :: (n → n) → n → n
+testgoal1 : Raw
 testgoal1 = term2raw (quoteTerm 
-    λ (b : ℕ → ℕ) → (λ (x : ℕ) → b x))
+    λ (b : ℕ → ℕ) → b)
 
 typedgoal1 : Well-typed-closed (typeOf testgoal1) _
 typedgoal1 = raw2wt testgoal1
 
 seeTG1     :    typedgoal1 
-           ≡    Lam       (O Nat => O Nat)
-                          (Lam       (O Nat)
-                                     (Var (there here) ⟨ Var here ⟩))
+           ≡    Lam       (O Nat => O Nat) (Var here)
 seeTG1 = refl
 \end{code}
 \end{frame}
 
 \subsection{Type-aware framework}
 
-\begin{frame}
+\newcommand{\diagramframe}{\begin{frame}
   \frametitle{Transformation framework}
   \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{transformation-framework}
     \caption{Possible transitions between representations}
-    \label{fig:transition-diagram}
   \end{figure}
-\end{frame}
+\end{frame}}
+
+\diagramframe
 
 
 \subsection{Example transformations}
 
-\begin{frame}
-  \frametitle{Example 1: Continuation-passing style}
-  \begin{itemize}
-  \item Control is passed explicitly in the form of a \emph{continuation}
-  \item Add extra argument to functions: a continuation
-  \item \texttt{return} becomes the continuation
-  \item A number of things become explicit:
-    \begin{enumerate}
-    \item procedure returns, which become apparent as calls to a continuation; 
-    \item intermediate values, which are all given names;
-    \item order of argument evaluation, which is made explicit;
-    \item tail calls, simply calling a procedure with the same continuation, unmodified.
-    \end{enumerate}
-  \end{itemize}
-\end{frame}
 
 \begin{frame}
-  \begin{itemize}
-  \item Implemented in function |T|
-  \item Basically: give abstractions extra argument, the continuation
-  \end{itemize}
-\begin{spec}
-T            : {σ : Uu} {Γ : Ctx}
-             → (wt :    WT    Γ                    σ)
-             →          WT    (map cpsType Γ)      (cpsType σ => RT)
-             →          WT    (map cpsType Γ)      RT
-\end{spec}
-  
-\begin{spec}
-cpsType : Uu → Uu
-cpsType (O x)         = O x
-cpsType (t => t₁)     = cpsType t => (cpsType t₁ => RT) => RT
-\end{spec}
-
-\end{frame}
-
-\begin{frame}
-  \frametitle{Example of CPS}
-  \begin{code}
-   original    =    λ g a → g a
-   cps         =    T original id
-   cps         ≡    (λ f' →
-                         (λ e' →
-                              f' e' id) a) g
-  \end{code}
-\end{frame}
-
-
-\begin{frame}
-  \frametitle{Example 2: SKI}
+  \frametitle{Example 1: SKI}
   \begin{itemize}
   \item Extremely simple version of untyped lambda calculus
   \item Only 3 combinators, and application
-  \item Elements are closed terms, can be assigned a type
+  \item Combinators are closed terms, can be assigned a type
   \item Basically: remove abstractions
   \end{itemize}
   \begin{spec}
@@ -627,7 +588,7 @@ Combinator = Comb []
   \item Contribution: type-preserving, total, structurally recursive translation
   \end{itemize}
 \begin{spec}
-topCompile : {τ : U'} → Well-typed-closed τ → Combinator τ
+topCompile : {τ : Uu} → Well-typed-closed τ → Combinator τ
 \end{spec}
 \end{frame}
 
@@ -647,12 +608,60 @@ seeSKI       = refl
   
 \end{frame}
 
+\begin{frame}
+  \frametitle{Example 2: Continuation-passing style}
+  \begin{itemize}
+  \item Control is passed explicitly in the form of a \emph{continuation}
+  \item Add extra argument to functions: a continuation
+  \item \texttt{return} becomes the continuation
+  \item A number of things become explicit:
+    \begin{enumerate}
+    \item procedure returns, which become apparent as calls to a continuation; 
+    \item intermediate values, which are all given names;
+    \item order of argument evaluation, which is made explicit;
+    \item tail calls, simply calling a procedure with the same continuation, unmodified.
+    \end{enumerate}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \begin{itemize}
+  \item Implemented in function |T|
+  \item Basically: give abstractions extra argument, the continuation
+  \end{itemize}
+\begin{spec}
+T            : {σ : Uu} {Γ : Ctx}
+             → (wt :    WT    Γ                    σ)
+             →          WT    (map cpsType Γ)      (cpsType σ => RT)
+             →          WT    (map cpsType Γ)      RT
+\end{spec}
+  
+\begin{spec}
+cpsType : Uu → Uu
+cpsType (O x)         = O x
+cpsType (t => t₁)     = cpsType t => (cpsType t₁ => RT) => RT
+\end{spec}
+
+\end{frame}
+
+% \begin{frame}
+%   \frametitle{Example of CPS}
+%   \begin{code}
+%    original    =    λ g a → g a
+%    cps         =    T original id
+%    cps         ≡    (λ f' →
+%                          (λ e' →
+%                               f' e' id) a) g
+%   \end{code}
+% \end{frame}
+
+\diagramframe
 
 \begin{frame}
   \frametitle{Interim Summary}
   Contributions:
   \begin{itemize}
-  \item Type-aware program transformation framework
+  \item Type-aware ``program transformation framework''
   \item Examples of use: CPS and SKI
   \item Type-preserving, total, structurally recursive CPS and SKI algorithms
   \end{itemize}
@@ -664,7 +673,7 @@ seeSKI       = refl
   \begin{itemize}
   \item Illustration of reflection in dependently typed setting
   \item Proof generation
-  \item Automatic quoting of user-defined AST 
+  \item Automatic quoting of user-defined AST (@Autoquote@)
   \item Type-preserving program transformations
   \pause
   \item \emph{But}, reflection is not yet mature!
