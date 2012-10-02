@@ -16,8 +16,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% stuff only for DRAFT versions
 %%%%% microtype with settings.
-\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
-\microtypecontext{spacing=nonfrench}
+%\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
+%\microtypecontext{spacing=nonfrench}
+\newcommand{\microtypesetup}[1]{\fbox{NO MICROTYPE!\phantom{\rule{\textwidth}{\textwidth}}}}
+
 %\usepackage{draftwatermark}
 %\SetWatermarkLightness{0.95}
 %% end DRAFT-version stuff.
@@ -158,17 +160,22 @@ open import Data.List hiding (_∷ʳ_)
 \HRule
 \begin{flushright}
 \Huge \textbf{\mytitle}\\
-\LARGE Paul van der Walt\\%
+\LARGE Paul van der Walt\\[1.5pt]%
+\vskip 5mm
 %\hfill\textless\href{mailto:paul@@denknerd.org}{{paul@@denknerd.org}}\textgreater\\
 \begin{center}%
-\IfFileExists{\chicken}{\includegraphics[width=0.9\textwidth]{\chicken}}{\fbox{\phantom{\rule{0.9\textwidth}{0.9\textwidth}}}}%
+\IfFileExists{\chicken}{\includegraphics[width=\textwidth]{\chicken}}{\fbox{\phantom{\rule{\textwidth}{\textwidth}}}}%
 \end{center}
 %\\[2mm]
-\large {[}\emph{Supervisors}{]} Wouter Swierstra and Johan Jeuring \\%[5mm]
-\large M.Sc. thesis Computing Science\\
-\large ICA-3120805\\
-\large rev. \texttt{\href{\ghloc/commit/\gitHash}{\gitAbbrevHash}}, \today
+\large M.Sc. thesis %Computing Science %\\
+%\large
+ICA-3120805\\
+\large {[}\emph{Supervisors}{]} Wouter Swierstra and Johan Jeuring \\[7mm]
 \end{flushright}
+\begin{center}%
+\large rev. \texttt{\href{\ghloc/commit/\gitHash}{\gitAbbrevHash}}, \today%
+\end{center}%
+\vskip -3mm
 \HRule
 \vfill
 \begin{center}
@@ -4234,6 +4241,14 @@ boring lemmas and alias definitions.
 % for LNCS bibliography:
 % \bibliographystyle{splncs}%this one doesn't sort automatically. :(
 
+\newpage
+
+\thispagestyle{empty}
+\vspace*{\stretch{1}}
+\begin{center}
+\includegraphics[width=5cm]{img/refl-chicken.png}
+\end{center}
+\vspace*{\stretch{1}}
 
 
 
