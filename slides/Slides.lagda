@@ -669,6 +669,9 @@ cpsType (t => t₁)     = cpsType t => (cpsType t₁ => RT) => RT
 
 \section{Discussion}
 
+\subsection{Contributions}
+
+
 \begin{frame}
   \begin{itemize}
   \item Illustration of reflection in dependently typed setting
@@ -685,6 +688,9 @@ cpsType (t => t₁)     = cpsType t => (cpsType t₁ => RT) => RT
     \end{itemize}
   \end{itemize}
 \end{frame}
+
+\subsection{Finally}
+
 
 \begin{frame}
   \frametitle{The Bottom Line}
