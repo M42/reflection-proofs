@@ -686,6 +686,17 @@ cpsType (t => t₁)     = cpsType t => (cpsType t₁ => RT) => RT
   \end{itemize}
 \end{frame}
 
+\begin{frame}
+  \frametitle{The Bottom Line}
+  \begin{itemize}
+  \item Reflection is a very useful technique
+  \item Combination with dependent types is powerful
+  \item Work still needs to be done on the reflection API in Agda
+
+  \item More details at \url{https://github.com/toothbrush/reflection-proofs}
+  \end{itemize}
+\end{frame}
+
 \end{document}
 %%% Local Variables:
 %%% mode: latex
