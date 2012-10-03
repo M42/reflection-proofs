@@ -99,7 +99,7 @@ open import Proofs.Util.Types
   \item Definition of naturals in Agda
   \end{itemize}
   \begin{spec}
-data ℕ : Set where
+data ℕ     : Set where
   zero     :          ℕ
   suc      : ℕ ->     ℕ
   \end{spec}
@@ -335,9 +335,9 @@ someTauto2   = quoteGoal e in (HOLE 0)
 \begin{spec}
 e :   Term
 e ≡   pi    (... Bool...) -- intro variable p
-            (def So (arg (def _∨_ (   arg (var 0 []) ∷
-                                      arg (def ¬_  (arg     (var 0 [])
-                                      ∷ [])) ∷ [])) ∷ []))
+            (def P (arg (def _∨_ (   arg (var 0 []) ∷
+                                     arg (def ¬_  (arg     (var 0 [])))  ∷ []
+                                     ...))))
 \end{spec}
 \end{frame}
 
@@ -416,7 +416,7 @@ open SKI'
 
 
 
-\section{Metaprogramming}
+\section{Type-safe Metaprogramming}
 
 
 
@@ -517,16 +517,14 @@ data Raw : Set where
 \begin{frame}
   \frametitle{What a WT looks like}
 \begin{code}
-testgoal1 : Raw
-testgoal1 = term2raw (quoteTerm 
-    λ (b : ℕ → ℕ) → b)
+testgoal1       : Raw
+testgoal1       = term2raw (quoteTerm                λ (b : ℕ) → b)
 
-typedgoal1 : Well-typed-closed (typeOf testgoal1) _
-typedgoal1 = raw2wt testgoal1
-
-seeTG1     :    typedgoal1 
-           ≡    Lam       (O Nat => O Nat) (Var here)
-seeTG1 = refl
+seeTG1          :    typedgoal1 
+                ≡                                    Lam   (O Nat) (Var here)
+seeTG1          = refl
+    where      typedgoal1      : Well-typed-closed (typeOf testgoal1) _
+               typedgoal1      = raw2wt testgoal1
 \end{code}
 \end{frame}
 
