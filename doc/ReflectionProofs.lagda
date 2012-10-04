@@ -246,7 +246,7 @@ and modify it. To the uninitiated, this sounds rather magical \cite{reflection-s
 but it has long been a favourite
 feature of users of such languages as Lisp~\cite{lisp-macros}. In many cases, this allows
 code to be a lot more concise and general, and thus reusable, than 
-usually is possible in simple imperative languages.
+usually is possible in simple languages.
 
 
 The dependently typed programming language
@@ -503,7 +503,7 @@ We see that only vectors with a value |n| such that |succ n| is the length of th
 vector, are valid inputs. This way, we guarantee that empty vectors cannot be beheaded. Agda is also convinced
 that this function is total, so we are done: we have a safe |head| function.
 
-This is probably the most common example of why DTP is the best thing since sliced bread:
+This is probably the most common example of why DTP\footnote{DTP stands for \emph{dependently typed programming}.} is the best thing since sliced bread:
 we cannot ask for the head of an empty vector, since we will get a compile time error
 that there is no possible value of |n| such that |succ n == zero|. Compare this to the |head| function
 defined in Haskell's Prelude, where a run time exception is generated if an empty list is passed in. How primitive!
@@ -647,10 +647,10 @@ tricks, the utility or sense of which might not at first be apparent.
 \section{A Programming Language \emph{and} Proof Assistant}\label{sec:plandpa}
 
 It has already been briefly mentioned that Agda is both a proof assistant and a programming language,
-as a result of the \ch. This correspondence lays down a relationship between programs as proofs and
+as a result of the \ch. This correspondence defines a relationship between programs as proofs and
 types as theorems. 
 
-In this section, we will give a short explanation of how this correspondence works, and 
+In this section, I will give a short explanation of how this correspondence works, and 
 what it means for programmers. I refrain from attempting to give a comprehensive explanation
 of intuitionistic logic and why the
 exact correspondence between natural deduction and simply typed $\lambda$-calculus exists. The
@@ -720,7 +720,7 @@ dropped, a number of desirable properties for a logic would not hold any longer.
 all of a sudden, run time exceptions are possible: if a function is not defined on a given input
 but we apply that argument anyway,
  bad things will happen (compare Haskell and a run time pattern matching failure).
-Because functions can also return types (which are just more values) and thus be used in type signatures, we would not want
+Because functions can also return types (which are also simply values) and thus be used in type signatures, we would not want
 it to be possible for type checking to break as a result of an incomplete function definition. 
 
 Finally,  Agda allows us to define functions and proofs side-by-side, allowing concurrent development of
@@ -732,7 +732,7 @@ that point are available.
 
 Admittedly, this section is by no means a comprehensive explanation of the \ch.
 More information about how to use Agda as a proof assistant is available \cite{Norell:2009:DTP:1481861.1481862,coquand2006emacs}. For
-background reading on the \ch a reference should be made to S\o rensen \emph{et al.} \cite{sorensen1998lectures}.
+background reading on the \ch a reference should again be made to S\o rensen \emph{et al.} \cite{sorensen1998lectures}.
 We will now look at some tricks which are peculiar to Agda; hopefully
 dealing with those now will make code snippets introduced later a little more comprehensible. 
 
@@ -788,8 +788,8 @@ well as potentially introduce unsound behaviour
 \cite{mcbride-motivation-eta-rules}.  
 
 Also, it means that it is possible to
-assert to Agda that a function that receives a certain type always
-gets an inhabited value. We call this assertion an \emph{irrefutable pattern}, see Fig.~\ref{fig:implicit0}. Here, we 
+assert to Agda that values of a certain type are always inhabited.
+We call this assertion an \emph{irrefutable pattern}, see Fig.~\ref{fig:implicit0}. Here, we 
 pattern match on |(tt , tt)|, and Agda is convinced that no other options are possible.
 
 Since inference is possible, we can also make this argument implicit, which effectively
@@ -808,7 +808,7 @@ bar' = foo'
     \end{shadedfigure}
 
 This is possible, since the type |⊤ × ⊤| only has one inhabitant. If
-multiple values were valid, the above code would have resulted in an unsolved meta in the definition of |bar'|. That brings
+multiple values were valid, the above code would have resulted in an unsolved meta\footnote{An unsolved meta can be thought of as an argument which cannot be inferred.} in the definition of |bar'|. That brings
 us to one of the drawbacks of this solution which has been used quite often. Mainly, the technique has been used to ``hide''
 a proof witness of, for example, an input term being of the right shape.
 The problem with this trick is that if an implicit
@@ -915,7 +915,7 @@ example₁   = refl
 \end{code}
 \end{shade}
 
-See how the zero is applied to the identity function, resulting in only the value zero.
+See how the identity function is applied to zero, resulting in only the value zero.
 The quoted representation of a natural zero is |con (quote zero) []|, where |con| means that we
 are introducing a constructor. The constructor |zero| takes no arguments, hence the empty list.
 
@@ -1351,9 +1351,10 @@ Note that  we will probably need to post-process the output of |convert|, but th
 
 If
 all of these steps are successful, the converted |Term| is returned as  |just e|, where |e| is the new, converted member
-of the AST. For example, see the unit tests in Fig. \ref{fig:test-autoquote}. Convenience functions for dealing with failing
-conversions are also provided. The |doConvert| function makes the assumption that the conversion manages, which enables it 
-to return a value without the |just|. Furthermore, this assumption, defined in |convertManages|, which is an inferable proof. This is on
+of the AST. For example, see the unit test in Fig. \ref{fig:test-autoquote}. Convenience functions for dealing with failing
+conversions are also provided. The |doConvert| function makes the assumption that the conversion succeeds, which enables it 
+to return a value without the |just|. 
+Furthermore, this assumption, defined in |convertManages|, is an inferable proof. This is on
 account of it being a record type, which is explained in Sec.~\ref{sec:implicit-unit}.
 
 
@@ -1376,7 +1377,7 @@ doConvert tab t {()    }      | nothing
 
 The use of |convertManages| and |doConvert| is illustrated in Fig.~\ref{fig:test-autoquote}. 
 This approach, using |convertManages| as an assumption, is a lot simpler than writing by hand a predicate function with the same pattern matching 
-structure as |convert|. Adding to the complication, |with| clauses are often expanded unpredictably in practise. The net effect
+structure as |convert|. Adding to the complication, |with| clauses are often expanded unpredictably in practice. The net effect
 of writing a pair of functions in this style is the same as the ``usual'' way of writing a predicate
 function by hand, in that a compile time error is generated if the function |doConvert| is 
 invoked on an argument with the wrong shape. Compare these relatively elegant functions to the verbose |term2boolexpr| and |isBoolExprQ| functions in Sec.~\ref{sec:addrefl}.
@@ -1402,8 +1403,8 @@ and specifically the function |constructors| in combination with |type|) to try 
 Because of time constraints, however, this is left as a suggestion for future work on the |Autoquote| library.
 
 The |BoolExpr| AST used in Sec.~\ref{sec:Boolean-tautologies} provides a
-good motivating example for using |Autoquote|, therefore a slightly
-more real-world example of |Autoquote| in use can be found in
+good motivating example for using |Autoquote|, therefore a 
+more realistic example of |Autoquote| in use can be found in
 Sec.~\ref{sec:autoquote-example}. One might also use the ability of quoting 
 arithmetic equations shown here in combination with a monoid solver,
 such as the example in Norell \emph{et al.} \cite{bove2009brief}.
@@ -1439,8 +1440,7 @@ more accessible.
 \section{Simple Example: Evenness}\label{sec:evenness}
 
 Sometimes, the best way to explain a complicated topic is to start by giving 
-some simple examples, letting the reader figure out the pattern behind what is being
-done themselves. Proof by reflection is no different: it is not a difficult technique, but can initially be
+some simple examples. Proof by reflection is no different: it is not a difficult technique, but can initially be
 counter intuitive. 
 
 To illustrate the concept of proof by reflection, we will cover an example taken from
@@ -1470,14 +1470,13 @@ isEven6 = isEven+2 (isEven+2 (isEven+2 isEven0))
 \end{code}
 \end{shade}
 
-To automate this, we will show how to \emph{compute} the proof
+To automate such proofs, we will show how to \emph{compute} the proof
 required. We start by defining a predicate |even?| that
 returns the unit type when its input is even and bottom otherwise.
 In this context, |⊤| and |⊥| can be seen as the analogues of |true|
 and |false|, just as presented in Sec.~\ref{sec:plandpa}.
 The meaning of such a decision function is that there exists
-a proof that some number is even, if it is $0$ or $2 + n$, for even $n$. Otherwise, no proof exists. That is the
-claim, at least. The idea
+a proof that some number is even, if it is $0$ or $2 + n$, for even $n$. Otherwise, no proof exists. We will have to prove this, though. The idea
 of ``there exists'' is perfectly modelled by the unit and empty types,
 since the unit type has one inhabitant, the empty type none.
 
@@ -1551,7 +1550,7 @@ argument, as explained in Sec.~\ref{sec:implicit-unit}. This means we can turn t
 implicit argument, so a user could get away with writing just
 |soundnessEven| as the proof, letting the inferrer do the rest. For
 the sake of exposition this is not done here, but the final implementation
-available on GitHub does use this trick. A detailed explanation of this
+available on GitHub does make use of this method. A detailed explanation of this
 technique, which is used extensively in the final code, is given in
 Sec.~\ref{sec:implicit-unit}.  Note that it still has the minor danger of
 making errors look like innocuous warnings.
@@ -1736,17 +1735,17 @@ foralls {n} b = forallsAcc b [] (zeroleast 0 n)
 
 \paragraph{What Is This |Diff| You Speak Of?}\label{sec:explain-diff}
 
-We just saw that the |Diff| argument is necessary in some
-of the recursive functions. Here, a short description of what it is
+In Fig.~\ref{fig:forallsacc}, we just saw that the |Diff| argument is necessary.
+ Here, a short description of what it is
 and why it is needed is given.
 
-In Sec.~\ref{sec:Boolean-tautologies} the function |forallsAcc| (among others)
+The function |forallsAcc| (among others)
 has a parameter of type |Diff n m|. Recalling the function's
 definition from Fig.~\ref{fig:forallsacc}, note that there are two variables, $n$ and $m$, giving the current size of the environment
 and the maximum number of bound variables in the proposition, respectively. 
 
 This is wrong, since our interpretation function |⟦_⊢_⟧| requires that these $m$ and $n$ are equal.
-We cannot, however, make them equal in the type signature for |proofGoal|, since we are 
+We cannot, however, make them equal in the type signature for |forallsAcc|, since we are 
 recursively building up the environment with an accumulating parameter. Because of this, we introduce |Diff|~-- see Fig.~\ref{fig:diff-datatype}.
 
 
@@ -1761,9 +1760,9 @@ zeroleast : (k n : ℕ) → Diff k (k + n)
 \caption{The definition of the |Diff| data type.}\label{fig:diff-datatype}
 \end{shadedfigure}
 
-The |Diff| data type  was necessary because given a term of type |BoolExpr m|, being a
+The |Diff| data type  is necessary because given a term of type |BoolExpr m|, being a
 proposition with at most $m$ variables, it should be ensured that in
-the end an environment of size $m$ would be produced.  The necessity
+the end an environment of size $m$ is produced.  The necessity
 of $m \equiv n$ is obvious considering that the evaluation function
 needs to be able to look up the variables in the Boolean expression.
 As |forallsAcc| is a recursive function that introduces new variables
@@ -1781,7 +1780,7 @@ We also provide the simple lemma |zeroleast|, which shows that for any
 two $k$ and $n$, $n$ steps are needed to count from $k$ to $k+n$.
 
 
-\paragraph{Soundness} Since |Diff| has been explained, and we now we finally know our real decision function |foralls|, we can set about proving its
+\paragraph{Soundness} Since |Diff| has been explained, and we now know our real decision function |foralls|, we can set about proving its
 soundness. Following the evens example, we want a function something like this.
 
 \begin{shade}
@@ -1797,7 +1796,7 @@ B|, where |B| is an expression in the image of the interpretation
 of this form.
 
 The function |proofGoal|, given a |BoolExpr n|, generates the
-corresponding proof obligation. That is, it gives back the type  equal to the theorem  under scrutiny. It does this by
+corresponding proof obligation. That is, it gives back the type  equivalent to the theorem  under scrutiny. It does this by
 first introducing $m$ universally quantified Boolean
 variables. These variables are accumulated in an environment. Finally, when $m$
 binders have been introduced, the |BoolExpr| is evaluated under this
@@ -1965,7 +1964,7 @@ environments in the leaves.
 It might come as a surprise that in a project focusing on reflection in Agda, in the programming language technology sense, has not yet
 found an application for reflection in this chapter. This is about to change. 
 We can get rid of the duplication seen in Fig.~\ref{fig:dup} using Agda's reflection API. 
-There we see the same Boolean formula twice: once in the type signature as an Agda
+In that figure we see the same Boolean formula twice: once in the type signature as an Agda
 proposition and once in the |BoolExpr| AST. More
 specifically, we will use the |quoteGoal| keyword to inspect the
 current goal. Given the |Term| representation of the goal, we can
@@ -1973,7 +1972,7 @@ convert it to its corresponding |BoolExpr| automatically.
 
 \ignore{
 \begin{code}
-open import Proofs.TautologyProver hiding (concrete2abstract; BoolExpr; foralls; proveTautology; soundness; boolTable; term2boolexpr'; stripSo ; isSoExprQ)
+open import Proofs.TautologyProver hiding (proofGoal; concrete2abstract; BoolExpr; foralls; proveTautology; soundness; boolTable; term2boolexpr'; stripSo ; isSoExprQ)
 
 {-
 Unfortunately, we need to duplicate this code here, because the So which is
@@ -2120,7 +2119,7 @@ Note that not every |Term| can be converted to a |BoolExpr|. Looking at the type
 |concrete2abstract| function, we see that it requires additional assumptions about the
 |Term|: it may only contain functions such as |_∧_| or |_∨_|, and
 bound variables. This is ensured by the predicates
-|isBoolExprQ| and friends.
+|isBoolExprQ| and friends. The functions |stripPi| and |stripSo| remove the quantified variables and |P| wrapper, respectively.
 
 The |concrete2abstract| function is rather verbose, and is mostly omitted.
 A representative snippet is given in Fig.~\ref{fig:concrete2abstract}. The attentive reader will notice that
@@ -2357,7 +2356,7 @@ embedding-projection function pairs for generic programming. One such example is
  Norell and Jansson \cite{norell2004prototyping}.
 
 
-Clearly, the technique is a very useful one, but it does have a conspicuous cumbersomeness
+Clearly, metaprogramming with Template Haskell is a very useful technique, but it does have a conspicuous cumbersomeness
 %limitation / restriction / inconvenience / disadvantage 
 (or should we say, potential pitfall).
 Developing a piece of Template Haskell code which should generate some function often results in
@@ -2371,7 +2370,7 @@ data structure for, say, lambda calculus, and have the guarantee that
 any term constructed in this AST is type-correct. The obvious
 advantage is then that the type checker will catch errors in whichever
 method tries to build an invalid piece of abstract syntax at compile time. This is preferable
-to it giving an obscure error pointing at some generated code, leaving
+to the type checker giving an obscure error pointing at some generated code, leaving
 the programmer to figure out how to solve the problem.
 
 In this chapter we will explore how one can leverage the power of
@@ -2386,7 +2385,7 @@ the reader  is assumed to be familiar with the rules and behaviour of
 STLC,  the definitions and rules which will be
 relevant later on are briefly repeated here.
 
-We first introduce the idea of contexts. A context is simply a stack of
+We first introduce the idea of contexts. A context is a stack of
 types, in which one can look up what type a variable is supposed to
 have. We have empty contexts, |[]|, and the possibility of adding a
 new type to the top of the context stack. We denote extension of the context by
@@ -2437,10 +2436,10 @@ Since we assume familiarity with lambda calculus in general, only
 a short introduction will be given here regarding nameless De Bruijn-indexed
 lambda terms \cite{de1972lambda}, as opposed to the ``usual'' named representation which
 is surprisingly enough still the standard for most textbooks on the
-subject.  Surprisingly, because named representation of lambda terms
+subject.  Named representation of lambda terms
 has all sorts of intricate issues such as preventing capture of free
 variables after $\alpha$-conversion, and needing to generate fresh
-variable names when adding abstractions, to name but a few. Algorithms for
+variable names when adding abstractions, to name but a few difficulties. Algorithms for
 transforming and generating lambda terms are often riddled with
 ``bookkeeping'' to prevent such unwanted behaviour. For example, whole
 libraries \cite{Weirich:2011:BU:2034574.2034818} have been developed
@@ -2707,7 +2706,7 @@ infer Γ (Var .(length Γ + m))      | outside m     = bad
 
 Abstractions are well-typed if the body of the lambda is well-typed, under a context extended with the
 type of the variable the lambda binds. Indeed, binding a variable adds it to the context for the body of the abstraction,
-with index  0, since it is the ``most recent'' binding. The type of the abstraction is, as argued above, a function from
+with index  0, since it is the ``most recent'' binding. This can be seen in the term |σ ∷ Γ| in the |Lam| constructor of |WT|. The type of the abstraction is, as argued above, a function from
 the type of the binding to the type of the body, |σ => τ| here.
 
 \begin{shade}
