@@ -99,7 +99,7 @@ mutual
   convert (vc , tab) (var x args) = just (vc x)
   convert (vc , tab) (con c args) = handleNameArgs (vc , tab) c args
   convert (vc , tab) (def f args) = handleNameArgs (vc , tab) f args
-  convert (vc , tab) (lam v σ t)  = nothing
+  convert (vc , tab) (lam v t)  = nothing
   convert (vc , tab) (pi t₁ t₂)   = nothing
   convert (vc , tab) (sort x)     = nothing
   convert (vc , tab) unknown      = nothing

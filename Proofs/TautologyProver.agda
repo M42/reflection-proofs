@@ -56,7 +56,7 @@ freeVars (pi a b)     = 0
 freeVars (var x args) = 0
 freeVars (con c args) = 0
 freeVars (def f args) = 0
-freeVars (lam v σ t)  = 0
+freeVars (lam v t)  = 0
 freeVars (sort x)     = 0
 freeVars unknown      = 0
 
@@ -69,7 +69,7 @@ stripPi (pi args t)  = pi   args t
 stripPi (var x args) = var  x    args
 stripPi (con c args) = con  c    args
 stripPi (def f args) = def  f    args
-stripPi (lam v σ t)  = lam  v  σ  t
+stripPi (lam v t)  = lam  v   t
 stripPi (sort x)     = sort x
 stripPi unknown      = unknown
 
@@ -90,7 +90,7 @@ isSoExprQ (def f (x ∷ x₃ ∷ x₄ ∷ args)) | yes () | tt
 isSoExprQ (def f args)                 | no ¬p with tt
 isSoExprQ (def f [])                   | no ¬p | tt = ⊥
 isSoExprQ (def f (x ∷ xs))             | no ¬p | tt = ⊥
-isSoExprQ (lam v σ t)                  = ⊥
+isSoExprQ (lam v t)                  = ⊥
 isSoExprQ (pi t₁ t₂)                   = ⊥
 isSoExprQ (sort x)                     = ⊥
 isSoExprQ unknown                      = ⊥
@@ -115,7 +115,7 @@ stripSo (def f (x ∷ x₃ ∷ x₄ ∷ args)) pf | yes () | tt
 stripSo (def f args)                 pf | no ¬p with tt
 stripSo (def f [])                   () | no ¬p | tt
 stripSo (def f (x ∷ xs))             () | no ¬p | tt
-stripSo (lam v σ t)                  ()
+stripSo (lam v t)                  ()
 stripSo (pi t₁ t₂)                   ()
 stripSo (sort x)                     ()
 stripSo unknown                      ()
