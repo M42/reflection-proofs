@@ -453,122 +453,9 @@ a |suc| translates to |S|. These constructors expect 0 and 1 argument, respectiv
 We will now look at the implementation of this library.
 
 \paragraph{Implementation} %TODO should we talk about this so much?
+% no change to Usage and afterwards have a VERY BRIEF Implementation
+% paragraph which explains in words what's happening.
 
-The type |Table a|, in Fig.~\ref{fig:nary}, is what we use for specifying what the AST we are expecting should look like. The function |N-ary| provides
-a way of storing a function with a variable number of arguments in our map, and |_dollarn_| is how we
-apply the ``stored'' function to a |Vec n| of arguments, where |n| is the arity of the function. Note that
-this is a copy of the standard library |Data.Vec.N-ary|, but has been instantiated here specifically
-to contain functions with types in |Set|. This was necessary, since the standard library version of
-|N-ary| can hold functions of arbitrary level (i.e. |Set n|). Therefore, the level of the 
-|N-ary| argument inside |ConstructorMapping| could not be inferred (since this depends on which function
-one tries to store in that field). This yields an unsolved constraint
-which prevented the module from being imported without using the unsound type-in-type option.
-
-Using this |N-ary| we can now define an entry in our |Table| as having an arity, and mapping
-a |Name| (which is Agda's internal representation of an identifier, see Fig.~\ref{fig:reflection}) to a
-constructor in the AST to which we would like to cast the |Term|. The definition of |N-ary| restricts 
-the possible function types to zero or more arguments of type |A| to an element of type |B|. In |ConstructorMapping|, we
-further specialise this function to zero or more arguments of type |astType| to |astType|, which forces 
-us to stick to simple inductive types, such as our |Expr| example. 
-
-\begin{shadedfigure}[H]
-\begin{spec}
-N-ary : (n : ℕ) → Set → Set → Set
-N-ary zero       A B = B
-N-ary (suc n)    A B = A → N-ary n A B
-
-_dollarn_ : ∀ {n} {A : Set} {B : Set} → N-ary n A B → (Vec A n → B)
-f dollarn []           = f
-f dollarn (x ∷ xs)     = f x dollarn xs
-
-data ConstructorMapping (astType : Set) : Set₁ where
-  _\#_↦_       : (arity : ℕ)
-               → Name
-               → N-ary arity astType astType
-               → ConstructorMapping astType
-
-Table : Set → Set₁
-Table a = (ℕ → a) × List (ConstructorMapping a)
-\end{spec}
-\caption{The types and helper functions associated with the |Autoquote| library.}\label{fig:nary}
-\end{shadedfigure}
-
-With the above ingredients we can now define the function |convert| shown
-in Fig.~\ref{fig:convert}. It takes a mapping of type |Table a|, and a |Term| obtained
-from one of Agda's reflection keywords, and produces a value which
-might be a properly converted term of type |a|. Here, |a| is the type
-we would like to cast to, for example |Expr|.  We also have the
-helper function |lookupName|, which 
-finds the corresponding entry in the mapping table. If nothing usable
-is found, |nothing| is returned.
-
-An example of such a mapping would be the one required for our |Expr|
-example, presented in Fig.~\ref{fig:exprTable}.
-
-
-Note that |convert| is not intended to
-be called directly; a convenience function |doConvert| is defined later.
-
-\begin{shadedfigure}
-\begin{spec}
-lookupName : {a : Set}      → List     (ConstructorMapping a)
-                            → Name
-                            → Maybe    (ConstructorMapping a)
-                            
-mutual
-  convert : {a : Set} → Table a → Term → Maybe a
-  convert (vc , tab) (var x args)       = just (vc x)
-  convert (vc , tab) (con c args)       = appCons (vc , tab) c args
-  convert (vc , tab) (def f args)       = appCons (vc , tab) f args
-  convert (vc , tab)     _              = nothing
-\end{spec}
-\caption{The function |convert|.}\label{fig:convert}
-\end{shadedfigure}
-
-
-If |convert| encounters a variable, it just uses the constructor which stands for variables. Note that
-the parameter is the De Bruijn index of the variable, which might or might not be in scope.
-This is something to check for afterwards, if a |just| value is returned.
-
-In the case of a constructor or a definition applied to arguments, the function |appCons| is called,
-which looks up a |Name| in the mapping and tries to recursively |convert| its arguments, then applies the corresponding constructor to
-these new arguments. Before this is done, the number of arguments is also compared to the defined arity of the function.
-
-The function |convertArgs| takes a list of term arguments (the type |Arg Term|) and tries to convert them into a list of AST values. 
-
-% a comment at the top of this code block fixes the indentation, but
-% that's really ugly. indentation is forgotten between code blocks,
-% it seems.
-\begin{shade}
-\begin{spec}
-  appCons : {a : Set} → Table a → Name → List (Arg Term) → Maybe a
-  appCons (vc , tab) name args with lookupName tab name
-  ... | just (arity       \# x  ↦ x₁)   with convertArgs (vc , tab) args
-  ... | just (arity       \# x₁ ↦ x₂)   | just x       with length x ≟-ℕ arity
-  ... | just (.(length x) \# x₁ ↦ x₂)   | just x       | yes
-                                                       = just (x₂ dollarn fromList x)
-  ... | just (arity       \# x₁ ↦ x₂)   | just x       | no      = nothing
-  ... | just (arity       \# x  ↦ x₁)   | nothing      = nothing
-  ... | nothing                         = nothing
-
-  convertArgs : {a : Set} → Table a → List (Arg Term) → Maybe (List a)
-  convertArgs tab []                   = just []
-  convertArgs tab (arg v r x ∷ ls)     with convert tab x
-  ... | just x₁      with convertArgs tab ls
-  ... | just x₂      | just x₁     = just (x₂ ∷ x₁)
-  ... | just x₁      | nothing     = nothing
-  ... | nothing      = nothing
-\end{spec}
-\end{shade}
-
-Note that  we will probably need to post-process the output of |convert|, but this will be illustrated later, in Sec.~\ref{sec:autoquote-example}.
-
-If
-all of these steps are successful, the converted |Term| is returned as  |just e|, where |e| is the new, converted member
-of the AST. For example, see the unit tests in Fig. \ref{fig:test-autoquote}. Convenience functions for dealing with failing
-conversions are also provided. The |doConvert| function makes the assumption that the conversion manages, which enables it 
-to return a value without the |just|. Furthermore, this assumption, defined in |convertManages|, which is an inferable proof. This is on
-account of it being a record type, which is explained in Sec.~\ref{sec:implicit-unit}.
 
 
 \begin{shade}
@@ -615,7 +502,7 @@ explained in Sec.~\ref{sec:inspecting-definitions} (the section on inspecting da
 and specifically the function |constructors| in combination with |type|) to try and discover the arity of the various constructors.
 Because of time constraints, however, this is left as a suggestion for future work on the |Autoquote| library.
 
-The |BoolExpr| AST used in Sec.~\ref{sec:Boolean-tautologies} provides a
+The |BoolExpr| AST used later in Sec.~\ref{sec:Boolean-tautologies} provides a
 good motivating example for using |Autoquote|, therefore a slightly
 more real-world example of |Autoquote| in use can be found in
 Sec.~\ref{sec:autoquote-example}. One might also use the ability of quoting 
@@ -625,7 +512,7 @@ such as the example in Norell \emph{et al.} \cite{bove2009brief}.
 Further examples of |Autoquote| functionality can be found in the module |Metaprogramming.ExampleAutoquote|.
 The module |Metaprogramming.Autoquote| contains 
 what could serve as a basis for a system for quoting concrete Agda into a more complex user-defined AST.
-Now that we have had a quick introduction to Agda in Chapter~\ref{chap:introducing-agda}, and defined
+Now that we have had a quick introduction to Agda in Sec.~\ref{chap:introducing-agda}, and defined
 this library, it is time to move on to putting it all to use.
 
 
