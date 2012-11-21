@@ -100,17 +100,6 @@ open import Data.Fin hiding (_+_)
 
 \usepackage{amsmath}
 
-%%%% the semantic package, for the nice type rules.
-%\usepackage{semantic}
-%\mathlig{ ->}{ \to}
-%\mathlig{||->}{\mapsto}
-%\mathlig{||=>}{\Mapsto}
-%\mathlig{=>}{\Rightarrow}
-%\mathlig{||- }{\vdash }
-%\mathlig{~>}{\leadsto}
-%\mathlig{=/=}{\neq}
-%%%% end semantic package stuff.
-
 \usepackage{hyperref}
 \usepackage{url}
 
@@ -259,7 +248,6 @@ can be done with Lisp, can be done better using dependent types; at least, so we
 looks at 
 how to use reflection in Agda. It should be a good starting point for someone already comfortable with
 Agda, or at the very least dependent types, to find inspiration on how to make reflection work to their advantage.
-
 Agda's reflection API defines several data types which represent terms,
 types, and sorts. These definitions take into account various Agda-specific
 features, including hidden arguments and computationally irrelevant
@@ -364,7 +352,7 @@ gives a detailed account of some real-world use-cases.
 \ignore{
 \begin{shade}
 \begin{code}
-open import Metaprogramming.Autoquote hiding (convertManages ; doConvert) renaming (_#_↦_ to _\#_↦_)
+open import Metaprogramming.Autoquote hiding (doConvert) renaming (_#_↦_ to _\#_↦_)
 \end{code}
 \end{shade}
 }
@@ -403,6 +391,7 @@ We might conceivably want to convert a piece of Agda concrete syntax, such as $5
 AST, using reflection. This typically involves ugly and verbose functions like
 the one from Sec.~\ref{sec:Boolean-tautologies} with many |with| clauses and frankly, too
 much tedium to be anything to be proud of. 
+
 %%%%%%%%%%%%%%%
 \begin{shadedfigure}[h]
 \begin{spec}
@@ -460,11 +449,6 @@ We will now look at the implementation of this library.
 
 \begin{shade}
 \begin{code}
-convertManages : {a : Set} → Table a → Term → Set
-convertManages t term with convert t term
-convertManages t term | just x       = ⊤
-convertManages t term | nothing      = ⊥
-
 doConvert : {a : Set}      → (tab : Table a) 
                            → (t : Term) 
                            → {man : convertManages tab t} 
@@ -830,6 +814,7 @@ foralls {n} b = forallsAcc b [] (zeroleast 0 n)
 
 
 \paragraph{What Is This |Diff| You Speak Of?}\label{sec:explain-diff}
+% TODO get rid of this, probably.
 
 We just saw that the |Diff| argument is necessary in some
 of the recursive functions. Here, a short description of what it is
@@ -1009,27 +994,6 @@ process to be automated. Luckily we have the |Autoquote| library,
 which we will apply in Sec.~\ref{sec:addrefl}.
 
 
-\subsection{Why Not Enumerate Environments?}\label{sec:no-enumerate-environments}
-
-A reasonable question to pose, after seeing the interface to the tautology prover, is why we have to separately 
-introduce fresh variables. Why can we not just write something like |∀ (e : Env n) → P someprop|?
-
-One of the reasons for not enumerating environments  is that
-referring to variables inside |someprop| becomes a bit of a problem. 
-Some new syntax would have to be introduced, such as a constructor
-|Var : Fin n → Bool| which could be used to refer to an element of the environment by number. This is 
-rather less elegant than the current implementation, which simply brings a few Boolean variables into scope in
-the native Agda manner, using a telescope (i.e. |(p q r : Bool) → P(p ∧ q ⇒ r)|, as defined in Sec.~\ref{para:telescopes}). This has another advantage, namely
-that when writing down a proposition, you are forced to use only valid variables, which translate to in-scope De Bruijn indices.
-
-Another difficulty of enumerating environments is the generation of the proof goal. Currently, a telescope with Boolean variables
-can be generated easily via recursion (see the function |proofGoal|), as opposed to having to generate all possible 
-lists of assignments. Some investigation was done to try and show that environments (lists of Booleans) of length $n$ are enumerable,
-but the results were not as elegant as those presented here. Also, generating the environments by quantifying over
-fresh variables and adding them to an accumulating environment saves 
-the hassle of creating a large binary tree with all the possible
-environments in the leaves.
-
 
 
 \subsection{Adding Reflection}\label{sec:addrefl}
@@ -1164,7 +1128,8 @@ hand.
 These are all the ingredients required to automatically prove that
 formulae are tautologies.  The following code illustrates the use of
 the |proveTautology| functions; we can omit the implicit arguments for
-the reasons outlined in Sec.~\ref{sec:implicit-unit}.
+the reasons outlined in Sec.~\ref{sec:implicit-unit}. %TODO this will
+                                %need explaining, but briefly.
 
 \begin{shade}
 \begin{code}
@@ -1182,7 +1147,7 @@ fave       = quoteGoal e in proveTautology e
 
 This shows that the reflection capabilities recently added to Agda are quite useful for
 automating certain tedious tasks, since we now need not encode the Boolean expression
-twice, in  slightly different formats. The conversion now happens automatically, without loss
+twice, in  slightly different formats. The conversion happens automatically, without loss
 of expressive power or general applicability of the proofs resulting from |soundness|.
 Furthermore, by using the proof by reflection technique, the proof is generated automatically.
 
@@ -1305,15 +1270,9 @@ concrete2abstract' t {pf} {pf2} fin = bool2fin     (freeVars t)
 \end{shade}
 
 Clearly, the |Autoquote| module can save a lot
-of repetitive coding for converting |Term|s into some  more structured
+of repetitive coding for converting |Term|s into some richer
 AST, such as |BoolExpr n|. 
 
-Finally, all developments regarding the proof by reflection technique, including
-the quoting code can be found in the modules |Proofs.TautologyProver| and |Metaprogramming.Autoquote|, respectively.
-There are also examples of using the tautology prover as a library in |Proofs.ExampleTautologies|, as well as two examples
-of using |Autoquote| in |Metaprogramming.ExampleAutoquote|. 
-The more extensive illustration of what is possible using |Autoquote| can be
-found in |Proofs.TautologyProver|.
 
 
 
@@ -1323,7 +1282,7 @@ found in |Proofs.TautologyProver|.
 
  
  
- 
+\paragraph{Related work} 
  
 This project's main innovations are novel combinations of existing
 techniques; as a result, quite a number of subjects are relevant to mention
@@ -1349,6 +1308,7 @@ object-oriented programming language with advanced reflective features \cite{Gol
 is surprising that industry programming does not use more of these advanced reflective features which have already  been around for a 
 long time.
  
+\paragraph{Evaluation}
 This would seem to be the inspiration for the current reflection system recently introduced
 in Agda, although we shall see that it is lacking in a number of fundamental capabilities.
 If we look at the taxonomy of reflective systems in programming language technology written up 
@@ -1400,6 +1360,7 @@ Returning to our research question,  repeated here to jog the memory,  a summary
 This paper has presented two simple applications of proof by
 reflection, the latter using Agda's reflection API. 
 
+\paragraph{Conclusions}
 We 
 have managed to automate generation of a certain class of proofs, which certainly 
 would count as mundane. The clear advantage of Agda's reflection system is that it
