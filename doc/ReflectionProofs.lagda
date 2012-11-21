@@ -78,6 +78,22 @@ minipage=\linewidth,margin=0pt,padding=0pt,bgcolor=hlite%
 \ignore{
 \begin{code}
 module doc.ReflectionProofs where
+
+open import Data.Bool renaming (not to ¬_)
+open import Relation.Binary.PropositionalEquality
+open import Reflection
+open import Data.List
+open import Data.Nat
+open import Data.Unit using (⊤ ; tt)
+open import Data.Empty
+open import Data.Product
+open import Data.Maybe
+open import Data.Vec
+open import Relation.Nullary using (yes; no)
+open import Data.String
+open import Data.Fin hiding (_+_)
+
+
 \end{code}
 }
 
@@ -162,13 +178,11 @@ should not relish doing.
 
 One of the many techniques for writing more effective
 code is that of \emph{metaprogramming}, which refers
-to the ability of a program to inspect\footnote{or \emph{reflect} upon} its own code
-and modify it. To the uninitiated, this sounds rather magical \cite{reflection-stackoverflow},
-but it has long been a favourite
+to the ability of a program to inspect\footnote{or \emph{reflect} upon} its own code,
+possibly modifying it. This has long been a favourite
 feature of users of such languages as Lisp~\cite{lisp-macros}. In many cases, this allows
 code to be a lot more concise and general, and thus reusable, than 
 usually is possible in simple imperative languages.
-
 
 The dependently typed programming language
 Agda~\cite{norell:thesis,Norell:2009:DTP:1481861.1481862} has recently been
@@ -176,7 +190,7 @@ extended with a \emph{reflection mechanism} for compile time metaprogramming in 
 MetaML~\cite{metaml}, Template Haskell~\cite{template-haskell}, and
 \CC\ templates~\cite{cplusplus}. Agda's reflection mechanisms make it
 possible to convert a program fragment into its corresponding abstract
-syntax tree and vice versa. In tandem with Agda's dependent types,
+syntax tree (AST) and vice versa. In tandem with Agda's dependent types,
 this has promising new programming potential.
 
 
@@ -212,7 +226,26 @@ and played around with.
 
 
 
-\section{Reflection in Agda}\label{sec:reflection}
+\section{Agda}\label{sec:reflection}
+
+The programming language Agda is an implementation
+of Martin-L\"of's type theory \cite{Martin-Lof:1985:CMC:3721.3731}, extended with records and modules. Agda
+is developed at the Chalmers University of Technology
+\cite{norell:thesis}; thanks to the \ch, it is
+both a 
+functional programming language
+and a proof assistant for intuitionistic logic. It is comparable with
+Coquand's calculus of constructions, the logic behind Coq \cite{DBLP:journals/iandc/CoquandH88}. Coq is
+similarly both a programming language and proof assistant.
+
+For an excellent tutorial on dependently typed programming using Agda,
+the reader is referred to Norell's work \cite{Norell:2009:DTP:1481861.1481862}.
+
+Before diving into the details of proof by reflection, a short
+introduction is given to Agda, including the peculiarities of its
+recent reflection API. 
+
+
 
 Since version 2.2.8, Agda includes a reflection API \cite{agda-relnotes-228}, which allows converting
 parts of a program's code into abstract syntax, in other words a data structure
@@ -243,17 +276,6 @@ Before going into too much detail about how reflection works and what data
 types are involved, we will look at a few simple code snippets which should serve
 to illustrate the basics of using the reflection API.
 
-\paragraph{Caveat}\label{para:caveat} One rather serious word of admission is to be made here.
-The code presented in this thesis does not work out of the box as advertised. For this
-code to compile, some minor changes to the Agda compiler are necessary.
-For reasons which will be made clear in Chapter~\ref{sec:type-safe-metaprogramming}, the abstract 
-data type representing terms inside the Agda compiler (the one in Fig.~\ref{fig:reflection}) needed to be extended with
-an extra argument to the constructor representing a lambda abstraction, denoting 
-the type (or more accurately, a representation thereof in terms of |Type|) of the argument 
-bound in that abstraction. There is a high likelihood that the changes to the Agda reflection API detailed
-in Appendix~\ref{appendix:lambda-types} will be adopted in a future version of Agda,
-but at the time of writing a personal fork of the compiler's repository was used\footnote{This fork, along with a version of the
-  Agda standard library with the modifications necessary to work with it, is available at \url{https://darcs.denknerd.org}.}.
 
 
 \paragraph{The Keywords} There are several new keywords that can be used to quote and unquote
@@ -271,7 +293,7 @@ example, the following unit test type checks:
 \begin{shade}
 \begin{code}
 example₀   : quoteTerm (\ (x : Bool) -> x)
-           ≡ lam visible (el _ (def (quote Bool) [])) (var 0 [])
+           ≡ lam visible (var 0 [])
 example₀   = refl
 \end{code}
 \end{shade}
@@ -281,15 +303,6 @@ this, we introduced a lambda abstraction, so we expect the |lam|
 constructor. Its one argument is visible, and
 the body of the lambda abstraction is just a reference to the
 nearest-bound variable, thus |var 0|, applied to an empty list of arguments.
-\paragraph{The |el| constructor} The test |example₀| also shows us that
-the quoted lambda binds a variable with some type.
- The |el| constructor we see 
-represents the type of the argument to the lambda. The first argument to |el| represents the sort, if it is known.
-In |example₀|, it is |unknown|.
-Furthermore
-the type of |x| is Boolean, represented as |def (quote Bool) []|. This means
-the |Bool| type (which is a definition, hence |def|) with no arguments.
-
 
 Furthermore, |quoteTerm| type checks and normalises its term before
 returning the required |Term|, as the following example demonstrates:
@@ -1358,7 +1371,7 @@ convert it to its corresponding |BoolExpr| automatically.
 
 \ignore{
 \begin{code}
-open import Proofs.TautologyProver hiding (concrete2abstract; BoolExpr; foralls; proveTautology; soundness; boolTable; term2boolexpr'; stripSo ; isSoExprQ)
+open import Proofs.TautologyProver hiding (concrete2abstract; BoolExpr; foralls; proveTautology; soundness; boolTable; term2boolexpr'; stripSo ; isSoExprQ ; proofGoal)
 
 {-
 Unfortunately, we need to duplicate this code here, because the So which is
@@ -1382,7 +1395,7 @@ isSoExprQ (def f (x ∷ x₃ ∷ x₄ ∷ args)) | yes () | tt
 isSoExprQ (def f args)                 | no ¬p with tt
 isSoExprQ (def f [])                   | no ¬p | tt = ⊥
 isSoExprQ (def f (x ∷ xs))             | no ¬p | tt = ⊥
-isSoExprQ (lam v σ t)                  = ⊥
+isSoExprQ (lam v t)                  = ⊥
 isSoExprQ (pi t₁ t₂)                   = ⊥
 isSoExprQ (sort x)                     = ⊥
 isSoExprQ unknown                      = ⊥
@@ -1407,7 +1420,7 @@ stripSo (def f (x ∷ x₃ ∷ x₄ ∷ args)) pf | yes () | tt
 stripSo (def f args)                 pf | no ¬p with tt
 stripSo (def f [])                   () | no ¬p | tt
 stripSo (def f (x ∷ xs))             () | no ¬p | tt
-stripSo (lam v σ t)                  ()
+stripSo (lam v t)                  ()
 stripSo (pi t₁ t₂)                   ()
 stripSo (sort x)                     ()
 stripSo unknown                      ()
@@ -1438,7 +1451,7 @@ isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | n
 isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | no ¬p | yes p = (isBoolExprQ' n x) × (isBoolExprQ' n x₁)
 isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₂ | no ¬p₁ | no ¬p = ⊥
 isBoolExprQ' n (def f (x ∷ x₁ ∷ x₂ ∷ args)) = ⊥
-isBoolExprQ' n (lam v σ t) = ⊥
+isBoolExprQ' n (lam v t) = ⊥
 isBoolExprQ' n (pi t₁ t₂) = ⊥
 isBoolExprQ' n (sort y) = ⊥
 isBoolExprQ' n unknown = ⊥
@@ -1479,7 +1492,7 @@ term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , pro
   (term2boolexpr n x₁ proj₂)
 term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) () | no ¬p | no p | no p₁
 term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ x₂ ∷ args)) ()
-term2boolexpr n (lam v σ t) ()
+term2boolexpr n (lam v t) ()
 term2boolexpr n (pi t₁ t₂) ()
 term2boolexpr n (sort x) ()
 term2boolexpr n unknown ()
