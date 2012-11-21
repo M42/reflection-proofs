@@ -18,7 +18,7 @@
 %%%%% microtype with settings.
 %\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
 %\microtypecontext{spacing=nonfrench}
-\newcommand{\microtypesetup}[1]{\fbox{NO MICROTYPE!\phantom{\rule{\textwidth}{\textwidth}}}}
+\newcommand{\microtypesetup}[1]{\fbox{NO MICROTYPE!\phantom{\rule{0.1\textwidth}{0.1\textwidth}}}}
 
 \usepackage{draftwatermark}
 \SetWatermarkLightness{0.95}
@@ -108,6 +108,7 @@ module doc.ReflectionProofs where
 \newcommand{\HRule}{\noindent\rule{\linewidth}{1.5pt}}
 \newcommand{\mytitle}{Reflection in Agda}
 \title{\mytitle}
+\author{Paul van der Walt \and Wouter Swierstra}
 \institute{
 \href{mailto:paul@@denknerd.org}{\nolinkurl{paul@@denknerd.org}}, \href{mailto:W.S.Swierstra@@uu.nl}{\nolinkurl{W.S.Swierstra@@uu.nl}}\\
 Department of Computer Science, Utrecht University
@@ -120,39 +121,33 @@ Department of Computer Science, Utrecht University
 
 \maketitle
 
-\clearpage
-
 \begin{abstract}
-This project explores the recent addition to Agda enabling
-\emph{reflection}, in the style of Lisp, MetaML, and Template
-Haskell. It illustrates several possible applications of reflection that arise
-in dependently typed programming, and details the limitations of the
-current implementation of reflection. Examples of type-safe metaprograms
-are given that illustrate the power of reflection coupled with a dependently 
-typed language. Among other things the
-limitations inherent in having |quote| and |unquote| implemented as
-keywords are highlighted. The fact that lambda terms are returned without
-typing information is discussed, and a solution is presented. Also
-provided is a detailed users' guide to the reflection API and a
-library of working code examples to illustrate how various common
-tasks can be performed, along with suggestions for an updated
-reflection API in a future version of Agda.
+  Detailing the implementation of proof by reflection using Agda's
+  recent reflection API.
+% This project explores the recent addition to Agda enabling
+% \emph{reflection}, in the style of Lisp, MetaML, and Template
+% Haskell. It illustrates several possible applications of reflection that arise
+% in dependently typed programming, and details the limitations of the
+% current implementation of reflection. Examples of type-safe metaprograms
+% are given that illustrate the power of reflection coupled with a dependently 
+% typed language. Among other things the
+% limitations inherent in having |quote| and |unquote| implemented as
+% keywords are highlighted. The fact that lambda terms are returned without
+% typing information is discussed, and a solution is presented. Also
+% provided is a detailed users' guide to the reflection API and a
+% library of working code examples to illustrate how various common
+% tasks can be performed, along with suggestions for an updated
+% reflection API in a future version of Agda.
 \end{abstract}
 
-\microtypesetup{protrusion=false} % disables protrusion locally in the document
-\tableofcontents
-\microtypesetup{protrusion=true}
-\clearpage
 
 
 \newcommand{\researchquestion}{%
 \begin{quote}
-``What are interesting applications of the new reflection API?
-Which tedious tasks can we automate? What advantages
-does the combination of dependent types and reflection give us?
- Finally, is
-the reflection API adequate as it stands to facilitate our needs or does it require extension? If
-extension is necessary, what kind and how much?''
+  ``What practical issues do we run into when trying to engineer
+  automatic proofs in a dependently typed language with reflection?
+  Are Agda's reflective capabilities sufficient and practically
+  usable, and if not, which improvements might make life easier?''
 \end{quote}
 }
 
@@ -200,40 +195,21 @@ reflection. More specifically it makes the following contributions:
 \begin{itemize}
   \item A short \emph{introduction to Agda} as a programming language is given in 
 Chapter~\ref{chap:introducing-agda}.
-\item The current status of the reflection
-  mechanism is documented. The existing documentation is limited to a paragraph in
-  the release notes~\cite{agda-relnotes-228} and comments in the
-  compiler's source code. In Chapter~\ref{sec:reflection} we give
-  several short examples of \emph{the reflection API\footnote{API stands for \emph{application programming interface}. The reflection
-    API is an interface to Agda's internal representation of terms.} in action}.
 \item How to use Agda's reflection mechanism to
   automate certain categories of proofs is illustrated in
-  Chapter~\ref{sec:proof-by-reflection}. The idea of \emph{proof by
+  Sec.~\ref{sec:proof-by-reflection}. The idea of \emph{proof by
     reflection} is certainly not new, but still worth examining in the
   context of this new technology.
-  
-\item We show how to
-  write \emph{type-safe metaprograms}. To illustrate this
-  point, we will develop a type-safe translation from the simply typed
-  lambda calculus to programs in continuation-passing style (CPS),
-  followed by a type-safe translation of closed lambda terms into SKI
-  combinator calculus (Chapter~\ref{sec:type-safe-metaprogramming}).  In
-  doing this, structurally recursive, total, type preserving CPS and SKI
-  transformations are defined.
- 
-\item Finally, we also discuss some of the
-  \emph{limitations of the current implementation} of reflection (Chapter~\ref{sec:generic-programming}),
-  brought to light by attempts to automate certain aspects of 
-  generic programming.
+\item A library called |Autoquote| is presented, which alleviates much
+  of a programmer's burden when quoting a given AST frequently. The
+  library is introduced in Sec.~\ref{sec:introducing-autoquote}.
 \end{itemize}
 
 The code and examples presented in this paper all compile using the
-latest development version of Agda (currently 2.3.1), with some minor
-modifications to the compiler (see
-Appendix~\ref{appendix:lambda-types}). All code, including this
+latest version of Agda (currently 2.3.2). All code, including this
 report, is available on
 GitHub\footnote{\ghurl}.
-This thesis is also a Literate Agda file, which means the code snippets can be extracted, compiled 
+This report is also a Literate Agda file, which means the code snippets can be extracted, compiled 
 and played around with.
 
 \section{Introducing Agda}\label{chap:introducing-agda}
