@@ -3,6 +3,7 @@
 
 \usepackage{color}
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+\usepackage{todonotes}
 
 %include polycode.fmt
 %if style == newcode
@@ -32,7 +33,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Font definitions.
-%\usepackage{tgpagella}                  %% looks a little like palatino -- thanks Zapf!
+\usepackage{tgpagella}                  %% looks a little like palatino -- thanks Zapf!
 \usepackage[T1]{fontenc}
 \renewcommand{\ttdefault}{lmtt}         %% Latin Modern for teletype
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -122,8 +123,7 @@ open import Data.Fin hiding (_+_)
   
 \date{\today}
 \newcommand{\HRule}{\noindent\rule{\linewidth}{1.5pt}}
-\newcommand{\mytitle}{Reflection in Agda}
-\title{\mytitle}
+\title{Engineering Proof by Reflection in Agda}
 \author{Paul van der Walt \and Wouter Swierstra}
 \institute{
 \href{mailto:paul@@denknerd.org}{\nolinkurl{paul@@denknerd.org}}, \href{mailto:W.S.Swierstra@@uu.nl}{\nolinkurl{W.S.Swierstra@@uu.nl}}\\
@@ -133,7 +133,6 @@ Department of Computer Science, Utrecht University
 
 
 \begin{document}
-\setcounter{tocdepth}{1}
 
 \maketitle
 
@@ -170,7 +169,7 @@ Department of Computer Science, Utrecht University
 \section{Introduction}\label{chap:introduction}
 
 Since the inception of computer programming, one of the aims has been to
-write code as concisely as possible, while achieving the most powerful effect.
+try and write as little code as possible, while achieving the most powerful effect.
 One of the holy grails of writing programs is also being able to reuse pieces of
 code, after having written them once, as opposed to continually writing small
 variations on existing code. Reinventing the wheel is something the programmer
@@ -202,19 +201,20 @@ The main questions we aim to answer during this project are:
 
 
 \paragraph{Contributions} This project starts to explore the possibilities and limitations of this
-new reflection mechanism. It describes several case studies,
+new reflection mechanism. It describes a case study,
 exemplative of the kind of problems that can be solved using
 reflection. More specifically it makes the following contributions:
 
 \begin{itemize}
+  \item A newcomers' crash course on reflection in Agda is given in Sec.~\ref{sec:crash}.
+\item A library called |Autoquote| is presented, which alleviates much
+  of a programmer's burden when quoting a given AST. The
+  library is introduced in Sec.~\ref{sec:introducing-autoquote}.
 \item How to use Agda's reflection mechanism to
   automate certain categories of proofs is illustrated in
   Sec.~\ref{sec:proof-by-reflection}. The idea of \emph{proof by
     reflection} is certainly not new, but still worth examining in the
   context of this new technology.
-\item A library called |Autoquote| is presented, which alleviates much
-  of a programmer's burden when quoting a given AST frequently. The
-  library is introduced in Sec.~\ref{sec:introducing-autoquote}.
 \end{itemize}
 
 The code and examples presented in this paper all compile using the
@@ -226,7 +226,7 @@ and played around with.
 
 
 
-\section{Agda}\label{sec:reflection}
+\subsection{Introducing Agda}\label{sec:reflection}
 
 The programming language Agda is an implementation
 of Martin-L\"of's type theory \cite{Martin-Lof:1985:CMC:3721.3731}, extended with records and modules. Agda
@@ -241,8 +241,9 @@ similarly both a programming language and proof assistant.
 For an excellent tutorial on dependently typed programming using Agda,
 the reader is referred to Norell's work \cite{Norell:2009:DTP:1481861.1481862}.
 
-Before diving into the details of proof by reflection, a short
-introduction is given to Agda, including the peculiarities of its
+Before diving into the details of proof by reflection, Sec. \ref{sec:thebasics}
+provides a crash course
+on Agda's
 recent reflection API. 
 
 
@@ -254,27 +255,24 @@ The idea of reflection is old: already in the 1980s Lisp included a similar
 feature, called \emph{quoting} and \emph{unquoting}, which allowed run time modification of a program's code, by
 the program itself. This has given rise to powerful techniques for reusing code and
 generating frequently needed but slightly different expressions automatically. What
-can be done with Lisp, can be done better using Agda; at least, so we hope. This chapter
-looks at the current state of the admittedly work-in-progress reflection API, and
-illustrates how to use it. It should be a good starting point for someone already comfortable with
-Agda to find inspiration on how to make reflection work to their advantage.
+can be done with Lisp, can be done better using dependent types; at least, so we hope. This chapter
+looks at 
+how to use reflection in Agda. It should be a good starting point for someone already comfortable with
+Agda, or at the very least dependent types, to find inspiration on how to make reflection work to their advantage.
 
 Agda's reflection API defines several data types which represent terms,
-types, and sorts. These definitions take into account various
+types, and sorts. These definitions take into account various Agda-specific
 features, including hidden arguments and computationally irrelevant
-terms. An overview of the core data types involved is 
-included in Sec.~\ref{sec:reflection-datatypes}. % Fig.~\ref{fig:reflection}. 
+terms. 
 In addition to these data
 types that represent \emph{terms}, there is limited support for
-reflecting \emph{definitions}. Inspection of definitions
-is detailed in Sec.~\ref{sec:inspecting-definitions}. Continue reading Sec.~\ref{sec:thebasics} for a
-practical guide to reflection.
+reflecting \emph{definitions}, although we will not use this capability.
 
-\section{The Basics}\label{sec:thebasics}
+\section{Using Reflection}\label{sec:crash}
 
-Before going into too much detail about how reflection works and what data
-types are involved, we will look at a few simple code snippets which should serve
-to illustrate the basics of using the reflection API.
+Before going into too much detail about how reflection can make our
+lives easier and what nifty techniques are possible, we will look at a few simple code snippets which should serve
+to illustrate the basics of using the reflection API in Agda.
 
 
 
@@ -332,154 +330,12 @@ representing the type of the current goal. In this example, the value
 of |e| in the hole will be |def ℕ []|, i.e., the |Term| representing
 the type |ℕ|.
 
-Another function that deals with types is the aptly named |type| function. Given
-a |Name|, such as the result of |quote example₀|, |type| returns the |Type| value representing the
-type of that identifier. This indeed implies one cannot ask the type of an arbitrary
-|Term|, since one would need to introduce it as a definition first, to be able to get a |Name| associated with it.
-In |example₂| we see what |type| returns when asked about the successor function (a function with
-type |ℕ → ℕ|), and in |example₃| we verify that the term shown is in fact the same as a
-function from naturals to naturals. The |el| constructor
-is illustrated clearly here. The first argument to |el| is the sort of the type, where in |example₂|
-the |lit 0| term denotes a type in |Set₀| (which is equal to |Set|). The second argument to |el| is, as we already saw, the |Term|-representation
-of the type.
-
-\begin{shade}
-\begin{code}
-example₂   : type          (quote ℕ.suc)
-           ≡ el (lit 0)    (pi    (arg visible relevant
-                                      (el (lit 0) (def (quote ℕ) [])))
-                                      (el (lit 0) (def (quote ℕ) [])))
-example₂ = refl
-
-example₃   : type          (quote ℕ.suc)
-           ≡ el (lit 0)    (quoteTerm (∀ (n : ℕ) → ℕ))
-example₃ = refl
-\end{code}
-\end{shade}
-
 
 The |unquote| keyword converts a |Term| data type back to concrete
 syntax. Just as |quoteTerm| and |quoteGoal|, it type checks and
 normalises the |Term| before it is spliced into the program text.
 
-This short introduction should already be enough to start developing
-simple reflective programs. The rest of this chapter goes into more detail
-regarding the data structures involved in Agda's reflection API, and later, 
-gives a detailed account of real-world use-case.
 
-\section{The Structures of Reflection}\label{sec:reflection-datatypes}
-
-After having seen an informal introduction to practical reflection, we will look at 
-the data types involved in reflection. After all, it is a good idea to be aware of what
-values one might expect as a result from |quoteTerm|.  The full definitions of |Term|, |Type| and their
-helpers are presented in Fig.~\ref{fig:reflection}.
-
-The first structure we will look at step-by-step is |Term|, which represents concrete 
-Agda terms.
-
-
-\begin{shadedfigure}[p]
-%if style == poly
-\begin{spec}
-      postulate Name          : Set
-
-    -- Arguments may be implicit, explicit, or inferred
-      data Visibility         : Set where
-        visible hidden instance : Visibility
-
-    -- Arguments can be relevant or irrelevant.
-      data Relevance          : Set where
-        relevant irrelevant : Relevance
-
-    -- Arguments.
-      data Arg A              : Set where
-        arg : (v : Visibility) (r : Relevance) (x : A) → Arg A
-    -- Terms.
-      mutual
-        data Term             : Set where
-        -- A bound variable applied to a list of arguments
-          var        : (x : ℕ) (args : List (Arg Term))            →         Term
-        -- Constructor applied to a list of arguments
-          con        : (c : Name) (args : List (Arg Term))         →         Term
-        -- Identifier applied to a list of arguments
-          def        : (f : Name) (args : List (Arg Term))         →         Term
-        -- Lambda abstraction (typed -- see Appendix~\ref{appendix:lambda-types}).
-          lam        : (v : Visibility) (σ : Type) (t : Term)      →         Term
-        -- Dependent function types
-          pi         : (t₁ : Arg Type) (t₂ : Type)                 →         Term
-        -- Sorts
-          sort       : Sort                                        →         Term
-        -- Anything else
-          unknown    :                                                       Term
-
-        data Type             : Set where
-          el         : (s : Sort) (t : Term)                       →         Type
-
-        data Sort             : Set where
-        -- A Set of a given (possibly neutral) level.
-          set        : (t : Term)       →       Sort
-        -- A Set of a given concrete level.
-          lit        : (n : ℕ)          →       Sort
-        -- Anything else.
-          unknown    :                          Sort
-  \end{spec}
-%endif
-  \caption{The data types for reflecting terms.}
-  \label{fig:reflection}
-\end{shadedfigure}
-
-A variable has a De Bruijn index, represented by a natural number,
-and may be applied to arguments.
-The constructors |con| and |def| are introduced for constructors and definitions, respectively,
-applied to a list of arguments. 
-Lambda abstractions bind one variable. 
-Included is the type signature of the argument, represented by a |Type|.
-The |pi| constructor represents function types, or telescopes (the dependent equivalent of an arrow). 
- It can be seen as a lambda abstraction for types instead of terms. 
-Finally the constructor |unknown| stands for things which are not or
-cannot be represented in this AST\footnote{AST stands for
-\emph{abstract syntax tree}; this abbreviation will be used
-hereafter.}, such as function definitions or holes.
-
-As explained in the previous section, the |el| constructor constructs values in |Type|. It has two arguments:
-one for the sort of the type, the other for the |Term| representing the type.
-
-Aside from the necessary data structures, the |Reflection| module of the Agda standard library\footnote{The standard library version 0.6 was used here; later versions 
-might expose more functionality.} also exports a number of
-functions. We provide a list of them in Fig. \ref{fig:reflection-functions}, along with
-a description of their use.
-
-\begin{shadedfigure}[h]
-\begin{spec}
-_≟-Name_           : Decidable {A = Name} _≡_
--- The other decidable properties are omitted for 
--- brevity, but are similarly named.
-
-type               : Name         → Type
-definition         : Name         → Definition
-constructors       : Data-type    → List Name
-\end{spec}
-\caption{The functions exported by the |Reflection| module of the Agda standard library, as of version 0.6.}\label{fig:reflection-functions}
-\end{shadedfigure}
-
-
-The |definition| function returns the definition of a given identifier. The type |Definition| is defined as follows.
-
-\begin{shade}
-\begin{spec}
-data Definition : Set where
-  function          : Function       →     Definition
-  data-type         : Data-type      →     Definition
-  record′           : Record         →     Definition
-  constructor′      :                      Definition
-  axiom             :                      Definition
-  primitive′        :                      Definition
-\end{spec}
-\end{shade}
-
-At the time of writing the only constructor we can do anything with is |data-type|: using
-it we can get a list of constructors, by calling the suitably named |constructors| function. See the
-illustration in Sec.~\ref{sec:inspecting-definitions}.
 
 Finally, we have decidable equality on the following types: |Visibility|, |Relevance|, |List Arg|s, |Arg Type|s, |Arg Term|s,  |Name|s,  |Term|s, |Sort|s  and |Type|s. 
 Typically, this is useful for deciding which constructor is present in
@@ -494,80 +350,14 @@ convert (def c args) with c ≟-Name quote foo
 \end{spec}
 \end{shade}
 
-Aside from these functions and types, the |Reflection| module also contains a few 
-lemmas for decidable equality on terms and types. These are rather boring, 
-and the user will probably never have to use them directly.
+This short introduction should already be enough to start developing
+simple reflective programs.  For a more detailed description of the
+reflection API in Agda, including many examples, the inquisitive
+reader is referred to the more extensive thesis covering this topic \cite{vdWalt:Thesis:2012}.
+The thesis goes into more detail
+regarding the data structures involved in Agda's reflection API, and later, 
+gives a detailed account of some real-world use-cases.
 
-\subsection{Inspecting Definitions}\label{sec:inspecting-definitions}
-
-With the functions provided by |Reflection| we can get a little more insight into definitions of data types. 
-For example, we can
- get a list of constructors for some data type. The following code snippets
-illustrate how this is done, and what the format of the answer is.
-
-\ignore{
-\begin{code}
-isDatatype : Definition → Set
-isDatatype (data-type x)           = ⊤
-isDatatype _                       = ⊥
-\end{code}
-}
-\begin{shade}
-\begin{code}
-giveDatatype : (d : Definition)  → {pf    : isDatatype d} → Data-type
-giveDatatype (data-type   d  )   {_   }   = d
-giveDatatype (function    x  )   {()  }
-\end{code}
-\vskip -7mm
-\begin{spec}
-...
-\end{spec}
-\end{shade}
-\ignore{
-\begin{code}
-giveDatatype (record′ x)    {()}
-giveDatatype constructor′   {()}
-giveDatatype axiom          {()}
-giveDatatype primitive′     {()}
-\end{code}
-}
-
-The helper function |giveDatatype| assumes that the constructor present is, in fact, |data-type|, which
-saves some elimination of uninteresting cases. With this helper, we can get the |Data-type| to feed to 
-the |constructors| function. The following unit test shows an example, where we ask for all the constructors
-of the natural numbers. 
-
-
-\begin{shade}
-\begin{code}
-ℕcons : List Name
-ℕcons = constructors (giveDatatype (definition (quote ℕ)))
-
-consExample : ℕcons ≡       quote ℕ.zero   ∷
-                            quote ℕ.suc    ∷ []
-consExample = refl
-\end{code}
-\end{shade}
-
-Now we have in |ℕcons| a list of the names of the constructors of the data type |ℕ|, which we
-could use to do more interesting things depending on the structure of a data type. One example
-might be to compute a generic representation which is isomorphic to the naturals,
-as is often done using
-Template Haskell. For example, in the Regular library for generic programming \cite{van2010lightweight}, a
-translation to a sum-of-products view is made.
-This possibility is explored in Chapter~\ref{sec:generic-programming}.
-
-
-That wraps up all the functionality available from the reflection API. Contemplating
-what we might want to do using these new tools, it becomes clear that
-a common task will be casting a raw |Term| into some AST of
-our own.
-I developed a library, |Autoquote|, which might serve as both an instructive
-example in how to pull apart |Term|s, as well as a useful and reusable function,
-since it can automatically convert a |Term|
-into some AST type. All that is needed is a mapping from concrete Agda
-|Name|s to constructors of this AST. An explanation of its implementation application is given
-in Sec.~\ref{sec:autoquote}, and an example use-case is given in \ref{sec:autoquote-example}.
 
 
 \section{Automatic Quoting}\label{sec:autoquote}
@@ -579,13 +369,22 @@ open import Metaprogramming.Autoquote hiding (convertManages ; doConvert) renami
 \end{shade}
 }
 
+In a language like Haskell, which has pattern matching, converting
+elements of one AST to another is usually a simple, if boring,
+task. Unfortunately for us, though, Agda functions are required to be
+total, having cases for each possible pattern. Since the AST of terms
+which can be quoted is usually much more liberal than an AST we would
+like to use (such as that of Boolean expressions, or first-order
+equations, for example), writing such conversion functions can be tedious.
+
+%TODO ease the transition here...
 If, each time we wanted to quote a term, we had to write a huge function, with many pattern matching cases and nested |with| statements to handle different 
 shapes of ASTs, we would quickly become discouraged. This nearly happened while doing this project, which is why
 |Autoquote| was conceived. Quoting some expression with a given grammar is a mundane task we are frequently faced with if we 
 are foolhardy enough to use reflection. The (partial) solution to this problem~-- something which at least mitigates 
 the agony~-- is presented in this section.
 
-Imagine we have some AST, for example |Expr|, in Fig.~\ref{fig:exprdata}.
+Imagine we have some AST, for example |Expr|, as in Fig.~\ref{fig:exprdata}.
 This is a rather simple inductive data structure representing terms which can contain Peano style natural
 numbers, variables (indexed by an Agda natural) and additions.
 
@@ -604,6 +403,22 @@ We might conceivably want to convert a piece of Agda concrete syntax, such as $5
 AST, using reflection. This typically involves ugly and verbose functions like
 the one from Sec.~\ref{sec:Boolean-tautologies} with many |with| clauses and frankly, too
 much tedium to be anything to be proud of. 
+%%%%%%%%%%%%%%%
+\begin{shadedfigure}[h]
+\begin{spec}
+term2boolexpr n (con tf []) pf with tf ≟-Name quote true
+term2boolexpr n (con tf []) pf | yes p = Truth
+...
+term2boolexpr n (def f []) ()
+term2boolexpr n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
+... | yes p = Not (term2boolexpr n x pf)
+... | no ¬p with f ≟-Name quote _∧_
+...
+\end{spec}
+\caption{The gist of  the conversion of a |Term| into a |BoolExpr n|.}\label{fig:concrete2abstract}
+\end{shadedfigure}
+%%% an example conversion function which is fugly
+%%%%%%%%%%%%%%%
 
 We need to check that the |Term| has a reasonable shape, and contains valid operators.
 Ideally, we would 
@@ -615,7 +430,7 @@ provide an interface which, when provided with such a mapping, automatically quo
 that fit. Here, \emph{fitting} is defined as only having variables, or names that are listed
 in this mapping. Other terms are rejected.
 The user provides an elegant-looking mapping and |Autoquote| automatically converts
-concrete Agda to  simple inductive types. The mapping table for |Expr| is
+concrete Agda to elements of simple inductive types. The mapping table for |Expr| is
 shown in Fig.~\ref{fig:exprTable}.
 
 \begin{shadedfigure}[h]
@@ -637,7 +452,7 @@ a |suc| translates to |S|. These constructors expect 0 and 1 argument, respectiv
 
 We will now look at the implementation of this library.
 
-\paragraph{Implementation}
+\paragraph{Implementation} %TODO should we talk about this so much?
 
 The type |Table a|, in Fig.~\ref{fig:nary}, is what we use for specifying what the AST we are expecting should look like. The function |N-ary| provides
 a way of storing a function with a variable number of arguments in our map, and |_dollarn_| is how we
@@ -721,8 +536,9 @@ these new arguments. Before this is done, the number of arguments is also compar
 
 The function |convertArgs| takes a list of term arguments (the type |Arg Term|) and tries to convert them into a list of AST values. 
 
-% a comment at the top of this code block fixes the indentation.
-% indentation is forgotten between code blocks, it seems.
+% a comment at the top of this code block fixes the indentation, but
+% that's really ugly. indentation is forgotten between code blocks,
+% it seems.
 \begin{shade}
 \begin{spec}
   appCons : {a : Set} → Table a → Name → List (Arg Term) → Maybe a
@@ -826,15 +642,11 @@ mechanically constructing a proof of a theorem by inspecting its
 shape.
 Here we will see two case studies illustrating proof by
 reflection and how Agda's reflection mechanism can make the technique
-more accessible.
+more convenient.
 
 
 
-
-
-
-
-\section{Simple Example: Evenness}\label{sec:evenness}
+\subsection{Simple Example: Evenness}\label{sec:evenness}
 
 Sometimes, the best way to explain a complicated topic is to start by giving 
 some simple examples, letting the reader figure out the pattern behind what is being
@@ -954,14 +766,12 @@ technique, which is used extensively in the final code, is given in
 Sec.~\ref{sec:implicit-unit}.  Note that it still has the minor danger of
 making errors look like innocuous warnings.
 
-
-An implementation of the above, including detailed comments,
-is to be found in the module |Proofs.IsEven|.
+%TODO implement trick here.
 
 This concludes the example of proving that certain naturals are even using proof by reflection.
 The next step will be to use the same approach for a more involved and realistic problem.
 
-\section{Second Example: Boolean Tautologies}\label{sec:Boolean-tautologies}
+\subsection{Second Example: Boolean Tautologies}\label{sec:Boolean-tautologies}
 
 Obviously, the first example of proof by reflection, the evenness of natural 
 numbers, was a rather trivial one. There was a good reason for studying it, though, since
@@ -1291,7 +1101,7 @@ someTauto    = soundness rep _
 \end{shadedfigure}
 
 Having said that, the trick of letting Agda infer the proof argument to pass to |soundness| is 
-still a little dangerous, as explained in Sec.~\ref{sec:implicit-unit}.
+still a little deceptive, as explained in Sec.~\ref{sec:implicit-unit}.
 The thing is, we do not want a user to get away with being able to prove that something which is not a
 tautology, is a tautology. Since the proof that under all environments the theorem evaluates
 to true is an inferred argument in this style, one is merely left with an unsolved meta (with an uninhabitable type, to be fair), which
@@ -1307,33 +1117,10 @@ ourselves and convert them the to De Bruijn indices. This is
 error-prone given how cluttered the abstract representation can get
 for formulae containing many variables. 
 
-It would be desirable for this
-process to be automated. In Sec.~\ref{sec:addrefl} a solution is
-presented that uses Agda's recent reflection API.
+It would be desirable for this representation
+process to be automated. Luckily we have the |Autoquote| library,
+which we will apply in Sec.~\ref{sec:addrefl}.
 
-\subsection{Why Not Propositional Equality?}\label{sec:no-propositional-equality}
-
-The question of why the |So| operator is used here to denote that a formula is 
-a tautology, as opposed to just writing the literal definition of tautology, namely
-|∀ (b : Bool) → Q(b) ≡ true|, was asked in the previous section.
-The reason for this is mainly a technical one. While it is possible to prove tautologies of this form, 
-using this format for reasoning about Boolean formulae becomes rather awkward.
-
-The reason for this is
-that the |So| operator returns a type, namely either |⊤|, |⊥| or other record types, which can
-be passed around as an automatically inferred implicit value (see Sec.~\ref{sec:implicit-unit} for a 
-detailed explanation about implicit inferred arguments), removing the need to put |refl| everywhere
-such a proof is needed~-- a unit or pair type can be inferred if it exists\footnote{Compare the example
-implementation of a ring solver in Agda, which has |refl|s all over the place \cite{ringsolver}, which
-cannot be made implicit and thus omitted.}. Because of this, the
-recursive cases of |soundness| become a lot simpler: the interpretation
-of a sub-expression being true becomes the same as a unit type being inhabited, and the and-operator
-corresponds to a pair. If the propositional equality way was being used, many lemmas such as that 
-|a ∧ b ≡ true ⇒ a ≡ true ∧ b ≡ true| need to be proven, and they are continually needed to
-pull apart such propositions for recursive calls. Using a type that allows
-pattern matching with irrefutable patterns
-to obtain left-truth and right-truth, to then be passed to the recursive calls, is much simpler in this
-case.
 
 \subsection{Why Not Enumerate Environments?}\label{sec:no-enumerate-environments}
 
@@ -1358,7 +1145,7 @@ environments in the leaves.
 
 
 
-\section{Adding Reflection}\label{sec:addrefl}
+\subsection{Adding Reflection}\label{sec:addrefl}
 
 It might come as a surprise that in a project focusing on reflection in Agda, in the programming language technology sense, has not yet
 found an application for reflection in this chapter. This is about to change. 
@@ -1425,77 +1212,6 @@ stripSo (pi t₁ t₂)                   ()
 stripSo (sort x)                     ()
 stripSo unknown                      ()
 
-
-isBoolExprQ' : (n : ℕ) → (t : Term) → Set
-isBoolExprQ' n (var x args) with (1 + x) ≤? n
-isBoolExprQ' n (var x args) | yes p = ⊤
-isBoolExprQ' n (var x args) | no ¬p = ⊥
-isBoolExprQ' n (con tf as) with Data.Nat._≟_ 0 (length as)
-isBoolExprQ' n (con tf []) | yes pp with tf ≟-Name quote true
-isBoolExprQ' n (con tf []) | yes pp | yes p = ⊤
-isBoolExprQ' n (con tf []) | yes pp | no ¬p with tf ≟-Name quote false
-isBoolExprQ' n (con tf []) | yes pp | no ¬p | yes p = ⊤
-isBoolExprQ' n (con tf []) | yes pp | no ¬p₁ | no ¬p = ⊥
-isBoolExprQ' n (con tf (x ∷ as)) | yes ()
-isBoolExprQ' n (con tf []) | no ¬p = ⊥-elim (¬p refl)
-isBoolExprQ' n (con tf (a ∷ s)) | no ¬p = ⊥
-isBoolExprQ' n (def f []) = ⊥
-isBoolExprQ' n (def f (arg v r x ∷ [])) with f ≟-Name quote ¬_
-isBoolExprQ' n (def f (arg v r x ∷ [])) | yes p = isBoolExprQ' n x
-isBoolExprQ' n (def f (arg v r x ∷ [])) | no ¬p = ⊥
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) with f ≟-Name quote _∧_
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | yes p = (isBoolExprQ' n x) × (isBoolExprQ' n x₁)
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p with f ≟-Name quote _∨_
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p | yes p = (isBoolExprQ' n x) × (isBoolExprQ' n x₁)
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | no ¬p with f ≟-Name quote _⇒_
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₁ | no ¬p | yes p = (isBoolExprQ' n x) × (isBoolExprQ' n x₁)
-isBoolExprQ' n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) | no ¬p₂ | no ¬p₁ | no ¬p = ⊥
-isBoolExprQ' n (def f (x ∷ x₁ ∷ x₂ ∷ args)) = ⊥
-isBoolExprQ' n (lam v t) = ⊥
-isBoolExprQ' n (pi t₁ t₂) = ⊥
-isBoolExprQ' n (sort y) = ⊥
-isBoolExprQ' n unknown = ⊥
-
-isBoolExprQ : (freeVars : ℕ) → (t : Term) → isSoExprQ t → Set
-isBoolExprQ n t pf with stripSo t pf
-isBoolExprQ n t pf | t' = isBoolExprQ' n t'
-
-
-term2boolexpr : (n : ℕ)
-        → (t : Term)
-        → isBoolExprQ' n t
-        → BoolExpr n
-term2boolexpr n (var x args) pf with (1 + x) ≤? n
-term2boolexpr n (var x args) pf | yes p = Atomic (fromℕ≤ {x} p)
-term2boolexpr n (var x args) () | no ¬p
-term2boolexpr n (con tf []) pf with tf ≟-Name quote true
-term2boolexpr n (con tf []) pf | yes p = Truth
-term2boolexpr n (con tf []) pf | no ¬p with tf ≟-Name quote false
-term2boolexpr n (con tf []) pf | no ¬p | yes p = Falsehood
-term2boolexpr n (con tf []) () | no ¬p₁ | no ¬p
-term2boolexpr n (con c (a ∷ rgs)) ()
-term2boolexpr n (def f []) ()
-term2boolexpr n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
-term2boolexpr n (def f (arg v r x ∷ [])) pf | yes p = Not (term2boolexpr n x pf)
-term2boolexpr n (def f (arg v r x ∷ [])) () | no ¬p
-term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ [])) pf with f ≟-Name quote _∧_
-term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | yes p = And
-  (term2boolexpr n x proj₁)
-  (term2boolexpr n x₁ proj₂)
-term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no p with f ≟-Name quote _∨_
-term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | no ¬p | yes p = Or
-  (term2boolexpr n x proj₁)
-  (term2boolexpr n x₁ proj₂)
-term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) pf | no ¬p | no p with f ≟-Name quote _⇒_
-term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) (proj₁ , proj₂) | no ¬p₁ | no ¬p | yes p = Imp
-  (term2boolexpr n x proj₁)
-  (term2boolexpr n x₁ proj₂)
-term2boolexpr n (def f (arg a₁ b₁ x ∷ arg a b x₁ ∷ [])) () | no ¬p | no p | no p₁
-term2boolexpr n (def f (arg v r x ∷ arg v₁ r₁ x₁ ∷ x₂ ∷ args)) ()
-term2boolexpr n (lam v t) ()
-term2boolexpr n (pi t₁ t₂) ()
-term2boolexpr n (sort x) ()
-term2boolexpr n unknown ()
 \end{code}
 }
 
@@ -1511,7 +1227,7 @@ concrete2abstract    :     (t     : Term)        → (n : ℕ)
 \ignore{
 \begin{shade}
 \begin{code}
-concrete2abstract t n {pf} {pf2} = term2boolexpr n (stripSo (stripPi t) pf) pf2
+concrete2abstract t n {pf} {pf2} = doConvert --  term2boolexpr n (stripSo (stripPi t) pf) pf2
 \end{code}
 \end{shade}}\!\!
 Note that not every |Term| can be converted to a |BoolExpr|. Looking at the type signature of the 
@@ -1529,19 +1245,6 @@ The functions in the type signature, |isBoolExprQ|
 and |isSoExprQ|, simply traverse the |Term| to see if it fulfils the requirements of
 being a Boolean expression enclosed in a call to |P|, preceded by a series of universally quantified Boolean variables.
 
-\begin{shadedfigure}[h]
-\begin{spec}
-term2boolexpr n (con tf []) pf with tf ≟-Name quote true
-term2boolexpr n (con tf []) pf | yes p = Truth
-...
-term2boolexpr n (def f []) ()
-term2boolexpr n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
-... | yes p = Not (term2boolexpr n x pf)
-... | no ¬p with f ≟-Name quote _∧_
-...
-\end{spec}
-\caption{The gist of  the conversion of a |Term| into a |BoolExpr n|.}\label{fig:concrete2abstract}
-\end{shadedfigure}
 
 
 All these pieces are assembled in the |proveTautology| function.
@@ -1559,6 +1262,7 @@ proveTautology t {_}{_}{i} =
   soundness (concrete2abstract t (freeVars t)) i
 \end{code}
 \end{shade}
+%TODO this is irrelevant!
 The |proveTautology| function converts a raw |Term| to a |BoolExpr n|
 format and calls the |soundness| lemma. It uses a few auxiliary
 functions such as |freeVars|, which counts the number of variables
@@ -1785,64 +1489,34 @@ make the system truly useful. }.
  
  
  
-Other related work includes the large body of publications in the
-domain of data type generic programming
-\cite{Rodriguez:2008:CLG:1543134.1411301,mcbride2010ornamental}, where we found the
-inspiration to try and implement prior techniques in a
-dependently typed setting. Especially  work by McBride, \emph{et al.} involving ornamentation and levitation \cite{Chapman:2010:GAL:1863543.1863547} is
-intriguing, and something which would have been very interesting to do is to embed the data type of 
-data types in Agda and automatically convert existing |data| declarations (which we can inspect) into values of
-this type. This whole step would be unnecessary in a language which supports this \emph{data type of data types} a priori, 
-so that the conversion to and from this type would be unnecessary, and data type generic programming becomes
-normal programming.
-
  
-Program transformations and their correctness (by various definitions) have long been a subject of research \cite{Partsch:1983:PTS:356914.356917},
-and given more advanced languages with more powerful generative programming techniques, this will likely prove a continuing trend. 
-For example, Guillemette and Monnier have researched various type preserving transformations in Haskell, using GADTs \cite{DBLP:conf/haskell/GuillemetteM07,Guillemette200723}. This work has even led 
-to a type preserving compiler for System~F in Haskell, where the GHC type checker mechanically verifies that each phase of the compiler 
-preserves types properly \cite{DBLP:conf/icfp/GuillemetteM08}. Type preserving CPS transformations have also been studied, for example in Watanabe's
-thesis \cite{watanabe}. His work presents, among other things, a type preserving CPS transformation of De Bruijn-style lambda calculus, implemented in Coq.
-
-As such,
-the contribution made in this project of a type-safe and total translation of simply typed lambda calculus to a language of SKI combinator calculus,
-as well as the continuation-passing style transformation, are interesting case studies. 
-We have shown that these
-translations are usable in combination with a reflective language, making the process of translation of programs straightforward for 
-users. Possible future work includes extending the body of available translations using the well-typed model of lambda calculus presented here
-as an intermediary language (or at least as inspiration for some other, more specialised data structure). It might also serve as a motivation
-to make the |unquote| keyword type-aware. Currently, even if all the steps in a transformation are type-safe, at the last step the typing information
-is still thrown away, which seems like a wasted opportunity. Probably it would be easy to make |unquote| aware of the expected type, thereby making the final
-link in the program transformation framework type-safe.
- 
-As far as the proof techniques used in the section on proof by reflection (Chapter~\ref{sec:proof-by-reflection}) are concerned,  
+As far as the proof techniques used in the section on proof by reflection (Sec.~\ref{sec:proof-by-reflection}) are concerned,  
 Chlipala's work \cite{chlipala2011certified} proved an invaluable resource, both for inspiration and guidance. One motivating example
 for doing this in Agda was Wojciech Jedynak's ring solver \cite{ringsolver}, which is the first example of Agda's reflection
 API in use that came to our attention. Compared to Jedynak's work, the proof generator presented here is more refined in terms of the interface
 presented to the user. The expectation is that approaches like these will become more commonplace for proving mundane lemmas in 
 large proofs. The comparison to tactics in a language like Coq is a natural one, and we see both advantages and disadvantages of each style. Of course, 
 the tactic language in Coq is much more specialised and sophisticated when it comes to generating proofs, but it is a pity that there are
-two separate languages in one, instead of the way it is in Agda, where metaprograms are written directly in the object language. Also, the 
+two separate languages in one, instead of the Agda way, where metaprograms are written directly in the object language. Also, the 
 fact that proof generation in Agda is explicit may be something some people appreciate. (Far) future work might be to 
 implement some sort of tactic framework for Agda, possibly with a DSL in the style of Coq's tactic language, around the reflection API.
+% Uh the following sentence sucks.
 The Ssreflect extension for Coq \cite{gonthier:inria-00515548}  should also be mentioned here; because of a lack of experience with Ssreflect, I 
-refrain from making concrete statements, but the expectation is that the developments presented here should also be possible using Ssreflect.
+refrain from making concrete statements, but the expectation is that
+the developments presented here should also be possible using
+Ssreflect.\todo{get familiar with ssreflect or fix the statement}
  
- 
- 
-
 Returning to our research question,  repeated here to jog the memory,  a summary of findings is made.
 
 \researchquestion
 
 This paper has presented two simple applications of proof by
-reflection, the latter using Agda's reflection API. Also, type-safe 
-metaprogramming techniques have been demonstrated, offering automatic conversion 
-and translation of programs, while preserving typing safety along the way. We 
+reflection, the latter using Agda's reflection API. 
+
+We 
 have managed to automate generation of a certain class of proofs, which certainly 
 would count as mundane. The clear advantage of Agda's reflection system is that it
-leverages the power of Agda's dependent types, leading to, among other yet to be described
-methods, the technique of type-safe metaprogramming presented here. Unfortunately, though,
+leverages the power of Agda's dependent types. Unfortunately, though,
 the reflection API itself is still rather primitive, so we find ourselves unable to define 
 things such as an automatic Bove-Capretta transformation of a given function, or the generation
 of generic programming embedding and projection functions. The reasons for not being able to 
@@ -1862,7 +1536,7 @@ techniques all the more painful.
 inspection of data type definitions is quite comprehensive.
 \item By default, untyped terms are returned from the |quoteTerm|
 keyword. This has been solved in the patches presented in
-Appendix~\ref{appendix:lambda-types}, but these are yet to be
+the mentioned thesis \cite{vdWalt:Thesis:2012}, but these are yet to be
 included in the main development version of Agda.
 \item The |unquote| keyword is unaware of types, so even if a program transformation is
   type-safe, in the end unquoting is still hit-and-miss.
@@ -1875,33 +1549,6 @@ of program transformations and proof generators which will likely turn out to be
 niche applications.
  
  
- 
-\clearpage
- 
- 
-% \vspace*{\stretch{1}}
-% {\centering
-% \textbf{Acknowledgements}\\[5mm]
-% }
-%  
-% Obviously, a formidable number of people deserve thanks here, but I will refrain
-% from mentioning everyone. Foremost, I would like to thank Wouter, my supervisor, for
-% his infinite patience in explaining things, giving sound and complete
-% advice, and his generally pleasant way of doing things. Marleen bravely
-% proofread this work, gave much-needed moral support, was  long-suffering: much appreciated. Tim deserves
-% ample thanks for noticing overworkedness and nipping it in the bud, taking
-% me on an epic hike through the forest.  Justin did his bit by
-% convincing me to go hitchhiking, which was surprisingly
-% inspiring~-- a portion of this thesis was eventually
-% written in a foreign city.  The Friday Pie Day group is of course
-% also worthy of mention, if only because of the added motivation I felt
-% near the end of my project to catch up on all the wasted time
-% spent drinking coffee and consuming calorific treats.
-% 
-% The rest of you know who you are; tolerating an atypically stressed-out me. Thanks.
-% \vspace*{\stretch{4}}
- 
-
 \newpage
 % \phantomsection \label{listoffig}
 % \addcontentsline{toc}{chapter}{List of Figures}
