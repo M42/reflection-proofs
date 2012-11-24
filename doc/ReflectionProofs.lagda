@@ -157,20 +157,7 @@ Department of Computer Science, Utrecht University
 
 \section{Introduction}\label{chap:introduction}
 
-Since the inception of computer programming, one of the aims has been to
-try and write as little code as possible, while achieving the most powerful effect.
-One of the holy grails of writing programs is also being able to reuse pieces of
-code, after having written them once, as opposed to continually writing small
-variations on existing code. Reinventing the wheel is something the programmer
-should not relish doing.
-
-One of the many techniques for writing more effective
-code is that of \emph{metaprogramming}, which refers
-to the ability of a program to inspect\footnote{or \emph{reflect} upon} its own code,
-possibly modifying it. This has long been a favourite
-feature of users of such languages as Lisp~\cite{lisp-macros}. In many cases, this allows
-code to be a lot more concise and general, and thus reusable, than 
-usually is possible in simple imperative languages.
+...
 
 The dependently typed programming language
 Agda~\cite{norell:thesis,Norell:2009:DTP:1481861.1481862} has recently been
@@ -189,10 +176,11 @@ The main questions we aim to answer during this project are:
 
 
 
-\paragraph{Contributions} This project starts to explore the possibilities and limitations of this
-new reflection mechanism. It describes a case study,
+\paragraph{Contributions} 
+This paper reports on the experience of engineering a certain proof
+tactic with this new reflection mechanism.  This is a case study,
 exemplative of the kind of problems that can be solved using
-reflection. More specifically it makes the following contributions:
+reflection. More specifically this work makes the following contributions:
 
 \begin{itemize}
   \item A newcomers' crash course on reflection in Agda is given in Sec.~\ref{sec:crash}.
@@ -226,41 +214,27 @@ functional programming language
 and a proof assistant for intuitionistic logic. It is comparable with
 Coquand's calculus of constructions, the logic behind Coq \cite{DBLP:journals/iandc/CoquandH88}. Coq is
 similarly both a programming language and proof assistant.
-
 For an excellent tutorial on dependently typed programming using Agda,
 the reader is referred to Norell's work \cite{Norell:2009:DTP:1481861.1481862}.
-
-Before diving into the details of proof by reflection, Sec. \ref{sec:thebasics}
-provides a crash course
-on Agda's
-recent reflection API. 
-
-
 
 Since version 2.2.8, Agda includes a reflection API \cite{agda-relnotes-228}, which allows converting
 parts of a program's code into abstract syntax, in other words a data structure
 in Agda itself, that can be inspected or modified like any other data structure.
 The idea of reflection is old: already in the 1980s Lisp included a similar
-feature, called \emph{quoting} and \emph{unquoting}, which allowed run time modification of a program's code, by
+feature, then already called \emph{quoting} and \emph{unquoting},
+which allowed run time modification of a program's code, for example by
 the program itself. This has given rise to powerful techniques for reusing code and
-generating frequently needed but slightly different expressions automatically. What
-can be done with Lisp, can be done better using dependent types; at least, so we hope. This chapter
-looks at 
-how to use reflection in Agda. It should be a good starting point for someone already comfortable with
-Agda, or at the very least dependent types, to find inspiration on how to make reflection work to their advantage.
-Agda's reflection API defines several data types which represent terms,
-types, and sorts. These definitions take into account various Agda-specific
-features, including hidden arguments and computationally irrelevant
-terms. 
-In addition to these data
-types that represent \emph{terms}, there is limited support for
-reflecting \emph{definitions}, although we will not use this capability.
+generating frequently needed but slightly different expressions
+automatically. 
+
 
 \section{Using Reflection}\label{sec:crash}
 
 Before going into too much detail about how reflection can make our
-lives easier and what nifty techniques are possible, we will look at a few simple code snippets which should serve
-to illustrate the basics of using the reflection API in Agda.
+lives easier and what nifty techniques are possible, we will look at
+the tools Agda provides us for reflecting. It should be a good
+starting point for someone familiar with Agda, or at the very least
+dependent typed programming in general. 
 
 
 
@@ -269,7 +243,6 @@ to illustrate the basics of using the reflection API in Agda.
 |quote| keyword allows the user to access the internal representation of
 any identifier, or name. This internal representation can be used to query the
 type or definition of the identifier.
-
 
 The easiest example of quotation uses the |quoteTerm| keyword to turn
 a fragment of concrete syntax into a |Term| value. Note that the
@@ -341,8 +314,9 @@ convert (def c args) with c ≟-Name quote foo
 This short introduction should already be enough to start developing
 simple reflective programs.  For a more detailed description of the
 reflection API in Agda, including many examples, the inquisitive
-reader is referred to the more extensive thesis covering this topic \cite{vdWalt:Thesis:2012}.
-The thesis goes into more detail
+reader is referred to the chapter in the thesis covering this topic \cite{vdWalt:Thesis:2012}.
+The thesis goes into more detail\todo{awkward to keep saying ``the
+  thesis''} 
 regarding the data structures involved in Agda's reflection API, and later, 
 gives a detailed account of some real-world use-cases.
 
@@ -363,7 +337,28 @@ task. Unfortunately for us, though, Agda functions are required to be
 total, having cases for each possible pattern. Since the AST of terms
 which can be quoted is usually much more liberal than an AST we would
 like to use (such as that of Boolean expressions, or first-order
-equations, for example), writing such conversion functions can be tedious.
+equations, for example), writing such conversion functions can be
+tedious, as can be seen in the code snippet of
+Fig.~\ref{fig:concrete2abstract}, which formed part of the inspiration
+to develop a better solution.
+
+%%%%%%%%%%%%%%%
+\begin{shadedfigure}[h]
+\begin{spec}
+term2boolexpr n (con tf []) pf with tf ≟-Name quote true
+term2boolexpr n (con tf []) pf | yes p = Truth
+...
+term2boolexpr n (def f []) ()
+term2boolexpr n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
+... | yes p = Not (term2boolexpr n x pf)
+... | no ¬p with f ≟-Name quote _∧_
+...
+\end{spec}
+\caption{The gist of  the conversion of a |Term| into some richer data
+  type.}\label{fig:concrete2abstract}
+\end{shadedfigure}
+%%% an example conversion function which is fugly
+%%%%%%%%%%%%%%%
 
 %TODO ease the transition here...
 If, each time we wanted to quote a term, we had to write a huge function, with many pattern matching cases and nested |with| statements to handle different 
@@ -389,28 +384,11 @@ data Expr : Set where
 
 We might conceivably want to convert a piece of Agda concrete syntax, such as $5 + x$, to this
 AST, using reflection. This typically involves ugly and verbose functions like
-the one from Sec.~\ref{sec:Boolean-tautologies} with many |with| clauses and frankly, too
+the one in Fig.~\ref{fig:concrete2abstract} with many |with| clauses and frankly, too
 much tedium to be anything to be proud of. 
 
-%%%%%%%%%%%%%%%
-\begin{shadedfigure}[h]
-\begin{spec}
-term2boolexpr n (con tf []) pf with tf ≟-Name quote true
-term2boolexpr n (con tf []) pf | yes p = Truth
-...
-term2boolexpr n (def f []) ()
-term2boolexpr n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
-... | yes p = Not (term2boolexpr n x pf)
-... | no ¬p with f ≟-Name quote _∧_
-...
-\end{spec}
-\caption{The gist of  the conversion of a |Term| into a |BoolExpr n|.}\label{fig:concrete2abstract}
-\end{shadedfigure}
-%%% an example conversion function which is fugly
-%%%%%%%%%%%%%%%
-
-We need to check that the |Term| has a reasonable shape, and contains valid operators.
-Ideally, we would 
+%We need to check that the |Term| has a reasonable shape, and contains valid operators.
+Ideally, we would  just
  provide a mapping from concrete constructs such as the |_+_| function to elements of our
 AST, and get a conversion function for free.
  This motivated my development of
@@ -418,9 +396,9 @@ AST, and get a conversion function for free.
 provide an interface which, when provided with such a mapping, automatically quotes expressions
 that fit. Here, \emph{fitting} is defined as only having variables, or names that are listed
 in this mapping. Other terms are rejected.
-The user provides an elegant-looking mapping and |Autoquote| automatically converts
-concrete Agda to elements of simple inductive types. The mapping table for |Expr| is
-shown in Fig.~\ref{fig:exprTable}.
+The user provides an elegant-looking mapping, such as the one for
+|Expr| in Fig.~\ref{fig:exprTable}, and |Autoquote| automatically converts
+concrete Agda to elements of simple inductive types. 
 
 \begin{shadedfigure}[h]
 \begin{code}
@@ -439,32 +417,18 @@ arity of the constructor:    how many arguments it expects.
 A |zero|, from the |Data.Nat| standard library, should be treated as our |Z| constructor, and
 a |suc| translates to |S|. These constructors expect 0 and 1 argument, respectively.
 
-We will now look at the implementation of this library.
+We will not say much about the implementation of this library;
+for more details the thesis can once again be referred to
+\cite{vdWalt:Thesis:2012}. The library exposes a function called
+|doConvert| which takes the conversion table and |Term| to convert,
+and produces an inhabitant of your richer data type.
 
-\paragraph{Implementation} %TODO should we talk about this so much?
-% no change to Usage and afterwards have a VERY BRIEF Implementation
-% paragraph which explains in words what's happening.
-
-
-
-\begin{shade}
-\begin{code}
-doConvert : {a : Set}      → (tab : Table a) 
-                           → (t : Term) 
-                           → {man : convertManages tab t} 
-                           → a
-doConvert tab t {man   }      with convert tab t
-doConvert tab t {man   }      | just x     = x
-doConvert tab t {()    }      | nothing
-\end{code}
-\end{shade}
-
-The use of |convertManages| and |doConvert| is illustrated in Fig.~\ref{fig:test-autoquote}. 
+The use of |doConvert| is illustrated in Fig.~\ref{fig:test-autoquote}. 
 This approach, using |convertManages| as an assumption, is a lot simpler than writing by hand a predicate function with the same pattern matching 
 structure as |convert|. Adding to the complication, |with| clauses are often expanded unpredictably in practise. The net effect
 of writing a pair of functions in this style is the same as the ``usual'' way of writing a predicate
 function by hand, in that a compile time error is generated if the function |doConvert| is 
-invoked on an argument with the wrong shape. Compare these relatively elegant functions to the verbose |term2boolexpr| and |isBoolExprQ| functions in Sec.~\ref{sec:addrefl}.
+invoked on an argument with the wrong shape. Compare these relatively elegant functions to the verbose |term2boolexpr| function.
 
 
 \begin{shadedfigure}[h]
@@ -480,25 +444,13 @@ something = refl
 \end{shadedfigure}
 
 
-The format of the translation |Table| required could most probably be made a little simpler,
-by not requiring the user to provide the arity of the function, but using the tools 
-explained in Sec.~\ref{sec:inspecting-definitions} (the section on inspecting data definitions,
-and specifically the function |constructors| in combination with |type|) to try and discover the arity of the various constructors.
-Because of time constraints, however, this is left as a suggestion for future work on the |Autoquote| library.
+The format of the translation |Table| required could most probably be
+made a little simpler, by not requiring the user to provide the arity
+of the function. Because of time constraints, however, this is left as
+a suggestion for future work on the |Autoquote| library.
 
-The |BoolExpr| AST used later in Sec.~\ref{sec:Boolean-tautologies} provides a
-good motivating example for using |Autoquote|, therefore a slightly
-more real-world example of |Autoquote| in use can be found in
-Sec.~\ref{sec:autoquote-example}. One might also use the ability of quoting 
-arithmetic equations shown here in combination with a monoid solver,
-such as the example in Norell \emph{et al.} \cite{bove2009brief}.
 
-Further examples of |Autoquote| functionality can be found in the module |Metaprogramming.ExampleAutoquote|.
-The module |Metaprogramming.Autoquote| contains 
-what could serve as a basis for a system for quoting concrete Agda into a more complex user-defined AST.
-Now that we have had a quick introduction to Agda in Sec.~\ref{chap:introducing-agda}, and defined
-this library, it is time to move on to putting it all to use.
-
+%TODO intro and outros, everywhere.
 
 \section{Proof by Reflection}\label{sec:proof-by-reflection}
 
@@ -510,7 +462,10 @@ is the capability of converting some piece of concrete code
 into an abstract syntax tree object that can be manipulated in the same
 system. Reflection in the proof technical sense is the method of
 mechanically constructing a proof of a theorem by inspecting its
-shape.
+shape. The proof by reflection technique is not old; this work simply
+combines a number of already-known methods into a usable package. The
+explanation of proof by reflection here draws heavily from Chlipala's
+work \cite{chlipala2011certified}.
 Here we will see two case studies illustrating proof by
 reflection and how Agda's reflection mechanism can make the technique
 more convenient.
@@ -518,11 +473,6 @@ more convenient.
 
 
 \subsection{Simple Example: Evenness}\label{sec:evenness}
-
-Sometimes, the best way to explain a complicated topic is to start by giving 
-some simple examples, letting the reader figure out the pattern behind what is being
-done themselves. Proof by reflection is no different: it is not a difficult technique, but can initially be
-counter intuitive. 
 
 To illustrate the concept of proof by reflection, we will cover an example taken from
 Chlipala~\cite{chlipala2011certified}, where a procedure is developed to automatically
@@ -570,7 +520,6 @@ even? 1                 = ⊥
 even? (suc (suc n))     = even? n
 \end{code}
 \end{shade}
-
 
 Next we need to show that the |even?| function is \emph{sound}; that
 our claim holds. To do so, we prove that when |even? n| returns |⊤|,
@@ -621,21 +570,24 @@ number, since the parameter |even? n|  is equal to |⊥|,
  thus
 |tt| would not be accepted where it is in the |Even 28| example. This will
 produce a |⊤ !=< ⊥| type error at compile time.
+
+Since the type |⊤| is a simple record type, Agda can infer the |tt|
+argument. This means we can turn the assumption |even? n| into an
+implicit argument, so a user could get away with writing just
+|soundnessEven| as the proof, letting the inferrer do the rest. 
+The way to implement this is to slightly modify the |soundnessEven|
+function, so that its arguments are all implicit. This trick will be
+used from here on to keep terms elegant.
+
+
+
+
 Note that it is possible to generate a user-friendly ``error'' of sorts, by replacing the |⊥| constructor in |even?| with
 a type with a descriptive name such as @NotEven@. Of course it should still be an empty type, but possibly parameterised with a natural to
 indicate which value is odd. This makes the soundness proof a little less straightforward, but in return the
 type error generated if an odd number is used becomes more informative. This enhancement is demonstrated in Fig.~\ref{fig:error}, in the Boolean
 tautologies example.
 
-Since the type |⊤| is a simple record type, Agda can infer the |tt|
-argument, as explained in Sec.~\ref{sec:implicit-unit}. This means we can turn the assumption |even? n| into an
-implicit argument, so a user could get away with writing just
-|soundnessEven| as the proof, letting the inferrer do the rest. For
-the sake of exposition this is not done here, but the final implementation
-available on GitHub does use this trick. A detailed explanation of this
-technique, which is used extensively in the final code, is given in
-Sec.~\ref{sec:implicit-unit}.  Note that it still has the minor danger of
-making errors look like innocuous warnings.
 
 %TODO implement trick here.
 
