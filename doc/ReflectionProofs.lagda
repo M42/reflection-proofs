@@ -825,9 +825,9 @@ leaf from |foralls| which is the proof that the formula is a tautology
 in that specific case. 
 \begin{shade}
 \begin{code}
-soundness       : {n : ℕ} → (b : BoolExpr n) → {i : foralls b}
+soundness       : {n : ℕ} → (b : BoolExpr n) → {p : foralls b}
                 → proofGoal 0 n (zeroleast 0 n) b []
-soundness {n} b {i} = soundnessAcc b [] (zeroleast 0 n) i
+soundness {n} b {p} = soundnessAcc b [] (zeroleast 0 n) p
 \end{code}
 \end{shade}
 The function |soundness| calls
@@ -1022,37 +1022,6 @@ concrete2abstract' t {pf} {pf2} fin = bool2fin     (freeVars t)
 \end{code}
 \end{shade}
 
-Clearly, the |Autoquote| module can save a lot
-of repetitive coding for converting |Term|s into some richer
-AST, such as |BoolExpr n|. 
-
-
-
-
-
-
-
-
-
-
-
-Note that not every |Term| can be converted to a |BoolExpr|. Looking at the type signature of the 
-|concrete2abstract| function, we see that it requires additional assumptions about the
-|Term|: it may only contain functions such as |_∧_| or |_∨_|, and
-bound variables. This is ensured by the predicates
-|isBoolExprQ| and friends.
-
-The |concrete2abstract| function is rather verbose, and is mostly omitted.
-A representative snippet is given in Fig.~\ref{fig:concrete2abstract}. The attentive reader will notice that
-the function in the referenced figure is called |term2boolexpr|; this is because we also unwrap the outermost call to |P| 
-and the telescope quantifying over  the variables before doing the conversion, since these elements are unnecessary in the |BoolExpr| representation. 
-The function |term2boolexpr| can be seen as a helper function to |concrete2abstract| where the ``interesting''  work happens.
-The functions in the type signature, |isBoolExprQ|
-and |isSoExprQ|, simply traverse the |Term| to see if it fulfils the requirements of
-being a Boolean expression enclosed in a call to |P|, preceded by a series of universally quantified Boolean variables.
-
-
-
 All these pieces are assembled in the |proveTautology| function.
 
 \begin{shade}
@@ -1062,19 +1031,19 @@ proveTautology :    (t     : Term) →
                     let n = freeVars t in
                         {pf2   : isBoolExprQ n (stripPi t) pf} →
                         let b = concrete2abstract t n {pf} {pf2} in
-                            {i : foralls b} →
+                            {p : foralls b} →
                             proofGoal 0 n (zeroleast 0 n) b []
-proveTautology t {_}{_}{i} = 
-  soundness (concrete2abstract t (freeVars t)) i
+proveTautology t {_}{_}{p} = 
+  soundness (concrete2abstract t (freeVars t)) p
 \end{spec}
 \end{shade}
 %TODO this is irrelevant!
-The |proveTautology| function converts a raw |Term| to a |BoolExpr n|
-format and calls the |soundness| lemma. It uses a few auxiliary
+The |proveTautology| function converts a raw |Term| to a |BoolExpr n| 
+format using |concrete2abstract| and calls the |soundness| lemma. It uses a few auxiliary
 functions such as |freeVars|, which counts the number of variables
 (needed to be able to instantiate the $n$ in |BoolExpr n|), and
 |stripSo| \& |stripPi|, which peel off the universal quantifiers and the
-function |So| with which we wrap our tautologies. These helper
+function |P| with which we wrap our tautologies. These helper
 functions have been omitted for brevity, since they are rather
 cumbersome and add little to the understanding of the subject at
 hand.
@@ -1112,26 +1081,6 @@ embedded language in Agda to inspect the shape of the proof that is needed, and 
 of predefined proof recipes to see if one of them might discharge the obligation. An advantage of 
 this approach versus the tactic language in Coq, would be that the language of the propositions and
 tactics is the same.
-
-The attentive reader will remember that we previously studied a system capable of automatically
-quoting concrete Agda to a simple user-defined AST. Would that not be perfectly suited to quoting to 
-the |BoolExpr| type used here? This turns out to be the case: we exploit this possibility in the rest of this chapter.
-
-\subsection{An Aside: Real-world Example of Automatic Quoting}\label{sec:autoquote-example}
-
-The process of quoting to a |BoolExpr n| outlined in Sec.~\ref{sec:addrefl}
-quickly becomes an ugly mess, with functions checking properties of an expression (such
-as only certain functions like |_∧_| or |¬_| occurring in the |Term|) being repetitive and verbose. The code summarised 
-in Fig.~\ref{fig:concrete2abstract} is an example of such a mess. If one 
-then wanted to quote to some other AST, the whole process would have to be modified, which, I can guarantee,
-is a painful process.
-
-The actual conversion function also ends up having many branches, checking if all the
-constructors and definitions are recognised, etc. This process can be made a lot less ugly and a lot more reusable.
-Recall the |Autoquote| module developed in
-Sec.~\ref{sec:autoquote}; the same can be used here, both as an
-illustration of its use, and to avoid code duplication,
-thus making the code for |term2boolexpr| more concise.
 
 
 
