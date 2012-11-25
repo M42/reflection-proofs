@@ -80,7 +80,7 @@ minipage=\linewidth,margin=0pt,padding=0pt,bgcolor=hlite%
 \begin{code}
 module doc.ReflectionProofs where
 
-open import Proofs.TautologyProver hiding (concrete2abstract; foralls; proveTautology; soundness; boolTable; stripSo ; isSoExprQ ; proofGoal ; ⟦_⊢_⟧ ; forallsAcc ;
+open import Proofs.TautologyProver hiding (concrete2abstract; foralls;  soundness; boolTable;  proofGoal ; ⟦_⊢_⟧ ; forallsAcc ;
        soundnessAcc)
 open import Data.Bool renaming (not to ¬_)
 open import Relation.Binary.PropositionalEquality
@@ -95,6 +95,7 @@ open import Data.Vec
 open import Relation.Nullary using (yes; no)
 open import Data.String
 open import Data.Fin hiding (_+_)
+open import Proofs.Util.Types
 
 
 \end{code}
@@ -691,13 +692,13 @@ to the user, if possible.
 
 
 \begin{shadedfigure}[H]
-\begin{code}
+\begin{spec}
 data Error (e : String) : Set where
 
 P    : Bool → Set
 P  true    =     ⊤
 P  false   =     Error "Argument expression does not evaluate to true."
-\end{code}
+\end{spec}
 \caption{Helper type |Error|, enabling clearer type errors.}\label{fig:error}
 \end{shadedfigure}
 
@@ -795,12 +796,6 @@ possible assignment of its variables to |true| or |false|.
 
 
 
-\ignore{
-\begin{code}
-Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
-Error-elim ()
-\end{code}
-}
 
 \begin{shade}
 \begin{code}
@@ -891,63 +886,6 @@ specifically, we will use the |quoteGoal| keyword to inspect the
 current goal. Given the |Term| representation of the goal, we can
 convert it to its corresponding |BoolExpr| automatically.
 
-\ignore{
-\begin{code}
-
-{-
-Unfortunately, we need to duplicate this code here, because the So which is
-quoted in isSoExprQ is not the same So as in the library. Oh well, this works.
--}
-
--- a check-function, or predicate, to determine if the thing which has
--- been quoted is a Term wrapped in a call to So(), which P()
--- normalises to.
-isSoExprQ : (t : Term) → Set
-isSoExprQ (var x args) = ⊥
-isSoExprQ (con c args) = ⊥
-isSoExprQ (def f args) with Data.Nat._≟_ (length args) 2
-isSoExprQ (def f args) | yes p with tt
-isSoExprQ (def f [])                   | yes () | tt
-isSoExprQ (def f (x ∷ []))             | yes () | tt
-isSoExprQ (def f (a ∷ arg v r x ∷ [])) | yes p  | tt with f ≟-Name quote P
-isSoExprQ (def f (a ∷ arg v r x ∷ [])) | yes p₁ | tt | yes p = ⊤
-isSoExprQ (def f (a ∷ arg v r x ∷ [])) | yes p  | tt | no ¬p = ⊥
-isSoExprQ (def f (x ∷ x₃ ∷ x₄ ∷ args)) | yes () | tt
-isSoExprQ (def f args)                 | no ¬p with tt
-isSoExprQ (def f [])                   | no ¬p | tt = ⊥
-isSoExprQ (def f (x ∷ xs))             | no ¬p | tt = ⊥
-isSoExprQ (lam v t)                  = ⊥
-isSoExprQ (pi t₁ t₂)                   = ⊥
-isSoExprQ (sort x)                     = ⊥
-isSoExprQ unknown                      = ⊥
-
--- assuming the predicate isSoExprQ above, return the
--- argument to So, which should be the boolean expression
--- we want.
-stripSo : (t : Term) → isSoExprQ t → Term
-stripSo (var x args)                 ()
-stripSo (con c args)                 ()
-stripSo (def f args)                 pf with Data.Nat._≟_ (length args) 2
-stripSo (def f args) pf | yes p with tt -- doing "with tt" at the end
-                                        -- is necessary in some cases,
-                                        -- to force normalisation of preceding
-                                        -- arguments.
-stripSo (def f [])                   pf | yes () | tt
-stripSo (def f (x ∷ []))             pf | yes () | tt
-stripSo (def f (a ∷ arg v r x ∷ [])) pf | yes p  | tt with f ≟-Name quote P
-stripSo (def f (a ∷ arg v r x ∷ [])) pf | yes p₁ | tt | yes p = x
-stripSo (def f (a ∷ arg v r x ∷ [])) () | yes p  | tt | no ¬p
-stripSo (def f (x ∷ x₃ ∷ x₄ ∷ args)) pf | yes () | tt
-stripSo (def f args)                 pf | no ¬p with tt
-stripSo (def f [])                   () | no ¬p | tt
-stripSo (def f (x ∷ xs))             () | no ¬p | tt
-stripSo (lam v t)                  ()
-stripSo (pi t₁ t₂)                   ()
-stripSo (sort x)                     ()
-stripSo unknown                      ()
-
-\end{code}
-}
 
 The conversion between a |Term| and |BoolExpr| is achieved in two phases.
 Since |Autoquote| only supports simple inductive data types, the first issue we encounter is that
@@ -1022,28 +960,8 @@ concrete2abstract' t {pf} {pf2} fin = bool2fin     (freeVars t)
 \end{code}
 \end{shade}
 
-All these pieces are assembled in the |proveTautology| function.
-
-\begin{shade}
-\begin{spec}
-proveTautology :    (t     : Term) →
-                    {pf    : isSoExprQ (stripPi t)} →
-                    let n = freeVars t in
-                        {pf2   : isBoolExprQ n (stripPi t) pf} →
-                        let b = concrete2abstract t n {pf} {pf2} in
-                            {p : foralls b} →
-                            proofGoal 0 n (zeroleast 0 n) b []
-proveTautology t {_}{_}{p} = 
-  soundness (concrete2abstract t (freeVars t)) p
-\end{spec}
-\end{shade}
-%TODO this is irrelevant!
-The |proveTautology| function converts a raw |Term| to a |BoolExpr n| 
-format using |concrete2abstract| and calls the |soundness| lemma. It uses a few auxiliary
-functions such as |freeVars|, which counts the number of variables
-(needed to be able to instantiate the $n$ in |BoolExpr n|), and
-|stripSo| \& |stripPi|, which peel off the universal quantifiers and the
-function |P| with which we wrap our tautologies. These helper
+We can now write a function called |proveTautology|, which uses this |concrete2abstract'| and calls |soundness| on the resulting term.
+This and other helper
 functions have been omitted for brevity, since they are rather
 cumbersome and add little to the understanding of the subject at
 hand.
@@ -1051,12 +969,11 @@ hand.
 
 These are all the ingredients required to automatically prove that
 formulae are tautologies.  The following code illustrates the use of
-the |proveTautology| functions; we can omit the implicit arguments for
-the reasons outlined in Sec.~\ref{sec:implicit-unit}. %TODO this will
-                                %need explaining, but briefly.
+the |proveTautology| function; we can omit all arguments except |e|, since they
+  can all be inferred.
 
 \begin{shade}
-\begin{spec}
+\begin{code}
 exclMid    : (b : Bool) → P(b ∨ ¬ b)
 exclMid    = quoteGoal e in proveTautology e
 
@@ -1065,7 +982,7 @@ peirce     = quoteGoal e in proveTautology e
 
 fave       : exampletheorem -- defined in Fig.~\ref{fig:exampletheorem}
 fave       = quoteGoal e in proveTautology e
-\end{spec}
+\end{code}
 \end{shade}
 
 
