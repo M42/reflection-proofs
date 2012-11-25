@@ -193,19 +193,19 @@ open import Metaprogramming.Autoquote
 
 -- here is a simplified version of BoolExpr. The only difference is the
 -- Atomic constructor, which holds naturals instead of Fin n's.
-data BoolIntermediate : Set where
-  Truth     :                                       BoolIntermediate
-  Falsehood :                                       BoolIntermediate
-  And       : BoolIntermediate → BoolIntermediate → BoolIntermediate
-  Or        : BoolIntermediate → BoolIntermediate → BoolIntermediate
-  Not       : BoolIntermediate                    → BoolIntermediate
-  Imp       : BoolIntermediate → BoolIntermediate → BoolIntermediate
-  Atomic    : ℕ                                   → BoolIntermediate
+data BoolInter : Set where
+  Truth     :                                       BoolInter
+  Falsehood :                                       BoolInter
+  And       : BoolInter → BoolInter → BoolInter
+  Or        : BoolInter → BoolInter → BoolInter
+  Not       : BoolInter                    → BoolInter
+  Imp       : BoolInter → BoolInter → BoolInter
+  Atomic    : ℕ                                   → BoolInter
   
 -- this is the translation table we need: refer to the thesis or the
 -- Metaprogramming.ExampleAutoquote module for more details on how
 -- and why this works.
-boolTable : Table BoolIntermediate
+boolTable : Table BoolInter
 boolTable = (Atomic ,
               2 # (quote _∧_  ) ↦ And
             ∷ 2 # (quote _∨_  ) ↦ Or
@@ -214,15 +214,15 @@ boolTable = (Atomic ,
             ∷ 0 # (quote false) ↦ Falsehood
             ∷ 2 # (quote _⇒_  ) ↦ Imp         ∷ [])
 
--- we can now convert a Term (Agda's abstract syntax) into our BoolIntermediate
+-- we can now convert a Term (Agda's abstract syntax) into our BoolInter
 -- datatype relatively painlessly.
-term2boolexpr' : (t : Term) → {pf : convertManages boolTable t} → BoolIntermediate
+term2boolexpr' : (t : Term) → {pf : convertManages boolTable t} → BoolInter
 term2boolexpr' t {pf} = doConvert boolTable t {pf}
 
 -- this predicate reflects the notion of a Term having at most n
 -- free variables. Each variable reference (Atomic's argument) must
 -- be smaller than this maximum n to be able to fit into BoolExpr
-bool2finCheck : (n : ℕ) → (t : BoolIntermediate) → Set
+bool2finCheck : (n : ℕ) → (t : BoolInter) → Set
 bool2finCheck n Truth        = ⊤
 bool2finCheck n Falsehood    = ⊤
 bool2finCheck n (And t t₁)   = bool2finCheck n t × bool2finCheck n t₁
@@ -234,7 +234,7 @@ bool2finCheck n (Atomic x)   | yes p = ⊤
 bool2finCheck n (Atomic x)   | no ¬p = ⊥
 
 -- assuming all's well with the variables, we can cast:
-bool2fin : (n : ℕ) → (t : BoolIntermediate) → (bool2finCheck n t) → BoolExpr n
+bool2fin : (n : ℕ) → (t : BoolInter) → (bool2finCheck n t) → BoolExpr n
 bool2fin n Truth       pf = Truth
 bool2fin n Falsehood   pf = Falsehood
 bool2fin n (And t t₁) (p₁ , p₂) = And (bool2fin n t p₁) (bool2fin n t₁ p₂)

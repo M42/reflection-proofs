@@ -80,6 +80,8 @@ minipage=\linewidth,margin=0pt,padding=0pt,bgcolor=hlite%
 \begin{code}
 module doc.ReflectionProofs where
 
+open import Proofs.TautologyProver hiding (concrete2abstract; foralls; proveTautology; soundness; boolTable; stripSo ; isSoExprQ ; proofGoal ; ⟦_⊢_⟧ ; forallsAcc ;
+       soundnessAcc)
 open import Data.Bool renaming (not to ¬_)
 open import Relation.Binary.PropositionalEquality
 open import Reflection
@@ -95,6 +97,12 @@ open import Data.String
 open import Data.Fin hiding (_+_)
 
 
+\end{code}
+}
+\ignore{
+\begin{code}
+open import Proofs.Util.Lemmas renaming (zero-least to zeroleast)
+open import Proofs.Util.Types using (Diff; Base; Step)
 \end{code}
 }
 
@@ -324,7 +332,7 @@ gives a detailed account of some real-world use-cases.
 \ignore{
 \begin{shade}
 \begin{code}
-open import Metaprogramming.Autoquote hiding (doConvert) renaming (_#_↦_ to _\#_↦_)
+open import Metaprogramming.Autoquote renaming (_#_↦_ to _\#_↦_)
 \end{code}
 \end{shade}
 }
@@ -472,9 +480,9 @@ more convenient.
 
 \subsection{Simple Example: Evenness}\label{sec:evenness}
 
-To illustrate the concept of proof by reflection, we will cover an example taken from
-Chlipala~\cite{chlipala2011certified}, where a procedure is developed to automatically
-prove that a number is even. We start by defining the
+To illustrate the concept of proof by reflection, we will cover
+Chlipala's example of even naturals~\cite{chlipala2011certified}.
+ We start by defining the
 property |Even| below. There are two constructors: the first
 constructor says that zero is even; the second constructor states that
 if $n$ is even, then so is $2 + n$.
@@ -503,10 +511,10 @@ To automate this, we will show how to \emph{compute} the proof
 required. We start by defining a predicate |even?| that
 returns the unit type when its input is even and bottom otherwise.
 In this context, |⊤| and |⊥| can be seen as the analogues of |true|
-and |false|, just as presented in Sec.~\ref{sec:plandpa}.
-The meaning of such a decision function is that there exists
-a proof that some number is even, if it is $0$ or $2 + n$, for even $n$. Otherwise, no proof exists. That is the
-claim, at least. The idea
+and |false|, since
+ there exists
+a proof that some number is even, if it is $0$ or $2 + n$, for even $n$. Otherwise, no proof exists. 
+The idea
 of ``there exists'' is perfectly modelled by the unit and empty types,
 since the unit type has one inhabitant, the empty type none.
 
@@ -577,25 +585,19 @@ The way to implement this is to slightly modify the |soundnessEven|
 function, so that its arguments are all implicit. This trick will be
 used from here on to keep terms elegant.
 
-
-
-
 Note that it is possible to generate a user-friendly ``error'' of sorts, by replacing the |⊥| constructor in |even?| with
-a type with a descriptive name such as @NotEven@. Of course it should still be an empty type, but possibly parameterised with a natural to
+a type with a descriptive name such as @NotEven@. Of course it should still be an empty type (isomorphic to |⊥|), but possibly parameterised with a natural to
 indicate which value is odd. This makes the soundness proof a little less straightforward, but in return the
-type error generated if an odd number is used becomes more informative. This enhancement is demonstrated in Fig.~\ref{fig:error}, in the Boolean
-tautologies example.
-
-
-%TODO implement trick here.
+type error generated if an odd number is used becomes more
+informative. 
 
 This concludes the example of proving that certain naturals are even using proof by reflection.
 The next step will be to use the same approach for a more involved and realistic problem.
 
 \subsection{Second Example: Boolean Tautologies}\label{sec:Boolean-tautologies}
 
-Obviously, the first example of proof by reflection, the evenness of natural 
-numbers, was a rather trivial one. There was a good reason for studying it, though, since
+Obviously, the first example of proof by reflection
+ was a rather trivial one. There was a good reason for studying it, though, since
 we will now apply the same technique to a more interesting problem, making
 the relationship to the previous example clear at each step.
 
@@ -624,7 +626,7 @@ inductive data type to represent Boolean expressions with at most $n$ free
 variables in Fig.~\ref{fig:boolexprn}.
 
 \begin{shadedfigure}[h]
-\begin{code}
+\begin{spec}
 data BoolExpr (n : ℕ) : Set where
   Truth         :                                  BoolExpr n
   Falsehood     :                                  BoolExpr n
@@ -633,7 +635,7 @@ data BoolExpr (n : ℕ) : Set where
   Not           : BoolExpr n                   →   BoolExpr n
   Imp           : BoolExpr n → BoolExpr n      →   BoolExpr n
   Atomic        : Fin n                        →   BoolExpr n
-\end{code}
+\end{spec}
 \caption{Inductive definition of Boolean expressions with $n$ free variables.}\label{fig:boolexprn}
 \end{shadedfigure}
 
@@ -646,17 +648,17 @@ evaluate the expression, however, we will need some way to map variables to valu
 Enter |Env n|: it has fixed size |n| since a |BoolExpr n| has at most $n$ free variables.
 
 \begin{shade}
-\begin{code}
+\begin{spec}
 Env   : ℕ → Set
 Env   = Vec Bool
-\end{code}
+\end{spec}
 \end{shade}
 
 Now we can define a decision function, which tells us if a given
 Boolean expression is true or not, under some assignment of variables. It does this by evaluating
 the formula's % the apostrophe is bonafide.
  AST, filling in for |Atomic| values the concrete values which are
-looked up in the environment. For example, |And| is converted to
+looked up in the environment. For example, |And| is evaluated to
 the Boolean function |_∧_|, and its two arguments in turn are
 recursively interpreted.
 
@@ -684,7 +686,7 @@ Recall our decision function |even?| in the previous section. It returned
 we should just translate |true| to the unit type and false to the empty type, to get
 the analogue of the |even?| function.
 
-We call this function |So|, the string parameter serving to give a clearer type error
+We call this function |P|, the string parameter serving to give a clearer type error
 to the user, if possible.
 
 
@@ -692,12 +694,9 @@ to the user, if possible.
 \begin{code}
 data Error (e : String) : Set where
 
-So   : String → Bool → Set
-So   _        true     = ⊤
-So   err      false    = Error err
-
 P    : Bool → Set
-P    = So "Argument expression does not evaluate to true."
+P  true    =     ⊤
+P  false   =     Error "Argument expression does not evaluate to true."
 \end{code}
 \caption{Helper type |Error|, enabling clearer type errors.}\label{fig:error}
 \end{shadedfigure}
@@ -710,11 +709,6 @@ inhabited, the argument to |P| is a tautology, i.e., for each
 assignment of the free variables the entire equation still evaluates
 to |true|. An example encoding of such a theorem is Fig.~\ref{fig:exampletheorem}~-- notice
 how similar it looks to the version expressed in mathematical notation, in equation~\ref{eqn:tauto-example}.
-
-One might wonder why propositions are not encoded in the slightly more 
-intuitive propositional equality style, for example |(b : Bool) → b ∨ ¬ b ≡ true|, since
-that notation more obviously reflects the meaning of ``being a tautology'', as opposed 
-to one having to understand the |So| function; this is justified in Sec.~\ref{sec:no-propositional-equality}.
 
 \begin{shadedfigure}[h]
 \begin{code}
@@ -739,15 +733,9 @@ expression is true under all variable assignments. This is done by generating a 
 of |⊤| or |⊥| types, depending on the result of |⟦_⊢_⟧| under each assignment.
 This corresponds precisely to the expression being a tautology if and only if the tree is inhabited.
 
-The |Diff| argument is unfortunately needed to prove that |forallsAcc| will eventually produce a
-tree with depth equal to the number of free variables in an expression. 
+The |Diff| argument is unfortunately needed for bookkeeping, to prove that |forallsAcc| will eventually produce a
+tree with depth equal to the number of free variables in an expression, and can be ignored.
 
-\ignore{
-\begin{code}
-open import Proofs.Util.Lemmas renaming (zero-least to zeroleast)
-open import Proofs.Util.Types using (Diff; Base; Step)
-\end{code}
-}
 
 \begin{shadedfigure}[h]
 \begin{code}
@@ -763,55 +751,7 @@ foralls {n} b = forallsAcc b [] (zeroleast 0 n)
 \end{shadedfigure}
 
 
-\paragraph{What Is This |Diff| You Speak Of?}\label{sec:explain-diff}
-% TODO get rid of this, probably.
-
-We just saw that the |Diff| argument is necessary in some
-of the recursive functions. Here, a short description of what it is
-and why it is needed is given.
-
-In Sec.~\ref{sec:Boolean-tautologies} the function |forallsAcc| (among others)
-has a parameter of type |Diff n m|. Recalling the function's
-definition from Fig.~\ref{fig:forallsacc}, note that there are two variables, $n$ and $m$, giving the current size of the environment
-and the maximum number of bound variables in the proposition, respectively. 
-
-This is wrong, since our interpretation function |⟦_⊢_⟧| requires that these $m$ and $n$ are equal.
-We cannot, however, make them equal in the type signature for |proofGoal|, since we are 
-recursively building up the environment with an accumulating parameter. Because of this, we introduce |Diff|~-- see Fig.~\ref{fig:diff-datatype}.
-
-
-\begin{shadedfigure}[h]
-\begin{spec}
-data Diff' : ℕ → ℕ → Set where
-  Base   : ∀ {n}                          → Diff' n n
-  Step   : ∀ {n m} → Diff' (suc n) m      → Diff' n m
-  
-zeroleast : (k n : ℕ) → Diff k (k + n)
-\end{spec}
-\caption{The definition of the |Diff| data type.}\label{fig:diff-datatype}
-\end{shadedfigure}
-
-The |Diff| data type  was necessary because given a term of type |BoolExpr m|, being a
-proposition with at most $m$ variables, it should be ensured that in
-the end an environment of size $m$ would be produced.  The necessity
-of $m \equiv n$ is obvious considering that the evaluation function
-needs to be able to look up the variables in the Boolean expression.
-As |forallsAcc| is a recursive function that introduces new variables
-to the environment one at a time, we need some way to ``promise'' that
-in the end $m$ will be equal to $n$. As can be seen in the definition
-of the |Base| constructor, this is exactly what happens.
-
-The same thing is necessary in some of the other functions, given
-that they also recursively construct or look up proofs that need to
-have the same size as their |BoolExpr| argument. Because they use the same
-technique in a slightly less overt manner they are not separately
-detailed here.
-
-We also provide the simple lemma |zeroleast|, which shows that for any 
-two $k$ and $n$, $n$ steps are needed to count from $k$ to $k+n$.
-
-
-\paragraph{Soundness} Since |Diff| has been explained, and we now we finally know our real decision function |foralls|, we can set about proving its
+\paragraph{Soundness} Since we now finally know our real decision function |foralls|, we can set about proving its
 soundness. Following the evens example, we want a function something like this.
 
 \begin{shade}
@@ -819,7 +759,8 @@ soundness. Following the evens example, we want a function something like this.
 sound : {n : ℕ} → (b : BoolExpr n) → foralls b → ...
 \end{spec}
 \end{shade}
-What should the return type of the |sound| lemma be? We would like to
+
+But what should the return type of the |sound| lemma be? We would like to
 prove that the argument |b| is a tautology, and hence, the |sound|
 function should return something of the form |(b1 ... bn : Bool) -> P
 B|, where |B| is an expression in the image of the interpretation
@@ -884,9 +825,9 @@ leaf from |foralls| which is the proof that the formula is a tautology
 in that specific case. 
 \begin{shade}
 \begin{code}
-soundness       : {n : ℕ} → (b : BoolExpr n) → foralls b
+soundness       : {n : ℕ} → (b : BoolExpr n) → {i : foralls b}
                 → proofGoal 0 n (zeroleast 0 n) b []
-soundness {n} b i = soundnessAcc b [] (zeroleast 0 n) i
+soundness {n} b {i} = soundnessAcc b [] (zeroleast 0 n) i
 \end{code}
 \end{shade}
 The function |soundness| calls
@@ -895,15 +836,13 @@ empty environment, and the |Diff| proof that |soundnessAcc| will be called
 ($n-0$) times. This results in an environment of size $n$ everywhere
 the expression is to be evaluated.
 
-
-
 Now, we can prove theorems by calling |soundness b p|, where |b| is the
 representation of the formula under consideration, and |p| is the evidence
 that all branches of the proof tree are true. Agda is convinced
 that the representation does in fact correspond to the concrete
-formula, and also that |soundness| gives a valid proof. In fact, we need not
+formula, and also that |soundness| gives a valid proof. We will not
 even give |p| explicitly; since the only valid values of |p| are nested pairs of |tt|,
-the argument can be inferred automatically, if its type is inhabited.
+the argument is inferred automatically, if its type is inhabited.
 
 If the module
 passes the type checker, we know our formula is both a tautology and
@@ -917,22 +856,19 @@ rep          = Imp    (And (Atomic (suc zero)) (Atomic zero))
                       (Atomic zero)
 
 someTauto    : (p q : Bool)         → P( p ∧ q ⇒ q )
-someTauto    = soundness rep _
+someTauto    = soundness rep
 \end{code}
 \caption{An example Boolean formula, along with the transliteration to a proposition and the corresponding proof.}\label{fig:dup}
 \end{shadedfigure}
 
-Having said that, the trick of letting Agda infer the proof argument to pass to |soundness| is 
-still a little deceptive, as explained in Sec.~\ref{sec:implicit-unit}.
-The thing is, we do not want a user to get away with being able to prove that something which is not a
-tautology, is a tautology. Since the proof that under all environments the theorem evaluates
-to true is an inferred argument in this style, one is merely left with an unsolved meta (with an uninhabitable type, to be fair), which
+If one were to give as input a formula which is not a tautology, Agda would not be able to infer the proof |foralls|, since
+it would be an uninhabited type. One would be left with an unsolved meta, which
 might seem a triviality if you do not read the compiler's output carefully. Luckily Agda disallows
-importing modules with unsolved metas, which means such a spurious proof will not be usable elsewhere
+importing modules with unsolved metas, which means such a spurious proof would not be usable elsewhere
 in a real-life development. 
 
-Other than that potential pitfall, the only part we still have to do manually is to convert the concrete
-Agda representation (|p ∧ q ⇒ q|, in this case) into our abstract
+The only part we still have to do manually is to convert the concrete
+Agda representation of the formula (|p ∧ q ⇒ q|, in this case) into our abstract
 syntax (|rep| here). This is unfortunate, as we end up typing out the
 formula twice. We also have to count the number of variables
 ourselves and convert them the to De Bruijn indices. This is
@@ -941,9 +877,7 @@ for formulae containing many variables.
 
 It would be desirable for this representation
 process to be automated. Luckily we have the |Autoquote| library,
-which we will apply in Sec.~\ref{sec:addrefl}.
-
-
+which we will now apply.
 
 
 \subsection{Adding Reflection}\label{sec:addrefl}
@@ -959,7 +893,6 @@ convert it to its corresponding |BoolExpr| automatically.
 
 \ignore{
 \begin{code}
-open import Proofs.TautologyProver hiding (concrete2abstract; BoolExpr; foralls; proveTautology; soundness; boolTable; term2boolexpr'; stripSo ; isSoExprQ ; proofGoal)
 
 {-
 Unfortunately, we need to duplicate this code here, because the So which is
@@ -976,7 +909,7 @@ isSoExprQ (def f args) with Data.Nat._≟_ (length args) 2
 isSoExprQ (def f args) | yes p with tt
 isSoExprQ (def f [])                   | yes () | tt
 isSoExprQ (def f (x ∷ []))             | yes () | tt
-isSoExprQ (def f (a ∷ arg v r x ∷ [])) | yes p  | tt with f ≟-Name quote So
+isSoExprQ (def f (a ∷ arg v r x ∷ [])) | yes p  | tt with f ≟-Name quote P
 isSoExprQ (def f (a ∷ arg v r x ∷ [])) | yes p₁ | tt | yes p = ⊤
 isSoExprQ (def f (a ∷ arg v r x ∷ [])) | yes p  | tt | no ¬p = ⊥
 isSoExprQ (def f (x ∷ x₃ ∷ x₄ ∷ args)) | yes () | tt
@@ -1001,7 +934,7 @@ stripSo (def f args) pf | yes p with tt -- doing "with tt" at the end
                                         -- arguments.
 stripSo (def f [])                   pf | yes () | tt
 stripSo (def f (x ∷ []))             pf | yes () | tt
-stripSo (def f (a ∷ arg v r x ∷ [])) pf | yes p  | tt with f ≟-Name quote So
+stripSo (def f (a ∷ arg v r x ∷ [])) pf | yes p  | tt with f ≟-Name quote P
 stripSo (def f (a ∷ arg v r x ∷ [])) pf | yes p₁ | tt | yes p = x
 stripSo (def f (a ∷ arg v r x ∷ [])) () | yes p  | tt | no ¬p
 stripSo (def f (x ∷ x₃ ∷ x₄ ∷ args)) pf | yes () | tt
@@ -1016,21 +949,93 @@ stripSo unknown                      ()
 \end{code}
 }
 
-The conversion between a |Term| and |BoolExpr| is achieved using the function \mbox{|concrete2abstract|}.
+The conversion between a |Term| and |BoolExpr| is achieved in two phases.
+Since |Autoquote| only supports simple inductive data types, the first issue we encounter is that
+|BoolExpr n| has an argument of type |Fin n| to its constructor |Atomic| (see Fig.~\ref{fig:boolexprn}).
+To work around this, we introduce a simpler, intermediary data structure, to which we will convert
+from |Term|. This type, called |BoolInter|, is presented in Fig. \ref{fig:boolinter}. It has no such constraints.
+
+\begin{shadedfigure}[h]
+\begin{spec}
+data BoolInter : Set where
+  Truth        :                                  BoolInter
+  Falsehood    :                                  BoolInter
+  And          : BoolInter     → BoolInter    →   BoolInter
+  Or           : BoolInter     → BoolInter    →   BoolInter
+  Not          : BoolInter                    →   BoolInter
+  Imp          : BoolInter     → BoolInter    →   BoolInter
+  Atomic       : ℕ                            →   BoolInter
+\end{spec}
+\caption{An intermediary data type, which is a simplified (constraint-free) version of |BoolExpr n|.}\label{fig:boolinter}
+\end{shadedfigure}
+
+The mapping needed for |Autoquote| is as follows: we mention which constructor represents
+De Bruijn-indexed variables and what the arity is of the different constructors. This way
+only |Term|s containing variables or the operators and, or, not,
+implication, true or false are accepted. Using this mapping, we can
+construct the function |term2boolexpr'| that, for suitable |Term|s,
+gives us an expression in |BoolInter|. See Fig.~\ref{fig:booltable}.
+
+\begin{shadedfigure}[h]
+\begin{code}
+boolTable : Table BoolInter
+boolTable = (Atomic ,
+                  2 \# (quote _∧_      ) ↦ And
+            ∷     2 \# (quote _∨_      ) ↦ Or
+            ∷     1 \# (quote  ¬_      ) ↦ Not
+            ∷     0 \# (quote true     ) ↦ Truth
+            ∷     0 \# (quote false    ) ↦ Falsehood
+            ∷     2 \# (quote _⇒_      ) ↦ Imp ∷ [])
+
+term2boolexpr      : (t : Term)
+                   → {pf : convertManages boolTable t}
+                   → BoolInter
+term2boolexpr  t {pf} = doConvert boolTable t {pf}
+\end{code}
+\caption{The mapping table for quoting |BoolInter|.}\label{fig:booltable}
+\end{shadedfigure}
+
+Once we have a |BoolInter| expression, we just need to check that its
+variables are all in scope (this means that $\forall$ |Atomic| $x  :     x < n$, if we
+want to convert to a |BoolExpr n|). This is done in |bool2fin|, assuming that |bool2finCheck|
+holds (the latter simply expresses the in-scope property).
+
+
+With these ingredients, we write |concrete2abstract|, which converts directly from a |Term| to a |BoolExpr n|.
+This illustrates how useful such an
+abstraction can be.  It uses the function |term2boolexpr'| defined in Fig.~\ref{fig:booltable}.
+
 \begin{shade}
 \begin{code}
-concrete2abstract    :     (t     : Term)        → (n : ℕ)
-                     →     {pf    : isSoExprQ (stripPi t)}
-                     →     {pf2   : isBoolExprQ n (stripPi t) pf}
-                     →     BoolExpr n
+concrete2abstract' :
+         (t : Term)
+       → {pf : isSoExprQ (stripPi t)}
+       → let t' = stripSo (stripPi t) pf in
+            {pf2 : convertManages boolTable t'}
+          → (bool2finCheck (freeVars t) (term2boolexpr' t' {pf2}))
+          → BoolExpr (freeVars t)
+concrete2abstract' t {pf} {pf2} fin = bool2fin     (freeVars t)
+                                                   (term2boolexpr'
+                                                     (stripSo (stripPi t) pf)
+                                                     {pf2})
+                                                   fin
 \end{code}
 \end{shade}
-\ignore{
-\begin{shade}
-\begin{code}
-concrete2abstract t n {pf} {pf2} = doConvert --  term2boolexpr n (stripSo (stripPi t) pf) pf2
-\end{code}
-\end{shade}}\!\!
+
+Clearly, the |Autoquote| module can save a lot
+of repetitive coding for converting |Term|s into some richer
+AST, such as |BoolExpr n|. 
+
+
+
+
+
+
+
+
+
+
+
 Note that not every |Term| can be converted to a |BoolExpr|. Looking at the type signature of the 
 |concrete2abstract| function, we see that it requires additional assumptions about the
 |Term|: it may only contain functions such as |_∧_| or |_∨_|, and
@@ -1051,7 +1056,7 @@ being a Boolean expression enclosed in a call to |P|, preceded by a series of un
 All these pieces are assembled in the |proveTautology| function.
 
 \begin{shade}
-\begin{code}
+\begin{spec}
 proveTautology :    (t     : Term) →
                     {pf    : isSoExprQ (stripPi t)} →
                     let n = freeVars t in
@@ -1061,7 +1066,7 @@ proveTautology :    (t     : Term) →
                             proofGoal 0 n (zeroleast 0 n) b []
 proveTautology t {_}{_}{i} = 
   soundness (concrete2abstract t (freeVars t)) i
-\end{code}
+\end{spec}
 \end{shade}
 %TODO this is irrelevant!
 The |proveTautology| function converts a raw |Term| to a |BoolExpr n|
@@ -1082,7 +1087,7 @@ the reasons outlined in Sec.~\ref{sec:implicit-unit}. %TODO this will
                                 %need explaining, but briefly.
 
 \begin{shade}
-\begin{code}
+\begin{spec}
 exclMid    : (b : Bool) → P(b ∨ ¬ b)
 exclMid    = quoteGoal e in proveTautology e
 
@@ -1091,7 +1096,7 @@ peirce     = quoteGoal e in proveTautology e
 
 fave       : exampletheorem -- defined in Fig.~\ref{fig:exampletheorem}
 fave       = quoteGoal e in proveTautology e
-\end{code}
+\end{spec}
 \end{shade}
 
 
@@ -1127,101 +1132,6 @@ Recall the |Autoquote| module developed in
 Sec.~\ref{sec:autoquote}; the same can be used here, both as an
 illustration of its use, and to avoid code duplication,
 thus making the code for |term2boolexpr| more concise.
-
-|Autoquote| only supports simple inductive data types, so the first problem we encounter is that
-|BoolExpr n| has an argument of type |Fin n| to its constructor |Atomic| (see Fig.~\ref{fig:boolexprn}).
-To work around this, we introduce a simpler, intermediary data structure, to which we will convert
-from |Term|. This type, called |BoolInter|, is presented in Fig. \ref{fig:boolinter}. It has no such constraints.
-
-\begin{shadedfigure}[h]
-\begin{code}
-data BoolInter : Set where
-  Truth        :                                  BoolInter
-  Falsehood    :                                  BoolInter
-  And          : BoolInter     → BoolInter    →   BoolInter
-  Or           : BoolInter     → BoolInter    →   BoolInter
-  Not          : BoolInter                    →   BoolInter
-  Imp          : BoolInter     → BoolInter    →   BoolInter
-  Atomic       : ℕ                            →   BoolInter
-\end{code}
-\caption{An intermediary data type, which is a simplified (constraint-free) version of |BoolExpr n|.}\label{fig:boolinter}
-\end{shadedfigure}
-
-The mapping needed for |Autoquote| is as follows: we mention which constructor represents
-De Bruijn-indexed variables and what the arity is of the different constructors. This way
-only |Term|s containing variables or the operators and, or, not,
-implication, true or false are accepted. Using this mapping, we can
-construct the function |term2boolexpr'| that, for suitable |Term|s,
-gives us an expression in |BoolInter|. See Fig.~\ref{fig:booltable}.
-
-\begin{shadedfigure}[h]
-\begin{code}
-boolTable : Table BoolInter
-boolTable = (Atomic ,
-                  2 \# (quote _∧_      ) ↦ And
-            ∷     2 \# (quote _∨_      ) ↦ Or
-            ∷     1 \# (quote  ¬_      ) ↦ Not
-            ∷     0 \# (quote true     ) ↦ Truth
-            ∷     0 \# (quote false    ) ↦ Falsehood
-            ∷     2 \# (quote _⇒_      ) ↦ Imp ∷ [])
-
-term2boolexpr'     : (t : Term)
-                   → {pf : convertManages boolTable t}
-                   → BoolInter
-term2boolexpr' t {pf} = doConvert boolTable t {pf}
-\end{code}
-\caption{The mapping table for quoting |BoolInter|.}\label{fig:booltable}
-\end{shadedfigure}
-
-Once we have a |BoolInter| expression, we just need to check that its
-variables are all in scope (this means that $\forall$ |Atomic| $x  :     x < n$, if we
-want to convert to a |BoolExpr n|). This is done in |bool2fin|, assuming that |bool2finCheck|
-holds (the latter simply expresses the in-scope property).
-
-\begin{shade}
-\begin{spec}
-bool2finCheck : (n : ℕ) → (t : BoolInter) → Set
-bool2finCheck n Truth        = ⊤
-bool2finCheck n (And t t₁)   = bool2finCheck n t × bool2finCheck n t₁
-...
-bool2finCheck n (Atomic x)   with suc x ≤? n
-bool2finCheck n (Atomic x)   | yes p    = ⊤
-bool2finCheck n (Atomic x)   | no ¬p    = ⊥
-
-bool2fin : (n : ℕ) (t : BoolInter) (bool2finCheck n t) → BoolExpr n
-bool2fin n Truth        pf            = Truth
-bool2fin n (And t t₁)   (p₁ , p₂)     = And (bool2fin n t p₁) (bool2fin n t₁ p₂)
-...
-bool2fin n (Atomic x)  p₁       with suc x ≤? n
-bool2fin n (Atomic x)  p₁       | yes p    = Atomic (fromℕ≤ {x} p)
-bool2fin n (Atomic x)  ()       | no ¬p
-\end{spec}
-\end{shade}
-
-With these ingredients, our |concrete2abstract| function presented in Sec.~\ref{sec:addrefl}
-can be rewritten to the following  drop-in replacement, illustrating how useful such an
-abstraction can be.  It uses the function |term2boolexpr'| defined in Fig.~\ref{fig:booltable}.
-
-\begin{shade}
-\begin{spec}
-concrete2abstract' :
-         (t : Term)
-       → {pf : isSoExprQ (stripPi t)}
-       → let t' = stripSo (stripPi t) pf in
-            {pf2 : convertManages boolTable t'}
-          → (bool2finCheck (freeVars t) (term2boolexpr' t' {pf2}))
-          → BoolExpr (freeVars t)
-concrete2abstract' t {pf} {pf2} fin = bool2fin     (freeVars t)
-                                                   (term2boolexpr'
-                                                     (stripSo (stripPi t) pf)
-                                                     {pf2})
-                                                   fin
-\end{spec}
-\end{shade}
-
-Clearly, the |Autoquote| module can save a lot
-of repetitive coding for converting |Term|s into some richer
-AST, such as |BoolExpr n|. 
 
 
 
