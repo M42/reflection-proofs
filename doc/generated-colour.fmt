@@ -292,6 +292,7 @@
 %format concatMap = "\defin{concatMap}"
 %format concrete = "\defin{concrete}"
 %format concrete2abstract = "\defin{concrete2abstract}"
+%format concrete2abstract' = "\defin{concrete2abstract}"
 %format cong = "\defin{cong}"
 %format cong₂ = "\defin{cong₂}"
 %format consExample = "\defin{consExample}"

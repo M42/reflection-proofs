@@ -241,7 +241,7 @@ Before going into too much detail about how reflection can make our
 lives easier and what nifty techniques are possible, we will look at
 the tools Agda provides us for reflecting. It should be a good
 starting point for someone familiar with Agda, or at the very least
-dependent typed programming in general. 
+dependently typed programming in general. 
 
 
 
@@ -249,7 +249,8 @@ dependent typed programming in general.
 |Term| values: |quote|, |quoteTerm|, |quoteGoal|, and |unquote|. The
 |quote| keyword allows the user to access the internal representation of
 any identifier, or name. This internal representation can be used to query the
-type or definition of the identifier.
+type or definition of the identifier; refer to the release
+notes~\cite{agda-relnotes-228} for a ilsting of the data structures involved.
 
 The easiest example of quotation uses the |quoteTerm| keyword to turn
 a fragment of concrete syntax into a |Term| value. Note that the
@@ -371,7 +372,7 @@ shapes of ASTs, we would quickly become discouraged. This nearly happened while 
 want to do anything useful with quoted terms. The (partial) solution to this problem~-- something which at least mitigates 
 the agony~-- is presented in this section.
 
-Imagine we have some AST, for example |Expr|, as in Fig.~\ref{fig:exprdata}.
+Imagine we have some AST, for example the type |Expr| shown in Fig.~\ref{fig:exprdata}.
 This is a rather simple inductive data structure representing terms which can contain Peano style natural
 numbers, variables (indexed by an Agda natural) and additions.
 
@@ -398,10 +399,10 @@ AST, and get a conversion function for free.
  This desire motivated my development of
 |Autoquote| in the course of this project. What |Autoquote| does is abstract over this process, and
 provide an interface which, when provided with such a mapping, automatically quotes expressions
-that fit. Here, \emph{fitting} is defined as only having variables, or names that are listed
-in this mapping. Other terms are rejected.
-The user provides an elegant-looking mapping, such as the one for
-|Expr| in Fig.~\ref{fig:exprTable}, and |Autoquote| automatically converts
+that fit. Here, \emph{fitting} is defined as only having names that are listed
+in this mapping, or variables. Other terms are rejected.
+The user provides an elegant-looking mapping, such as in
+Fig.~\ref{fig:exprTable}, and |Autoquote| automatically converts
 concrete Agda to elements of simple inductive types. 
 
 \begin{shadedfigure}[h]
@@ -426,21 +427,20 @@ for more details the thesis can once again be referred to
 \cite{vdWalt:Thesis:2012}. Using the library is simple; it exposes a function called
 |doConvert| which takes the conversion table, a (hidden) proof that
 the conversion is possible, and a |Term| to convert,
-and produces an inhabitant of your richer data type.
+and produces an inhabitant of your data type.
 
 The use of |doConvert| is illustrated in Fig.~\ref{fig:test-autoquote}. 
 This approach used |convertManages| as an assumption, so fails at
 compile time if an incompatible term is given.
-Compare these relatively elegant functions to the verbose |term2boolexpr| function.
+Compare these relatively elegant functions to the verbose
+|term2boolexpr| function in Fig.~\ref{fig:concrete2abstract}.
 
 
 \begin{shadedfigure}[h]
 \begin{code}
-something : {x y : ℕ}    → doConvert    exprTable
-                                        (quoteTerm ((1 + x + 2) + y))
-                         ≡ S    (Pl         (Pl       (Var 1)
-                                                      (S (S Z)))
-                                            (Var 0))
+something : {x : ℕ}      → doConvert    exprTable
+                                        (quoteTerm (x + 1))
+                         ≡ Pl (Var 0) (S Z)
 something = refl
 \end{code}
 \caption{An example of |Autoquote| in use. See Fig.~\ref{fig:exprTable} for the definition of |exprTable|, a typical |Name|-to-constructor mapping.}\label{fig:test-autoquote}
@@ -597,12 +597,9 @@ The next step will be to use the same approach for a more involved and realistic
 
 \subsection{Second Example: Boolean Tautologies}\label{sec:Boolean-tautologies}
 
-Obviously, the first example of proof by reflection
- was a rather trivial one. There was a good reason for studying it, though, since
-we will now apply the same technique to a more interesting problem, making
+We will now apply the same technique as above to a more interesting problem, making
 the relationship to the previous example clear at each step.
-
-Another application of proof by reflection 
+The next application of proof by reflection 
 is Boolean expressions which are a tautology. We will prove this by evaluation of the
 formulae. We will follow the same
 recipe as for even naturals, with one further addition. In the
@@ -751,7 +748,6 @@ foralls {n} b = forallsAcc b [] (zeroleast 0 n)
 \caption{The function |foralls|, which decides if a proposition is a tautology. Compare to the |even?| function in Sec.~\ref{sec:evenness}.}\label{fig:forallsacc}
 \end{shadedfigure}
 
-
 \paragraph{Soundness} Since we now finally know our real decision function |foralls|, we can set about proving its
 soundness. Following the evens example, we want a function something like this.
 
@@ -891,28 +887,16 @@ The conversion between a |Term| and |BoolExpr| is achieved in two phases.
 Since |Autoquote| only supports simple inductive data types, the first issue we encounter is that
 |BoolExpr n| has an argument of type |Fin n| to its constructor |Atomic| (see Fig.~\ref{fig:boolexprn}).
 To work around this, we introduce a simpler, intermediary data structure, to which we will convert
-from |Term|. This type, called |BoolInter|, is presented in Fig. \ref{fig:boolinter}. It has no such constraints.
+from |Term|. This type, called |BoolInter|, is not shown here, since the only difference with |BoolExpr n| is that the
+index of its variables is a |ℕ| instead of a |Fin n|.
 
-\begin{shadedfigure}[h]
-\begin{spec}
-data BoolInter : Set where
-  Truth        :                                  BoolInter
-  Falsehood    :                                  BoolInter
-  And          : BoolInter     → BoolInter    →   BoolInter
-  Or           : BoolInter     → BoolInter    →   BoolInter
-  Not          : BoolInter                    →   BoolInter
-  Imp          : BoolInter     → BoolInter    →   BoolInter
-  Atomic       : ℕ                            →   BoolInter
-\end{spec}
-\caption{An intermediary data type, which is a simplified (constraint-free) version of |BoolExpr n|.}\label{fig:boolinter}
-\end{shadedfigure}
 
 The mapping needed for |Autoquote| is as follows: we mention which constructor represents
 De Bruijn-indexed variables and what the arity is of the different constructors. This way
 only |Term|s containing variables or the operators and, or, not,
-implication, true or false are accepted. Using this mapping, we can
+implication, true or false are accepted. Using the mapping presented in Fig.~\ref{fig:booltable}, we can
 construct the function |term2boolexpr'| that, for suitable |Term|s,
-gives us an expression in |BoolInter|. See Fig.~\ref{fig:booltable}.
+gives us an expression in |BoolInter|. 
 
 \begin{shadedfigure}[h]
 \begin{code}
@@ -924,11 +908,6 @@ boolTable = (Atomic ,
             ∷     0 \# (quote true     ) ↦ Truth
             ∷     0 \# (quote false    ) ↦ Falsehood
             ∷     2 \# (quote _⇒_      ) ↦ Imp ∷ [])
-
-term2boolexpr      : (t : Term)
-                   → {pf : convertManages boolTable t}
-                   → BoolInter
-term2boolexpr  t {pf} = doConvert boolTable t {pf}
 \end{code}
 \caption{The mapping table for quoting |BoolInter|.}\label{fig:booltable}
 \end{shadedfigure}
@@ -941,8 +920,9 @@ holds (the latter simply expresses the in-scope property).
 
 With these ingredients, we write |concrete2abstract|, which converts directly from a |Term| to a |BoolExpr n|.
 This illustrates how useful such an
-abstraction can be.  It uses the function |term2boolexpr'| defined in Fig.~\ref{fig:booltable}.
+abstraction can be.  It uses the previously mentioned function |term2boolexpr'|.
 
+\ignore{
 \begin{shade}
 \begin{code}
 concrete2abstract' :
@@ -959,6 +939,7 @@ concrete2abstract' t {pf} {pf2} fin = bool2fin     (freeVars t)
                                                    fin
 \end{code}
 \end{shade}
+}
 
 We can now write a function called |proveTautology|, which uses this |concrete2abstract'| and calls |soundness| on the resulting term.
 This and other helper
