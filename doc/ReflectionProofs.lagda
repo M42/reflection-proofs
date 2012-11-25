@@ -54,24 +54,26 @@
 \newcommand{\ch}{Curry--Howard isomorphism\xspace}
 % This defines figures with backgrounds -- useful for code
 \usepackage{adjustbox}
-\usepackage{float} % enable H position specifier
+% \usepackage{float} % enable H position specifier
 % \newenvironment{shadedfigure}{\begin{figure}}{\end{figure}}
 % \newenvironment{shade}{}{}
 \newenvironment{shadedfigure}[1][tbhp]{%
+  \vskip -5mm
     \begin{figure}[#1]
     \begin{adjustbox}{minipage=\linewidth-10pt,margin=5pt,bgcolor=hlite}
 }{%
     \end{adjustbox}
     \end{figure}
+  \vskip -5mm
 }
 \newenvironment{shade}{
 
-\vskip 0.5\baselineskip
+\vskip 0.2\baselineskip
 \begin{adjustbox}{%
 minipage=\linewidth,margin=0pt,padding=0pt,bgcolor=hlite%
 }}{%
 \end{adjustbox}
-\vskip 0.5\baselineskip
+\vskip 0.2\baselineskip
 
 }
 
@@ -259,8 +261,7 @@ example, the following unit test type checks:
 
 \begin{shade}
 \begin{code}
-example₀   : quoteTerm (\ (x : Bool) -> x)
-           ≡ lam visible (var 0 [])
+example₀   : quoteTerm (\ (x : Bool) -> x)       ≡ lam visible (var 0 [])
 example₀   = refl
 \end{code}
 \end{shade}
@@ -350,7 +351,7 @@ tedious, as can be seen in the code snippet of
 Fig.~\ref{fig:concrete2abstract}, which formed part of an actual term
 conversion function, before a better solution was developed.
 
-\begin{shadedfigure}[h]
+\begin{shadedfigure}
 \begin{spec}
 term2boolexpr n (con tf []) pf with tf ≟-Name quote true
 term2boolexpr n (con tf []) pf | yes p = Truth
@@ -376,7 +377,7 @@ Imagine we have some AST, for example the type |Expr| shown in Fig.~\ref{fig:exp
 This is a rather simple inductive data structure representing terms which can contain Peano style natural
 numbers, variables (indexed by an Agda natural) and additions.
 
-\begin{shadedfigure}[h]
+\begin{shadedfigure}
 \begin{code}
 data Expr : Set where
   Var           : ℕ               →     Expr
@@ -405,7 +406,7 @@ The user provides an elegant-looking mapping, such as in
 Fig.~\ref{fig:exprTable}, and |Autoquote| automatically converts
 concrete Agda to elements of simple inductive types. 
 
-\begin{shadedfigure}[h]
+\begin{shadedfigure}
 \begin{code}
 exprTable : Table Expr
 exprTable = (Var ,
@@ -436,11 +437,10 @@ Compare these relatively elegant functions to the verbose
 |term2boolexpr| function in Fig.~\ref{fig:concrete2abstract}.
 
 
-\begin{shadedfigure}[h]
+\begin{shadedfigure}
 \begin{code}
-something : {x : ℕ}      → doConvert    exprTable
-                                        (quoteTerm (x + 1))
-                         ≡ Pl (Var 0) (S Z)
+something : {x : ℕ}      → doConvert    exprTable      (    quoteTerm (x + 1))
+                         ≡                                  Pl (Var 0) (S Z)
 something = refl
 \end{code}
 \caption{An example of |Autoquote| in use. See Fig.~\ref{fig:exprTable} for the definition of |exprTable|, a typical |Name|-to-constructor mapping.}\label{fig:test-autoquote}
@@ -562,9 +562,6 @@ or |8772|, this proof obligation reduces to
 
 \begin{shade}
 \begin{code}
-isEven28        : Even 28
-isEven28        = soundnessEven tt
-
 isEven8772      : Even 8772
 isEven8772      = soundnessEven tt
 \end{code}
@@ -623,16 +620,13 @@ the one given in the section on even natural numbers (Sec.~\ref{sec:evenness}). 
 inductive data type to represent Boolean expressions with at most $n$ free
 variables in Fig.~\ref{fig:boolexprn}.
 
-\begin{shadedfigure}[h]
+\begin{shadedfigure}
 \begin{spec}
 data BoolExpr (n : ℕ) : Set where
-  Truth         :                                  BoolExpr n
-  Falsehood     :                                  BoolExpr n
-  And           : BoolExpr n → BoolExpr n      →   BoolExpr n
-  Or            : BoolExpr n → BoolExpr n      →   BoolExpr n
-  Not           : BoolExpr n                   →   BoolExpr n
-  Imp           : BoolExpr n → BoolExpr n      →   BoolExpr n
-  Atomic        : Fin n                        →   BoolExpr n
+  Truth Falsehood  :                                  BoolExpr n
+  And   Or  Imp    : BoolExpr n → BoolExpr n      →   BoolExpr n
+  Not              : BoolExpr n                   →   BoolExpr n
+  Atomic           : Fin n                        →   BoolExpr n
 \end{spec}
 \caption{Inductive definition of Boolean expressions with $n$ free variables.}\label{fig:boolexprn}
 \end{shadedfigure}
@@ -688,7 +682,7 @@ We call this function |P|, the string parameter serving to give a clearer type e
 to the user, if possible.
 
 
-\begin{shadedfigure}[H]
+\begin{shadedfigure}
 \begin{spec}
 data Error (e : String) : Set where
 
@@ -708,7 +702,7 @@ assignment of the free variables the entire equation still evaluates
 to |true|. An example encoding of such a theorem is Fig.~\ref{fig:exampletheorem}~-- notice
 how similar it looks to the version expressed in mathematical notation, in equation~\ref{eqn:tauto-example}.
 
-\begin{shadedfigure}[h]
+\begin{shadedfigure}
 \begin{code}
 exampletheorem : Set
 exampletheorem = (p₁ q₁ p₂ q₂ : Bool)   →
@@ -735,7 +729,7 @@ The |Diff| argument is unfortunately needed for bookkeeping, to prove that |fora
 tree with depth equal to the number of free variables in an expression, and can be ignored.
 
 
-\begin{shadedfigure}[h]
+\begin{shadedfigure}
 \begin{code}
 forallsAcc : {n m : ℕ} → BoolExpr m → Env n → Diff n m → Set
 forallsAcc b acc    (Base     ) = P ⟦ acc ⊢ b ⟧
@@ -840,7 +834,7 @@ passes the type checker, we know our formula is both a tautology and
 that we have the corresponding proof object at our disposal
 afterwards, as in the example of Fig.~\ref{fig:dup}.
 
-\begin{shadedfigure}[h]
+\begin{shadedfigure}
 \begin{code}
 rep          : BoolExpr 2
 rep          = Imp    (And (Atomic (suc zero)) (Atomic zero)) 
@@ -898,7 +892,7 @@ implication, true or false are accepted. Using the mapping presented in Fig.~\re
 construct the function |term2boolexpr'| that, for suitable |Term|s,
 gives us an expression in |BoolInter|. 
 
-\begin{shadedfigure}[h]
+\begin{shadedfigure}
 \begin{code}
 boolTable : Table BoolInter
 boolTable = (Atomic ,
@@ -955,9 +949,6 @@ the |proveTautology| function; we can omit all arguments except |e|, since they
 
 \begin{shade}
 \begin{code}
-exclMid    : (b : Bool) → P(b ∨ ¬ b)
-exclMid    = quoteGoal e in proveTautology e
-
 peirce     : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
 peirce     = quoteGoal e in proveTautology e
 
@@ -1014,10 +1005,10 @@ languages, such as Haskell \cite{DBLP:journals/lisp/Stump09}. Smalltalk, an earl
 object-oriented programming language with advanced reflective features \cite{Goldberg:1983:SLI:273}, is the predecessor of Objective-C. As such, it
 is surprising that industry programming does not use more of these advanced reflective features which have already  been around for a 
 long time.
- 
-\paragraph{Evaluation}
 This would seem to be the inspiration for the current reflection system recently introduced
 in Agda, although we shall see that it is lacking in a number of fundamental capabilities.
+
+\paragraph{Evaluation}
 If we look at the taxonomy of reflective systems in programming language technology written up 
 by Sheard \cite{sheard-staged-programming}
 we see that we can make a few rough judgements about the metaprogramming facilities Agda currently 
@@ -1032,10 +1023,6 @@ make the system truly useful. }.
 \item Agda's current reflection API leans more towards analysis than generation,
 \item it supports encoding of terms in an algebraic data type (as opposed to a string, for example),
 \item it involves manual staging annotations (by using keywords such as |quote| and |unquote|),
-\item it is neither strictly static nor run time, but compile time. It behaves much like a 
-  static system (one which produces an object program, as does for example YAcc \cite{johnson1975yacc})
-  would, but does not produce intermediate code which might be modified later by the user.
-  Note that this fact is essential for Agda to remain sound.
 \item It is homogeneous, because a representation of the object language lives inside the metalanguage (as a native
   data type), 
 \item it is only two-stage: we cannot as yet produce an object program which is itself a metaprogram. This is
