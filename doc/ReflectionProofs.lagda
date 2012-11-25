@@ -3,7 +3,6 @@
 
 \usepackage{color}
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
-\usepackage{todonotes}
 
 %include polycode.fmt
 %if style == newcode
@@ -17,9 +16,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% stuff only for DRAFT versions
 %%%%% microtype with settings.
-%\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
-%\microtypecontext{spacing=nonfrench}
-\newcommand{\microtypesetup}[1]{\fbox{NO MICROTYPE!\phantom{\rule{0.1\textwidth}{0.1\textwidth}}}}
+\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
+\microtypecontext{spacing=nonfrench}
+%\newcommand{\microtypesetup}[1]{\fbox{NO MICROTYPE!\phantom{\rule{0.1\textwidth}{0.1\textwidth}}}}
+\usepackage{todonotes}
 
 \usepackage{draftwatermark}
 \SetWatermarkLightness{0.95}
@@ -137,22 +137,15 @@ Department of Computer Science, Utrecht University
 \maketitle
 
 \begin{abstract}
-  Detailing the implementation of proof by reflection using Agda's
-  recent reflection API.
-% This project explores the recent addition to Agda enabling
-% \emph{reflection}, in the style of Lisp, MetaML, and Template
-% Haskell. It illustrates several possible applications of reflection that arise
-% in dependently typed programming, and details the limitations of the
-% current implementation of reflection. Examples of type-safe metaprograms
-% are given that illustrate the power of reflection coupled with a dependently 
-% typed language. Among other things the
-% limitations inherent in having |quote| and |unquote| implemented as
-% keywords are highlighted. The fact that lambda terms are returned without
-% typing information is discussed, and a solution is presented. Also
-% provided is a detailed users' guide to the reflection API and a
-% library of working code examples to illustrate how various common
-% tasks can be performed, along with suggestions for an updated
-% reflection API in a future version of Agda.
+  This project explores the recent addition to Agda enabling
+\emph{reflection}, in the style of Lisp, MetaML, and Template Haskell.
+It gives a brief introduction to using reflection, and details the  intricacies
+of using reflection to implement an automatic theorem proving
+tactic called proof by reflection. Also, a library is presented which
+can be used for automatically quoting a class of concrete Agda terms
+to a simple, user-defined
+inductive data type, alleviating the burden a programmer usually faces
+when wanting to use reflection in a practical setting. 
 \end{abstract}
 
 
@@ -323,9 +316,8 @@ convert (def c args) with c ≟-Name quote foo
 This short introduction should already be enough to start developing
 simple reflective programs.  For a more detailed description of the
 reflection API in Agda, including many examples, the inquisitive
-reader is referred to the chapter in the thesis covering this topic \cite{vdWalt:Thesis:2012}.
-The thesis goes into more detail \todo{awkward to keep saying ``the
-  thesis''} 
+reader is referred to the chapter in van der Walt's thesis covering this topic \cite{vdWalt:Thesis:2012}.
+This thesis goes into more detail 
 regarding the data structures involved in Agda's reflection API, and later, 
 gives a detailed account of some real-world use-cases.
 
@@ -424,7 +416,7 @@ A |zero|, from the |Data.Nat| standard library, should be treated as our |Z| con
 a |suc| translates to |S|. These constructors expect 0 and 1 argument, respectively.
 
 We will not say much about the implementation of this library;
-for more details the thesis can once again be referred to
+for more details van der Walt's thesis can once again be referred to
 \cite{vdWalt:Thesis:2012}. Using the library is simple; it exposes a function called
 |doConvert| which takes the conversion table, a (hidden) proof that
 the conversion is possible, and a |Term| to convert,
@@ -1040,7 +1032,6 @@ the tactic language in Coq is much more specialised and sophisticated when it co
 two separate languages in one, instead of the Agda way, where metaprograms are written directly in the object language. Also, the 
 fact that proof generation in Agda is explicit may be something some people appreciate. (Far) future work might be to 
 implement some sort of tactic framework for Agda, possibly with a DSL in the style of Coq's tactic language, around the reflection API.
-
 % Uh the following sentence sucks.
 The Ssreflect extension for Coq \cite{gonthier:inria-00515548}  should also be mentioned here; 
 the developments presented here should also be possible using
@@ -1070,7 +1061,7 @@ reflection in Agda, since no generation has been done in this paper.
 inspection of data type definitions is quite comprehensive.
 \item By default, untyped terms are returned from the |quoteTerm|
 keyword. This has been solved in the patches presented in
-the mentioned thesis \cite{vdWalt:Thesis:2012}, but these are yet to be
+the mentioned masters' thesis \cite{vdWalt:Thesis:2012}, but these are yet to be
 included in the main development version of Agda.
 \end{itemize}
  
