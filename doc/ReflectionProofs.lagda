@@ -991,7 +991,7 @@ tactics is the same.
  
 \paragraph{Related work} 
  
-This project's main innovations are novel combinations of existing
+This project's main innovations are novel a combination of existing
 techniques; as a result, quite a number of subjects are relevant to mention
 here.
  
@@ -1021,7 +1021,9 @@ in Agda, although we shall see that it is lacking in a number of fundamental cap
 If we look at the taxonomy of reflective systems in programming language technology written up 
 by Sheard \cite{sheard-staged-programming}
 we see that we can make a few rough judgements about the metaprogramming facilities Agda currently 
-supports\footnote{Of course, having been implemented during a single  Agda Implementors' Meeting \cite{thorsten-communication}, the current implementation is more a proof-of-concept, and is still far from
+supports\footnote{Of course, having been implemented during a single
+Agda Implementors' Meeting \cite{thorsten-communication}, the current
+implementation is more a proof-of-concept, and is still far from
 being considered finished, so it would be unfair to judge the current implementation all too harshly. In
 fact, I hope that this work might motivate the Agda developers to include some more features, to
 make the system truly useful. }.
@@ -1041,24 +1043,21 @@ make the system truly useful. }.
 \end{itemize}
  
  
- 
- 
- 
 As far as the proof techniques used in the section on proof by reflection (Sec.~\ref{sec:proof-by-reflection}) are concerned,  
 Chlipala's work \cite{chlipala2011certified} proved an invaluable resource, both for inspiration and guidance. One motivating example
 for doing this in Agda was Wojciech Jedynak's ring solver \cite{ringsolver}, which is the first example of Agda's reflection
 API in use that came to our attention. Compared to Jedynak's work, the proof generator presented here is more refined in terms of the interface
 presented to the user. The expectation is that approaches like these will become more commonplace for proving mundane lemmas in 
-large proofs. The comparison to tactics in a language like Coq is a natural one, and we see both advantages and disadvantages of each style. Of course, 
+large proofs. The comparison to tactics in a language like Coq is a tempting one, and we see both advantages and disadvantages of each style. Of course, 
 the tactic language in Coq is much more specialised and sophisticated when it comes to generating proofs, but it is a pity that there are
 two separate languages in one, instead of the Agda way, where metaprograms are written directly in the object language. Also, the 
 fact that proof generation in Agda is explicit may be something some people appreciate. (Far) future work might be to 
 implement some sort of tactic framework for Agda, possibly with a DSL in the style of Coq's tactic language, around the reflection API.
+
 % Uh the following sentence sucks.
-The Ssreflect extension for Coq \cite{gonthier:inria-00515548}  should also be mentioned here; because of a lack of experience with Ssreflect, I 
-refrain from making concrete statements, but the expectation is that
+The Ssreflect extension for Coq \cite{gonthier:inria-00515548}  should also be mentioned here; 
 the developments presented here should also be possible using
-Ssreflect.\todo{get familiar with ssreflect or fix the statement}
+Ssreflect.
  
 Returning to our research question,  repeated here to jog the memory,  a summary of findings is made.
 
@@ -1073,38 +1072,29 @@ have managed to automate generation of a certain class of proofs, which certainl
 would count as mundane. The clear advantage of Agda's reflection system is that it
 leverages the power of Agda's dependent types. Unfortunately, though,
 the reflection API itself is still rather primitive, so we find ourselves unable to define 
-things such as an automatic Bove-Capretta transformation of a given function, or the generation
-of generic programming embedding and projection functions. The reasons for not being able to 
-do all that we would like with the API as it stands are best summarised as follows. 
+generative 
+ functions. The reasons for not being able to 
+do all that we would like with the API as it stands are best summarised as follows; we concentrate on the analysis-side of
+reflection in Agda, since no generation has been done in this paper.
  
 %Reflection API limitations:
 \begin{itemize}
-\item One cannot call |unquote| on nonconstructor terms,
-i.e. |unquote (lam2term t)| where $t$ is some parameter or variable.
-\item It is impossible to introduce definitions, and therefore also
-impossible to define pattern matching, since pattern matching is only
-allowed in definitions. Pattern matching lambda expressions in Agda
-are simply syntactic sugar for local definitions. This precludes
-automating the Bove-Capretta method, and makes generic programming
-techniques all the more painful.
 \item Inspection of functions (e.g. clauses) is not implemented, although
 inspection of data type definitions is quite comprehensive.
 \item By default, untyped terms are returned from the |quoteTerm|
 keyword. This has been solved in the patches presented in
 the mentioned thesis \cite{vdWalt:Thesis:2012}, but these are yet to be
 included in the main development version of Agda.
-\item The |unquote| keyword is unaware of types, so even if a program transformation is
-  type-safe, in the end unquoting is still hit-and-miss.
 \end{itemize}
  
 
 Having said all of that, though, a number of things are possible with the reflection mechanism 
-as it stands, and the expectation is that it should be possible to define quite a few more examples
+as it stands, and the expectation is that it should be possible to define quite a few examples
 of program transformations and proof generators which will likely turn out to be useful for various
 niche applications.
  
  
-\newpage
+% \newpage
 % \phantomsection \label{listoffig}
 % \addcontentsline{toc}{chapter}{List of Figures}
 % \listoffigures
@@ -1113,15 +1103,9 @@ niche applications.
 %\bibliographystyle{plain}
 % for LNCS bibliography:
 \bibliographystyle{splncs}%this one doesn't sort automatically. :(
-
-
-
 % Voor IFL paper:
 % Beperk je tot de essentie
 % Geef voorbeelden
-
-
-
 \end{document}
 
 %%% Local Variables:
