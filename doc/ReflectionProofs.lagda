@@ -157,8 +157,6 @@ Department of Computer Science, Utrecht University
 
 \section{Introduction}\label{chap:introduction}
 
-...
-
 The dependently typed programming language
 Agda~\cite{norell:thesis,Norell:2009:DTP:1481861.1481862} has recently been
 extended with a \emph{reflection mechanism} for compile time metaprogramming in the style of Lisp~\cite{lisp-macros},
@@ -177,7 +175,7 @@ The main questions we aim to answer during this project are:
 
 
 \paragraph{Contributions} 
-This paper reports on the experience of engineering a certain proof
+This paper reports on the experience of implementing a proof
 tactic with this new reflection mechanism.  This is a case study,
 exemplative of the kind of problems that can be solved using
 reflection. More specifically this work makes the following contributions:
@@ -315,7 +313,7 @@ This short introduction should already be enough to start developing
 simple reflective programs.  For a more detailed description of the
 reflection API in Agda, including many examples, the inquisitive
 reader is referred to the chapter in the thesis covering this topic \cite{vdWalt:Thesis:2012}.
-The thesis goes into more detail\todo{awkward to keep saying ``the
+The thesis goes into more detail \todo{awkward to keep saying ``the
   thesis''} 
 regarding the data structures involved in Agda's reflection API, and later, 
 gives a detailed account of some real-world use-cases.
@@ -339,10 +337,9 @@ which can be quoted is usually much more liberal than an AST we would
 like to use (such as that of Boolean expressions, or first-order
 equations, for example), writing such conversion functions can be
 tedious, as can be seen in the code snippet of
-Fig.~\ref{fig:concrete2abstract}, which formed part of the inspiration
-to develop a better solution.
+Fig.~\ref{fig:concrete2abstract}, which formed part of an actual term
+conversion function, before a better solution was developed.
 
-%%%%%%%%%%%%%%%
 \begin{shadedfigure}[h]
 \begin{spec}
 term2boolexpr n (con tf []) pf with tf ≟-Name quote true
@@ -357,14 +354,12 @@ term2boolexpr n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
 \caption{The gist of  the conversion of a |Term| into some richer data
   type.}\label{fig:concrete2abstract}
 \end{shadedfigure}
-%%% an example conversion function which is fugly
-%%%%%%%%%%%%%%%
 
 %TODO ease the transition here...
 If, each time we wanted to quote a term, we had to write a huge function, with many pattern matching cases and nested |with| statements to handle different 
 shapes of ASTs, we would quickly become discouraged. This nearly happened while doing this project, which is why
 |Autoquote| was conceived. Quoting some expression with a given grammar is a mundane task we are frequently faced with if we 
-are foolhardy enough to use reflection. The (partial) solution to this problem~-- something which at least mitigates 
+want to do anything useful with quoted terms. The (partial) solution to this problem~-- something which at least mitigates 
 the agony~-- is presented in this section.
 
 Imagine we have some AST, for example |Expr|, as in Fig.~\ref{fig:exprdata}.
@@ -382,16 +377,16 @@ data Expr : Set where
 \caption{The toy expression language |Expr|. We would like support for automatically quoting such terms.}\label{fig:exprdata}
 \end{shadedfigure}
 
-We might conceivably want to convert a piece of Agda concrete syntax, such as $5 + x$, to this
+We might want to convert a piece of Agda concrete syntax, such as $5 + x$, to this
 AST, using reflection. This typically involves ugly and verbose functions like
 the one in Fig.~\ref{fig:concrete2abstract} with many |with| clauses and frankly, too
 much tedium to be anything to be proud of. 
 
-%We need to check that the |Term| has a reasonable shape, and contains valid operators.
-Ideally, we would  just
- provide a mapping from concrete constructs such as the |_+_| function to elements of our
+In an ideal world, we would  just
+ provide a mapping from concrete constructs such as the |_+_| function
+ to elements like |Pl| of our
 AST, and get a conversion function for free.
- This motivated my development of
+ This desire motivated my development of
 |Autoquote| in the course of this project. What |Autoquote| does is abstract over this process, and
 provide an interface which, when provided with such a mapping, automatically quotes expressions
 that fit. Here, \emph{fitting} is defined as only having variables, or names that are listed
@@ -419,16 +414,15 @@ a |suc| translates to |S|. These constructors expect 0 and 1 argument, respectiv
 
 We will not say much about the implementation of this library;
 for more details the thesis can once again be referred to
-\cite{vdWalt:Thesis:2012}. The library exposes a function called
-|doConvert| which takes the conversion table and |Term| to convert,
+\cite{vdWalt:Thesis:2012}. Using the library is simple; it exposes a function called
+|doConvert| which takes the conversion table, a (hidden) proof that
+the conversion is possible, and a |Term| to convert,
 and produces an inhabitant of your richer data type.
 
 The use of |doConvert| is illustrated in Fig.~\ref{fig:test-autoquote}. 
-This approach, using |convertManages| as an assumption, is a lot simpler than writing by hand a predicate function with the same pattern matching 
-structure as |convert|. Adding to the complication, |with| clauses are often expanded unpredictably in practise. The net effect
-of writing a pair of functions in this style is the same as the ``usual'' way of writing a predicate
-function by hand, in that a compile time error is generated if the function |doConvert| is 
-invoked on an argument with the wrong shape. Compare these relatively elegant functions to the verbose |term2boolexpr| function.
+This approach used |convertManages| as an assumption, so fails at
+compile time if an incompatible term is given.
+Compare these relatively elegant functions to the verbose |term2boolexpr| function.
 
 
 \begin{shadedfigure}[h]
@@ -449,6 +443,10 @@ made a little simpler, by not requiring the user to provide the arity
 of the function. Because of time constraints, however, this is left as
 a suggestion for future work on the |Autoquote| library.
 
+In most cases, the result from |doConvert| will require some
+post-processing, as we will see later in the Boolean tautologies
+example, but for now it suffices to say that |Autoquote| removes a lot
+of the burden of converting |Term|s into other ASTs.
 
 %TODO intro and outros, everywhere.
 
