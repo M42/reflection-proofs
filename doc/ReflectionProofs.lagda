@@ -58,13 +58,13 @@
 % \newenvironment{shadedfigure}{\begin{figure}}{\end{figure}}
 % \newenvironment{shade}{}{}
 \newenvironment{shadedfigure}[1][tbhp]{%
-  \vskip -5mm
+ % \vskip -5mm
     \begin{figure}[#1]
     \begin{adjustbox}{minipage=\linewidth-10pt,margin=5pt,bgcolor=hlite}
 }{%
     \end{adjustbox}
     \end{figure}
-  \vskip -5mm
+ % \vskip -5mm
 }
 \newenvironment{shade}{
 
@@ -79,6 +79,7 @@ minipage=\linewidth,margin=0pt,padding=0pt,bgcolor=hlite%
 
 \newcommand{\lagda}{\texttt{\--\--{}lagda}\xspace}
 \ignore{
+  
 \begin{code}
 module doc.ReflectionProofs where
 

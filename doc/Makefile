@@ -13,13 +13,15 @@ $(TEXFILE): $(LHSFILE) $(FMTS) refs.bib
 
 extracted/ReflectionProofs.agda: $(LHSFILE)
 	lhs2TeX  --newcode $(LHSFILE) --agda  --no-pragmas > $@
+	sed -i.bak s/doc\.ReflectionProofs/ReflectionProofs/g $@
 
 check: extracted/ReflectionProofs.agda
-	agda $< --include-path=$(AGDA_SRC) --include-path=extracted
+	agda $< --include-path=$(AGDA_SRC) --include-path=extracted --include-path=..
 
 clean:
 	rubber --clean $(TEXFILE)
 	rm -fv $(TEXFILE)
+	rm -v extracted/*
 
 pdfshow: $(PDF)
 	if [ -x /usr/bin/open ] ; then open $<; fi
