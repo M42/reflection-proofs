@@ -138,11 +138,11 @@ Department of Computer Science, Utrecht University
 \maketitle
 
 \begin{abstract}
-  This project explores the recent addition to Agda enabling
-\emph{reflection}, in the style of Lisp, MetaML, and Template Haskell.
-It gives a brief introduction to using reflection, and details the  intricacies
-of using reflection to implement an automatic theorem proving
-tactic called proof by reflection. Also, a library is presented which
+  This paper explores the recent addition to Agda enabling
+\emph{reflection}, in the style of Lisp, MetaML, and Template Haskell.\todo{Add citations to Lisp, MetaML etc.?}
+It gives a brief introduction to using reflection, and details the intricacies
+of using reflection to implement automate certain proofs using \emph{proof by reflection}. 
+Also, a library is presented which
 can be used for automatically quoting a class of concrete Agda terms
 to a simple, user-defined
 inductive data type, alleviating the burden a programmer usually faces
@@ -172,37 +172,33 @@ syntax tree (AST) and vice versa. In tandem with Agda's dependent types,
 this has promising new programming potential.
 
 
-The main questions we aim to answer during this project are:
-
+This paper addresses the following central questions:
 
 \researchquestion
 
-
-
 \paragraph{Contributions} 
-This paper reports on the experience of implementing a proof
-tactic with this new reflection mechanism.  This is a case study,
+This paper reports on the experience of using Agda's reflection mechanism to automate certain 
+categories of proofs.
+This is a case study,
 exemplative of the kind of problems that can be solved using
 reflection. More specifically this work makes the following contributions:
 
 \begin{itemize}
-  \item A newcomers' crash course on reflection in Agda is given in Sec.~\ref{sec:crash}.
-\item A library called |Autoquote| is presented, which alleviates much
-  of a programmer's burden when quoting a given AST. The
-  library is introduced in Sec.~\ref{sec:introducing-autoquote}.
-\item How to use Agda's reflection mechanism to
-  automate certain categories of proofs is illustrated in
-  Sec.~\ref{sec:proof-by-reflection}. The idea of \emph{proof by
+  \item We give a brief overview of Agda's reflection mechanism (Sec.~\ref{sec:crash}). Previously, these features were only documented in release notes and comments in Agda's source files;
+\item We present |Autoquote|, an Agda library that alleviates much
+  of a programmer's burden when quoting a given abstract syntax tree (Sec.~\ref{sec:introducing-autoquote}).
+\item We show how to use Agda's reflection mechanism to
+  automate certain categories of proofs (Sec.~\ref{sec:proof-by-reflection}).
+ The idea of \emph{proof by
     reflection} is certainly not new, but still worth examining in the
-  context of this new technology.
+  context of this new technology.\todo{Is there a good reference for proof by reflection? Maybe check the chapter in CoqArt?}
 \end{itemize}
 
 The code and examples presented in this paper all compile using the
 latest version of Agda (currently 2.3.2). All code, including this
 report, is available on
 GitHub\footnote{\ghurl}.
-This report is also a Literate Agda file, which means the code snippets can be extracted, compiled 
-and played around with.
+This report is also a Literate Agda file, which means the code snippets can be extracted, compiled, and adapted.
 
 
 
@@ -211,31 +207,35 @@ and played around with.
 The programming language Agda is an implementation
 of Martin-L\"of's type theory \cite{Martin-Lof:1985:CMC:3721.3731}, extended with records and modules. Agda
 is developed at the Chalmers University of Technology
-\cite{norell:thesis}; thanks to the \ch, it is
+\cite{norell:thesis}; in accordance with \ch, it can be viewed as
 both a 
 functional programming language
 and a proof assistant for intuitionistic logic. It is comparable with
-Coquand's calculus of constructions, the logic behind Coq \cite{DBLP:journals/iandc/CoquandH88}. Coq is
-similarly both a programming language and proof assistant.
+Coquand's calculus of constructions, the logic behind Coq \cite{DBLP:journals/iandc/CoquandH88}. %Coq is
+%similarly both a programming language and proof assistant.
+%Een beetje overbodig -- WS
 For an excellent tutorial on dependently typed programming using Agda,
 the reader is referred to Norell's work \cite{Norell:2009:DTP:1481861.1481862}.
 
-Since version 2.2.8, Agda includes a reflection API \cite{agda-relnotes-228}, which allows converting
-parts of a program's code into abstract syntax, in other words a data structure
+Since version 2.2.8, Agda includes a reflection API \cite{agda-relnotes-228}, which allows the conversion of
+parts of a program's code into an abstract syntax tree, in other words a data structure
 in Agda itself, that can be inspected or modified like any other data structure.
 The idea of reflection is old: already in the 1980s Lisp included a similar
 feature, then already called \emph{quoting} and \emph{unquoting},
 which allowed run time modification of a program's code, for example by
-the program itself. This has given rise to powerful techniques for reusing code and
-generating frequently needed but slightly different expressions
-automatically. 
+the program itself. This has given rise to powerful techniques for code reuse and
+abstraction.
+%generating frequently needed but slightly different expressions
+%automatically. 
 
+This paper explores how such a reflection mechanism can be used in
+\emph{dependently typed} language such as Agda.
 
 \section{Using Reflection}\label{sec:crash}
 
 Before going into too much detail about how reflection can make our
-lives easier and what nifty techniques are possible, we will look at
-the tools Agda provides us for reflecting. It should be a good
+lives easier and what nifty techniques are possible, we will look 
+at Agda's reflection API in some detail. It should be a good
 starting point for someone familiar with Agda, or at the very least
 dependently typed programming in general. 
 
@@ -245,8 +245,10 @@ dependently typed programming in general.
 |Term| values: |quote|, |quoteTerm|, |quoteGoal|, and |unquote|. The
 |quote| keyword allows the user to access the internal representation of
 any identifier, or name. This internal representation can be used to query the
-type or definition of the identifier; refer to the release
-notes~\cite{agda-relnotes-228} for a ilsting of the data structures involved.
+type or definition of the identifier; we refer to the release
+notes~\cite{agda-relnotes-228} for a listing of the data structures involved.
+
+\todo{Misschien kort de type signature geven: Term : Set represents terms?}
 
 The easiest example of quotation uses the |quoteTerm| keyword to turn
 a fragment of concrete syntax into a |Term| value. Note that the
@@ -275,7 +277,7 @@ example₁   = refl
 \end{code}
 \end{shade}
 
-See how the zero is applied to the identity function, resulting in only the value zero.
+See how the identity function is applied to zero, resulting in only the value zero.
 The quoted representation of a natural zero is |con (quote zero) []|, where |con| means that we
 are introducing a constructor. The constructor |zero| takes no arguments, hence the empty list.
 
@@ -315,7 +317,7 @@ convert (def c args) with c ≟-Name quote foo
 \end{shade}
 
 This short introduction should already be enough to start developing
-simple reflective programs.  For a more detailed description of the
+simple programs using reflection.  For a more detailed description of the
 reflection API in Agda, including many examples, the inquisitive
 reader is referred to the chapter in van der Walt's thesis covering this topic \cite{vdWalt:Thesis:2012}.
 This thesis goes into more detail 
@@ -333,10 +335,13 @@ open import Metaprogramming.Autoquote renaming (_#_↦_ to _\#_↦_)
 \end{shade}
 }
 
+\todo{Leg hier eerst het probleem uit: je wilt niet altijd met Terms
+  werken. Hoe vertaal je een Term naar een custom AST?}
+
 In a language like Haskell, which has pattern matching, converting
 elements of one AST to another is usually a simple, if boring,
 task. Unfortunately for us, though, Agda functions are required to be
-total, having cases for each possible pattern. Since the AST of terms
+total, that is, they must have a case branch for each possible pattern. Since the AST of terms
 which can be quoted is usually much more liberal than an AST we would
 like to use (such as that of Boolean expressions, or first-order
 equations, for example), writing such conversion functions can be
