@@ -14,7 +14,7 @@
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% stuff only for DRAFT versions
+%% TODO: stuff only for DRAFT versions
 %%%%% microtype with settings.
 \usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
 \microtypecontext{spacing=nonfrench}
@@ -39,11 +39,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \newcommand{\ignore}[1]{}
-
-\newcommand{\pref}[1]{~\ref{#1} on page~\pageref{#1}}
-
-% brace yourself!
-\newcommand{\bracket}[1]{{[}#1{]}}
 
 \newcommand{\ghloc}{https://github.com/toothbrush/reflection-proofs}
 \newcommand{\ghurl}{\url{\ghloc}}
@@ -247,9 +242,9 @@ dependently typed programming in general.
 |quote| keyword allows the user to access the internal representation of
 any identifier, or name. This internal representation can be used to query the
 type or definition of the identifier; we refer to the release
-notes~\cite{agda-relnotes-228} for a listing of the data structures involved.
-
-\todo{Misschien kort de type signature geven: Term : Set represents terms?}
+notes~\cite{agda-relnotes-228} for a listing of the data structures
+involved; the most important one is the type |Term : Set| which
+represents concrete Agda terms.
 
 The easiest example of quotation uses the |quoteTerm| keyword to turn
 a fragment of concrete syntax into a |Term| value. Note that the
@@ -287,8 +282,8 @@ example:
 
 \begin{shade}
 \begin{spec}
-exampleQuoteGoal : ℕ
-exampleQuoteGoal = quoteGoal e in (HOLE 0)
+example₂ : ℕ
+example₂ = quoteGoal e in (HOLE 0)
 \end{spec}
 \end{shade}
 
@@ -342,20 +337,24 @@ open import Metaprogramming.Autoquote renaming (_#_↦_ to _\#_↦_)
 %met een verhaal over pattern matchen/total functions/enz -- dat is een
 %technisch probleem, maar niet het probleem dat je wilt oplossen.
 
-
-\todo{Leg hier eerst het probleem uit: je wilt niet altijd met Terms
-  werken. Hoe vertaal je een Term naar een custom AST? Zonder meer
-  context `valt het probleem een beetje uit de lucht'.}
+In the previous section, we saw how we can get hold of values of type
+|Term|, representing concrete Agda terms. This is a great start, but
+we rarely want to directly manipulate |Term|s: often it
+is much more useful to use our own AST for computations. It sounds
+like a minor task to write a quick function to convert a |Term|
+into something more useful. However, it turns out this often becomes a mess.
 
 In a language like Haskell, which has pattern matching, converting
 elements of one AST to another is usually a simple, if boring,
 task. Unfortunately for us, though, Agda functions are required to be
-total, that is, they must have a case branch for each possible pattern. Since the AST of terms
-which can be quoted is usually much more liberal than an AST we would
-like to use (such as that of Boolean expressions, or first-order
-equations, for example), writing such conversion functions can be
-tedious, as can be seen in the code snippet of
-Fig.~\ref{fig:concrete2abstract}, which formed part of an actual term
+total, which means they must have a case branch for each possible pattern. Since the AST |Term|
+ covers all quotable terms, it has many alternatives.  We also cannot pattern match on the
+names of the constructors, but must resort to using decidable
+equality. This is why
+ such a
+ conversion function  is often
+verbose, as can be seen in the code snippet of
+Fig.~\ref{fig:concrete2abstract}, an excerpt of an actual 
 conversion function, before a better solution was developed.
 
 \begin{shadedfigure}
@@ -369,70 +368,63 @@ term2boolexpr n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
 ... | no ¬p with f ≟-Name quote _∧_
 ...
 \end{spec}
-\caption{The gist of  the conversion of a |Term| into some richer data
+\caption{The gist of  the conversion of a |Term| into some more specific data
   type.}\label{fig:concrete2abstract}
 \end{shadedfigure}
 
-%TODO ease the transition here...
-Each time we want to quote a term, we have to write a huge function with many pattern matching cases and nested |with| statements to handle different 
-kinds of ASTs. This quickly become tedious. This motivated the need for
-|Autoquote|. Quoting some expression with a given grammar is a mundane task we are frequently faced with if we 
-want to do anything useful with quoted terms. The (partial) solution to this problem~-- something which at least mitigates 
-the agony~-- is presented in this section.
+The (partial) solution to this problem~-- something which at least mitigates 
+the agony~-- is presented in this section, in the form of the
+|Autoquote| library.
 
-Imagine we have some AST, for example the type |Expr| shown in Fig.~\ref{fig:exprdata}.
-This is a rather simple inductive data structure representing terms which can contain Peano style natural
+\paragraph{The |Autoquote| library}
+We will examine a toy AST, called |Expr|, shown in Fig.~\ref{fig:exprdata}.
+It is a rather simple inductive data structure representing terms which can contain Peano-style natural
 numbers, variables (indexed by an Agda natural) and additions.
 
 
-\todo{Misschien Plus ipv Pl? Pl lijkt erg op Pi}
 \begin{shadedfigure}
 \begin{code}
 data Expr : Set where
   Var           : ℕ               →     Expr
-  Pl            : Expr → Expr     →     Expr
+  Plus          : Expr → Expr     →     Expr
   S             : Expr            →     Expr
   Z             :                       Expr
 \end{code}
 \caption{The toy expression language |Expr|. We would like support for automatically quoting such terms.}\label{fig:exprdata}
 \end{shadedfigure}
 
-We might want to convert a piece of Agda concrete syntax, such as $5 + x$, to this
-AST, using reflection. This typically involves ugly and verbose functions like
-the one in Fig.~\ref{fig:concrete2abstract} with many |with| clauses and frankly, too
-much tedium to be anything to be proud of. 
-
-In an ideal world, we would  just
+We might want to convert an expression, such as $5 + x$, to this
+AST, using reflection. In an ideal world, we would  just
  provide a mapping from concrete constructs such as the |_+_| function
- to elements like |Pl| of our
+ to elements like |Plus| of our
 AST, and get a conversion function for free.
- This desire motivated the \todo{let op: gebruik geen my/I/mine enz. Meng niet te veel verschillende voornaamwoorden }development of
-|Autoquote|. What |Autoquote| does is abstract over this process, and
-provide an interface which, when provided with such a mapping, automatically quotes expressions
+The |Autoquote| library does just this, exposing
+an interface which, when provided with such a mapping, automatically quotes expressions
 that fit. Here, \emph{fitting} is defined as only having names that are listed
-in this mapping, or variables. Other terms are rejected.
-The user provides an elegant-looking mapping, such as in
+in the mapping, or variables. Other terms are rejected.
+The user provides an elegant mapping, such as in
 Fig.~\ref{fig:exprTable}, and |Autoquote| automatically converts
-concrete Agda to elements of simple inductive types. 
+concrete Agda terms to elements of simple inductive types. 
 
 \begin{shadedfigure}
 \begin{code}
 exprTable : Table Expr
 exprTable = (Var ,
-             2   \# (quote _+_)      ↦ Pl   ∷
-             0   \# (quote ℕ.zero)   ↦ Z    ∷ 
-             1   \# (quote ℕ.suc)    ↦ S    ∷ [])
+             2   \# (quote _+_)      ↦ Plus   ∷
+             0   \# (quote ℕ.zero)   ↦ Z      ∷ 
+             1   \# (quote ℕ.suc)    ↦ S      ∷ [])
 \end{code}
 \caption{The mapping table for converting to the imaginary |Expr| AST. }\label{fig:exprTable}
 \end{shadedfigure}
 
-This should be interpreted is that any variables encountered should be stored as |Var|s, and
-the |_+_| operator should be a |Pl| constructor. In each case we are required to manually specify the
-arity of the constructor:    how many arguments it expects.
+This should be interpreted as follows: any variables encountered should be stored as |Var|s, and
+the |_+_| operator should be mapped to a |Plus| constructor. In each case we are required to manually specify the
+arity of the constructor, or    how many arguments it expects.
 A |zero|, from the |Data.Nat| standard library, should be treated as our |Z| constructor, and
 a |suc| translates to |S|. These constructors expect 0 and 1 argument, respectively.
 
-We will not say much about the implementation of this library.
+We will not say much about the implementation of this library, since
+it is not groundbreaking.
 For more details, we again refer to van der Walt's thesis~\cite{vdWalt:Thesis:2012}. 
 Using the library is simple; it exposes a function called
 |doConvert| which takes the conversion table, a (hidden) proof that
@@ -440,7 +432,7 @@ the conversion is possible, and a |Term| to convert,
 and produces an inhabitant of your data type.
 
 The use of |doConvert| is illustrated in Fig.~\ref{fig:test-autoquote}. 
-This approach used |convertManages| as an assumption, so fails at
+This approach uses |convertManages| as an assumption, so fails at
 compile time if an incompatible term is given.
 To convince yourself of the utility of the |Autoquote| library, compare these relatively elegant functions to the verbose
 |term2boolexpr| function in Fig.~\ref{fig:concrete2abstract}.
@@ -449,18 +441,12 @@ To convince yourself of the utility of the |Autoquote| library, compare these re
 \begin{shadedfigure}
 \begin{code}
 something : {x : ℕ}      → doConvert    exprTable      (    quoteTerm (x + 1))
-                         ≡                                  Pl (Var 0) (S Z)
+                         ≡                                  Plus (Var 0) (S Z)
 something = refl
 \end{code}
 \caption{An example of |Autoquote| in use. See Fig.~\ref{fig:exprTable} for the definition of |exprTable|, a typical |Name|-to-constructor mapping.}\label{fig:test-autoquote}
 \end{shadedfigure}
 
-
-% The format of the translation |Table| required could most probably be
-% made a little simpler by not requiring the user to provide the arity
-% of the function. Because of time constraints, however, this is left as
-% a suggestion for future work on the |Autoquote| library.
-% Laat maar weg -- WS
 
 In most cases, the result from |doConvert| will require some
 post-processing, as we will see later in the Boolean tautologies
