@@ -172,6 +172,7 @@
 %format Asymmetric = "\defin{Asymmetric}"
 %format Bool = "\defin{Bool}"
 %format BoolExpr = "\defin{BoolExpr}"
+%format IsOdd = "\defin{IsOdd}"
 %format BoolInter = "\defin{BoolInter}"
 %format BoolIntermediate = "\defin{BoolIntermediate}"
 %format Col = "\defin{Col}"
