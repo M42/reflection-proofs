@@ -45,10 +45,11 @@ isEven8772 = soundnessEven tt
 -- trying to prove something uneven is even. This fails, however, since
 -- we've shown above that the proposition that uneven naturals are even, is
 -- isomorphic to ⊥, i.e. contains no elements.
-{-
+
+-- another unfortunate thing is that this hole expects something
+-- of type ⊥ -- we'll make the "error" nicer down below.
 isEven27 : Even 27
 isEven27 = soundnessEven {!!}
--}
 
 -- it's unfortunate that we have to include explicit proofs each time,
 -- especially since they're always tt or impossible. We can use a trick
@@ -65,4 +66,47 @@ sound {suc (suc n)} {s } = isEvenSS (sound {n}{s})
 isEven58 : Even 58
 isEven58 = sound
 
--- TODO: show how we can give nicer error messages too
+{- We will now show how to give meaningful error messages
+   if a number is odd. Unfortunately we have to use bools as a
+   proxy, since otherwise the only error we would ever get is
+   NotEven 1.
+   -}
+open import Data.Bool
+open import Relation.Binary.PropositionalEquality
+
+-- our ornamented error type
+data NotEven : ℕ → Set where
+
+evenB? : ℕ → Bool
+evenB? zero = true
+evenB? (suc zero) = false
+evenB? (suc (suc n)) = evenB? n
+
+-- check if a number is even. If so, give top,
+-- else return our error type, with the number
+-- as an argument
+soEven : ℕ → Set
+soEven n = if evenB? n then ⊤ else NotEven n
+
+-- now prove that n is even precisely when our function
+-- returns true
+soundnessEven' : {n : ℕ} → {p : evenB? n ≡ true} → Even n
+soundnessEven' {0} {e} = isEvenZ
+soundnessEven' {suc zero} {()}
+soundnessEven' {suc (suc n)} {s} = isEvenSS (soundnessEven' {n} {s})
+
+decEven : {n : ℕ} → {p : soEven n} → Even n
+decEven {n} {p}    with evenB? n    | inspect evenB? n
+decEven {n}        | true           | [ eq ]    = soundnessEven' {n} {eq}
+decEven {n} {()}   | false          | [ eq ]
+
+-- now we can prove instances by applying the soundness theorem
+-- with reflexivity proofs
+
+-- For example, it turns out that 30 is even:
+isEven30 : Even 30
+isEven30 = decEven
+
+-- ...but 13 throws a _descriptive_ error!
+isEven13 : Even 13
+isEven13 = decEven
