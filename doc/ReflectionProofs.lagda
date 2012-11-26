@@ -336,6 +336,13 @@ open import Metaprogramming.Autoquote renaming (_#_↦_ to _\#_↦_)
 \end{shade}
 }
 
+% TODO De inleiding van Sectie 3. Hier weet de lezer nog helemaal niet wat
+%het probleem is. Neem de tijd om uit te leggen wat het probleem is:
+%quoten levert een Term op, maar vaak wil je iets anders. Nu begin je
+%met een verhaal over pattern matchen/total functions/enz -- dat is een
+%technisch probleem, maar niet het probleem dat je wilt oplossen.
+
+
 \todo{Leg hier eerst het probleem uit: je wilt niet altijd met Terms
   werken. Hoe vertaal je een Term naar een custom AST? Zonder meer
   context `valt het probleem een beetje uit de lucht'.}
@@ -991,8 +998,30 @@ tactics is the same.
 
 
 \section{Discussion}\label{sec:discussion}
-% ... and Conclusion and Related Work and Reflection API Limitations
 
+% TODO
+%De conclusie kan scherper. Ik vind de korte samenvatting over het
+% reflection API goed (in de klassificatie van Sheard),  maar de
+% Conclusion sectie is wat zwak. Ik zou eerder de laatste alinea van de
+% vorige sectie weghalen, en hier zetten en uitbreiden. Daar gaat het
+% paper om, en niet om wat je precies wel/niet kan met de huidige
+% reflection API.
+
+
+% TODO 2 
+% Misschien is het nog beter om hier terug te blikken op de technieken
+% die je gebruikt voor proof automation:
+% 
+% - AutoQuote en quoteGoal om een AST te krijgen;
+% 
+% - predicates that compute to a unit type (or pairs of unit types) or
+% an empty type, tagged with an error message
+% 
+% Maak de lessen van deze experimenten expliciet! Je blikt al goed
+% vooruit (hiermee is het denkbaar dat we Coq-achtige tactieken talen
+% kunnen schrijven), maar maak ook duidelijk welke technieken je hebt
+% gebruikt om je oorspronkelijke doel (het engineeren van proof by
+% reflection in Agda) te bereiken.
  
  
 \paragraph{Related work} 
