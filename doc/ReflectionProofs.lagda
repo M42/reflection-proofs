@@ -525,8 +525,8 @@ even? (suc (suc n))     = even? n
 \end{code}
 \end{shade}
 
-Next we need to show that the |even?| function is \emph{sound}; that
-our claim \todo{which claim exactly?}holds. To do so, we prove that when |even? n| returns |⊤|,
+Next we need to show that the |even?| function is \emph{sound}.
+ To do so, we prove that when |even? n| returns |⊤|,
 the type |Even n| is
 inhabited. Since we are working in a constructive logic, the only
 way to show this is to give some witness. This is done in the function |soundnessEven|. What
@@ -551,11 +551,11 @@ absurd pattern, \texttt{()}.
 
 Now that this has been done, if we need a proof that some arbitrary
 |n| is even, we only need to call |soundnessEven|. Note that
-the value of |n| is an implicit argument to |soundnessEven|. The only
-argument we need to provide to our |soundnessEven| lemma is a proof
+the value of |n| is inferred. The only
+argument we must to provide to |soundnessEven| is a proof
 that |even? n| is inhabited. For any closed term, such as the numbers |28|
 or |8772|, this proof obligation reduces to 
-|⊤|, which is proven by the single constructor it has, |tt|.
+|⊤|, which is proven by its single constructor, |tt|.
 
 \begin{shade}
 \begin{code}
@@ -577,14 +577,16 @@ argument. This means we can turn the assumption |even? n| into an
 implicit argument, so a user could get away with writing just
 |soundnessEven| as the proof, letting the inferrer do the rest. 
 The way to implement this is to slightly modify the |soundnessEven|
-function, so that its arguments are all implicit. This trick will be
+function, so that its arguments are all implicit. This trick is
+implemented in the code on Github, and will be
 used from here on to keep terms elegant.
 
 \todo{Zeg hier even dat Agda supports eta expansion for unit types. En zeg even wat het gevolg hiervoor is mbt foutmeldingen}
 
 
-Note that it is possible to generate a user-friendly ``error'' of sorts, by replacing the |⊥| inthe |even?| function  with
-an empty type with a descriptive name:
+Note that it is possible to generate a user-friendly ``error'' of
+sorts, by replacing the |⊥| with
+an empty type having a descriptive name:
 
 \begin{shade}
 \begin{spec}
@@ -597,7 +599,8 @@ type error generated if an odd number is used becomes more
 informative. 
 
 This concludes the example of proving that certain naturals are even using proof by reflection.
-The next step will be to use the same approach for a more involved and realistic problem.
+The next step will be to use the same approach for a more involved and
+realistic problem.
 
 \subsection{Second Example: Boolean Tautologies}\label{sec:Boolean-tautologies}
 
