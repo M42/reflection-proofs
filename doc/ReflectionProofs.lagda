@@ -336,7 +336,8 @@ open import Metaprogramming.Autoquote renaming (_#_↦_ to _\#_↦_)
 }
 
 \todo{Leg hier eerst het probleem uit: je wilt niet altijd met Terms
-  werken. Hoe vertaal je een Term naar een custom AST?}
+  werken. Hoe vertaal je een Term naar een custom AST? Zonder meer
+  context `valt het probleem een beetje uit de lucht'.}
 
 In a language like Haskell, which has pattern matching, converting
 elements of one AST to another is usually a simple, if boring,
@@ -365,9 +366,9 @@ term2boolexpr n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
 \end{shadedfigure}
 
 %TODO ease the transition here...
-If, each time we wanted to quote a term, we had to write a huge function, with many pattern matching cases and nested |with| statements to handle different 
-shapes of ASTs, we would quickly become discouraged. This nearly happened while doing this project, which is why
-|Autoquote| was conceived. Quoting some expression with a given grammar is a mundane task we are frequently faced with if we 
+Each time we want to quote a term, we have to write a huge function with many pattern matching cases and nested |with| statements to handle different 
+kinds of ASTs. This quickly become tedious. This motivated the need for
+|Autoquote|. Quoting some expression with a given grammar is a mundane task we are frequently faced with if we 
 want to do anything useful with quoted terms. The (partial) solution to this problem~-- something which at least mitigates 
 the agony~-- is presented in this section.
 
@@ -375,6 +376,8 @@ Imagine we have some AST, for example the type |Expr| shown in Fig.~\ref{fig:exp
 This is a rather simple inductive data structure representing terms which can contain Peano style natural
 numbers, variables (indexed by an Agda natural) and additions.
 
+
+\todo{Misschien Plus ipv Pl? Pl lijkt erg op Pi}
 \begin{shadedfigure}
 \begin{code}
 data Expr : Set where
@@ -395,8 +398,8 @@ In an ideal world, we would  just
  provide a mapping from concrete constructs such as the |_+_| function
  to elements like |Pl| of our
 AST, and get a conversion function for free.
- This desire motivated my development of
-|Autoquote| in the course of this project. What |Autoquote| does is abstract over this process, and
+ This desire motivated the \todo{let op: gebruik geen my/I/mine enz. Meng niet te veel verschillende voornaamwoorden }development of
+|Autoquote|. What |Autoquote| does is abstract over this process, and
 provide an interface which, when provided with such a mapping, automatically quotes expressions
 that fit. Here, \emph{fitting} is defined as only having names that are listed
 in this mapping, or variables. Other terms are rejected.
@@ -409,21 +412,21 @@ concrete Agda to elements of simple inductive types.
 exprTable : Table Expr
 exprTable = (Var ,
              2   \# (quote _+_)      ↦ Pl   ∷
-             0   \# (quote ℕ.zero)   ↦ Z    ∷
+             0   \# (quote ℕ.zero)   ↦ Z    ∷ 
              1   \# (quote ℕ.suc)    ↦ S    ∷ [])
 \end{code}
 \caption{The mapping table for converting to the imaginary |Expr| AST. }\label{fig:exprTable}
 \end{shadedfigure}
 
-How this should be interpreted is that any variables encountered should be stored as |Var|s, and
+This should be interpreted is that any variables encountered should be stored as |Var|s, and
 the |_+_| operator should be a |Pl| constructor. In each case we are required to manually specify the
 arity of the constructor:    how many arguments it expects.
 A |zero|, from the |Data.Nat| standard library, should be treated as our |Z| constructor, and
 a |suc| translates to |S|. These constructors expect 0 and 1 argument, respectively.
 
-We will not say much about the implementation of this library;
-for more details van der Walt's thesis can once again be referred to
-\cite{vdWalt:Thesis:2012}. Using the library is simple; it exposes a function called
+We will not say much about the implementation of this library.
+For more details, we again refer to van der Walt's thesis~\cite{vdWalt:Thesis:2012}. 
+Using the library is simple; it exposes a function called
 |doConvert| which takes the conversion table, a (hidden) proof that
 the conversion is possible, and a |Term| to convert,
 and produces an inhabitant of your data type.
@@ -431,7 +434,7 @@ and produces an inhabitant of your data type.
 The use of |doConvert| is illustrated in Fig.~\ref{fig:test-autoquote}. 
 This approach used |convertManages| as an assumption, so fails at
 compile time if an incompatible term is given.
-Compare these relatively elegant functions to the verbose
+To convince yourself of the utility of the |Autoquote| library, compare these relatively elegant functions to the verbose
 |term2boolexpr| function in Fig.~\ref{fig:concrete2abstract}.
 
 
@@ -445,10 +448,11 @@ something = refl
 \end{shadedfigure}
 
 
-The format of the translation |Table| required could most probably be
-made a little simpler, by not requiring the user to provide the arity
-of the function. Because of time constraints, however, this is left as
-a suggestion for future work on the |Autoquote| library.
+% The format of the translation |Table| required could most probably be
+% made a little simpler by not requiring the user to provide the arity
+% of the function. Because of time constraints, however, this is left as
+% a suggestion for future work on the |Autoquote| library.
+% Laat maar weg -- WS
 
 In most cases, the result from |doConvert| will require some
 post-processing, as we will see later in the Boolean tautologies
@@ -464,11 +468,12 @@ is both a programming language and a proof system, it is possible to
 define functions that compute proofs. Reflection is an overloaded word
 in this context, since in programming language technology reflection
 is the capability of converting some piece of concrete code
-into an abstract syntax tree object that can be manipulated in the same
+into an abstract syntax tree that can be manipulated in the same
 system. Reflection in the proof technical sense is the method of
 mechanically constructing a proof of a theorem by inspecting its
-shape. The proof by reflection technique is not old; this work simply
-combines a number of already-known methods into a usable package. The
+shape. The proof by reflection technique we describe here is not new, but
+instead
+combines a number of existing methods into a usable package. The
 explanation of proof by reflection here draws heavily from Chlipala's
 work \cite{chlipala2011certified}.
 Here we will see two case studies illustrating proof by
@@ -527,9 +532,9 @@ even? (suc (suc n))     = even? n
 \end{shade}
 
 Next we need to show that the |even?| function is \emph{sound}; that
-our claim holds. To do so, we prove that when |even? n| returns |⊤|,
+our claim \todo{which claim exactly?}holds. To do so, we prove that when |even? n| returns |⊤|,
 the type |Even n| is
-inhabited, and since we are working in a constructive logic, the only
+inhabited. Since we are working in a constructive logic, the only
 way to show this is to give some witness. This is done in the function |soundnessEven|. What
 we are 
 actually doing here is giving a recipe for
@@ -571,7 +576,7 @@ it is not possible to write something with type |Even 27|, or any other uneven
 number, since the parameter |even? n|  is equal to |⊥|,
  thus
 |tt| would not be accepted where it is in the |Even 28| example. This will
-produce a |⊤ !=< ⊥| type error at compile time.
+produce a type error stating that the types |⊤| and |⊥| cannot be unified.
 
 Since the type |⊤| is a simple record type, Agda can infer the |tt|
 argument. This means we can turn the assumption |even? n| into an
@@ -581,9 +586,19 @@ The way to implement this is to slightly modify the |soundnessEven|
 function, so that its arguments are all implicit. This trick will be
 used from here on to keep terms elegant.
 
-Note that it is possible to generate a user-friendly ``error'' of sorts, by replacing the |⊥| constructor in |even?| with
-a type with a descriptive name such as @NotEven@. Of course it should still be an empty type (isomorphic to |⊥|), but possibly parameterised with a natural to
-indicate which value is odd. This makes the soundness proof a little less straightforward, but in return the
+\todo{Zeg hier even dat Agda supports eta expansion for unit types. En zeg even wat het gevolg hiervoor is mbt foutmeldingen}
+
+
+Note that it is possible to generate a user-friendly ``error'' of sorts, by replacing the |⊥| inthe |even?| function  with
+an empty type with a descriptive name:
+
+\begin{shade}
+\begin{spec}
+data IsOdd : ℕ -> Set where
+\end{spec}  
+\end{shade}
+
+This makes the soundness proof a little less straightforward, but in return the
 type error generated if an odd number is used becomes more
 informative. 
 
@@ -594,9 +609,8 @@ The next step will be to use the same approach for a more involved and realistic
 
 We will now apply the same technique as above to a more interesting problem, making
 the relationship to the previous example clear at each step.
-The next application of proof by reflection 
-is Boolean expressions which are a tautology. We will prove this by evaluation of the
-formulae. We will follow the same
+The next example of proof by reflection will be a decision procedure 
+that checks if a Boolean expression is a tautology. We will follow the same
 recipe as for even naturals, with one further addition. In the
 previous example, the input of our decision procedure |even?| and the
 problem domain were both natural numbers. As we shall see, this need
@@ -608,7 +622,7 @@ Take as an example the Boolean formula in equation \ref{eqn:tauto-example}.
 \end{align}
 
 It is trivial to see that this is a tautology, but proving this 
-using deduction rules for classical logic would be rather tedious. It
+in Agda directly can be rather tedious. It
 is even worse if we want to check if the formula always holds by
 trying all possible variable assignments, since this will give $2^n$
 cases, where $n$ is the number of variables.
@@ -674,11 +688,7 @@ open import Proofs.Util.Handy
 Recall our decision function |even?| in the previous section. It returned
 |⊤| if the proposition was valid, |⊥| otherwise. Looking at |⟦_⊢_⟧|, we see that
 we should just translate |true| to the unit type and false to the empty type, to get
-the analogue of the |even?| function.
-
-We call this function |P|, the string parameter serving to give a clearer type error
-to the user, if possible.
-
+the analogue of the |even?| function. We therefore define a function |P|, mapping Booleans to types. To give more useful error messages, we decorate the empty type with an additional string.
 
 \begin{shadedfigure}
 \begin{spec}
@@ -756,8 +766,8 @@ B|, where |B| is an expression in the image of the interpretation
 |⟦_⊢_⟧|. For instance, the statement |exampletheorem| is a proposition
 of this form.
 
-The function |proofGoal|, given a |BoolExpr n|, generates the
-corresponding proof obligation. That is, it gives back the type  equal to the theorem  under scrutiny. It does this by
+The function |proofGoal| takes a |BoolExpr n| as its argument and generates the statement
+that this |BoolExpr| is a tautology. That is, it gives back the type  equal to the theorem  under scrutiny. It does this by
 first introducing $m$ universally quantified Boolean
 variables. These variables are accumulated in an environment. Finally, when $m$
 binders have been introduced, the |BoolExpr| is evaluated under this
@@ -800,7 +810,7 @@ soundnessAcc {m} bexp {n} env (Step y) H =
     (soundnessAcc bexp (false ∷ env)    y (proj₂ H))
 \end{code}
 \end{shade}
-
+\todo{Misschien alleen de type signature geven?}
 
 If we look closely at the definition of |soundnessAcc|, we see that it
 builds up the environment by assigning some configuration of |true| and |false| to the variables. It eventually returns the
@@ -823,9 +833,11 @@ Now, we can prove theorems by calling |soundness b p|, where |b| is the
 representation of the formula under consideration, and |p| is the evidence
 that all branches of the proof tree are true. Agda is convinced
 that the representation does in fact correspond to the concrete
-formula, and also that |soundness| gives a valid proof. We will not
-even give |p| explicitly; since the only valid values of |p| are nested pairs of |tt|,
-the argument is inferred automatically, if its type is inhabited.
+formula, and also that |soundness| gives a valid proof. We do not
+even need to give |p| explicitly since the only valid values of |p| are nested pairs of |tt|,
+the argument is inferred automatically for closed terms, if its type is inhabited. 
+
+\todo{Say something along the lines of ``This once again exploits that Agda supports eta expansion for record types.''}
 
 If the module
 passes the type checker, we know our formula is both a tautology and
@@ -883,7 +895,7 @@ from |Term|. This type, called |BoolInter|, is not shown here, since the only di
 index of its variables is a |ℕ| instead of a |Fin n|.
 
 
-The mapping needed for |Autoquote| is as follows: we mention which constructor represents
+The |Autoquote| library needs a lookup table, mentioning which constructor represents
 De Bruijn-indexed variables and what the arity is of the different constructors. This way
 only |Term|s containing variables or the operators and, or, not,
 implication, true or false are accepted. Using the mapping presented in Fig.~\ref{fig:booltable}, we can
@@ -909,10 +921,13 @@ variables are all in scope (this means that $\forall$ |Atomic| $x  :     x < n$,
 want to convert to a |BoolExpr n|). This is done in |bool2fin|, assuming that |bool2finCheck|
 holds (the latter simply expresses the in-scope property).
 
+\todo{Hier wordt het te technisch. Zeg gewoon dat je nats naar fins
+  converteerd om een BoolExpr uit op te leveren -- hoe je dat precies
+  doet kan de lezer zelf wel bedenken.}
 
 With these ingredients, we write |concrete2abstract|, which converts directly from a |Term| to a |BoolExpr n|.
-This illustrates how useful such an
-abstraction can be.  It uses the previously mentioned function |term2boolexpr'|.
+This illustrates how useful such an \todo{Which abstraction do you mean? Autoquote?}
+abstraction can be. 
 
 \ignore{
 \begin{shade}
@@ -969,6 +984,7 @@ of predefined proof recipes to see if one of them might discharge the obligation
 this approach versus the tactic language in Coq, would be that the language of the propositions and
 tactics is the same.
 
+\todo{Goeie conclusie!}
 
 
 
@@ -991,10 +1007,11 @@ many developments in the functional, logic as well as object-oriented programmin
 been inspired~-- systems with varying power and scope.
  
  
+\todo{Onderstaande alinea zou ik misschien weglaten, als je moet snijden }
 People sometimes jokingly say that the more advanced
 a given programming language becomes, the more it converges towards Lisp \cite{graham04}, and that
 the more complex some piece of software becomes, the higher the likelihood of discovering somewhere in
-the source a badly defined, ad hoc implementation of a Lisp interpreter.
+the source a badly defined, ad hoc implementation of a Lisp interpreter. 
 The fact is, though, that it is becoming increasingly common to generate pieces of code 
 from a general recipe, possibly giving rise to a more efficient specific implementation, 
 or at the very least not having to reinvent the wheel. Reflection is becoming more common, to
@@ -1041,7 +1058,7 @@ implement some sort of tactic framework for Agda, possibly with a DSL in the sty
 % Uh the following sentence sucks.
 The Ssreflect extension for Coq \cite{gonthier:inria-00515548}  should also be mentioned here; 
 the developments presented here should also be possible using
-Ssreflect.
+Ssreflect. \todo{Misschien benoemen dat performance te wensen over laat, een probleem waar SSReflect ook tegen aan is gelopen}.
  
 Returning to our research question,  repeated here to jog the memory,  a summary of findings is made.
 
@@ -1052,9 +1069,9 @@ reflection, the latter using Agda's reflection API.
 
 \paragraph{Conclusions}
 We 
-have managed to automate generation of a certain class of proofs, which certainly 
-would count as mundane. The clear advantage of Agda's reflection system is that it
-leverages the power of Agda's dependent types. Unfortunately, though,
+have managed to automate generation of a certain class of mundane proofs. The clear advantage of Agda's reflection system is that it
+leverages the power of Agda's dependent types. \todo{Ik hou niet zo van 'leverages' -- wat bedoel je hier nou precies?}
+ Unfortunately, though,
 the reflection API itself is still rather primitive, so we find ourselves unable to define 
 generative 
  functions. The reasons for not being able to 
@@ -1077,7 +1094,11 @@ as it stands, and the expectation is that it should be possible to define quite 
 of program transformations and proof generators which will likely turn out to be useful for various
 niche applications.
  
- 
+\todo{Ik vind deze conclusie wat zwakker -- ik word zelf meer
+  enthousiast van de eerdere opmerking die zei dat dit een eerste stap
+  is richting Coq-achtige tactics. Ik zou de conclusion sectie inkorten en vervangen door een (uitgebreidere) versie van de laatste alinea van sectie 4.}
+
+
 % \newpage
 % \phantomsection \label{listoffig}
 % \addcontentsline{toc}{chapter}{List of Figures}
