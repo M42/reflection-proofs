@@ -1,5 +1,8 @@
 module Proofs.Util.Lemmas where
 
+-- a few boring lemmas for use with the Boolean tautology
+-- prover.
+
 open import Data.Nat
 open import Relation.Binary.PropositionalEquality
 open import Proofs.Util.Types
@@ -19,4 +22,3 @@ coerceDiff refl d = d
 zero-least : (k n : ℕ) → Diff k (k + n)
 zero-least k zero    = coerceDiff (zeroId k) Base
 zero-least k (suc n) = Step (coerceDiff (succLemma k n) (zero-least (suc k) n))
-

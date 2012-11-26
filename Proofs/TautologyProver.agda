@@ -278,4 +278,3 @@ proveTautology : (t : Term) →
                     {i : foralls b} →
                     proofGoal n b
 proveTautology e {pf} {pf2} {fin} {i} = soundness {freeVars e} (concrete2abstract e fin) {i}
-

@@ -26,11 +26,6 @@ P = So "Argument expression does not evaluate to true."
 Error-elim : ∀ {Whatever : Set} {e : String} → Error e → Whatever
 Error-elim ()
 
-
-
-
 data Diff : ℕ → ℕ → Set where
   Base : ∀ {n}   → Diff n n
   Step : ∀ {n m} → Diff (suc n) m → Diff n m
-
-

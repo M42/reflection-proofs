@@ -56,5 +56,5 @@ not = quoteGoal e in proveTautology e
 peirce : (p q  : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
 peirce = quoteGoal e in proveTautology e
 
-foo : quoteTerm (\(x : Bool) -> x) ≡ lam visible (el _ (def (quote Bool) [])) (var 0 [])
+foo : quoteTerm (\(x : Bool) -> x) ≡ lam visible (var 0 [])
 foo = refl

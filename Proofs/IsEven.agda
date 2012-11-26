@@ -45,8 +45,10 @@ isEven8772 = soundnessEven tt
 -- trying to prove something uneven is even. This fails, however, since
 -- we've shown above that the proposition that uneven naturals are even, is
 -- isomorphic to ⊥, i.e. contains no elements.
+{-
 isEven27 : Even 27
 isEven27 = soundnessEven {!!}
+-}
 
 -- it's unfortunate that we have to include explicit proofs each time,
 -- especially since they're always tt or impossible. We can use a trick
@@ -62,3 +64,5 @@ sound {suc (suc n)} {s } = isEvenSS (sound {n}{s})
 -- makes for much neater proof objects.
 isEven58 : Even 58
 isEven58 = sound
+
+-- TODO: show how we can give nicer error messages too
