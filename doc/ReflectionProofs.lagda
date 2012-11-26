@@ -83,8 +83,8 @@ minipage=\linewidth,margin=0pt,padding=0pt,bgcolor=hlite%
 \begin{code}
 module doc.ReflectionProofs where
 
-open import Proofs.TautologyProver hiding (concrete2abstract; foralls;  soundness; boolTable;  proofGoal ; ⟦_⊢_⟧ ; forallsAcc ;
-       soundnessAcc)
+open import Proofs.TautologyProver hiding (concrete2abstract; foralls;  
+       soundness; boolTable;  proofGoal ; ⟦_⊢_⟧ ; forallsAcc ;  soundnessAcc)
 open import Data.Bool renaming (not to ¬_)
 open import Relation.Binary.PropositionalEquality
 open import Reflection
@@ -139,9 +139,10 @@ Department of Computer Science, Utrecht University
 
 \begin{abstract}
   This paper explores the recent addition to Agda enabling
-\emph{reflection}, in the style of Lisp, MetaML, and Template Haskell.\todo{Add citations to Lisp, MetaML etc.?}
+\emph{reflection}, in the style of Lisp~\cite{Smith:1984:RSL:800017.800513}, MetaML~\cite{metaml}, and Template Haskell~\cite{template-haskell}.
 It gives a brief introduction to using reflection, and details the intricacies
-of using reflection to implement automate certain proofs using \emph{proof by reflection}. 
+of using reflection to automate certain proofs using \emph{proof by
+  reflection}. 
 Also, a library is presented which
 can be used for automatically quoting a class of concrete Agda terms
 to a simple, user-defined
@@ -186,7 +187,7 @@ reflection. More specifically this work makes the following contributions:
 \begin{itemize}
   \item We give a brief overview of Agda's reflection mechanism (Sec.~\ref{sec:crash}). Previously, these features were only documented in release notes and comments in Agda's source files;
 \item We present |Autoquote|, an Agda library that alleviates much
-  of a programmer's burden when quoting a given abstract syntax tree (Sec.~\ref{sec:introducing-autoquote}).
+  of a programmer's burden when quoting a given abstract syntax tree (Sec.~\ref{sec:autoquote}).
 \item We show how to use Agda's reflection mechanism to
   automate certain categories of proofs (Sec.~\ref{sec:proof-by-reflection}).
  The idea of \emph{proof by
