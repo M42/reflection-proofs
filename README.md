@@ -1,6 +1,6 @@
 Engineering Proof by Reflection in Agda
 ==================
-Hint: if you are looking for the MSc project "Reflection in Agda", see [here](https://github.com/toothbrush/reflection-proofs/tree/msc-thesis).  
+**Hint**: if you are looking for the MSc project "Reflection in Agda", see [here](https://github.com/toothbrush/reflection-proofs/tree/msc-thesis).  
 [Department of Computing Science, Utrecht University](http://www.cs.uu.nl)
 
 Paul van der Walt and [Wouter Swierstra](http://www.staff.science.uu.nl/~swier004/)
