@@ -952,6 +952,10 @@ fave       = quoteGoal e in proveTautology e
 \end{code}
 \end{shade}
 
+With that, we have automatically converted propositions from the Agda world into our
+own AST, generated a proof of their soundness, and converted that back into a real proof that Agda
+trusts. In the following section, the conclusion, we will revisit these results.  \todo{uh, name "Conclusion"? what about an outro here?}
+
 
 This shows that the reflection capabilities recently added to Agda are quite useful for
 automating certain tedious tasks, since we now need not encode the Boolean expression
@@ -967,6 +971,7 @@ this approach versus the tactic language in Coq, would be that the language of t
 tactics is the same.
 
 \todo{Goeie conclusie!}
+%TODO deze moet naar Discussion, ja. --Paul
 
 
 
@@ -1065,6 +1070,7 @@ This paper has presented two simple applications of proof by
 reflection, the latter using Agda's reflection API. 
 
 \paragraph{Conclusions}
+% TODO ja dit is zwak. up next.
 We 
 have managed to automate generation of a certain class of mundane proofs. The clear advantage of Agda's reflection system is that it
 leverages the power of Agda's dependent types. \todo{Ik hou niet zo van 'leverages' -- wat bedoel je hier nou precies?}
@@ -1095,11 +1101,6 @@ niche applications.
   enthousiast van de eerdere opmerking die zei dat dit een eerste stap
   is richting Coq-achtige tactics. Ik zou de conclusion sectie inkorten en vervangen door een (uitgebreidere) versie van de laatste alinea van sectie 4.}
 
-
-% \newpage
-% \phantomsection \label{listoffig}
-% \addcontentsline{toc}{chapter}{List of Figures}
-% \listoffigures
 
 \bibliography{refs}{}
 %\bibliographystyle{plain}
