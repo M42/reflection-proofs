@@ -78,8 +78,8 @@ minipage=\linewidth,margin=0pt,padding=0pt,bgcolor=hlite%
 \begin{code}
 module doc.ReflectionProofs where
 
-open import Proofs.TautologyProver hiding (concrete2abstract; foralls;  
-       soundness; boolTable;  proofGoal ; ⟦_⊢_⟧ ; forallsAcc ;  soundnessAcc)
+open import Proofs.TautologyProver hiding (concrete2abstract; 
+        boolTable;  proofGoal ; ⟦_⊢_⟧ ; forallsAcc ;  soundnessAcc)
 open import Data.Bool renaming (not to ¬_)
 open import Relation.Binary.PropositionalEquality
 open import Reflection
@@ -726,11 +726,13 @@ we effectively quantified over all possible environments. We are going to need a
 to lift our decision function to arbitrary environments.
 
 
-The way we do this is the function |foralls|, in Fig.~\ref{fig:forallsacc}. This function represents the real analogue
+The way we do this is the function |forallsAcc|, in Fig.~\ref{fig:forallsacc}. This function represents the real analogue
 of |even?| in this situation: it returns a type which is only inhabited if the argument Boolean
 expression is true under all variable assignments. This is done by generating a full binary tree
 of |⊤| or |⊥| types, depending on the result of |⟦_⊢_⟧| under each assignment.
-This corresponds precisely to the expression being a tautology if and only if the tree is inhabited.
+This corresponds precisely to the expression being a tautology if and
+only if the tree is inhabited. Note that |foralls| simply bootstraps
+|forallsAcc| with an empty environment -- it is omitted for brevity.
 
 The |Diff| argument is unfortunately needed for bookkeeping, to prove that |forallsAcc| will eventually produce a
 tree with depth equal to the number of free variables in an expression, and can be ignored.
@@ -742,11 +744,8 @@ forallsAcc : {n m : ℕ} → BoolExpr m → Env n → Diff n m → Set
 forallsAcc b acc    (Base     ) = P ⟦ acc ⊢ b ⟧
 forallsAcc b acc    (Step y   ) =
   forallsAcc b (true ∷ acc) y × forallsAcc b (false ∷ acc) y
-
-foralls : {n : ℕ} → BoolExpr n → Set
-foralls {n} b = forallsAcc b [] (zeroleast 0 n)
 \end{code}
-\caption{The function |foralls|, which decides if a proposition is a tautology. Compare to the |even?| function in Sec.~\ref{sec:evenness}.}\label{fig:forallsacc}
+\caption{The function |forallsAcc|, which decides if a proposition is a tautology. Compare to the |even?| function in Sec.~\ref{sec:evenness}.}\label{fig:forallsacc}
 \end{shadedfigure}
 
 \paragraph{Soundness} Since we now finally know our real decision function |foralls|, we can set about proving its
@@ -790,10 +789,6 @@ need to show the soundness of our decision function |foralls|. That is, we need
 to be able to show that a formula is true if it holds for every
 possible assignment of its variables to |true| or |false|.
 
-
-
-
-
 \begin{shade}
 \begin{code}
 soundnessAcc :   {m : ℕ} →          (b : BoolExpr m) →
@@ -813,35 +808,34 @@ soundnessAcc {m} bexp {n} env (Step y) H =
 
 If we look closely at the definition of |soundnessAcc|, we see that it
 builds up the environment by assigning some configuration of |true| and |false| to the variables. It eventually returns the
-leaf from |foralls| which is the proof that the formula is a tautology
+leaf from |forallsAcc| which is the proof that the formula is a tautology
 in that specific case. 
-\begin{shade}
-\begin{code}
-soundness       : {n : ℕ} → (b : BoolExpr n) → {p : foralls b}
-                → proofGoal 0 n (zeroleast 0 n) b []
-soundness {n} b {p} = soundnessAcc b [] (zeroleast 0 n) p
-\end{code}
-\end{shade}
-The function |soundness| calls
-|soundnessAcc| with some initial input, namely the |BoolExpr n|, an
-empty environment, and the |Diff| proof that |soundnessAcc| will be called
-($n-0$) times. This results in an environment of size $n$ everywhere
-the expression is to be evaluated.
 
+% 
+% \begin{shade}
+% \begin{code}
+% soundness       : {n : ℕ} → (b : BoolExpr n) → {p : foralls b}
+%                 → proofGoal 0 n (zeroleast 0 n) b []
+% soundness {n} b {p} = soundnessAcc b [] (zeroleast 0 n) p
+% \end{code}
+% \end{shade}
+
+The function |soundness| simply bootstraps |soundnessAcc| with an
+empty environment, just like |foralls|.
 Now, we can prove theorems by calling |soundness b p|, where |b| is the
 representation of the formula under consideration, and |p| is the evidence
 that all branches of the proof tree are true. Agda is convinced
 that the representation does in fact correspond to the concrete
 formula, and also that |soundness| gives a valid proof. We do not
 even need to give |p| explicitly since the only valid values of |p| are nested pairs of |tt|,
-the argument is inferred automatically for closed terms, if its type is inhabited. 
-
-\todo{Say something along the lines of ``This once again exploits that Agda supports eta expansion for record types.''}
+the argument is inferred automatically for closed terms, if its type
+is inhabited.  This once  again exploits the fact that  Agda supports eta
+expansion for record types. 
 
 If the module
 passes the type checker, we know our formula is both a tautology and
 that we have the corresponding proof object at our disposal
-afterwards, as in the example of Fig.~\ref{fig:dup}.
+afterwards, as in |someTauto|.
 
 \begin{shadedfigure}
 \begin{code}
@@ -871,7 +865,7 @@ for formulae containing many variables.
 
 It would be desirable for this representation
 process to be automated. Luckily we have the |Autoquote| library,
-which we will now apply.
+which we will now use.
 
 
 \subsection{Adding Reflection}\label{sec:addrefl}
@@ -896,8 +890,8 @@ index of its variables is a |ℕ| instead of a |Fin n|.
 
 The |Autoquote| library needs a lookup table, mentioning which constructor represents
 De Bruijn-indexed variables and what the arity is of the different constructors. This way
-only |Term|s containing variables or the operators and, or, not,
-implication, true or false are accepted. Using the mapping presented in Fig.~\ref{fig:booltable}, we can
+only |Term|s containing variables or the usual operators 
+are accepted. Using the mapping presented in Fig.~\ref{fig:booltable}, we can
 construct the function |term2boolexpr'| that, for suitable |Term|s,
 gives us an expression in |BoolInter|. 
 
@@ -905,29 +899,20 @@ gives us an expression in |BoolInter|.
 \begin{code}
 boolTable : Table BoolInter
 boolTable = (Atomic ,
-                  2 \# (quote _∧_      ) ↦ And
-            ∷     2 \# (quote _∨_      ) ↦ Or
-            ∷     1 \# (quote  ¬_      ) ↦ Not
-            ∷     0 \# (quote true     ) ↦ Truth
-            ∷     0 \# (quote false    ) ↦ Falsehood
-            ∷     2 \# (quote _⇒_      ) ↦ Imp ∷ [])
+                  2 \# (quote _∧_      ) ↦ And                 ∷     2 \# (quote _∨_      ) ↦ Or
+            ∷     1 \# (quote  ¬_      ) ↦ Not                 ∷     0 \# (quote true     ) ↦ Truth
+            ∷     0 \# (quote false    ) ↦ Falsehood           ∷     2 \# (quote _⇒_      ) ↦ Imp           ∷ [])
 \end{code}
 \caption{The mapping table for quoting |BoolInter|.}\label{fig:booltable}
 \end{shadedfigure}
 
 Once we have a |BoolInter| expression, we just need to check that its
 variables are all in scope (this means that $\forall$ |Atomic| $x  :     x < n$, if we
-want to convert to a |BoolExpr n|). This is done in |bool2fin|, assuming that |bool2finCheck|
-holds (the latter simply expresses the in-scope property).
-
-\todo{Hier wordt het te technisch. Zeg gewoon dat je nats naar fins
-  converteerd om een BoolExpr uit op te leveren -- hoe je dat precies
-  doet kan de lezer zelf wel bedenken.}
-
-With these ingredients, we write |concrete2abstract|, which converts directly from a |Term| to a |BoolExpr n|.
-This illustrates how useful such an \todo{Which abstraction do you mean? Autoquote?}
-abstraction can be. 
-
+want to convert to a |BoolExpr n|), and convert to a |BoolExpr n| by replacing all the |ℕ| values with their |Fin n| counterparts.
+% With these ingredients, we can convert directly from a |Term| to a |BoolExpr n|.
+% This illustrates how useful |Autoquote|
+%  can be. 
+%
 \ignore{
 \begin{shade}
 \begin{code}
@@ -945,19 +930,17 @@ concrete2abstract' t {pf} {pf2} fin = bool2fin     (freeVars t)
                                                    fin
 \end{code}
 \end{shade}
-}
-
-We can now write a function called |proveTautology|, which uses this |concrete2abstract'| and calls |soundness| on the resulting term.
+}%
+We can now write a function called |proveTautology|, which uses the automatic quoter and calls |soundness| on the resulting term.
 This and other helper
 functions have been omitted for brevity, since they are rather
-cumbersome and add little to the understanding of the subject at
-hand.
+predictable.
 
 
-These are all the ingredients required to automatically prove that
-formulae are tautologies.  The following code illustrates the use of
+That is all we need to automatically prove that
+formulae are tautologies.  The following snippet illustrates the use of
 the |proveTautology| function; we can omit all arguments except |e|, since they
-  can all be inferred.
+  can  be inferred.
 
 \begin{shade}
 \begin{code}
@@ -1028,14 +1011,7 @@ many developments in the functional, logic as well as object-oriented programmin
 been inspired~-- systems with varying power and scope.
  
  
-\todo{Onderstaande alinea zou ik misschien weglaten, als je moet snijden }
-People sometimes jokingly say that the more advanced
-a given programming language becomes, the more it converges towards Lisp \cite{graham04}, and that
-the more complex some piece of software becomes, the higher the likelihood of discovering somewhere in
-the source a badly defined, ad hoc implementation of a Lisp interpreter. 
-The fact is, though, that it is becoming increasingly common to generate pieces of code 
-from a general recipe, possibly giving rise to a more efficient specific implementation, 
-or at the very least not having to reinvent the wheel. Reflection is becoming more common, to
+Reflection is becoming more common, to
 various extents, in industry-standard languages such as Java, Objective-C, as well as theoretically more interesting
 languages, such as Haskell \cite{DBLP:journals/lisp/Stump09}. Smalltalk, an early
 object-oriented programming language with advanced reflective features \cite{Goldberg:1983:SLI:273}, is the predecessor of Objective-C. As such, it
