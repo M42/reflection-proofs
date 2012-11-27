@@ -613,19 +613,19 @@ previous example, the input of our decision procedure |even?| and the
 problem domain were both natural numbers. As we shall see, this need
 not always be the case: more complex structures and properties may be used.
 
-Take as an example the Boolean formula in equation \ref{eqn:tauto-example}.
+Take as an example the following Boolean formula.
 \begin{align}\label{eqn:tauto-example}
 (p_1 \vee q_1) \wedge (p_2 \vee q_2) \Rightarrow (q_1 \vee p_1) \wedge (q_2 \vee p_2)
 \end{align}
 
-It is trivial to see that this is a tautology, but proving this 
-in Agda directly can be rather tedious. It
+It is trivial to see that this is a tautology, but directly proving this 
+in Agda can be rather tedious. It
 is even worse if we want to check if the formula always holds by
-trying all possible variable assignments, since this will give $2^n$
+trying all possible variable assignments, since this requires $2^n$
 cases, where $n$ is the number of variables.
 
 To automate this process, we will follow a similar approach to
-the one given in the section on even natural numbers (Sec.~\ref{sec:evenness}). We start by defining an
+the one given in the previous section. We start by defining an
 inductive data type to represent Boolean expressions with at most $n$ free
 variables in Fig.~\ref{fig:boolexprn}.
 
@@ -646,14 +646,16 @@ There is nothing
 surprising about this definition; we use the type |Fin n| to ensure
 that variables (represented by |Atomic|) are always in scope. If we want to
 evaluate the expression, however, we will need some way to map variables to values.
-Enter |Env n|: it has fixed size |n| since a |BoolExpr n| has at most $n$ free variables.
+Enter |Env n|: a vector of $n$ Boolean values. It has fixed size |n| since a |BoolExpr n| has at most $n$ free variables.
 
-\begin{shade}
-\begin{spec}
-Env   : ℕ → Set
-Env   = Vec Bool
-\end{spec}
-\end{shade}
+% ...lijkt me dat mensen dit wel begrijpen. Ik probeer hier ruimte te
+% besparen. --Paul
+% \begin{shade}
+% \begin{spec}
+% Env   : ℕ → Set
+% Env   = Vec Bool
+% \end{spec}
+% \end{shade}
 
 Now we can define a decision function, which tells us if a given
 Boolean expression is true or not, under some assignment of variables. It does this by evaluating
@@ -685,7 +687,8 @@ open import Proofs.Util.Handy
 Recall our decision function |even?| in the previous section. It returned
 |⊤| if the proposition was valid, |⊥| otherwise. Looking at |⟦_⊢_⟧|, we see that
 we should just translate |true| to the unit type and false to the empty type, to get
-the analogue of the |even?| function. We therefore define a function |P|, mapping Booleans to types. To give more useful error messages, we decorate the empty type with an additional string.
+the analogue of the |even?| function. We therefore define a function
+|P| in Fig~\ref{fig:error}, mapping Booleans to types. To give more useful error messages, we decorate the empty type with an additional string.
 
 \begin{shadedfigure}
 \begin{spec}
@@ -721,7 +724,6 @@ of the decision function |P|, so proving |P| to be sound will not suffice. We ju
 to take an environment, an expression, and return a Boolean. In Fig.~\ref{fig:exampletheorem}, though,
 we effectively quantified over all possible environments. We are going to need a way
 to lift our decision function to arbitrary environments.
-
 
 
 The way we do this is the function |foralls|, in Fig.~\ref{fig:forallsacc}. This function represents the real analogue
