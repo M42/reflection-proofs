@@ -579,10 +579,12 @@ because Agda supports eta expansion for record types. This means these proofs ca
 there is only one option, namely |tt|. Here,
  the type system is doing work for us which is not done for general
  data types; for records eta expansion is safe, since recursion is not allowed.
+ %%%%%%%%%%%%%%%%%%%
  This does impact error reporting, since a module may appear to
  compile with unsolved constraints on implicit arguments, merely
  marking the term yellow, but rest assured that no spurious proofs are
  being generated. \todo{wording needs help}
+ %%%%%%%%%%%%%%%%%%%%
 This trick is
 implemented in the code on Github, and will be
 used from here on to keep terms elegant. 
@@ -809,7 +811,8 @@ soundnessAcc {m} bexp {n} env (Step y) H =
     (soundnessAcc bexp (false ∷ env)    y (proj₂ H))
 \end{code}
 \end{shade}
-\todo{Misschien alleen de type signature geven?}
+\todo{Misschien alleen de type signature geven? .. hoewel ik dan in
+  woorden moet vertellen wat er gebeurt. misschien wat later. --PW}
 
 
 If we look closely at the definition of |soundnessAcc|, we see that it
@@ -939,25 +942,10 @@ fave       = quoteGoal e in proveTautology e
 
 With that, we have automatically converted propositions in the Agda world to our
 own AST, generated a proof of their soundness, and converted that back into a real proof that Agda
-trusts. %In the following section, the conclusion, we will revisit these results.  \todo{uh, name "Conclusion"? what about an outro here?}
+trusts. 
 
 \section{Discussion}\label{sec:discussion}
 
-% TODO 2 
-% Misschien is het nog beter om hier terug te blikken op de technieken
-% die je gebruikt voor proof automation:
-% 
-% - AutoQuote en quoteGoal om een AST te krijgen;
-% 
-% - predicates that compute to a unit type (or pairs of unit types) or
-% an empty type, tagged with an error message
-% 
-% Maak de lessen van deze experimenten expliciet! Je blikt al goed
-% vooruit (hiermee is het denkbaar dat we Coq-achtige tactieken talen
-% kunnen schrijven), maar maak ook duidelijk welke technieken je hebt
-% gebruikt om je oorspronkelijke doel (het engineeren van proof by
-% reflection in Agda) te bereiken.
- 
  
 \paragraph{Related work} 
  
@@ -965,21 +953,25 @@ Our main innovations are novel a combination of existing
 techniques; as a result, quite a number of subjects are relevant to mention
 here.
  
-As far as reflection in general goes, Demers and Malenfant \cite{demers1995reflection} wrote an informative historical overview on the topic.
-What we are referring to as reflection dates back to work by Brian Smith \cite{Smith:1984:RSL:800017.800513}
+As far as reflection in general goes, Demers and Malenfant~\cite{demers1995reflection} wrote an informative historical overview on the topic.
+What we are referring to as reflection dates back to work by Brian Smith~\cite{Smith:1984:RSL:800017.800513}
 and was initially presented in the Lisp family of languages in the 80s. Since then,
 many developments in the functional, logic as well as object-oriented programming worlds have 
 been inspired~-- systems with varying power and scope.
  
- 
 Reflection is becoming more common, to
 various extents, in industry-standard languages such as Java, Objective-C, as well as theoretically more interesting
 languages, such as Haskell \cite{DBLP:journals/lisp/Stump09}. Smalltalk, an early
-object-oriented programming language with advanced reflective features \cite{Goldberg:1983:SLI:273}, is the predecessor of Objective-C. As such, it
+object-oriented programming language with advanced reflective features~\cite{Goldberg:1983:SLI:273}, is the predecessor of Objective-C. As such, it
 is surprising that industry programming does not use more of these advanced reflective features which have already  been around for a 
-long time.
-This would seem to be the inspiration for the current reflection system recently introduced
-in Agda, although we shall see that it is lacking in a number of fundamental capabilities.
+long time. The disadvantage of Smalltalk, however, is that reflection
+is extremely unsafe: one can call non-existent functions, to name just
+one pitfall.
+
+These systems would seem to be the inspiration for the current reflection system recently introduced
+in Agda, although it is lacking in a number of fundamental
+capabilities, most notably type awareness of |unquote|, and type erasure
+when using |quoteTerm|.
 
 \paragraph{Evaluation}
 If we look at the taxonomy of reflective systems in programming language technology written up 
@@ -996,7 +988,7 @@ make the system truly useful. }.
 \item Agda's current reflection API leans more towards analysis than generation,
 \item it supports encoding of terms in an algebraic data type (as opposed to a string, for example),
 \item it involves manual staging annotations (by using keywords such as |quote| and |unquote|),
-\item It is homogeneous, because a representation of the object language lives inside the metalanguage (as a native
+\item it is homogeneous, because a representation of the object language lives inside the metalanguage (as a native
   data type), 
 \item it is only two-stage: we cannot as yet produce an object program which is itself a metaprogram. This is
   because we rely on built in keywords such as |quote|, which cannot themselves be represented.
@@ -1004,19 +996,20 @@ make the system truly useful. }.
  
  
 As far as the proof techniques used in the section on proof by reflection (Sec.~\ref{sec:proof-by-reflection}) are concerned,  
-Chlipala's work \cite{chlipala2011certified} proved an invaluable resource, both for inspiration and guidance. One motivating example
-for doing this in Agda was Wojciech Jedynak's ring solver \cite{ringsolver}, which is the first example of Agda's reflection
+Chlipala's work~\cite{chlipala2011certified} proved an invaluable resource. One motivating example
+for doing this in Agda was Wojciech Jedynak's ring solver~\cite{ringsolver}, which is the first example of Agda's reflection
 API in use that came to our attention. Compared to Jedynak's work, the proof generator presented here is more refined in terms of the interface
 presented to the user. The expectation is that approaches like these will become more commonplace for proving mundane lemmas in 
 large proofs. The comparison to tactics in a language like Coq is a tempting one, and we see both advantages and disadvantages of each style. Of course, 
 the tactic language in Coq is much more specialised and sophisticated when it comes to generating proofs, but it is a pity that there are
 two separate languages in one, instead of the Agda way, where metaprograms are written directly in the object language. Also, the 
-fact that proof generation in Agda is explicit may be something some people appreciate. (Far) future work might be to 
-implement some sort of tactic framework for Agda, possibly with a DSL in the style of Coq's tactic language, around the reflection API.
-The Ssreflect extension for Coq \cite{gonthier:inria-00515548}  should also be mentioned here; 
+fact that proof generation in Agda is explicit may be something some
+people appreciate. 
+
+The SSReflect extension for Coq~\cite{gonthier:inria-00515548}  should also be mentioned here; 
 the techniques presented here should also be applicable in
-Ssreflect. Unfortunately, when computing large proof trees,
-performance could be better; this is a problem for both Ssreflect and
+SSReflect. Unfortunately, when computing large proof trees,
+performance could be better; this is a problem for both SSReflect and
 Agda's reflective method. \todo{citation here?}
  
 \paragraph{Conclusions}
@@ -1030,28 +1023,29 @@ reflection, the latter using Agda's reflection API.
 We 
 have managed to automate generation of a certain class of mundane
 proofs. 
-This shows that the reflection capabilities recently added to Agda are quite useful for
-automating tedious tasks, since, for example, we now need not encode expressions
-manually. Using |Autoquote|, the AST conversion can be done automatically, without loss
-of expressive power or general applicability of proofs resulting from
-soundness functions.
+ This shows that the reflection capabilities recently added to Agda are quite useful for
+ automating tedious tasks.  For example, we now need not encode expressions
+ manually:
+ using |quoteTerm| and |Autoquote|, the AST conversion can be done
+ automatically. 
 Furthermore, by using the proof by reflection technique, we have shown
-how to automatically generate proofs.
+how to automatically generate proofs, without loss
+ of general applicability. Constraining ourselves to
+(pairs of) unit types as predicates, we can let Agda infer them, and by tagging
+an empty type with a string, we can achieve more helpful errors if
+these predicates are invalid. These simple tools were sufficient to
+engineer relatively powerful and -- more importantly -- easily usable
+proof tools.
 
 It seems conceivable to imagine that in the future, using techniques such as those presented
 here, a framework for tactics might be within reach. Eventually we might be able to define an
-embedded language in Agda to inspect the shape of the proof that is needed, and look at a database
+embedded language in Agda, in the style of Coq's tactic language, to
+inspect the shape of the proof that is needed using reflection, and look at a database
 of predefined proof recipes to see if one of them might discharge the obligation. An advantage of 
 this approach versus the tactic language in Coq, would be that the language of the propositions and
 tactics is the same.
 
  
-% TODO conclusie uitbreiden
-% ALSO
-% Daar gaat het
-% paper om, en niet om wat je precies wel/niet kan met de huidige
-% reflection API.
-
 
 \bibliography{refs}{}
 %\bibliographystyle{plain}
