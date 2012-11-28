@@ -23,8 +23,8 @@ notice that u is automatically instantiated, since
 there is only one option, namely tt,tt. this is special and
 cool, the type system is doing work for us. Note that this is
 because eta-reduction only is done in the type system for records
-and not for general data types. possibly the reason is because this is
-safe in records because recursion isn't allowed. question for agda-café?
+and not for general data types. the reason is because this is
+safe in records: recursion isn't allowed.
 -}
 foo' : {u : ⊤ × ⊤} → ℕ
 foo' = 5
