@@ -190,7 +190,7 @@ makes quoting simple abstract syntax trees a breeze \todo{too informal?}
   automate certain categories of proofs (Sec.~\ref{sec:proof-by-reflection}).
  The idea of \emph{proof by
     reflection} is certainly not new, but still worth examining in the
-  context of this new technology.\todo{Is there a good reference for proof by reflection? Maybe check the chapter in CoqArt?}
+  context of this new technology.
 \end{itemize}
 
 The code presented in this paper compiles using the
@@ -461,13 +461,10 @@ is the capability of converting some piece of concrete code
 into an abstract syntax tree that can be manipulated in the same
 system. Reflection in the proof technical sense is the method of
 mechanically constructing a proof of a theorem by inspecting its
-shape. The proof by reflection technique we describe here is not new, but
+shape. The proof by reflection technique we describe here is not new --
+see for example the chapter in Coq'Art~\cite{L:BC04} -- but
 instead
 combines a number of existing methods into a usable package. 
-%The
-%explanation of proof by reflection here draws heavily from Chlipala's
-%work \cite{chlipala2011certified}.
-%%% we reference Chlipala a few sentences later -- PW
 Here we will see two case studies illustrating proof by
 reflection and how Agda's reflection mechanism can make the technique
 more convenient.
@@ -604,7 +601,6 @@ data IsOdd : ℕ -> Set where
 This makes the soundness proof a little less straightforward, but in return the
 type error generated if an odd number is used becomes more
 informative. 
-
 This concludes the example of proving that certain naturals are even using proof by reflection.
 The next step will be to use the same approach for a more involved and
 realistic problem.
@@ -619,7 +615,6 @@ recipe as for even naturals, with one further addition. In the
 previous example, the input of our decision procedure |even?| and the
 problem domain were both natural numbers. As we shall see, this need
 not always be the case: more complex structures and properties may be used.
-
 Take as an example the following Boolean formula.
 \begin{align}\label{eqn:tauto-example}
 (p_1 \vee q_1) \wedge (p_2 \vee q_2) \Rightarrow (q_1 \vee p_1) \wedge (q_2 \vee p_2)
