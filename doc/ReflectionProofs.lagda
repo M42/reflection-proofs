@@ -574,11 +574,19 @@ argument. This means we can turn the assumption |even? n| into an
 implicit argument, so a user could get away with writing just
 |soundnessEven| as the proof, letting the inferrer do the rest. 
 The way to implement this is to slightly modify the |soundnessEven|
-function, so that its arguments are all implicit. This trick is
+function, so that its arguments are all implicit.  This is possible
+because Agda supports eta expansion for record types. This means these proofs can be automatically instantiated, since
+there is only one option, namely |tt|. Here,
+ the type system is doing work for us which is not done for general
+ data types; for records eta expansion is safe, since recursion is not allowed.
+ This does impact error reporting, since a module may appear to
+ compile with unsolved constraints on implicit arguments, merely
+ marking the term yellow, but rest assured that no spurious proofs are
+ being generated. \todo{wording needs help}
+This trick is
 implemented in the code on Github, and will be
-used from here on to keep terms elegant.
+used from here on to keep terms elegant. 
 
-\todo{Zeg hier even dat Agda supports eta expansion for unit types. En zeg even wat het gevolg hiervoor is mbt foutmeldingen}
 
 
 Note that it is possible to generate a user-friendly ``error'' of
