@@ -737,7 +737,7 @@ only if the tree is inhabited. Note that |foralls| simply bootstraps
 |forallsAcc| with an empty environment -- it is omitted for brevity.
 
 The |Diff| argument is unfortunately needed for bookkeeping, to prove that |forallsAcc| will eventually produce a
-tree with depth equal to the number of free variables in an expression, and can be ignored.
+tree with depth equal to the number of free variables in an expression (i.e., |m ≡ n|), and can be ignored.
 
 
 \begin{shadedfigure}
@@ -761,15 +761,15 @@ sound : {n : ℕ} → (b : BoolExpr n) → foralls b → ...
 
 But what should the return type of the |sound| lemma be? We would like to
 prove that the argument |b| is a tautology, and hence, the |sound|
-function should return something of the form |(b1 ... bn : Bool) -> P
+function should return something of the form |(b₁ ... bn : Bool) -> P
 B|, where |B| is an expression in the image of the interpretation
 |⟦_⊢_⟧|. For instance, the statement |exampletheorem| is a proposition
 of this form.
 
 The function |proofGoal| takes a |BoolExpr n| as its argument and generates the statement
-that this |BoolExpr| is a tautology. That is, it gives back the type  equal to the theorem  under scrutiny. It does this by
-first introducing $m$ universally quantified Boolean
-variables. These variables are accumulated in an environment. Finally, when $m$
+that it is a tautology. That is, it gives back the type  equal to the theorem  under scrutiny. It does this by
+first introducing $n$ universally quantified Boolean
+variables. These variables are accumulated in an environment. Finally, when $n$
 binders have been introduced, the |BoolExpr| is evaluated under this
 environment.
 
@@ -779,8 +779,7 @@ environment.
 proofGoal      : (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
 proofGoal   .  m    m    (Base    ) b acc = P ⟦ acc ⊢ b ⟧ 
 proofGoal      n    m    (Step y  ) b acc =
-               (a : Bool) →
-                    proofGoal (1 + n) m y b (a ∷ acc)
+               (a : Bool) → proofGoal (1 + n) m y b (a ∷ acc)
 \end{code}
 \end{shade}
 
@@ -791,48 +790,56 @@ need to show the soundness of our decision function |foralls|. That is, we need
 to be able to show that a formula is true if it holds for every
 possible assignment of its variables to |true| or |false|. 
 
-\begin{shade}
-\begin{code}
-soundnessAcc :   {m : ℕ} →          (b : BoolExpr m) →
-                 {n : ℕ} →          (env : Env n) →
-                 (d : Diff n m) →   forallsAcc b env d →
-                 proofGoal n m d b env
-soundnessAcc     bexp     env Base     H with ⟦ env ⊢ bexp ⟧
-soundnessAcc     bexp     env Base     H | true  = H
-soundnessAcc     bexp     env Base     H | false = Error-elim H
-soundnessAcc {m} bexp {n} env (Step y) H =
-  λ a → if {λ b → proofGoal (1 + n) m y bexp (b ∷ env)} a
-    (soundnessAcc bexp (true  ∷ env)    y (proj₁ H))
-    (soundnessAcc bexp (false ∷ env)    y (proj₂ H))
-\end{code}
-\end{shade}
-\todo{Misschien alleen de type signature geven? .. hoewel ik dan in
-  woorden moet vertellen wat er gebeurt. misschien wat later. --PW}
-
-
-If we look closely at the definition of |soundnessAcc|, we see that it
-builds up the environment by assigning some configuration of |true| and |false| to the variables. It eventually returns the
-leaf from |forallsAcc| which is the proof that the formula is a tautology
-in that specific case. 
-
-% 
 % \begin{shade}
 % \begin{code}
-% soundness       : {n : ℕ} → (b : BoolExpr n) → {p : foralls b}
-%                 → proofGoal 0 n (zeroleast 0 n) b []
-% soundness {n} b {p} = soundnessAcc b [] (zeroleast 0 n) p
+% soundnessAcc :   {m : ℕ}           →    (b : BoolExpr m)       →
+%                  {n : ℕ}           →    (env : Env n)          →
+%                  (d : Diff n m)    →    forallsAcc b env d     →
+%                  proofGoal n m d b env
+% soundnessAcc     bexp     env Base     H with ⟦ env ⊢ bexp ⟧
+% soundnessAcc     bexp     env Base     H | true  = H
+% soundnessAcc     bexp     env Base     H | false = Error-elim H
+% soundnessAcc {m} bexp {n} env (Step y) H =
+%   λ a → if {λ b → proofGoal (1 + n) m y bexp (b ∷ env)} a
+%     (soundnessAcc bexp (true  ∷ env)    y (proj₁ H))
+%     (soundnessAcc bexp (false ∷ env)    y (proj₂ H))
 % \end{code}
 % \end{shade}
+% \todo{Misschien alleen de type signature geven? .. hoewel ik dan in
+%   woorden moet vertellen wat er gebeurt. misschien wat later. --PW}
 
-The function |soundness| simply bootstraps |soundnessAcc| with an
-empty environment, just like |foralls|.
-Now, we can prove theorems by calling |soundness b p|, where |b| is the
+This is done in the function |soundness|, of which we only provide the
+type signature. It takes the predicate |foralls| which is only
+satisfied when a proposition is a tautology, and gives back a proof
+which has the type computed by |proofGoal|. It uses the predicate to
+safely extract the leaf from |foralls| corresponding to any given
+environment resulting from the binders introduced by |proofGoal|.
+
+\begin{shade}
+\begin{code}
+soundness       : {n : ℕ}    → (b : BoolExpr n) → {p : foralls b}
+                             → proofGoal 0 n (zeroleast 0 n) b []
+\end{code}
+\ignore{
+\begin{code}
+soundness {n} b {p}          = soundnessAcc b [] (zeroleast 0 n) p
+\end{code}
+}
+\end{shade}
+
+%If we look closely at the definition of |soundnessAcc|, we see that it
+%builds up the environment by assigning some configuration of |true| and |false| to the variables. It eventually returns the
+%leaf from |forallsAcc| which is the proof that the formula is a tautology
+%in that specific case. 
+
+Now, we can prove theorems by calling |soundness b {p}|, where |b| is the
 representation of the formula under consideration, and |p| is the evidence
 that all branches of the proof tree are true. Agda is convinced
 that the representation does in fact correspond to the concrete
 formula, and also that |soundness| gives a valid proof. We do not
-even need to give |p| explicitly since the only valid values of |p| are nested pairs of |tt|,
-the argument is inferred automatically for closed terms, if its type
+even give |p| explicitly since the only valid values are nested
+pairs of |tt|, which can be
+inferred automatically for closed terms, if the type
 is inhabited.  This once  again exploits the fact that  Agda supports eta
 expansion for record types. 
 

@@ -44,6 +44,8 @@
 %format quoteGoal = "\keyword{quoteGoal}"
 %format quoteTerm = "\keyword{quoteTerm}"
 
+%format bn = "\ensuremath{\mathsf{b_n}}"
+
 %format postulate = "\bkw{postulate}"
 %format mutual = "\bkw{mutual}"
 %format module = "\bkw{module}"
