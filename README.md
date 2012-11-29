@@ -24,4 +24,4 @@ The code included in this repository can be used as a convenient starting point 
 Reference to thesis / self-plug
 -------------------------------
 
-This paper covers a small portion of what the original thesis covers, in a lot less detail. Inquisitive readers are encouraged to take a look at the  [thesis](https://github.com/toothbrush/reflection-proofs/downloads); more extensive  [code](https://github.com/toothbrush/reflection-proofs/tree/msc-thesis)  can be found in the `msc-thesis` branch.
+This paper covers a small portion of what the original thesis covers, in a lot less detail. Inquisitive readers are encouraged to take a look at the  [thesis](https://github.com/downloads/toothbrush/reflection-proofs/ReflectionProofs.pdf); more extensive  [code](https://github.com/toothbrush/reflection-proofs/tree/msc-thesis)  can be found in the `msc-thesis` branch.
