@@ -905,7 +905,7 @@ boolTable = (Atomic ,
             ∷     1 \# (quote  ¬_      ) ↦ Not                 ∷     0 \# (quote true     ) ↦ Truth
             ∷     0 \# (quote false    ) ↦ Falsehood           ∷     2 \# (quote _⇒_      ) ↦ Imp           ∷ [])
 \end{code}
-\caption{The mapping table for quoting |BoolInter|.}\label{fig:booltable}
+\caption{The mapping table for quoting to |BoolInter|.}\label{fig:booltable}
 \end{shadedfigure}
 
 Once we have a |BoolInter| expression, we just need to check that its
