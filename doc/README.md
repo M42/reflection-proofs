@@ -27,11 +27,11 @@ The Makefile targets
 --------------------
 
 The included Makefile has a few targets. Most likely you will want to compile the article
-for yourself -- this is also the default target. This will run LHS2TeX on the Literate
+for yourself – this is  the default target. It will run LHS2TeX on the Literate
 Agda file, then use `rubber` to compile the paper.
 
 If you'd like to extract the code and play around with it, without having the added
-distraction of all the LaTeX code around it, you will probably want to use `make extract`. This
+distraction of all the LaTeX  around it, you will probably want to use `make extract`. This
 target will place a file called `ReflectionProofs.agda` in the `extracted` subdirectory. If you
 would like to type check the generated file, without opening the Emacs Agda interface, just run
-`make check` -- this allows you to do development the primitive way.
+`make check` – this allows you to do development the primitive way.
