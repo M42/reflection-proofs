@@ -23,6 +23,10 @@ packages installed and working. A few, but not all, dependencies are listed here
 * A sensible pdflatex installation
 * Rubber (available from Your Favourite Package Manager™)
 
+You should also tell the Makefile where your Agda standard library is located. The easiest
+way to do this is to copy the file `agda_src.mk.example` to `agda_src.mk` and fill in the
+path as needed.
+
 The Makefile targets
 --------------------
 
