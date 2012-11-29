@@ -582,7 +582,7 @@ because Agda supports eta expansion for record types. More specifically, Agda wi
  the type system is doing work for us which is not done for general
  data types; for records eta expansion is safe, since recursion is not allowed.
 This trick is
-implemented in the code on Github, and will be
+implemented in the code on GitHub, and will be
 used from here on to make our proofs easier to use.
 
 
@@ -604,7 +604,7 @@ informative. When a user tries to use the |soundnessEven| lemma to generate a pr
 of the statement |Even 7|, Agda will complain about a missing implicit
 argument of type |IsOdd 7|. An unsolved implicit argument is marked
 yellow in Agda, which looks less scary than a type error in a visible argument, but rest assured that
-no suprious proofs are being generated.
+no spurious proofs are being generated.
 This concludes the example of proving that certain naturals are even using proof by reflection.
 The next step will be to use the same approach for a more involved and
 realistic problem.
@@ -850,9 +850,9 @@ someTauto    = soundness rep
 \end{shadedfigure}
 
 If one were to give as input a formula which is not a tautology, Agda would not be able to infer the proof |foralls|, since
-it would be an uninhabited type. This would result in an unsolved metavariable, which
+it would be an uninhabited type. This would result in an unsolved meta-variable, which
 might seem a triviality if you do not read the compiler's output carefully. Luckily Agda disallows
-importing modules with unsolved metavariables, which means such a spurious proof would not be usable elsewhere
+importing modules with unsolved meta-variables, which means such a spurious proof would not be usable elsewhere
 in a real-life development. 
 
 The only part we still have to do manually is to convert the concrete
