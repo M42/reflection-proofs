@@ -100,7 +100,7 @@ open import Proofs.Util.Types
 }
 \ignore{
 \begin{code}
-open import Proofs.Util.Lemmas renaming (zero-least to zeroleast)
+open import Proofs.Util.Lemmas
 open import Proofs.Util.Types using (Diff; Base; Step)
 \end{code}
 }
@@ -807,11 +807,11 @@ environment resulting from the binders introduced by |proofGoal|.
 \begin{shade}
 \begin{code}
 soundness       : {n : ℕ}    → (b : BoolExpr n) → {p : foralls b}
-                             → proofGoal' 0 n (zeroleast 0 n) b []
+                             → proofGoal' 0 n (zero-least 0 n) b []
 \end{code}
 \ignore{
 \begin{code}
-soundness {n} b {p}          = soundnessAcc b [] (zeroleast 0 n) p
+soundness {n} b {p}          = soundnessAcc b [] (zero-least 0 n) p
 \end{code}
 }
 \end{shade}
