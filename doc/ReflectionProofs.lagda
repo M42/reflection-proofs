@@ -411,10 +411,10 @@ Agda terms to elements of the AST.
 \begin{shadedfigure}
 \begin{code}
 exprTable : Table Expr
-exprTable = (Var ,
-             2   \# (quote _+_)      ↦ Plus   ∷
-             0   \# (quote ℕ.zero)   ↦ Z      ∷ 
-             1   \# (quote ℕ.suc)    ↦ S      ∷ [])
+exprTable = (  Var ,
+               (quote _+_)      \# 2    ↦ Plus   ∷
+               (quote ℕ.zero)   \# 0    ↦ Z      ∷ 
+               (quote ℕ.suc)    \# 1    ↦ S      ∷ [])
 \end{code}
 \caption{The mapping table for converting to the imaginary |Expr| AST. }\label{fig:exprTable}
 \end{shadedfigure}
@@ -901,9 +901,9 @@ gives us a value in |BoolInter|.
 \begin{code}
 boolTable : Table BoolInter
 boolTable = (Atomic ,
-                  2 \# (quote _∧_      ) ↦ And                 ∷     2 \# (quote _∨_      ) ↦ Or
-            ∷     1 \# (quote  ¬_      ) ↦ Not                 ∷     0 \# (quote true     ) ↦ Truth
-            ∷     0 \# (quote false    ) ↦ Falsehood           ∷     2 \# (quote _⇒_      ) ↦ Imp           ∷ [])
+                  (quote _∧_      )  \# 2 ↦ And                 ∷     (quote _∨_      )   \# 2   ↦ Or
+            ∷     (quote  ¬_      )  \# 1 ↦ Not                 ∷     (quote true     )   \# 0   ↦ Truth
+            ∷     (quote false    )  \# 0 ↦ Falsehood           ∷     (quote _⇒_      )   \# 2   ↦ Imp           ∷ [])
 \end{code}
 \caption{The mapping table for quoting to |BoolInter|.}\label{fig:booltable}
 \end{shadedfigure}

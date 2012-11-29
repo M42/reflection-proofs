@@ -45,7 +45,7 @@ f $ⁿ (x ∷ xs) = f x $ⁿ xs
 -- the actual constructor, packed in an N-ary function, which will make it easier to apply
 -- the arguments retrieved from a List (Arg Term) to the constructor.
 data ConstructorMapping (astType : Set) : Set₁ where
-  _#_↦_ : (arity : ℕ) → Name → N-ary arity astType astType → ConstructorMapping astType
+  _#_↦_ : Name → (arity : ℕ) → N-ary arity astType astType → ConstructorMapping astType
 
 -- here we simply say that a mapping table is a "variable" constructor (assumed to take one
 -- natural as argument representing the de Bruijn index of that variable in whatever context
@@ -57,9 +57,9 @@ Table a = ((ℕ → a) × List (ConstructorMapping a))
 -- if we manage to find it, return the whole entry.
 lookupName : {a : Set} → List (ConstructorMapping a) → Name → Maybe (ConstructorMapping a)
 lookupName [] name = nothing
-lookupName (arity # x ↦ x₁ ∷ tab) name with name ≟-Name x
-lookupName (arity # x ↦ x₁ ∷ tab) name | yes p = just (arity # x ↦ x₁)
-lookupName (arity # x ↦ x₁ ∷ tab) name | no ¬p = lookupName tab name
+lookupName (x # arity ↦ x₁ ∷ tab) name with name ≟-Name x
+lookupName (x # arity ↦ x₁ ∷ tab) name | yes p = just (x # arity ↦ x₁)
+lookupName (x # arity ↦ x₁ ∷ tab) name | no ¬p = lookupName tab name
 
 mutual
   -- see if we can find a Name in the constructor table, and if
@@ -68,11 +68,11 @@ mutual
   -- list of arguments to that Term.
   handleNameArgs : {a : Set} → Table a → Name → List (Arg Term) → Maybe a
   handleNameArgs (vc , tab) name args with lookupName tab name
-  handleNameArgs (vc , tab) name args | just (arity       # x  ↦ x₁)   with convertArgs (vc , tab) args
-  handleNameArgs (vc , tab) name args | just (arity       # x₁ ↦ x₂)   | just x with length x ≟-Nat arity
-  handleNameArgs (vc , tab) name args | just (.(length x) # x₁ ↦ x₂)   | just x | yes = just (x₂ $ⁿ fromList x)
-  handleNameArgs (vc , tab) name args | just (arity       # x₁ ↦ x₂)   | just x | no  = nothing
-  handleNameArgs (vc , tab) name args | just (arity       # x  ↦ x₁)   | nothing = nothing
+  handleNameArgs (vc , tab) name args | just (x     # arity        ↦ x₁)   with convertArgs (vc , tab) args
+  handleNameArgs (vc , tab) name args | just (x₁    # arity        ↦ x₂)   | just x with length x ≟-Nat arity
+  handleNameArgs (vc , tab) name args | just (x₁    # .(length x)  ↦ x₂)   | just x | yes = just (x₂ $ⁿ fromList x)
+  handleNameArgs (vc , tab) name args | just (x₁    # arity        ↦ x₂)   | just x | no  = nothing
+  handleNameArgs (vc , tab) name args | just (x     # arity        ↦ x₁)   | nothing = nothing
   handleNameArgs (vc , tab) name args | nothing = nothing
 
   -- convert a list of arguments (such as those applied to variables
