@@ -14,16 +14,16 @@
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% TODO: stuff only for DRAFT versions
+%% TODO: stuff only for DRAFT versions {{
 %%%%% microtype with settings.
 \usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
 \microtypecontext{spacing=nonfrench}
 %\newcommand{\microtypesetup}[1]{\fbox{NO MICROTYPE!\phantom{\rule{0.1\textwidth}{0.1\textwidth}}}}
-\usepackage{todonotes}
+%\usepackage{todonotes}
 
 \usepackage{draftwatermark}
 \SetWatermarkLightness{0.95}
-%% end DRAFT-version stuff.
+%% end DRAFT-version stuff. }}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \usepackage{subfigure}
@@ -78,8 +78,8 @@ minipage=\linewidth,margin=0pt,padding=0pt,bgcolor=hlite%
 \begin{code}
 module doc.ReflectionProofs where
 
-open import Proofs.TautologyProver hiding (concrete2abstract; 
-        boolTable;  proofGoal ; ⟦_⊢_⟧ ; forallsAcc ;  soundnessAcc)
+open import Proofs.TautologyProver hiding (concrete2abstract;  soundness ;
+        boolTable;  proofGoal ; ⟦_⊢_⟧ ; forallsAcc )
 open import Data.Bool renaming (not to ¬_)
 open import Relation.Binary.PropositionalEquality
 open import Reflection
@@ -182,7 +182,6 @@ reflection. More specifically this work makes the following contributions:
 \begin{itemize}
   \item We give a brief overview of Agda's reflection mechanism (Sec.~\ref{sec:crash}). Previously, these features were only documented in release notes and comments in Agda's source files.
 \item We present |Autoquote|, an Agda library that 
-%makes quoting simple abstract syntax trees a breeze \todo{too informal?}
 alleviates much
   of a programmer's burden when quoting a given abstract syntax tree 
 (Sec.~\ref{sec:autoquote}).
@@ -204,20 +203,23 @@ This paper is also a Literate Agda file, which means the code snippets can be ex
 \subsection{Introducing Agda}\label{sec:reflection}
 
 Agda is an implementation
-of Martin-L\"of's type theory \cite{Martin-Lof:1985:CMC:3721.3731},
-extended with records and modules. It is developed at the Chalmers University of Technology
-\cite{norell:thesis}; in accordance with \ch, it can be viewed as
+of Martin-L\"of's type theory~\cite{Martin-Lof:1985:CMC:3721.3731},
+extended with records and modules. It is developed at the Chalmers
+University of Technology~\cite{norell:thesis}; in accordance with \ch,
+it can be viewed as
 both a 
 functional programming language
 and a proof assistant for intuitionistic logic. It is comparable to
-Coquand's calculus of constructions, the logic behind Coq \cite{DBLP:journals/iandc/CoquandH88}. 
+Coq, which is based on
+Coquand's calculus of constructions~\cite{DBLP:journals/iandc/CoquandH88}. 
 For an excellent tutorial on dependently typed programming using Agda,
-the reader is referred to Norell's work \cite{Norell:2009:DTP:1481861.1481862}.
+the reader is referred to Norell's work~\cite{Norell:2009:DTP:1481861.1481862}.
 
-Since version 2.2.8, Agda includes a reflection API \cite{agda-relnotes-228}, which allows the conversion of
+Since version 2.2.8, Agda includes a reflection API~\cite{agda-relnotes-228}, which allows the conversion of
 parts of a program's code into an abstract syntax tree, a data structure
 in Agda itself, that can be inspected or modified like any other data structure.
-The idea of reflection is old: already in the 1980s Lisp included a similar
+The idea of reflection is old: in the 1980s % no apostrophe!
+ Lisp included a similar
 feature, then already called \emph{quoting} and \emph{unquoting},
 which allowed run time modification of a program's code, for example by
 the program itself. This has given rise to powerful techniques for code reuse and
@@ -265,7 +267,8 @@ Dissecting
 this, we introduced a lambda abstraction, so we expect the |lam|
 constructor. Its one argument is visible (as opposed to hidden), and
 the body of the lambda abstraction is just a reference to the
-nearest-bound variable, thus |var 0|, applied to an empty list of arguments.
+nearest-bound variable, thus |var 0|, applied to an empty list of
+arguments. Variables are referred to by their De Bruijn indices.
 
 Furthermore, |quoteTerm| type checks and normalises its term before
 returning the |Term|, as the following example demonstrates:
@@ -311,20 +314,19 @@ illustrated in the function |convert|, below.
 \begin{shade}
 \begin{spec}
 convert : Term → Something
-convert (def c args) with c ≟-Name quote foo
+convert (con c args) with c ≟-Name quote foo
 ...                   | yes p     = (HOLE 0) -- |foo| applied to arguments
 ...                   | no ¬p     = (HOLE 1) -- a function other than |foo|
 \end{spec}
 \end{shade}
-\todo{Je hebt def nog niet uitgelegd, zou je ook con kunnen gebruiken?}
 
 This short introduction should already be enough to start developing
 simple programs using reflection.  For a more detailed description of the
 reflection API in Agda, including many examples, the inquisitive
-reader is referred to the chapter in van der Walt's thesis covering this topic \cite{vdWalt:Thesis:2012}.
+reader is referred to the chapter in van der Walt's thesis covering this topic~\cite{vdWalt:Thesis:2012}.
 This thesis goes into more detail 
 regarding the data structures involved in Agda's reflection API, and later, 
-gives a detailed account of some real-world use-cases.
+gives a detailed account of some real-world applications.
 
 
 
@@ -427,8 +429,7 @@ We will not say much about the implementation of this library, since
 it is not groundbreaking.
 For more details, we again refer to van der Walt's thesis~\cite{vdWalt:Thesis:2012}. 
 Using the library is simple; it exposes a function called
-|doConvert| which takes the conversion table, a (hidden) \todo{is it a
-  problem that we only talk about implicit args later? -- not really readers should be familiar with Agda's implicit arguments already} proof that
+|doConvert| which takes the conversion table, a (hidden)  proof that
 the conversion is possible, and a |Term| to convert,
 and produces an inhabitant of the desired data type.
 
@@ -453,7 +454,7 @@ something = refl
 
 In most cases, the result from |doConvert| will require some
 post-processing, as we will see later in the Boolean tautologies
-example (Section~\ref{sec:Boolean-tautologies}), but for now it suffices to say that |Autoquote| removes a lot
+example (Sec.~\ref{sec:Boolean-tautologies}), but for now it suffices to say that |Autoquote| removes a lot
 of the burden of converting |Term|s into other ASTs.
 
 \section{Proof by Reflection}\label{sec:proof-by-reflection}
@@ -506,7 +507,7 @@ isEven6 = isEven+2 (isEven+2 (isEven+2 isEven0))
 
 To automate this, we will show how to \emph{compute} the proof
 required. We start by defining a predicate |even?| that
-returns the unit type when its input is even and bottom otherwise.
+returns the unit type (top) when its input is even and the empty type (bottom) otherwise.
 In this context, |⊤| and |⊥| can be seen as the analogues of |true|
 and |false|, since
  there exists
@@ -574,19 +575,12 @@ produce a type error stating that the types |⊤| and |⊥| cannot be unified.
 Since the type |⊤| is a simple record type, Agda can infer the |tt|
 argument. This means we can turn the assumption |even? n| into an
 implicit argument, so a user could get away with writing just
-|soundnessEven| as the proof, letting the Agda fill in the missing proof. 
-To implement this is, we modify the |soundnessEven|
+|soundnessEven| as the proof, letting Agda fill in the missing proof. 
+To achieve this, we modify the |soundnessEven|
 function slightly, making all its arguments implicit.  This trick works
 because Agda supports eta expansion for record types. More specifically, Agda will automatically fill in implicit arguments of the unit type. Here,
  the type system is doing work for us which is not done for general
  data types; for records eta expansion is safe, since recursion is not allowed.
- %%%%%%%%%%%%%%%%%%%
-% This does impact error reporting. Since a module may appear to
-% compile with unsolved constraints on implicit arguments, merely
-% marking the term yellow. but rest assured that no spurious proofs are
-% being generated. \todo{wording needs help -- 
-% ik zou deze alinea hier gewoon weglaten en benoemen in de volgende paragraaf}
- %%%%%%%%%%%%%%%%%%%%
 This trick is
 implemented in the code on Github, and will be
 used from here on to make our proofs easier to use.
@@ -607,7 +601,10 @@ data IsOdd : ℕ -> Set where
 This makes the soundness proof a little less straightforward, but in return the
 type error generated if an odd number is used becomes more
 informative. When a user tries to use the |soundnessEven| lemma to generate a proof
-of the statement |Even 7|, Agda will complain about a missing implicit argument of type |IsOdd7|.
+of the statement |Even 7|, Agda will complain about a missing implicit
+argument of type |IsOdd 7|. An unsolved implicit argument is marked
+yellow in Agda, which looks less scary than a type error in a visible argument, but rest assured that
+no suprious proofs are being generated.
 This concludes the example of proving that certain naturals are even using proof by reflection.
 The next step will be to use the same approach for a more involved and
 realistic problem.
@@ -666,7 +663,7 @@ Enter |Env n|: a vector of $n$ Boolean values. It has fixed size |n| since a |Bo
 % \end{spec}
 % \end{shade}
 
-Now we can define a decision function, which tells us if a given
+Now we can define an evaluation function, which tells us if a given
 Boolean expression is true or not, under some assignment of variables. It does this by evaluating
 the formula's % the apostrophe is bonafide.
  AST, filling in for |Atomic| values the concrete values which are
@@ -697,7 +694,7 @@ Recall our decision function |even?| in the previous section. It returned
 |⊤| if the proposition was valid, |⊥| otherwise. Looking at |⟦_⊢_⟧|, we see that
 we should just translate |true| to the unit type and false to the empty type, to get
 the analogue of the |even?| function. We therefore define a function
-|P| in Fig~\ref{fig:error}, mapping Booleans to types. To give more useful error messages, we decorate the empty type with an additional string.
+|P| in Fig.~\ref{fig:error}, mapping Booleans to types. To give more useful error messages, we decorate the empty type with a string.
 
 \begin{shadedfigure}
 \begin{spec}
@@ -729,13 +726,13 @@ exampletheorem = (p₁ q₁ p₂ q₂ : Bool)   →
 \end{shadedfigure}
 
 Here a complication arises, though. We are quantifying over a list of Boolean values \emph{outside}
-of the decision function |P|, so proving |P| to be sound will not suffice. We just defined an evaluation function |⟦_⊢_⟧|
+of the function |P|, so proving |P| to be sound will not suffice. We just defined an evaluation function |⟦_⊢_⟧|
 to take an environment, an expression, and return a Boolean. In Fig.~\ref{fig:exampletheorem}, though,
 we effectively quantified over all possible environments. We are going to need a way
 to lift the function |P| over arbitrary environments.
 
 % Ik zou uitkijken met het gebruik van 'decision function' -- hier
-% wordt meestal mee bedoelt een functie van het type:
+% wordt meestal mee bedoeld een functie van het type:
 % decideP : (x : A) -> Either (P x) (P x -> Empty)
 
 The function |forallsAcc|, in Fig.~\ref{fig:forallsacc}, performs this lifting. This function represents the real analogue
@@ -743,7 +740,7 @@ of |even?| in this situation: it returns a type which is only inhabited if the a
 expression is true under all variable assignments. This is done by generating a full binary tree
 of |⊤| or |⊥| types, depending on the result of |⟦_⊢_⟧| under each assignment.
 This corresponds precisely to the expression being a tautology if and
-only if the tree is inhabited. Note that |foralls| simply bootstraps
+only if the tree is inhabited. The function |foralls| simply bootstraps
 |forallsAcc| with an empty environment -- it is omitted for brevity.
 
 The |Diff| argument is unfortunately needed for bookkeeping, to prove that |forallsAcc| will eventually produce a
@@ -765,12 +762,12 @@ soundness. Following the |soundnessEven| example, we want a function something l
 
 \begin{shade}
 \begin{spec}
-sound : {n : ℕ} → (b : BoolExpr n) → foralls b → ...
+soundness : {n : ℕ} → (b : BoolExpr n) → foralls b → ...
 \end{spec}
 \end{shade}
 
-But what should the return type of the |sound| lemma be? We would like to
-prove that the argument |b| is a tautology, and hence, the |sound|
+But what should the return type of the |soundness| lemma be? We would like to
+prove that the argument |b| is a tautology, and hence, the |soundness|
 function should return something of the form |(b₁ ... bn : Bool) -> P
 B|, where |B| is an expression in the image of the interpretation
 |⟦_⊢_⟧|. For instance, the statement |exampletheorem| is a proposition
@@ -800,24 +797,6 @@ need to show the soundness of our decision function |foralls|. That is, we need
 to be able to show that a formula is true if it holds for every
 possible assignment of its variables to |true| or |false|. 
 
-% \begin{shade}
-% \begin{code}
-% soundnessAcc :   {m : ℕ}           →    (b : BoolExpr m)       →
-%                  {n : ℕ}           →    (env : Env n)          →
-%                  (d : Diff n m)    →    forallsAcc b env d     →
-%                  proofGoal n m d b env
-% soundnessAcc     bexp     env Base     H with ⟦ env ⊢ bexp ⟧
-% soundnessAcc     bexp     env Base     H | true  = H
-% soundnessAcc     bexp     env Base     H | false = Error-elim H
-% soundnessAcc {m} bexp {n} env (Step y) H =
-%   λ a → if {λ b → proofGoal (1 + n) m y bexp (b ∷ env)} a
-%     (soundnessAcc bexp (true  ∷ env)    y (proj₁ H))
-%     (soundnessAcc bexp (false ∷ env)    y (proj₂ H))
-% \end{code}
-% \end{shade}
-% \todo{Misschien alleen de type signature geven? .. hoewel ik dan in
-%   woorden moet vertellen wat er gebeurt. misschien wat later. --PW}
-
 This is done in the function |soundness|, of which we only provide the
 type signature. It takes the predicate |foralls| which is only
 satisfied when a proposition is a tautology, and gives back a proof
@@ -828,7 +807,7 @@ environment resulting from the binders introduced by |proofGoal|.
 \begin{shade}
 \begin{code}
 soundness       : {n : ℕ}    → (b : BoolExpr n) → {p : foralls b}
-                             → proofGoal 0 n (zeroleast 0 n) b []
+                             → proofGoal' 0 n (zeroleast 0 n) b []
 \end{code}
 \ignore{
 \begin{code}
@@ -856,7 +835,7 @@ expansion for record types.
 If the module
 passes the type checker, we know our formula is both a tautology and
 that we have the corresponding proof object at our disposal
-afterwards, as in |someTauto|.
+afterwards, as in |someTauto| (Fig.~\ref{fig:dup}).
 
 \begin{shadedfigure}
 \begin{code}
@@ -871,16 +850,16 @@ someTauto    = soundness rep
 \end{shadedfigure}
 
 If one were to give as input a formula which is not a tautology, Agda would not be able to infer the proof |foralls|, since
-it would be an uninhabited type. One would be left with an unsolved meta variable, which
+it would be an uninhabited type. This would result in an unsolved metavariable, which
 might seem a triviality if you do not read the compiler's output carefully. Luckily Agda disallows
-importing modules with unsolved meta variables, which means such a spurious proof would not be usable elsewhere
+importing modules with unsolved metavariables, which means such a spurious proof would not be usable elsewhere
 in a real-life development. 
 
 The only part we still have to do manually is to convert the concrete
 Agda representation of the formula (|p ∧ q ⇒ q|, in this case) into our abstract
 syntax (|rep|, in this example). This is unfortunate, as we end up typing out the
 formula twice. We also have to count the number of variables
-ourselves and convert them the to De Bruijn indices. This is
+ourselves and convert them to De Bruijn indices. This is
 error-prone given how cluttered the abstract representation can get
 for formulae containing many variables. 
 
@@ -907,12 +886,12 @@ The conversion between a |Term| and |BoolExpr| is achieved in two phases.
 Since |Autoquote| only supports simple inductive data types, the first issue we encounter is that
 |BoolExpr n| has an argument of type |Fin n| to its constructor |Atomic| (see Fig.~\ref{fig:boolexprn}).
 To work around this, we introduce a simpler, intermediary data structure, to which we will convert
-from |Term|. This type, called |BoolInter|, is not shown here, but the only difference with |BoolExpr n| is that the
-index of its variables is natural instead of a |Fin n|.
+from |Term|. This type, called |BoolInter|, is not shown here, but the only difference with |BoolExpr n| is that its
+variables are represented by naturals instead of |Fin|s.
 
 
 The |Autoquote| library needs a lookup table, mentioning which constructor represents
-De Bruijn-indexed variables and what the arity of the constructors is. This way
+variables and what the arity of the constructors is. This way
 only |Term|s containing variables or the usual operators 
 are accepted. Using the mapping presented in Fig.~\ref{fig:booltable}, we can
 construct a function that, for suitable |Term|s,
@@ -931,11 +910,8 @@ boolTable = (Atomic ,
 
 Once we have a |BoolInter| expression, we just need to check that its
 variables are all in scope (this means that $\forall$ |Atomic| $x  :     x < n$, if we
-want to convert to a |BoolExpr n|), and convert to a |BoolExpr n| by replacing all the |ℕ| values with their |Fin n| counterparts.
+want to convert to a |BoolExpr n|), and replace all the |ℕ| values with their |Fin n| counterparts.
 We can now write a function called |proveTautology|, which uses the automatic quoter and calls |soundness| on the resulting term.
-%This and other helper
-%functions have been omitted for brevity, since they are rather
-%predictable.
 
 That is all we need to automatically prove that
 formulae are tautologies.  The following snippet illustrates the use of
@@ -961,7 +937,7 @@ trusts.
  
 \paragraph{Related work} 
  
-Our main innovations are novel a combination of existing
+Our main innovations are novel combinations of existing
 techniques; as a result, quite a number of subjects are relevant to mention
 here.
  
@@ -973,24 +949,28 @@ been inspired~-- systems with varying power and scope.
  
 Reflection is becoming more common, to
 various extents, in industry-standard languages such as Java, Objective-C, as well as theoretically more interesting
-languages, such as Haskell \cite{DBLP:journals/lisp/Stump09}. Smalltalk, an early
-object-oriented programming language with advanced reflective features~\cite{Goldberg:1983:SLI:273}, is the predecessor of Objective-C. As such, it
-is surprising that industry programming does not use more of these advanced reflective features which have already  been around for a 
-long time. The disadvantage of Smalltalk, however, is that reflection
+languages, such as Haskell~\cite{DBLP:journals/lisp/Stump09}. Smalltalk, an early
+object-oriented programming language with advanced reflective
+features~\cite{Goldberg:1983:SLI:273}, is the predecessor of
+Objective-C.
+The disadvantage of Smalltalk, however, is that reflection
 is extremely unsafe: one can call non-existent functions, to name just
 one pitfall.
+Nevertheless, it
+is surprising that industry programming does not use more of these advanced reflective features which have already  been around for a 
+long time. 
 
-These systems would seem to be the inspiration for the current reflection system recently introduced
+These systems would seem to be the inspiration for the current reflection mechanism recently introduced
 in Agda, although it is lacking in a number of fundamental
 capabilities, most notably type awareness of |unquote|, and type erasure
 when using |quoteTerm|.
 
 \paragraph{Evaluation}
 If we look at the taxonomy of reflective systems in programming language technology written up 
-by Sheard \cite{sheard-staged-programming}
+by Sheard~\cite{sheard-staged-programming},
 we see that we can make a few rough judgements about the metaprogramming facilities Agda currently 
 supports\footnote{Of course, having been implemented during a single
-Agda Implementors' Meeting \cite{thorsten-communication}, the current
+Agda Implementors' Meeting~\cite{thorsten-communication}, the current
 implementation is more a proof-of-concept, and is still far from
 being considered finished, so it would be unfair to judge the current implementation all too harshly. In
 fact, we hope that this work might motivate the Agda developers to include some more features, to
@@ -1000,9 +980,10 @@ make the system truly useful. }.
 \item Agda's current reflection API leans more towards analysis than generation,
 \item it supports encoding of terms in an algebraic data type (as opposed to a string, for example),
 \item it involves manual staging annotations (by using keywords such as |quote| and |unquote|),
-\item it is homogeneous, because a representation of the object language lives inside the metalanguage (as a native
-  data type), 
-\item it is only two-stage: we cannot as yet produce an object program which is itself a metaprogram. This is
+\item it is homogeneous, because the object language is the
+  metalanguage. The object language's representation is a native
+  data type.
+\item It is only two-stage: we cannot as yet produce an object program which is itself a metaprogram. This is
   because we rely on built in keywords such as |quote|, which cannot themselves be represented.
 \end{itemize}
  
@@ -1020,15 +1001,10 @@ people appreciate.
 
 There are performance issues with the current reflection API in
 Agda. This should not come as a surprise. The extensive usage of proof
-by reflection in Coq and SSReflect~\cite{gonthier:inria-00515548}, has
+by reflection in Coq and SSReflect~\cite{gonthier:inria-00515548} has
 motivated a lot of recent work on improving Coq's compile time
 evaluation. We hope that Agda can be extended with similar technology.
 
-% The SSReflect extension for Coq~\cite{gonthier:inria-00515548}  should also be mentioned here; 
-% the techniques presented here should also be applicable in
-% SSReflect. Unfortunately, when computing large proof trees,
-% performance could be better; this is a problem for both SSReflect and
-% Agda's reflective method. \todo{citation here?}
  
 \paragraph{Conclusions}
 Returning to our research question,  repeated here to jog the memory,  a summary of findings is made.
