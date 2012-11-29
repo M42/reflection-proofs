@@ -138,11 +138,11 @@ Department of Computer Science, Utrecht University
 It gives a brief introduction to using reflection, and details the intricacies
 of using reflection to automate certain proofs using \emph{proof by
   reflection}. 
-Also, a library is presented which
+It presents a library that
 can be used for automatically quoting a class of concrete Agda terms
 to a simple, user-defined
 inductive data type, alleviating the burden a programmer usually faces
-when wanting to use reflection in a practical setting. 
+when using reflection in a practical setting. 
 \end{abstract}
 
 
@@ -182,9 +182,9 @@ reflection. More specifically this work makes the following contributions:
 \begin{itemize}
   \item We give a brief overview of Agda's reflection mechanism (Sec.~\ref{sec:crash}). Previously, these features were only documented in release notes and comments in Agda's source files.
 \item We present |Autoquote|, an Agda library that 
-makes quoting simple abstract syntax trees a breeze \todo{too informal?}
-% alleviates much
-%   of a programmer's burden when quoting a given abstract syntax tree 
+%makes quoting simple abstract syntax trees a breeze \todo{too informal?}
+alleviates much
+  of a programmer's burden when quoting a given abstract syntax tree 
 (Sec.~\ref{sec:autoquote}).
 \item We show how to use Agda's reflection mechanism to
   automate certain categories of proofs (Sec.~\ref{sec:proof-by-reflection}).
@@ -229,7 +229,7 @@ This paper explores how such a reflection mechanism can be used in a
 \section{Using Reflection}\label{sec:crash}
 
 Before going into too much detail about how reflection can make our
-life easier and what nifty techniques are possible, we look 
+life easier and what new programming techniques are possible, we look 
 at Agda's reflection API in some detail. It should be a good
 starting point for someone familiar with Agda, or at the very least
 dependently typed programming in general. 
@@ -239,8 +239,12 @@ dependently typed programming in general.
 \paragraph{The Keywords} There are several new keywords that can be used to quote and unquote
 |Term| values: |quote|, |quoteTerm|, |quoteGoal|, and |unquote|. The
 |quote| keyword allows the user to access the internal representation of
-any identifier, or name. This internal representation can be used to query the
-type or definition of the identifier; we refer to the release
+any identifier. This internal representation can be used to query the
+type or definition of the identifier. We refer to the release
+% Kurt Vonnegut zegt over de semi-colon: Here is a lesson in creative
+% writing. First rule: Do not use semicolons. They are transvestite
+% hermaphrodites representing absolutely nothing. All they do is show
+% you've been to college. -- gebruik ze niet te vaak :)
 notes~\cite{agda-relnotes-228} for a listing of the data structures
 involved; the most important one is the type |Term : Set| which
 represents concrete Agda terms.
@@ -312,6 +316,7 @@ convert (def c args) with c ≟-Name quote foo
 ...                   | no ¬p     = (HOLE 1) -- a function other than |foo|
 \end{spec}
 \end{shade}
+\todo{Je hebt def nog niet uitgelegd, zou je ook con kunnen gebruiken?}
 
 This short introduction should already be enough to start developing
 simple programs using reflection.  For a more detailed description of the
@@ -374,7 +379,7 @@ the agony~-- is presented in this section, in the form of the
 \paragraph{The |Autoquote| library}
 We will examine a toy AST, called |Expr|, shown in Fig.~\ref{fig:exprdata}.
 It is a rather simple inductive data structure representing terms which can contain Peano-style natural
-numbers, variables (indexed by an Agda natural) and additions.
+numbers, variables (represented by an Agda natural) and additions.
 
 
 \begin{shadedfigure}
@@ -389,7 +394,7 @@ data Expr : Set where
 \end{shadedfigure}
 
 We might want to convert an expression, such as $5 + x$, to this
-AST, using reflection. In an ideal world, we would  just
+AST using reflection. In an ideal world, we would  just
  provide a mapping from concrete constructs such as the |_+_| function
  to elements like |Plus| of our
 AST, and get a conversion function for free.
@@ -423,12 +428,12 @@ it is not groundbreaking.
 For more details, we again refer to van der Walt's thesis~\cite{vdWalt:Thesis:2012}. 
 Using the library is simple; it exposes a function called
 |doConvert| which takes the conversion table, a (hidden) \todo{is it a
-  problem that we only talk about implicit args later?} proof that
+  problem that we only talk about implicit args later? -- not really readers should be familiar with Agda's implicit arguments already} proof that
 the conversion is possible, and a |Term| to convert,
-and produces an inhabitant of your data type.
+and produces an inhabitant of the desired data type.
 
 The use of |doConvert| is illustrated in Fig.~\ref{fig:test-autoquote}. 
-Note that the hidden assumption that the conversion is possible causes
+The hidden assumption that the conversion is possible causes
 a 
 compile time failure if an incompatible term is given.
 To convince yourself of the utility of the |Autoquote| library,
@@ -448,7 +453,7 @@ something = refl
 
 In most cases, the result from |doConvert| will require some
 post-processing, as we will see later in the Boolean tautologies
-example, but for now it suffices to say that |Autoquote| removes a lot
+example (Section~\ref{sec:Boolean-tautologies}), but for now it suffices to say that |Autoquote| removes a lot
 of the burden of converting |Term|s into other ASTs.
 
 \section{Proof by Reflection}\label{sec:proof-by-reflection}
@@ -543,7 +548,7 @@ right-hand side of the function definition. The assumption, |even?
 1|, is uninhabited, and we discharge this branch using Agda's
 absurd pattern, \texttt{()}.
 
-Now that this has been done, if we need a proof that some arbitrary
+If we need a proof that some arbitrary
 |n| is even, we only need to call |soundnessEven|. Note that
 the value of |n| is inferred. The only
 argument we must to provide to |soundnessEven| is a proof
@@ -569,22 +574,22 @@ produce a type error stating that the types |⊤| and |⊥| cannot be unified.
 Since the type |⊤| is a simple record type, Agda can infer the |tt|
 argument. This means we can turn the assumption |even? n| into an
 implicit argument, so a user could get away with writing just
-|soundnessEven| as the proof, letting the inferrer do the rest. 
-The way to implement this is to slightly modify the |soundnessEven|
-function, so that its arguments are all implicit.  This is possible
-because Agda supports eta expansion for record types. This means these proofs can be automatically instantiated, since
-there is only one option, namely |tt|. Here,
+|soundnessEven| as the proof, letting the Agda fill in the missing proof. 
+To implement this is, we modify the |soundnessEven|
+function slightly, making all its arguments implicit.  This trick works
+because Agda supports eta expansion for record types. More specifically, Agda will automatically fill in implicit arguments of the unit type. Here,
  the type system is doing work for us which is not done for general
  data types; for records eta expansion is safe, since recursion is not allowed.
  %%%%%%%%%%%%%%%%%%%
- This does impact error reporting, since a module may appear to
- compile with unsolved constraints on implicit arguments, merely
- marking the term yellow, but rest assured that no spurious proofs are
- being generated. \todo{wording needs help}
+% This does impact error reporting. Since a module may appear to
+% compile with unsolved constraints on implicit arguments, merely
+% marking the term yellow. but rest assured that no spurious proofs are
+% being generated. \todo{wording needs help -- 
+% ik zou deze alinea hier gewoon weglaten en benoemen in de volgende paragraaf}
  %%%%%%%%%%%%%%%%%%%%
 This trick is
 implemented in the code on Github, and will be
-used from here on to keep terms elegant. 
+used from here on to make our proofs easier to use.
 
 
 
@@ -598,9 +603,11 @@ data IsOdd : ℕ -> Set where
 \end{spec}  
 \end{shade}
 
+
 This makes the soundness proof a little less straightforward, but in return the
 type error generated if an odd number is used becomes more
-informative. 
+informative. When a user tries to use the |soundnessEven| lemma to generate a proof
+of the statement |Even 7|, Agda will complain about a missing implicit argument of type |IsOdd7|.
 This concludes the example of proving that certain naturals are even using proof by reflection.
 The next step will be to use the same approach for a more involved and
 realistic problem.
@@ -706,7 +713,7 @@ P  false   =     Error "Argument expression does not evaluate to true."
 
 Now that we have these helper functions, it is easy to define what it
 means to be a tautology. We quantify over a few Boolean variables, and
-wrap the formula in our |P| decision function. If the resulting type is
+wrap the formula in the function |P|. If the resulting type is
 inhabited, the argument to |P| is a tautology, i.e., for each
 assignment of the free variables the entire equation still evaluates
 to |true|. An example encoding of such a theorem is Fig.~\ref{fig:exampletheorem}~-- notice
@@ -725,10 +732,13 @@ Here a complication arises, though. We are quantifying over a list of Boolean va
 of the decision function |P|, so proving |P| to be sound will not suffice. We just defined an evaluation function |⟦_⊢_⟧|
 to take an environment, an expression, and return a Boolean. In Fig.~\ref{fig:exampletheorem}, though,
 we effectively quantified over all possible environments. We are going to need a way
-to lift our decision function to arbitrary environments.
+to lift the function |P| over arbitrary environments.
 
+% Ik zou uitkijken met het gebruik van 'decision function' -- hier
+% wordt meestal mee bedoelt een functie van het type:
+% decideP : (x : A) -> Either (P x) (P x -> Empty)
 
-The way we do this is the function |forallsAcc|, in Fig.~\ref{fig:forallsacc}. This function represents the real analogue
+The function |forallsAcc|, in Fig.~\ref{fig:forallsacc}, performs this lifting. This function represents the real analogue
 of |even?| in this situation: it returns a type which is only inhabited if the argument Boolean
 expression is true under all variable assignments. This is done by generating a full binary tree
 of |⊤| or |⊥| types, depending on the result of |⟦_⊢_⟧| under each assignment.
@@ -737,7 +747,7 @@ only if the tree is inhabited. Note that |foralls| simply bootstraps
 |forallsAcc| with an empty environment -- it is omitted for brevity.
 
 The |Diff| argument is unfortunately needed for bookkeeping, to prove that |forallsAcc| will eventually produce a
-tree with depth equal to the number of free variables in an expression (i.e., |m ≡ n|), and can be ignored.
+tree with depth equal to the number of free variables in an expression, and can be ignored.
 
 
 \begin{shadedfigure}
@@ -751,7 +761,7 @@ forallsAcc b acc    (Step y   ) =
 \end{shadedfigure}
 
 \paragraph{Soundness} Since we now finally know our real decision function |foralls|, we can set about proving its
-soundness. Following the evens example, we want a function something like this.
+soundness. Following the |soundnessEven| example, we want a function something like this.
 
 \begin{shade}
 \begin{spec}
@@ -832,14 +842,14 @@ soundness {n} b {p}          = soundnessAcc b [] (zeroleast 0 n) p
 %leaf from |forallsAcc| which is the proof that the formula is a tautology
 %in that specific case. 
 
-Now, we can prove theorems by calling |soundness b {p}|, where |b| is the
+Now, we can prove theorems by a call of the form |soundness b {p}|, where |b| is the
 representation of the formula under consideration, and |p| is the evidence
 that all branches of the proof tree are true. Agda is convinced
 that the representation does in fact correspond to the concrete
 formula, and also that |soundness| gives a valid proof. We do not
 even give |p| explicitly since the only valid values are nested
 pairs of |tt|, which can be
-inferred automatically for closed terms, if the type
+inferred automatically for closed terms if the type
 is inhabited.  This once  again exploits the fact that  Agda supports eta
 expansion for record types. 
 
@@ -861,22 +871,22 @@ someTauto    = soundness rep
 \end{shadedfigure}
 
 If one were to give as input a formula which is not a tautology, Agda would not be able to infer the proof |foralls|, since
-it would be an uninhabited type. One would be left with an unsolved meta, which
+it would be an uninhabited type. One would be left with an unsolved meta variable, which
 might seem a triviality if you do not read the compiler's output carefully. Luckily Agda disallows
-importing modules with unsolved metas, which means such a spurious proof would not be usable elsewhere
+importing modules with unsolved meta variables, which means such a spurious proof would not be usable elsewhere
 in a real-life development. 
 
 The only part we still have to do manually is to convert the concrete
 Agda representation of the formula (|p ∧ q ⇒ q|, in this case) into our abstract
-syntax (|rep| here). This is unfortunate, as we end up typing out the
+syntax (|rep|, in this example). This is unfortunate, as we end up typing out the
 formula twice. We also have to count the number of variables
 ourselves and convert them the to De Bruijn indices. This is
 error-prone given how cluttered the abstract representation can get
 for formulae containing many variables. 
 
 It would be desirable for this representation
-process to be automated. Luckily we have the |Autoquote| library,
-which we will now use.
+process to be automated. Luckily we have the |Autoquote| library
+for precisely this purpose.
 
 
 \subsection{Adding Reflection}\label{sec:addrefl}
@@ -983,7 +993,7 @@ supports\footnote{Of course, having been implemented during a single
 Agda Implementors' Meeting \cite{thorsten-communication}, the current
 implementation is more a proof-of-concept, and is still far from
 being considered finished, so it would be unfair to judge the current implementation all too harshly. In
-fact, I hope that this work might motivate the Agda developers to include some more features, to
+fact, we hope that this work might motivate the Agda developers to include some more features, to
 make the system truly useful. }.
  
 \begin{itemize}
@@ -1004,15 +1014,21 @@ API in use that came to our attention. Compared to Jedynak's work, the proof gen
 presented to the user. The expectation is that approaches like these will become more commonplace for proving mundane lemmas in 
 large proofs. The comparison to tactics in a language like Coq is a tempting one, and we see both advantages and disadvantages of each style. Of course, 
 the tactic language in Coq is much more specialised and sophisticated when it comes to generating proofs, but it is a pity that there are
-two separate languages in one, instead of the Agda way, where metaprograms are written directly in the object language. Also, the 
+two separate languages. This paper explores an alternative, where metaprograms are written directly in the object language. Also, the 
 fact that proof generation in Agda is explicit may be something some
 people appreciate. 
 
-The SSReflect extension for Coq~\cite{gonthier:inria-00515548}  should also be mentioned here; 
-the techniques presented here should also be applicable in
-SSReflect. Unfortunately, when computing large proof trees,
-performance could be better; this is a problem for both SSReflect and
-Agda's reflective method. \todo{citation here?}
+There are performance issues with the current reflection API in
+Agda. This should not come as a surprise. The extensive usage of proof
+by reflection in Coq and SSReflect~\cite{gonthier:inria-00515548}, has
+motivated a lot of recent work on improving Coq's compile time
+evaluation. We hope that Agda can be extended with similar technology.
+
+% The SSReflect extension for Coq~\cite{gonthier:inria-00515548}  should also be mentioned here; 
+% the techniques presented here should also be applicable in
+% SSReflect. Unfortunately, when computing large proof trees,
+% performance could be better; this is a problem for both SSReflect and
+% Agda's reflective method. \todo{citation here?}
  
 \paragraph{Conclusions}
 Returning to our research question,  repeated here to jog the memory,  a summary of findings is made.
