@@ -11,11 +11,11 @@ $(PDF): $(TEXFILE)
 $(TEXFILE): $(LHSFILE) $(FMTS) refs.bib
 	lhs2TeX --agda -o $@ $<
 
-extracted/ReflectionProofs.agda: $(LHSFILE)
-	lhs2TeX  --newcode $(LHSFILE) --agda  --no-pragmas > $@
-	sed -i.bak s/doc\.ReflectionProofs/ReflectionProofs/g $@
+extract: $(LHSFILE)
+	lhs2TeX  --newcode $(LHSFILE) --agda  --no-pragmas > extracted/$(LHSFILE:.lagda=.agda)
+	sed -i.bak s/doc\.ReflectionProofs/ReflectionProofs/g extracted/$(LHSFILE:.lagda=.agda)
 
-check: extracted/ReflectionProofs.agda
+check: extract
 	agda $< --include-path=$(AGDA_SRC) --include-path=extracted --include-path=..
 
 clean:
