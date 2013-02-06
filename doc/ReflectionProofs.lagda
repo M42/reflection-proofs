@@ -1,5 +1,5 @@
-%\documentclass[a4paper]{report}
-\documentclass[a4paper]{llncs}
+\documentclass{llncs}
+%\documentclass[a4paper]{llncs}
 
 \usepackage{color}
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
@@ -16,13 +16,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% TODO: stuff only for DRAFT versions {{
 %%%%% microtype with settings.
-\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
-\microtypecontext{spacing=nonfrench}
-%\newcommand{\microtypesetup}[1]{\fbox{NO MICROTYPE!\phantom{\rule{0.1\textwidth}{0.1\textwidth}}}}
-%\usepackage{todonotes}
-
-\usepackage{draftwatermark}
-\SetWatermarkLightness{0.95}
+%\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
+%\microtypecontext{spacing=nonfrench}
+\usepackage{todonotes}
 %% end DRAFT-version stuff. }}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -122,8 +118,8 @@ open import Proofs.Util.Types using (Diff; Base; Step)
 \title{Engineering Proof by Reflection in Agda}
 \author{Paul van der Walt \and Wouter Swierstra}
 \institute{
-\href{mailto:paul@@denknerd.org}{\nolinkurl{paul@@denknerd.org}}, \href{mailto:W.S.Swierstra@@uu.nl}{\nolinkurl{W.S.Swierstra@@uu.nl}}\\
-Department of Computer Science, Utrecht University
+Department of Computer Science, Utrecht University, The Netherlands\\
+\href{mailto:paul@@denknerd.org}{\nolinkurl{paul@@denknerd.org}}, \href{mailto:W.S.Swierstra@@uu.nl}{\nolinkurl{W.S.Swierstra@@uu.nl}}
 }
 
 
@@ -143,6 +139,8 @@ can be used for automatically quoting a class of concrete Agda terms
 to a simple, user-defined
 inductive data type, alleviating the burden a programmer usually faces
 when using reflection in a practical setting. 
+\keywords{dependently-typed programming, reflection, Agda, proof by
+  reflection, metaprogramming}
 \end{abstract}
 
 
@@ -172,7 +170,7 @@ This paper addresses the following central questions:
 
 \researchquestion
 
-\paragraph{Contributions} 
+\paragraph{Contributions.} 
 This paper reports on the experience of using Agda's reflection mechanism to automate certain 
 categories of proofs.
 This is a case study,
@@ -195,7 +193,7 @@ alleviates much
 The code presented in this paper compiles using the
 latest version of Agda (currently 2.3.2). Supporting code, including this
 paper, is available on
-GitHub\footnote{\ghurl}.
+GitHub. \footnote{\ghurl}
 This paper is also a Literate Agda file, which means the code snippets can be extracted, compiled, and adapted.
 
 
@@ -238,7 +236,7 @@ dependently typed programming in general.
 
 
 
-\paragraph{The Keywords} There are several new keywords that can be used to quote and unquote
+\paragraph{The Keywords.} There are several new keywords that can be used to quote and unquote
 |Term| values: |quote|, |quoteTerm|, |quoteGoal|, and |unquote|. The
 |quote| keyword allows the user to access the internal representation of
 any identifier. This internal representation can be used to query the
@@ -378,7 +376,7 @@ The (partial) solution to this problem~-- something which at least mitigates
 the agony~-- is presented in this section, in the form of the
 |Autoquote| library.
 
-\paragraph{The |Autoquote| library}
+\paragraph{The |Autoquote| Library.}
 We will examine a toy AST, called |Expr|, shown in Fig.~\ref{fig:exprdata}.
 It is a rather simple inductive data structure representing terms which can contain Peano-style natural
 numbers, variables (represented by an Agda natural) and additions.
@@ -757,7 +755,7 @@ forallsAcc b acc    (Step y   ) =
 \caption{The function |forallsAcc|, which decides if a proposition is a tautology. Compare to the |even?| function in Sec.~\ref{sec:evenness}.}\label{fig:forallsacc}
 \end{shadedfigure}
 
-\paragraph{Soundness} Since we now finally know our real decision function |foralls|, we can set about proving its
+\paragraph{Soundness.} Since we now finally know our real decision function |foralls|, we can set about proving its
 soundness. Following the |soundnessEven| example, we want a function something like this.
 
 \begin{shade}
@@ -935,7 +933,7 @@ trusts.
 \section{Discussion}\label{sec:discussion}
 
  
-\paragraph{Related work} 
+\paragraph{Related Work.} 
  
 Our main innovations are novel combinations of existing
 techniques; as a result, quite a number of subjects are relevant to mention
@@ -965,16 +963,16 @@ in Agda, although it is lacking in a number of fundamental
 capabilities, most notably type awareness of |unquote|, and type erasure
 when using |quoteTerm|.
 
-\paragraph{Evaluation}
+\paragraph{Evaluation.}
 If we look at the taxonomy of reflective systems in programming language technology written up 
 by Sheard~\cite{sheard-staged-programming},
 we see that we can make a few rough judgements about the metaprogramming facilities Agda currently 
-supports\footnote{Of course, having been implemented during a single
+supports. \footnote{Of course, having been implemented during a single
 Agda Implementors' Meeting~\cite{thorsten-communication}, the current
 implementation is more a proof-of-concept, and is still far from
 being considered finished, so it would be unfair to judge the current implementation all too harshly. In
 fact, we hope that this work might motivate the Agda developers to include some more features, to
-make the system truly useful. }.
+make the system truly useful. }
  
 \begin{itemize}
 \item Agda's current reflection API leans more towards analysis than generation,
@@ -1006,7 +1004,7 @@ motivated a lot of recent work on improving Coq's compile time
 evaluation. We hope that Agda can be extended with similar technology.
 
  
-\paragraph{Conclusions}
+\paragraph{Conclusions.}
 Returning to our research question,  repeated here to jog the memory,  a summary of findings is made.
 
 \researchquestion
@@ -1039,7 +1037,8 @@ of predefined proof recipes to see if one of them might discharge the obligation
 this approach versus the tactic language in Coq, would be that the language of the propositions and
 tactics is the same.
 
- 
+\subsubsection{Acknowledgements.}
+  test
 
 \bibliography{refs}{}
 %\bibliographystyle{plain}
