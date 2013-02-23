@@ -166,19 +166,13 @@ Some more detailed comments (line numbers exclude code lines)
 
 p1, line 2: should be a reference for the reflection mechanism: for example the first author's MSc thesis sounds the best place to find out more.
 
-p1: exemplative -> illustrative
-
 p1, line -2: remove "the latest version of Agda" and give a specific version range.
-
-p2, line 1: the paper in PDF form isn't literate!
 
 p3, lines6-7: why does quoteTerm normalise? Is there another function that doesn't normalise in the API? Can you give a design rationale here?
 
 p3, generally: would be helpful to have the (informal) types of the various keywords here: can they be given Agda-style types or not? If not, why not?
 
 p3 foot: what is Something?
-
-p5: elegant -> straightforward
 
 p5, line -6: where does the (hidden) proof come from? Should say something here, or give a forward reference.
 
