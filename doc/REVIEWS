@@ -114,10 +114,6 @@ It always specifies the constructor to be used for variables, while
 the remaining table values are mappings from term names to
 constructors. It would be more clear to point out this special case.
 
-Is the arity in the table mappings really necessary? It seems like you
-could take the quoted function, inspect its quoted type, and compute
-the arity based on the number of arguments it takes.
-
 I was a bit dissapointed when learning at the very end that Autoquote
 can only translate into non-dependent types. It would be better to set
 expectations properly in the beginning of the paper. You could modify

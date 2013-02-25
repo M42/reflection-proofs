@@ -18,10 +18,10 @@ $(TEXFILE): $(LHSFILE) $(FMTS) refs.bib
 
 extract: $(LHSFILE)
 	lhs2TeX  --newcode $(LHSFILE) --agda  --no-pragmas > extracted/$(LHSFILE:.lagda=.agda)
-	sed -i.bak s/doc\.ReflectionProofs/ReflectionProofs/g extracted/$(LHSFILE:.lagda=.agda)
+	sed -i.bak s/doc\.ReflectionProofs/doc\.extracted\.ReflectionProofs/g extracted/$(LHSFILE:.lagda=.agda)
 
 check: extract
-	agda $< --include-path=$(AGDA_SRC) --include-path=extracted --include-path=..
+	agda extracted/$(LHSFILE:.lagda=.agda) --include-path=$(AGDA_SRC) --include-path=extracted --include-path=..
 
 clean:
 	rubber --clean $(TEXFILE)

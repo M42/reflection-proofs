@@ -207,12 +207,12 @@ data BoolInter : Set where
 -- and why this works.
 boolTable : Table BoolInter
 boolTable = (Atomic ,
-                 (quote _∧_  )    # 2     ↦ And
-            ∷    (quote _∨_  )    # 2     ↦ Or
-            ∷    (quote  ¬_  )    # 1     ↦ Not
-            ∷    (quote true )    # 0     ↦ Truth
-            ∷    (quote false)    # 0     ↦ Falsehood
-            ∷    (quote _⇒_  )    # 2     ↦ Imp         ∷ [])
+                 (quote _∧_  )    ↦ And
+            ∷    (quote _∨_  )    ↦ Or
+            ∷    (quote  ¬_  )    ↦ Not
+            ∷    (quote true )    ↦ Truth
+            ∷    (quote false)    ↦ Falsehood
+            ∷    (quote _⇒_  )    ↦ Imp         ∷ [])
 
 -- we can now convert a Term (Agda's abstract syntax) into our BoolInter
 -- datatype relatively painlessly.

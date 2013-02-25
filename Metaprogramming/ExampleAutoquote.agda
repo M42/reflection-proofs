@@ -22,10 +22,10 @@ data Combinatory : Set where
 -- this is what the corresponding table would look like.
 skiTable : Table Combinatory
 skiTable = VarC ,
-           (quote  S ) # 0 ↦  S  ∷
-           (quote  K ) # 0 ↦  K  ∷
-           (quote  I ) # 0 ↦  I  ∷
-           (quote _$_) # 2 ↦ _$_ ∷ [] 
+           (quote  S ) ↦  S  ∷
+           (quote  K ) ↦  K  ∷
+           (quote  I ) ↦  I  ∷
+           (quote _$_) ↦ _$_ ∷ [] 
 
 -- the variable x here is just to introduce something
 -- which is out-of-scope. Otherwise we wouldn't be able to get
@@ -47,9 +47,9 @@ data Expr : Set where
 -- ...and the unsurprising table:
 exprTable : Table Expr
 exprTable =  Variable ,
-             (quote _+_ ) # 2 ↦ Plus ∷
-             (quote zero) # 0 ↦ Zero ∷
-             (quote suc ) # 1 ↦ Succ ∷  []
+             (quote _+_ ) ↦ Plus ∷
+             (quote zero) ↦ Zero ∷
+             (quote suc ) ↦ Succ ∷  []
 
 -- you can see for yourself what happens by normalising (C-c C-n)
 -- something like the expression `doConvert exprTable testterm`

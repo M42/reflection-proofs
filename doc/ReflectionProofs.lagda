@@ -348,7 +348,7 @@ gives a detailed account of some real-world applications.
 \ignore{
 \begin{shade}
 \begin{code}
-open import Metaprogramming.Autoquote renaming (_#_↦_ to _\#_↦_)
+open import Metaprogramming.Autoquote
 \end{code}
 \end{shade}
 }
@@ -431,9 +431,9 @@ Agda terms to elements of the AST.
 \begin{code}
 exprTable : Table Expr
 exprTable = (  Var ,
-               (quote _+_)      \# 2    ↦ Plus   ∷
-               (quote ℕ.zero)   \# 0    ↦ Z      ∷ 
-               (quote ℕ.suc)    \# 1    ↦ S      ∷ [])
+               (quote _+_)          ↦ Plus   ∷
+               (quote ℕ.zero)       ↦ Z      ∷ 
+               (quote ℕ.suc)        ↦ S      ∷ [])
 \end{code}
 \caption{The mapping table for converting to the imaginary |Expr| AST. }\label{fig:exprTable}
 \end{shadedfigure}
@@ -927,7 +927,7 @@ variables are represented by naturals instead of |Fin|s.
 
 
 The |Autoquote| library needs a lookup table, mentioning which constructor represents
-variables and what the arity of the constructors is. This way
+variables and what the arity of the constructors is. This way \todo{remove mention of arity: this is automatic. note that not-fitting arities are rejected.}
 only |Term|s containing variables or the usual operators 
 are accepted. Using the mapping presented in Fig.~\ref{fig:booltable}, we can
 construct a function that, for suitable |Term|s,
@@ -937,9 +937,9 @@ gives us a value in |BoolInter|.
 \begin{code}
 boolTable : Table BoolInter
 boolTable = (Atomic ,
-                  (quote _∧_      )  \# 2 ↦ And                 ∷     (quote _∨_      )   \# 2   ↦ Or
-            ∷     (quote  ¬_      )  \# 1 ↦ Not                 ∷     (quote true     )   \# 0   ↦ Truth
-            ∷     (quote false    )  \# 0 ↦ Falsehood           ∷     (quote _⇒_      )   \# 2   ↦ Imp           ∷ [])
+                  (quote _∧_      )   ↦ And                 ∷     (quote _∨_      )      ↦ Or
+            ∷     (quote  ¬_      )   ↦ Not                 ∷     (quote true     )      ↦ Truth
+            ∷     (quote false    )   ↦ Falsehood           ∷     (quote _⇒_      )      ↦ Imp           ∷ [])
 \end{code}
 \caption{The mapping table for quoting to |BoolInter|.}\label{fig:booltable}
 \end{shadedfigure}

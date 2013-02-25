@@ -14,8 +14,8 @@ open import Data.Vec hiding (map)
 open import Metaprogramming.Util.PropEqNat
 
 {-
-here we'll try and generalise the concrete->Term->AST process
-idea: provide a table with (Name, arity, Constructor ∈ AST) and
+here we'll try and generalise the concrete Agda term->Term->AST process
+idea: provide a table with (Name, Constructor ∈ AST) and
 we'll try and quote it.
 
 examples on how to use this module are briefly presented in
@@ -39,13 +39,22 @@ f $ⁿ []       = f
 f $ⁿ (x ∷ xs) = f x $ⁿ xs
 -- end copy from stdlib
 
+getArity : Type → ℕ
+getArity (el s (var x args)) = 0
+getArity (el s (con c args)) = 0
+getArity (el s (def f args)) = 0
+getArity (el s (lam v t)) = 0
+getArity (el s (pi t₁ t)) = 1 + getArity t
+getArity (el s (sort x)) = 0
+getArity (el s unknown) = 0
+
 -- a constructor mapping takes the arity of a constructor (a natural
 -- representing how many arguments it takes), it's Name (which is Agda's internal
 -- representation and can be retrieved using the quote keyword, i.e. `quote zero`), and
 -- the actual constructor, packed in an N-ary function, which will make it easier to apply
 -- the arguments retrieved from a List (Arg Term) to the constructor.
 data ConstructorMapping (astType : Set) : Set₁ where
-  _#_↦_ : Name → (arity : ℕ) → N-ary arity astType astType → ConstructorMapping astType
+  _↦_ : (n : Name) → N-ary (getArity (type n)) astType astType → ConstructorMapping astType
 
 -- here we simply say that a mapping table is a "variable" constructor (assumed to take one
 -- natural as argument representing the de Bruijn index of that variable in whatever context
@@ -57,9 +66,9 @@ Table a = ((ℕ → a) × List (ConstructorMapping a))
 -- if we manage to find it, return the whole entry.
 lookupName : {a : Set} → List (ConstructorMapping a) → Name → Maybe (ConstructorMapping a)
 lookupName [] name = nothing
-lookupName (x # arity ↦ x₁ ∷ tab) name with name ≟-Name x
-lookupName (x # arity ↦ x₁ ∷ tab) name | yes p = just (x # arity ↦ x₁)
-lookupName (x # arity ↦ x₁ ∷ tab) name | no ¬p = lookupName tab name
+lookupName (x ↦ x₁ ∷ tab) name with name ≟-Name x
+lookupName (x ↦ x₁ ∷ tab) name | yes p = just (x ↦ x₁)
+lookupName (x ↦ x₁ ∷ tab) name | no ¬p = lookupName tab name
 
 mutual
   -- see if we can find a Name in the constructor table, and if
@@ -68,11 +77,11 @@ mutual
   -- list of arguments to that Term.
   handleNameArgs : {a : Set} → Table a → Name → List (Arg Term) → Maybe a
   handleNameArgs (vc , tab) name args with lookupName tab name
-  handleNameArgs (vc , tab) name args | just (x     # arity        ↦ x₁)   with convertArgs (vc , tab) args
-  handleNameArgs (vc , tab) name args | just (x₁    # arity        ↦ x₂)   | just x with length x ≟-Nat arity
-  handleNameArgs (vc , tab) name args | just (x₁    # .(length x)  ↦ x₂)   | just x | yes = just (x₂ $ⁿ fromList x)
-  handleNameArgs (vc , tab) name args | just (x₁    # arity        ↦ x₂)   | just x | no  = nothing
-  handleNameArgs (vc , tab) name args | just (x     # arity        ↦ x₁)   | nothing = nothing
+  handleNameArgs (vc , tab) name args | just (x ↦ x₁)   with convertArgs (vc , tab) args
+  handleNameArgs (vc , tab) name args | just (x₁ ↦ x₂)   | just x with getArity (type x₁) | getArity (type x₁) ≟-Nat length x
+  handleNameArgs (vc , tab) name args | just (x₁ ↦ x₂)   | just x | .(length x) | yes = just (x₂ $ⁿ fromList x)
+  handleNameArgs (vc , tab) name args | just (x₁ ↦ x₂)   | just x | arity       | no  = nothing
+  handleNameArgs (vc , tab) name args | just (x ↦ x₁)   | nothing = nothing
   handleNameArgs (vc , tab) name args | nothing = nothing
 
   -- convert a list of arguments (such as those applied to variables
@@ -99,7 +108,7 @@ mutual
   convert (vc , tab) (var x args) = just (vc x)
   convert (vc , tab) (con c args) = handleNameArgs (vc , tab) c args
   convert (vc , tab) (def f args) = handleNameArgs (vc , tab) f args
-  convert (vc , tab) (lam v t)  = nothing
+  convert (vc , tab) (lam v t)    = nothing
   convert (vc , tab) (pi t₁ t₂)   = nothing
   convert (vc , tab) (sort x)     = nothing
   convert (vc , tab) unknown      = nothing
@@ -121,4 +130,3 @@ doConvert : {a : Set} → (tab : Table a) → (t : Term) → {man : convertManag
 doConvert tab t {man} with convert tab t
 doConvert tab t {man} | just x = x
 doConvert tab t {() } | nothing
-
