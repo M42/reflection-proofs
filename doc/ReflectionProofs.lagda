@@ -153,7 +153,7 @@ when using reflection in a practical setting.
 
 The dependently typed programming language
 Agda~\cite{norell:thesis,Norell:2009:DTP:1481861.1481862} has recently been
-extended with a \emph{reflection mechanism} for compile time metaprogramming in the style of Lisp~\cite{lisp-macros},
+extended with a \emph{reflection mechanism}~\cite{vdWalt:Thesis:2012} for compile time metaprogramming in the style of Lisp~\cite{lisp-macros},
 MetaML~\cite{metaml}, Template Haskell~\cite{template-haskell}, and
 \CC\ templates~\cite{cplusplus}. Agda's reflection mechanisms make it
 possible to convert a program fragment into its corresponding abstract
@@ -192,10 +192,10 @@ alleviates much
   context of this technology. % removed keyword new, as per reviewer 2
 \end{itemize}
 
-The code presented in this paper compiles using the
-latest version of Agda (currently 2.3.2) \todo{give a version range}. Supporting code, including this
+The code presented in this paper compiles using 
+ Agda version 2.3.2. Supporting code, including this %TODO does it compile??
 paper in Literate Agda format, is available on
-GitHub.~\footnote{\ghurl}
+GitHub.\footnote{\ghurl}
 % review comment applied: paper isn't Literate Agda
 
 \subsection{Introducing Agda}\label{sec:reflection}
@@ -252,6 +252,7 @@ notes~\cite{agda-relnotes-228,agda-relnotes-230} for a listing of the data struc
 involved; the most important one is the type |Term : Set| which
 represents concrete Agda terms.
 
+
 The easiest example of quotation uses the |quoteTerm| keyword to turn
 a fragment of concrete syntax into a |Term| value. Note that the
 |quoteTerm| keyword reduces like any other function in Agda. As an
@@ -271,8 +272,11 @@ the body of the lambda abstraction is just a reference to the
 nearest-bound variable, thus |var 0|, applied to an empty list of
 arguments. Variables are referred to by their De Bruijn indices.
 
-Furthermore, |quoteTerm| type checks and normalises its term before
-returning the |Term|, as the following example demonstrates: \todo{explain why quoteTerm normalises}
+Furthermore, |quoteTerm| type checks its term before
+returning the |Term|, as the following example demonstrates. Since
+type checking a term necessitates normalisation, the returned |Term| is
+always in normal form.
+
 \todo{on page 3 it would be really nice to have informal types of the keywords presented (reviewer 4). if this is impossible, why?}
 \begin{shade}
 \begin{code}
@@ -280,13 +284,11 @@ example₁   : quoteTerm ((\ x → x) 0) ≡ con (quote ℕ.zero) []
 example₁   = refl
 \end{code}
 \end{shade}
-\todo{refer to N.zero everywhere.}
 
 \todo{page 7 overfull bad box}
-\todo{be consistent about referring to N.zero and just zero}
 See how the identity function is applied to zero, resulting in only the value zero.
-The quoted representation of a natural zero is |con (quote zero) []|, where |con| means that we
-are introducing a constructor. The constructor |zero| takes no arguments, hence the empty list.
+The quoted representation of a natural zero is |con (quote ℕ.zero) []|, where |con| means that we
+are introducing a constructor. The constructor |ℕ.zero| takes no arguments, hence the empty list.
 
 The |quoteGoal| keyword is slightly different. It is best explained using an
 example:
@@ -416,7 +418,11 @@ AST, and get a conversion function for free.
 The |Autoquote| library does just this, exposing
 an interface which, when provided with such a mapping, automatically quotes expressions
 that fit. Here, \emph{fitting} is defined as only having names that are listed
-in the mapping, or variables. Other terms are rejected.\todo{be explicit: what does this mean? reviewer 2}
+in the mapping, or variables. Other terms are rejected.\todo{p5 ``Other terms are rejected'' - what does it mean for a term to be rejected?
+i.e. what is the effect? The text hints that this is a type error, since there
+is a suggestion that a proof is needed to show it is valid, but it would be
+good to be explicit.
+}
 The user provides a straightforward mapping, such as in % elegant => straightforward, review 4
 Fig.~\ref{fig:exprTable}, and |Autoquote| automatically converts
 Agda terms to elements of the AST.
@@ -758,14 +764,20 @@ of |⊤| or |⊥| types, depending on the result of |⟦_⊢_⟧| under each ass
 This corresponds precisely to the expression being a tautology if and
 only if the tree is inhabited. The function |foralls| simply bootstraps
 |forallsAcc| with an empty environment -- it is omitted for brevity.
-\todo{review 4: remark about truth table}
+\todo{p10, Para ``the function..'': could remark that the tree effectively codes up the
+truth table for the proposition in question.}
 
-\todo{be careful about what I claim can be ignored. forallsAcc drives the computation, it could do with some explanation (reviewer 1)}
-\todo{review 4 says ``needs clarification''}
 The |Diff| argument is unfortunately needed for bookkeeping, to prove that |forallsAcc| will eventually produce a
+\todo{review 4 says ``needs clarification''}
 tree with depth equal to the number of free variables in an
 expression, and can be ignored.\todo{this is the argument driving the
-  computation, we cannot ignore it. explain this better.}
+  computation, we cannot ignore it. explain this better. ``* In page 10, it says that the argument of forallsAcc can be ignored,
+  but it is precisely the argument driving the computation. It'd be
+  nice to explain it better.
+``, quoth reviewer 1}
+\todo{reviewer 4 says this is unsatisfactory. that's true, because
+  actually Diff is there to be able to prove that sizes will
+  eventually match up}
 
 
 
@@ -988,14 +1000,14 @@ long time.
 
 These systems would seem to be the inspiration for the current reflection mechanism recently introduced
 in Agda, although it is lacking in a number of fundamental
-capabilities, most notably type awareness of |unquote|, and type erasure
+capabilities, most notably type awareness of |unquote|, and type preservation
 when using |quoteTerm|.
 
 \paragraph{Evaluation.}
 If we look at the taxonomy of reflective systems in programming language technology written up 
 by Sheard~\cite{sheard-staged-programming},
 we see that we can make a few rough judgements about the metaprogramming facilities Agda currently 
-supports.~\footnote{Of course, having been implemented during a single
+supports.\footnote{Of course, having been implemented during a single
 Agda Implementors' Meeting~\cite{thorsten-communication}, the current
 implementation is more a proof-of-concept, and is still far from
 being considered finished, so it would be unfair to judge the current implementation all too harshly. In
@@ -1033,7 +1045,8 @@ evaluation. We hope that Agda can be extended with similar technology.
 
  
 \paragraph{Conclusions.}
-Returning to our research question,  repeated here to jog the memory,  a summary of findings is made.
+Returning to our research question,  repeated here to jog the memory,
+a summary of findings is made.\todo{some over-colloquiallisms}
 
 \researchquestion
 

@@ -30,52 +30,35 @@ Agda's reflection in more detail, relieving the reader from the need
 to go into release notes, and had it explain (at least intuitively)
 all the definitions used.
 
-Detailed Comments:
-
-* The release notes citation should point to 2.3.0 (and not
-  just 2.2.8)
-
-* In section 2, it would be nice to have examples that complement
-  those of the release notes, and not exactly the same examples.
-
-* In example 1, you refer to N.zero but in the paragraph below, you
-  write zero.
-
-* In page 3, you mention the types Visibility, Relevance, List Args,
-  etc, but these types haven't been introduced before.
-
-* there is a bad overfull box in page 7.
-
-* In page 10, it says that the argument of forallsAcc can be ignored,
-  but it is precisely the argument driving the computation. It'd be
-  nice to explain it better.
-
-* Page 13. What is the type of proveTautology?
-
+Detailed comments noted.
 
 ----------------------- REVIEW 2 ---------------------
-This paper describes the use of Agda's reflection mechanism to help with proof automation, and gives some simple examples, including proving evenness of natural numbers and proving that a boolean formula is a tautology.
+This paper describes the use of Agda's reflection mechanism to help with proof
+automation, and gives some simple examples, including proving evenness of
+natural numbers and proving that a boolean formula is a tautology.
 
-It seems that proof automation is important for a practical language with dependent types, and Agda's reflection mechanism as described is likely to help. However, this paper only really scratches the surface of what is possible - existing (unpublished, as far as I'm aware) examples such as the Ring solver go much further towards demonstrating its value.
+It seems that proof automation is important for a practical language with
+dependent types, and Agda's reflection mechanism as described is likely to
+help. However, this paper only really scratches the surface of what is possible
+- existing (unpublished, as far as I'm aware) examples such as the Ring solver
+go much further towards demonstrating its value.
 
-The 'Evenness' example uses a lot of space for something pretty simple. An in practice, the number won't necessarily be known. What if you know "Even x" and need to prove "Even (x + 100)". Does it still work? Similarly for the tautology example - what if there is an unknown formula which is nevertheless known to be a tautology? It would be nice, therefore, to show how such proof obligations come up in practice and how the reflection techniques described help. Without this, it's not clear that the paper answers the given central question of whether Agda's reflective capabilities are sufficient and practically usable.
+The 'Evenness' example uses a lot of space for something pretty simple. An in
+practice, the number won't necessarily be known. What if you know "Even x" and
+need to prove "Even (x + 100)". Does it still work? Similarly for the tautology
+example - what if there is an unknown formula which is nevertheless known to be
+a tautology? It would be nice, therefore, to show how such proof obligations
+come up in practice and how the reflection techniques described help. Without
+this, it's not clear that the paper answers the given central question of
+whether Agda's reflective capabilities are sufficient and practically usable.
 
-In summary: there's some nice tutorial material here describing reflection and its application, but I think there are some limitations which need to be addressed before the paper can be accepted. In particular, the paper needs to discuss how the Boolean tautology example could scale to an infinite type such as Nat.
+In summary: there's some nice tutorial material here describing reflection and
+its application, but I think there are some limitations which need to be
+addressed before the paper can be accepted. In particular, the paper needs to
+discuss how the Boolean tautology example could scale to an infinite type such
+as Nat.
 
-Minor comments
-
-The fonts and layout look wrong. Is this the proper LaTeX class? Also remember that the colour won't come out in print...
-
-p2 "new" keywords seems wrong for a technique was has been aroundfor a couple of years. I know it hasn't been written up elsewhere, but I'd omit the word "new"
-
-p3 "This is why we have decidable equality" - can you explain what you mean by this, for the non-Agda expert?
-
-Vars are naturals - so they are de Bruijn indexed?
-
-p5 "Other terms are rejected" - what does it mean for a term to be rejected? i.e. what is the effect? The text hints that this is a type error, since there is a suggestion that a proof is needed to show it is valid, but it would be good to be explicit.
-
-p8 I'm not sure I'd go as far as to say it's "trivial" to show that (1) is a tautology, but I agree it should be easy, if tedious.
-
+Minor comments sorted.
 
 ----------------------- REVIEW 3 ---------------------
 Summary of the Content
@@ -111,7 +94,7 @@ mechanism to recover a notion of simple "pattern matching" from an abstract
 datatype only exposing equality operations. In this case "names" are
 the abstract datatype (ADT), which expose decidable equality functions that
 make up the implementation of the declarative pattern matching-esque
-table. 
+table.
 
 Maybe you could address why Agda does not support pattern matching on
 names? Is this a technial or theoretical limitation? Agda does support
@@ -156,37 +139,16 @@ clarify the issues mentioned above.
 
 
 ----------------------- REVIEW 4 ---------------------
-The paper is clear in its intention: to explore the practical use of the Agda reflection API. It does this by means of two examples: showing that even numbers are even, and that Boolean tautologies are indeed tautologies. The examples are developed step-by-step, but it can be difficult to follow, particularly in the latter example, without a clearer high-level statement at the beginning of the example giving an indication about how it will be solved. 
+The paper is clear in its intention: to explore the practical use of the Agda
+reflection API. It does this by means of two examples: showing that even
+numbers are even, and that Boolean tautologies are indeed tautologies. The
+examples are developed step-by-step, but it can be difficult to follow,
+particularly in the latter example, without a clearer high-level statement at
+the beginning of the example giving an indication about how it will be solved.
 
-While the examples are interesting, I am tempted to ask what we might conclude from it. While it's of clear value to the Agda implementors, it perhaps has the message for the non-expert that using the system in practice is difficult. To quote an example from p10 "The Diff argument is unfortunately needed for bookkeeping, to prove that forallsAcc will eventually produce a tree with depth equal to the number of free variables in an expression, and can be ignored." Really? It's needed for book-keeping (presumably to make something work in the Agda environment) but we can ignore it. I'd call that unsatisfactory. 
+While the examples are interesting, I am tempted to ask what we might conclude
+from it. While it's of clear value to the Agda implementors, it perhaps has the
+message for the non-expert that using the system in practice is difficult. To
+quote an example from p10 "The Diff argument is unfortunately needed for...
 
-The paper is sometimes over-colloquial "repeated here to jog the memory", "performance issues" etc. Still, the results are definitely valuable as a "report from the trenches" as it were, even if it's mid-battle.
-
-Some more detailed comments (line numbers exclude code lines)
-
-p1, line 2: should be a reference for the reflection mechanism: for example the first author's MSc thesis sounds the best place to find out more.
-
-p1, line -2: remove "the latest version of Agda" and give a specific version range.
-
-p3, lines6-7: why does quoteTerm normalise? Is there another function that doesn't normalise in the API? Can you give a design rationale here?
-
-p3, generally: would be helpful to have the (informal) types of the various keywords here: can they be given Agda-style types or not? If not, why not?
-
-p3 foot: what is Something?
-
-p5, line -6: where does the (hidden) proof come from? Should say something here, or give a forward reference.
-
-p6, line 1: why do the results require some post processing? How are they post processed?
-
-p6 line -11: which chapter in Coq'Art?
-
-p10, Para "the function..': could remark that the tree effectively codes up the truth table for the proposition in question.
-
-p10, para "The Diff ..." needs clarification.
-
-p11, line -6: "Agda is convinced ..." means?
-
-p12, end section 4.2: need to append "and we show this now." to the final sentence.
-
-p15, line 6: "performance issues" need to be more specific about this.
-
+Detailed comments noted.
