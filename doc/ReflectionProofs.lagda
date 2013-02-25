@@ -431,9 +431,9 @@ Agda terms to elements of the AST.
 \begin{code}
 exprTable : Table Expr
 exprTable = (  Var ,
-               (quote _+_)          ↦ Plus   ∷
-               (quote ℕ.zero)       ↦ Z      ∷ 
-               (quote ℕ.suc)        ↦ S      ∷ [])
+               (quote _+_       )   ↦ Plus   ∷
+               (quote ℕ.zero    )   ↦ Z      ∷ 
+               (quote ℕ.suc     )   ↦ S      ∷ [])
 \end{code}
 \caption{The mapping table for converting to the imaginary |Expr| AST. }\label{fig:exprTable}
 \end{shadedfigure}
