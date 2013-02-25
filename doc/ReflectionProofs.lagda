@@ -1,8 +1,9 @@
 \documentclass{llncs}
-%\documentclass[a4paper]{llncs}
 
 \usepackage{color}
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+
+%% the newcode stuff is for code extraction.
 
 %include polycode.fmt
 %if style == newcode
@@ -25,7 +26,6 @@
 \usepackage{subfigure}
 \usepackage{xspace}
 \usepackage{textcomp} % text-mode <> characters
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Font definitions.
@@ -70,7 +70,6 @@ minipage=\linewidth,margin=0pt,padding=0pt,bgcolor=hlite%
 
 \newcommand{\lagda}{\texttt{\--\--{}lagda}\xspace}
 \ignore{
-  
 \begin{code}
 module doc.ReflectionProofs where
 
@@ -90,14 +89,10 @@ open import Relation.Nullary using (yes; no)
 open import Data.String
 open import Data.Fin hiding (_+_)
 open import Proofs.Util.Types
-
-
-\end{code}
-}
-\ignore{
-\begin{code}
 open import Proofs.Util.Lemmas
 open import Proofs.Util.Types using (Diff; Base; Step)
+
+
 \end{code}
 }
 
@@ -112,7 +107,7 @@ open import Proofs.Util.Types using (Diff; Base; Step)
   citecolor=DarkBlue,
   linkcolor=black,
   urlcolor=DarkBlue}
-  
+
 \date{\today}
 \newcommand{\HRule}{\noindent\rule{\linewidth}{1.5pt}}
 \title{Engineering Proof by Reflection in Agda}
@@ -178,7 +173,8 @@ This paper addresses the following central questions:
 This paper reports on the experience of using Agda's reflection mechanism to automate certain 
 categories of proofs.
 This is a case study,
-exemplative of the kind of problems that can be solved using
+illustrative % reviewer 4: "exemplative => illustrative"
+of the kind of problems that can be solved using
 reflection. More specifically this work makes the following contributions:
 
 \begin{itemize}
@@ -193,16 +189,14 @@ alleviates much
   automate certain categories of proofs (Sec.~\ref{sec:proof-by-reflection}).
  The idea of \emph{proof by
     reflection} is certainly not new, but still worth examining in the
-  context of this new technology.
+  context of this technology. % removed keyword new, as per reviewer 2
 \end{itemize}
 
 The code presented in this paper compiles using the
-latest version of Agda (currently 2.3.2). Supporting code, including this
-paper, is available on
+latest version of Agda (currently 2.3.2) \todo{give a version range}. Supporting code, including this
+paper in Literate Agda format, is available on
 GitHub.~\footnote{\ghurl}
-This paper is also a Literate Agda file, which means the code snippets can be extracted, compiled, and adapted.
-
-
+% review comment applied: paper isn't Literate Agda
 
 \subsection{Introducing Agda}\label{sec:reflection}
 
@@ -236,6 +230,7 @@ This paper explores how such a reflection mechanism can be used in a
 \todo{examples that complement the release notes, not the same ones.}
 
 
+\todo{Reviewer 1 says section 2 could use examples which are distinct from those in the release notes. }
 Before going into too much detail about how reflection can make our
 life easier and what new programming techniques are possible, we look 
 at Agda's reflection API in some detail. It should be a good
@@ -277,7 +272,8 @@ nearest-bound variable, thus |var 0|, applied to an empty list of
 arguments. Variables are referred to by their De Bruijn indices.
 
 Furthermore, |quoteTerm| type checks and normalises its term before
-returning the |Term|, as the following example demonstrates:
+returning the |Term|, as the following example demonstrates: \todo{explain why quoteTerm normalises}
+\todo{on page 3 it would be really nice to have informal types of the keywords presented (reviewer 4). if this is impossible, why?}
 \begin{shade}
 \begin{code}
 example₁   : quoteTerm ((\ x → x) 0) ≡ con (quote ℕ.zero) []
@@ -287,6 +283,7 @@ example₁   = refl
 \todo{refer to N.zero everywhere.}
 
 \todo{page 7 overfull bad box}
+\todo{be consistent about referring to N.zero and just zero}
 See how the identity function is applied to zero, resulting in only the value zero.
 The quoted representation of a natural zero is |con (quote zero) []|, where |con| means that we
 are introducing a constructor. The constructor |zero| takes no arguments, hence the empty list.
@@ -312,8 +309,11 @@ syntax. Just as |quoteTerm| and |quoteGoal|, it type checks and
 normalises the |Term| before it is spliced into the program text.
 
 
+\todo{don't talk about visibility, relevance etc without introducing them first.}
 Unfortunately, we cannot pattern match on constructor names without
 further ado.
+\todo{``this is why we have\dots'' needs explaining for the non-Agda-expert. talk about pattern matching, totality}
+\todo{vars are naturals -- does this mean they are de bruijn indexed? reviewer 2}
 This is why we have decidable equality on the following types: |Visibility|, |Relevance|, |List Arg|s, |Arg Type|s, |Arg Term|s,  |Name|s,  |Term|s, |Sort|s  and |Type|s. 
 Typically, this is useful for deciding which constructor is present in
 some expression, by comparing to known |Name|s (obtained using |quote|). Such a comparison is
@@ -331,6 +331,7 @@ convert (con c args) with c ≟-Name quote foo
 \end{spec}
 \end{shade}
 
+\todo{what is Something?}
 This short introduction should already be enough to start developing
 simple programs using reflection.  For a more detailed description of the
 reflection API in Agda, including many examples, the inquisitive
@@ -349,6 +350,7 @@ open import Metaprogramming.Autoquote renaming (_#_↦_ to _\#_↦_)
 \end{code}
 \end{shade}
 }
+\todo{look for bad/overfull hboxes}
 
 In the previous section, we saw how we can get hold of values of type
 |Term|, representing concrete Agda terms. This is a great start, but
@@ -414,8 +416,8 @@ AST, and get a conversion function for free.
 The |Autoquote| library does just this, exposing
 an interface which, when provided with such a mapping, automatically quotes expressions
 that fit. Here, \emph{fitting} is defined as only having names that are listed
-in the mapping, or variables. Other terms are rejected.
-The user provides an elegant mapping, such as in
+in the mapping, or variables. Other terms are rejected.\todo{be explicit: what does this mean? reviewer 2}
+The user provides a straightforward mapping, such as in % elegant => straightforward, review 4
 Fig.~\ref{fig:exprTable}, and |Autoquote| automatically converts
 Agda terms to elements of the AST.
 
@@ -440,7 +442,7 @@ We will not say much about the implementation of this library, since
 it is not groundbreaking.
 For more details, we again refer to van der Walt's thesis~\cite{vdWalt:Thesis:2012}. 
 Using the library is simple; it exposes a function called
-|doConvert| which takes the conversion table, a (hidden)  proof that
+|doConvert| which takes the conversion table, a (hidden)  proof that \todo{where does the hidden proof come from? or give forward reference}
 the conversion is possible, and a |Term| to convert,
 and produces an inhabitant of the desired data type.
 
@@ -449,7 +451,7 @@ The hidden assumption that the conversion is possible causes
 a 
 compile time failure if an incompatible term is given.
 To convince yourself of the utility of the |Autoquote| library,
-compare this relatively elegant code  to the verbose
+compare this relatively straightforward code  to the verbose
 |term2boolexpr| function in Fig.~\ref{fig:concrete2abstract}.
 
 
@@ -464,7 +466,7 @@ something = refl
 
 
 In most cases, the result from |doConvert| will require some
-post-processing, as we will see later in the Boolean tautologies
+post-processing\todo{why do they need this? what post-processing?}, as we will see later in the Boolean tautologies
 example (Sec.~\ref{sec:Boolean-tautologies}), but for now it suffices to say that |Autoquote| removes a lot
 of the burden of converting |Term|s into other ASTs.
 
@@ -479,7 +481,7 @@ into an abstract syntax tree that can be manipulated in the same
 system. Reflection in the proof technical sense is the method of
 mechanically constructing a proof of a theorem by inspecting its
 shape. The proof by reflection technique we describe here is not new --
-see for example the chapter in Coq'Art~\cite{L:BC04} -- but
+see for example the chapter in Coq'Art~\cite{L:BC04}\todo{which chapter?} -- but
 instead
 combines a number of existing methods into a usable package. 
 Here we will see two case studies illustrating proof by
@@ -489,6 +491,9 @@ more convenient.
 
 \subsection{Simple Example: Evenness}\label{sec:evenness}
 
+\todo{uses a lot of space for something simple. what about proving Even (x+100)? how about infinite types?}
+\todo{without this, it isn't clear that the paper answers the central question, namely whether agda's reflection mechanism is practically usable. reviewer 2}
+\todo{think about font / colour -- what will come out in print?}
 To illustrate the concept of proof by reflection, we will follow
 Chlipala's example of even naturals~\cite{chlipala2011certified}.
  We start by defining the
@@ -635,7 +640,7 @@ Take as an example the following Boolean formula.
 (p_1 \vee q_1) \wedge (p_2 \vee q_2) \Rightarrow (q_1 \vee p_1) \wedge (q_2 \vee p_2)
 \end{align}
 
-It is trivial to see that this is a tautology, but directly proving this 
+It is trivial\todo{hm, trivial? easy if tedious seems better.} to see that this is a tautology, but directly proving this 
 in Agda can be rather tedious. It
 is even worse if we want to check if the formula always holds by
 trying all possible variable assignments, since this requires $2^n$
@@ -753,11 +758,15 @@ of |⊤| or |⊥| types, depending on the result of |⟦_⊢_⟧| under each ass
 This corresponds precisely to the expression being a tautology if and
 only if the tree is inhabited. The function |foralls| simply bootstraps
 |forallsAcc| with an empty environment -- it is omitted for brevity.
+\todo{review 4: remark about truth table}
 
+\todo{be careful about what I claim can be ignored. forallsAcc drives the computation, it could do with some explanation (reviewer 1)}
+\todo{review 4 says ``needs clarification''}
 The |Diff| argument is unfortunately needed for bookkeeping, to prove that |forallsAcc| will eventually produce a
 tree with depth equal to the number of free variables in an
 expression, and can be ignored.\todo{this is the argument driving the
   computation, we cannot ignore it. explain this better.}
+
 
 
 \begin{shadedfigure}
@@ -836,7 +845,7 @@ soundness {n} b {p}          = soundnessAcc b [] (zero-least 0 n) p
 
 Now, we can prove theorems by a call of the form |soundness b {p}|, where |b| is the
 representation of the formula under consideration, and |p| is the evidence
-that all branches of the proof tree are true. Agda is convinced
+that all branches of the proof tree are true. Agda is convinced\todo{review 4: what does convinced mean?}
 that the representation does in fact correspond to the concrete
 formula, and also that |soundness| gives a valid proof. We do not
 even give |p| explicitly since the only valid values are nested
@@ -878,11 +887,13 @@ for formulae containing many variables.
 
 It would be desirable for this representation
 process to be automated. Luckily we have the |Autoquote| library
-for precisely this purpose.
+for precisely this purpose.\todo{review 4 says append ``and we show this now''}
 
 
 \subsection{Adding Reflection}\label{sec:addrefl}
 
+\todo{see reviewer 3: among other things there are a lot of useful comments regarding the declarative translation table.}
+\todo{more from review 3: open / closed proof example, question whether the approach scales.}
 It might come as a surprise that in a paper focusing on reflection --
 in the programming language technology sense -- we have not yet
 presented a convincing use for reflection. This is about to change. 
@@ -932,6 +943,7 @@ formulae are tautologies.  The following snippet illustrates the use of
 the |proveTautology| function; we can omit all arguments except |e|, since they
   can  be inferred.
 
+  \todo{what is the type of proveTautology?}
 \begin{shade}
 \begin{code}
 peirce     : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
@@ -1013,7 +1025,7 @@ two separate languages. This paper explores an alternative, where metaprograms a
 fact that proof generation in Agda is explicit may be something some
 people appreciate. 
 
-There are performance issues with the current reflection API in
+There are performance issues\todo{need to be more specific about this, says review 4} with the current reflection API in
 Agda. This should not come as a surprise. The extensive usage of proof
 by reflection in Coq and SSReflect~\cite{gonthier:inria-00515548} has
 motivated a lot of recent work on improving Coq's compile time
