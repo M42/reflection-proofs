@@ -171,6 +171,10 @@ This paper addresses the following central questions:
 \researchquestion
 
 \paragraph{Contributions.} 
+\todo{note that the tutorial isn't self-contained, point to msc, maybe}
+\todo{explain all the definitions used, at least intuitively}
+\todo{thank the reviewers and such}
+
 This paper reports on the experience of using Agda's reflection mechanism to automate certain 
 categories of proofs.
 This is a case study,
@@ -178,7 +182,9 @@ exemplative of the kind of problems that can be solved using
 reflection. More specifically this work makes the following contributions:
 
 \begin{itemize}
-  \item We give a brief overview of Agda's reflection mechanism (Sec.~\ref{sec:crash}). Previously, these features were only documented in release notes and comments in Agda's source files.
+  \item We give a brief overview of Agda's reflection mechanism
+(Sec.~\ref{sec:crash}). Previously, these features were only
+documented in the release notes and comments in Agda's source files.
 \item We present |Autoquote|, an Agda library that 
 alleviates much
   of a programmer's burden when quoting a given abstract syntax tree 
@@ -193,7 +199,7 @@ alleviates much
 The code presented in this paper compiles using the
 latest version of Agda (currently 2.3.2). Supporting code, including this
 paper, is available on
-GitHub. \footnote{\ghurl}
+GitHub.~\footnote{\ghurl}
 This paper is also a Literate Agda file, which means the code snippets can be extracted, compiled, and adapted.
 
 
@@ -213,7 +219,7 @@ Coquand's calculus of constructions~\cite{DBLP:journals/iandc/CoquandH88}.
 For an excellent tutorial on dependently typed programming using Agda,
 the reader is referred to Norell's work~\cite{Norell:2009:DTP:1481861.1481862}.
 
-Since version 2.2.8, Agda includes a reflection API~\cite{agda-relnotes-228}, which allows the conversion of
+Since version 2.2.8, Agda includes a reflection API~\cite{agda-relnotes-228,agda-relnotes-230}, which allows the conversion of
 parts of a program's code into an abstract syntax tree, a data structure
 in Agda itself, that can be inspected or modified like any other data structure.
 The idea of reflection is old: in the 1980s % no apostrophe!
@@ -227,6 +233,8 @@ This paper explores how such a reflection mechanism can be used in a
 \emph{dependently typed} language such as Agda.
 
 \section{Using Reflection}\label{sec:crash}
+\todo{examples that complement the release notes, not the same ones.}
+
 
 Before going into too much detail about how reflection can make our
 life easier and what new programming techniques are possible, we look 
@@ -245,7 +253,7 @@ type or definition of the identifier. We refer to the release
 % writing. First rule: Do not use semicolons. They are transvestite
 % hermaphrodites representing absolutely nothing. All they do is show
 % you've been to college. -- gebruik ze niet te vaak :)
-notes~\cite{agda-relnotes-228} for a listing of the data structures
+notes~\cite{agda-relnotes-228,agda-relnotes-230} for a listing of the data structures
 involved; the most important one is the type |Term : Set| which
 represents concrete Agda terms.
 
@@ -276,7 +284,9 @@ example₁   : quoteTerm ((\ x → x) 0) ≡ con (quote ℕ.zero) []
 example₁   = refl
 \end{code}
 \end{shade}
+\todo{refer to N.zero everywhere.}
 
+\todo{page 7 overfull bad box}
 See how the identity function is applied to zero, resulting in only the value zero.
 The quoted representation of a natural zero is |con (quote zero) []|, where |con| means that we
 are introducing a constructor. The constructor |zero| takes no arguments, hence the empty list.
@@ -308,6 +318,9 @@ This is why we have decidable equality on the following types: |Visibility|, |Re
 Typically, this is useful for deciding which constructor is present in
 some expression, by comparing to known |Name|s (obtained using |quote|). Such a comparison is
 illustrated in the function |convert|, below. 
+\todo{don't talk about visibility, relevance etc. without introducing;
+rather just talk about why we have decidable equality and how we
+cannot pattern match for various reasons (total function impossible etc)}
 
 \begin{shade}
 \begin{spec}
@@ -742,7 +755,9 @@ only if the tree is inhabited. The function |foralls| simply bootstraps
 |forallsAcc| with an empty environment -- it is omitted for brevity.
 
 The |Diff| argument is unfortunately needed for bookkeeping, to prove that |forallsAcc| will eventually produce a
-tree with depth equal to the number of free variables in an expression, and can be ignored.
+tree with depth equal to the number of free variables in an
+expression, and can be ignored.\todo{this is the argument driving the
+  computation, we cannot ignore it. explain this better.}
 
 
 \begin{shadedfigure}
@@ -910,6 +925,7 @@ Once we have a |BoolInter| expression, we just need to check that its
 variables are all in scope (this means that $\forall$ |Atomic| $x  :     x < n$, if we
 want to convert to a |BoolExpr n|), and replace all the |ℕ| values with their |Fin n| counterparts.
 We can now write a function called |proveTautology|, which uses the automatic quoter and calls |soundness| on the resulting term.
+\todo{what is the type of provetautology}
 
 That is all we need to automatically prove that
 formulae are tautologies.  The following snippet illustrates the use of
@@ -967,7 +983,7 @@ when using |quoteTerm|.
 If we look at the taxonomy of reflective systems in programming language technology written up 
 by Sheard~\cite{sheard-staged-programming},
 we see that we can make a few rough judgements about the metaprogramming facilities Agda currently 
-supports. \footnote{Of course, having been implemented during a single
+supports.~\footnote{Of course, having been implemented during a single
 Agda Implementors' Meeting~\cite{thorsten-communication}, the current
 implementation is more a proof-of-concept, and is still far from
 being considered finished, so it would be unfair to judge the current implementation all too harshly. In
