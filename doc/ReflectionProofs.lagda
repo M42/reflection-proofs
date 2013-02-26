@@ -213,7 +213,7 @@ Coquand's calculus of constructions~\cite{DBLP:journals/iandc/CoquandH88}.
 For an excellent tutorial on dependently typed programming using Agda,
 the reader is referred to Norell's work~\cite{Norell:2009:DTP:1481861.1481862}.
 
-Since version 2.2.8, Agda includes a reflection API~\cite{agda-relnotes-228,agda-relnotes-230}, which allows the conversion of
+Since version 2.2.8, Agda includes a reflection API~\cite{agda-relnotes-228}, which allows the conversion of
 parts of a program's code into an abstract syntax tree, a data structure
 in Agda itself, that can be inspected or modified like any other data structure.
 The idea of reflection is old: in the 1980s % no apostrophe!
@@ -248,7 +248,7 @@ type or definition of the identifier. We refer to the release
 % writing. First rule: Do not use semicolons. They are transvestite
 % hermaphrodites representing absolutely nothing. All they do is show
 % you've been to college. -- gebruik ze niet te vaak :)
-notes~\cite{agda-relnotes-228,agda-relnotes-230} for a listing of the data structures
+notes~\cite{agda-relnotes-228} for a listing of the data structures
 involved; the most important one is the type |Term : Set| which
 represents concrete Agda terms.
 
@@ -337,8 +337,8 @@ convert (con c args) with c ≟-Name quote foo
 This short introduction should already be enough to start developing
 simple programs using reflection.  For a more detailed description of the
 reflection API in Agda, including many examples, the inquisitive
-reader is referred to the chapter in van der Walt's thesis covering this topic~\cite{vdWalt:Thesis:2012}.
-This thesis goes into more detail 
+reader is referred to Chapter~3 of van der Walt's thesis~\cite{vdWalt:Thesis:2012}.
+The thesis goes into more detail 
 regarding the data structures involved in Agda's reflection API, and later, 
 gives a detailed account of some real-world applications.
 
@@ -487,7 +487,7 @@ into an abstract syntax tree that can be manipulated in the same
 system. Reflection in the proof technical sense is the method of
 mechanically constructing a proof of a theorem by inspecting its
 shape. The proof by reflection technique we describe here is not new --
-see for example the chapter in Coq'Art~\cite{L:BC04}\todo{which chapter?} -- but
+see for example Chapter~16 of Coq'Art~\cite{L:BC04} -- but
 instead
 combines a number of existing methods into a usable package. 
 Here we will see two case studies illustrating proof by
@@ -1046,7 +1046,7 @@ evaluation. We hope that Agda can be extended with similar technology.
  
 \paragraph{Conclusions.}
 Returning to our research question,  repeated here to jog the memory,
-a summary of findings is made.\todo{some over-colloquiallisms}
+a summary of findings is made.\todo{some over-colloquialisms}
 
 \researchquestion
 
@@ -1079,15 +1079,16 @@ this approach versus the tactic language in Coq, would be that the language of t
 tactics is the same.
 
 \subsubsection{Acknowledgements.}
-  test
+We would like to thank each of  the 4 anonymous reviewers for detailed and constructive comments that greatly improved the article.
 
 \bibliography{refs}{}
 %\bibliographystyle{plain}
 % for LNCS bibliography:
 \bibliographystyle{splncs}%this one doesn't sort automatically. :(
-% Voor IFL paper:
+% (TODO) Voor IFL paper:
 % Beperk je tot de essentie
 % Geef voorbeelden
+% Minder colloquial
 \end{document}
 
 %%% Local Variables:
