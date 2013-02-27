@@ -110,3 +110,19 @@ isEven30 = decEven
 -- ...but 13 throws a _descriptive_ error!
 isEven13 : Even 13
 isEven13 = decEven
+
+-- experiments on unbounded domains follow.
+-- the question is whether we could somehow write a tactic which
+-- could decipher the expression in the output type, and produce
+-- the corresponding proof modifier. This seems difficult.
+-- at the very least, we would need to implement abstract versions of these
+-- functions and a sort of "tactic database"
+
+addConst : (x : ℕ) → Even x → Even (x + 12)
+addConst .0 isEvenZ = isEvenSS
+                   (isEvenSS (isEvenSS (isEvenSS (isEvenSS (isEvenSS isEvenZ)))))
+addConst .(suc (suc n)) (isEvenSS {n} pf) = isEvenSS (addConst n pf)
+
+mult : (x : ℕ) → Even x → Even (x * 3)
+mult .0 isEvenZ = isEvenZ
+mult .(suc (suc n)) (isEvenSS {n} pf) = isEvenSS (isEvenSS (isEvenSS (mult n pf)))

@@ -166,9 +166,7 @@ This paper addresses the following central questions:
 \researchquestion
 
 \paragraph{Contributions.} 
-\todo{note that the tutorial isn't self-contained, point to msc, maybe}
 \todo{explain all the definitions used, at least intuitively}
-\todo{thank the reviewers and such}
 
 This paper reports on the experience of using Agda's reflection mechanism to automate certain 
 categories of proofs.
@@ -178,12 +176,14 @@ of the kind of problems that can be solved using
 reflection. More specifically this work makes the following contributions:
 
 \begin{itemize}
-  \item We give a brief overview of Agda's reflection mechanism
+  \item We give a very brief introduction to Agda's reflection mechanism
 (Sec.~\ref{sec:crash}). Previously, these features were only
-documented in the release notes and comments in Agda's source files.
-\item We present |Autoquote|, an Agda library that 
-alleviates much
-  of a programmer's burden when quoting a given abstract syntax tree 
+documented in the release notes and comments in Agda's source
+files. A detailed tutorial is available elsewhere~\cite{vdWalt:Thesis:2012}.
+\item We present |Autoquote|, an Agda library that does a
+  declaratively-specified 
+  translation of a quoted
+expression to a non-dependent datatype AST representing it
 (Sec.~\ref{sec:autoquote}).
 \item We show how to use Agda's reflection mechanism to
   automate certain categories of proofs (Sec.~\ref{sec:proof-by-reflection}).
@@ -227,34 +227,26 @@ This paper explores how such a reflection mechanism can be used in a
 \emph{dependently typed} language such as Agda.
 
 \section{Using Reflection}\label{sec:crash}
-\todo{examples that complement the release notes, not the same ones.}
+\todo{``examples that complement the release notes, not the same
+  ones.'' -- maar ik wil het juist simpel houden. Wouter, idee\"en?}
 
+Before going into any detail on what can be done with
+reflection, we will present Agda's
+reflection API by example. This is by no means a comprehensive
+tutorial; instead, one can be found in \cite{vdWalt:Thesis:2012}.
 
-\todo{Reviewer 1 says section 2 could use examples which are distinct from those in the release notes. }
-Before going into too much detail about how reflection can make our
-life easier and what new programming techniques are possible, we look 
-at Agda's reflection API in some detail. It should be a good
-starting point for someone familiar with Agda, or at the very least
-dependently typed programming in general. 
-
-
-
-\paragraph{The Keywords.} There are several new keywords that can be used to quote and unquote
+\paragraph{The Keywords.} There are several keywords that can be used to quote and unquote
 |Term| values: |quote|, |quoteTerm|, |quoteGoal|, and |unquote|. The
 |quote| keyword allows the user to access the internal representation of
-any identifier. This internal representation can be used to query the
+any identifier. This internal representation, a |Name| value, can be used to query the
 type or definition of the identifier. We refer to the release
-% Kurt Vonnegut zegt over de semi-colon: Here is a lesson in creative
-% writing. First rule: Do not use semicolons. They are transvestite
-% hermaphrodites representing absolutely nothing. All they do is show
-% you've been to college. -- gebruik ze niet te vaak :)
 notes~\cite{agda-relnotes-228} for a listing of the data structures
 involved; the most important one is the type |Term : Set| which
 represents concrete Agda terms.
 
-
 The easiest example of quotation uses the |quoteTerm| keyword to turn
-a fragment of concrete syntax into a |Term| value. Note that the
+a fragment of concrete syntax into a |Term| value (informally, one
+might say it is of type |concrete Agda expression -> Term|). Note that the
 |quoteTerm| keyword reduces like any other function in Agda. As an
 example, the following unit test type checks:
 
@@ -267,17 +259,16 @@ example₀   = refl
 
 Dissecting
 this, we introduced a lambda abstraction, so we expect the |lam|
-constructor. Its one argument is visible (as opposed to hidden), and
+constructor. Its one argument is visible (as opposed to hidden/implicit), and
 the body of the lambda abstraction is just a reference to the
 nearest-bound variable, thus |var 0|, applied to an empty list of
 arguments. Variables are referred to by their De Bruijn indices.
 
-Furthermore, |quoteTerm| type checks its term before
-returning the |Term|, as the following example demonstrates. Since
+Furthermore, |quoteTerm| type checks its argument before
+returning the |Term|. Since
 type checking a term necessitates normalisation, the returned |Term| is
-always in normal form.
+always in normal form, as |example₁| demonstrates.
 
-\todo{on page 3 it would be really nice to have informal types of the keywords presented (reviewer 4). if this is impossible, why?}
 \begin{shade}
 \begin{code}
 example₁   : quoteTerm ((\ x → x) 0) ≡ con (quote ℕ.zero) []
@@ -285,12 +276,13 @@ example₁   = refl
 \end{code}
 \end{shade}
 
-\todo{page 7 overfull bad box}
-See how the identity function is applied to zero, resulting in only the value zero.
+The identity function is applied to zero, resulting in just the value zero.
 The quoted representation of a natural zero is |con (quote ℕ.zero) []|, where |con| means that we
-are introducing a constructor. The constructor |ℕ.zero| takes no arguments, hence the empty list.
+are introducing a constructor. The constructor |ℕ.zero| has no arguments, hence the empty list.
 
-The |quoteGoal| keyword is slightly different. It is best explained using an
+The |quoteGoal| keyword is slightly different. It makes little sense
+to assign an informal type to |quoteGoal|, since it is really a
+syntactic construct that depends on its context. It is best explained using an
 example:
 
 \begin{shade}
@@ -301,44 +293,48 @@ example₂ = quoteGoal e in (HOLE 0)
 \end{shade}
 
 The |quoteGoal| keyword binds the variable |e| to the |Term|
-representing the type of the current goal. In this example, the value
+representing the type expected at the position of |quoteGoal|. In this example, the value
 of |e| in the hole will be |def ℕ []|, i.e., the |Term| representing
-the type |ℕ|.
+the type |ℕ|, which is a definition, hence |def|.
 
-
-The |unquote| keyword converts a |Term| data type back to concrete
+The |unquote| keyword (whose informal type could be expressed as |Term -> concrete Agda|) converts a |Term| data type back to concrete
 syntax. Just as |quoteTerm| and |quoteGoal|, it type checks and
-normalises the |Term| before it is spliced into the program text.
+normalises the |Term| before it is spliced into the program text. The
+|quote| keyword returns the representation of an identifier as a value in the
+primitive type |Name|. Thus, |quote x : Name|, if |x| is is the name of a definition (function, datatype, record, or
+      a constructor).
 
 
-\todo{don't talk about visibility, relevance etc without introducing them first.}
 Unfortunately, we cannot pattern match on constructor names without
-further ado.
-\todo{``this is why we have\dots'' needs explaining for the non-Agda-expert. talk about pattern matching, totality}
-\todo{vars are naturals -- does this mean they are de bruijn indexed? reviewer 2}
-This is why we have decidable equality on the following types: |Visibility|, |Relevance|, |List Arg|s, |Arg Type|s, |Arg Term|s,  |Name|s,  |Term|s, |Sort|s  and |Type|s. 
-Typically, this is useful for deciding which constructor is present in
-some expression, by comparing to known |Name|s (obtained using |quote|). Such a comparison is
-illustrated in the function |convert|, below. 
-\todo{don't talk about visibility, relevance etc. without introducing;
-rather just talk about why we have decidable equality and how we
-cannot pattern match for various reasons (total function impossible etc)}
+some inelegance. The only mechanism we have to distinguish |Name|s is
+decidable equality, which results in code as presented below -- a lot
+less concise than the pattern matching equivalent would be.
+
+
 
 \begin{shade}
 \begin{spec}
-convert : Term → Something
-convert (con c args) with c ≟-Name quote foo
+whatever : Term → ...
+whatever (con c args) with c ≟-Name quote foo
 ...                   | yes p     = (HOLE 0) -- |foo| applied to arguments
-...                   | no ¬p     = (HOLE 1) -- a function other than |foo|
+...                   | no ¬p     = (HOLE 1) -- a function other than |foo|, try another |Name|
 \end{spec}
 \end{shade}
 
-\todo{what is Something?}
+Note that in particular, if we want a |case|-like decision here, many
+branches will be necessary. The reason pattern matching on
+|Name|s is not supported, is that their domain is potentially infinite\todo{Wouter, zeg ik dit goed?}. Since
+Agda functions are required to be total, this would always require a
+``default'' case.  However, Agda does allow matching on |String|s
+(which similarly only expose decidable equality), so the
+limitation is purely a technical one, which might be solved in the future.
+
+
 This short introduction should already be enough to start developing
 simple programs using reflection.  For a more detailed description of the
-reflection API in Agda, including many examples, the inquisitive
+reflection API in Agda, the 
 reader is referred to Chapter~3 of van der Walt's thesis~\cite{vdWalt:Thesis:2012}.
-The thesis goes into more detail 
+It goes into more detail 
 regarding the data structures involved in Agda's reflection API, and later, 
 gives a detailed account of some real-world applications.
 
@@ -352,21 +348,21 @@ open import Metaprogramming.Autoquote
 \end{code}
 \end{shade}
 }
-\todo{look for bad/overfull hboxes}
 
-In the previous section, we saw how we can get hold of values of type
-|Term|, representing concrete Agda terms. This is a great start, but
+\todo{vars are naturals -- does this mean they are de bruijn indexed? reviewer 2}
+In the previous section, we saw how we can recover values of type
+|Term|, representing concrete Agda terms. This is a start, but
 we rarely want to directly manipulate |Term|s: often it
-is much more useful to use our own AST for computations. It sounds
-like a minor task to write a quick function to convert a |Term|
+is much more useful to use our own AST for computations. It should
+be a minor task to write a function to convert a |Term|
 into something more useful. However, it turns out this often becomes a mess.
 
-In a language like Haskell, which has pattern matching, converting
+When  pattern matching is possible, converting
 elements of one AST to another is usually a simple, if boring,
-task. Unfortunately for us, though, Agda functions are required to be
-total, which means they must have a case branch for each possible pattern. Since  |Term|
- covers all quotable terms, it has many alternatives.  Furthermore, we cannot pattern match on the
-names of the constructors, so we must resort to using decidable
+task. Unfortunately, Agda functions are required to be
+total, which means they must have a case for each possible pattern. Since  |Term|
+ covers all quotable terms, it has many alternatives.  Furthermore,
+ for |Name|s, we only have decidable
 equality. This is why
  such a
  conversion function  is often
@@ -385,18 +381,19 @@ term2boolexpr n (def f (arg v r x ∷ [])) pf with f ≟-Name quote ¬_
 ... | no ¬p with f ≟-Name quote _∧_
 ...
 \end{spec}
-\caption{The gist of  the conversion of a |Term| into some more specific data
+\caption{The gist of a na\"ive conversion function, from |Term| into some more specific data
   type.}\label{fig:concrete2abstract}
 \end{shadedfigure}
 
-The (partial) solution to this problem~-- something which at least mitigates 
+A (partial) solution to this problem~-- something which at least mitigates 
 the agony~-- is presented in this section, in the form of the
 |Autoquote| library.
 
 \paragraph{The |Autoquote| Library.}
-We will examine a toy AST, called |Expr|, shown in Fig.~\ref{fig:exprdata}.
-It is a rather simple inductive data structure representing terms which can contain Peano-style natural
-numbers, variables (represented by an Agda natural) and additions.
+We will use |Expr|, presented in Fig.~\ref{fig:exprdata}, as a running
+example of a toy AST.
+It is a simple non-dependent inductive data structure representing terms with Peano-style natural
+numbers, variables (represented using De Bruijn indices) and additions.
 
 
 \begin{shadedfigure}
@@ -412,20 +409,19 @@ data Expr : Set where
 
 We might want to convert an expression, such as $5 + x$, to this
 AST using reflection. In an ideal world, we would  just
- provide a mapping from concrete constructs such as the |_+_| function
- to elements like |Plus| of our
-AST, and get a conversion function for free.
+ pattern match on concrete constructs such as the |_+_| function
+ and return elements like |Plus| of our
+AST.
 The |Autoquote| library does just this, exposing
 an interface which, when provided with such a mapping, automatically quotes expressions
 that fit. Here, \emph{fitting} is defined as only having names that are listed
-in the mapping, or variables. Other terms are rejected.\todo{p5 ``Other terms are rejected'' - what does it mean for a term to be rejected?
-i.e. what is the effect? The text hints that this is a type error, since there
-is a suggestion that a proof is needed to show it is valid, but it would be
-good to be explicit.
-}
+in the mapping, or variables with De Bruijn indices, and having
+correct constructor arities. Trying to convert other terms results in
+a type error. 
 The user provides a straightforward mapping, such as in % elegant => straightforward, review 4
 Fig.~\ref{fig:exprTable}, and |Autoquote| automatically converts
-Agda terms to elements of the AST.
+Agda terms to elements of the AST. Currently only non-dependent
+inductive types are supported.
 
 \begin{shadedfigure}
 \begin{code}
@@ -438,24 +434,28 @@ exprTable = (  Var ,
 \caption{The mapping table for converting to the imaginary |Expr| AST. }\label{fig:exprTable}
 \end{shadedfigure}
 
-This should be interpreted as follows: any variables encountered should be stored as |Var|s, and
-the |_+_| operator should be mapped to a |Plus| constructor. In each case we are required to manually specify the
-arity of the constructor, or    how many arguments it expects.
-A |zero|, from the |Data.Nat| standard library, should be treated as our |Z| constructor, and
-a |suc| translates to |S|. These constructors expect 0 and 1 argument, respectively.
+This table should be interpreted as follows: any variables encountered should be stored as |Var|s, and
+the |_+_| operator should be mapped to a |Plus| constructor. 
+A |zero|, from the |Data.Nat| standard library, should be treated as our |Z| constructor, etc.
+ Note that the first item in the table
+(|Var| in this case) is special, and should be a constructor for De
+Bruijn-indexed variables. The rest of the table an arbitrary list of constructors.
 
 We will not say much about the implementation of this library, since
 it is not groundbreaking.
 For more details, we again refer to van der Walt's thesis~\cite{vdWalt:Thesis:2012}. 
 Using the library is simple; it exposes a function called
-|doConvert| which takes the conversion table, a (hidden)  proof that \todo{where does the hidden proof come from? or give forward reference}
+|doConvert| which takes the conversion table, a (hidden, automatically
+inferred)  proof that
 the conversion is possible, and a |Term| to convert,
-and produces an inhabitant of the desired data type.
+and produces an inhabitant of the desired data type, where
+possible. The implicit proof technique is outlined in
+Sec.~\ref{}. \todo{forward reference}
 
 The use of |doConvert| is illustrated in Fig.~\ref{fig:test-autoquote}. 
 The hidden assumption that the conversion is possible causes
 a 
-compile time failure if an incompatible term is given.
+type error if an incompatible term is given.
 To convince yourself of the utility of the |Autoquote| library,
 compare this relatively straightforward code  to the verbose
 |term2boolexpr| function in Fig.~\ref{fig:concrete2abstract}.
@@ -467,14 +467,21 @@ something : {x : ℕ}      → doConvert    exprTable      (    quoteTerm (x + 1
                          ≡                                  Plus (Var 0) (S Z)
 something = refl
 \end{code}
-\caption{An example of |Autoquote| in use. See Fig.~\ref{fig:exprTable} for the definition of |exprTable|, a typical |Name|-to-constructor mapping.}\label{fig:test-autoquote}
+\caption{An example of |Autoquote| in use. See Fig.~\ref{fig:exprTable} for the definition of |exprTable|, a declarative |Name|-to-constructor mapping.}\label{fig:test-autoquote}
 \end{shadedfigure}
 
-
 In most cases, the result from |doConvert| will require some
-post-processing\todo{why do they need this? what post-processing?}, as we will see later in the Boolean tautologies
-example (Sec.~\ref{sec:Boolean-tautologies}), but for now it suffices to say that |Autoquote| removes a lot
+post-processing -- 
+for example, turning all
+naturals into |Fin n| values, or scope checking a resulting
+expression -- as we will see later in the Boolean tautologies example (Sec.~\ref{sec:Boolean-tautologies}). However, for now it suffices to say that |Autoquote| removes a lot
 of the burden of converting |Term|s into other ASTs.
+
+A mechanism like |Autoquote| is actually an ad-hoc workaround for a more
+general difficulty in Agda, namely that currently, pattern matching on data types
+exposing decidable equality is  unreasonably awkward. If this were
+possible in general, like it is for |String|, the |Autoquote|
+library would be redundant.
 
 \section{Proof by Reflection}\label{sec:proof-by-reflection}
 
@@ -492,13 +499,14 @@ instead
 combines a number of existing methods into a usable package. 
 Here we will see two case studies illustrating proof by
 reflection and how Agda's reflection mechanism can make the technique
-more convenient.
+more convenient. The first example is a closed example and  sets the
+stage for the second. .... ... \todo{clarity}
 
 
 \subsection{Simple Example: Evenness}\label{sec:evenness}
 
-\todo{uses a lot of space for something simple. what about proving Even (x+100)? how about infinite types?}
-\todo{without this, it isn't clear that the paper answers the central question, namely whether agda's reflection mechanism is practically usable. reviewer 2}
+\todo{uses a lot of space for something simple. what about proving
+  Even (x+100)? how about infinite types? without this, it isn't clear that the paper answers the central question, namely whether agda's reflection mechanism is practically usable. reviewer 2}
 \todo{think about font / colour -- what will come out in print?}
 To illustrate the concept of proof by reflection, we will follow
 Chlipala's example of even naturals~\cite{chlipala2011certified}.
@@ -1078,7 +1086,7 @@ of predefined proof recipes to see if one of them might discharge the obligation
 this approach versus the tactic language in Coq, would be that the language of the propositions and
 tactics is the same.
 
-\subsubsection{Acknowledgements.}
+\subsubsection{Acknowledgements.} %TODO is this enough/right?
 We would like to thank each of  the 4 anonymous reviewers for detailed and constructive comments that greatly improved the article.
 
 \bibliography{refs}{}
@@ -1089,6 +1097,7 @@ We would like to thank each of  the 4 anonymous reviewers for detailed and const
 % Beperk je tot de essentie
 % Geef voorbeelden
 % Minder colloquial
+% check for overfull hboxes and such
 \end{document}
 
 %%% Local Variables:

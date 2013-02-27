@@ -1,26 +1,4 @@
 ----------------------- REVIEW 1 ---------------------
-The article reports on the experience of automating certain 
-proofs in Agda using the proof-by-reflection technique, with 
-the help of Agda's reflection mechanism.
-
-It is very well written, with clear examples and 
-an impeccable presentation. However, it is rather light in 
-terms of contributions. I identified three minor contributions.
-
-* The first minor contribution is to explain proof-by-reflection in the
-  language Agda. The proof by reflection technique is well-known, but I
-  have not seen any explanation of it in Agda.
-
-* Another minor contribution is to explain Agda's reflection
-  mechanism, up to now only documented in release notes and source
-  code. A complete explanation of Agda's reflection mechanism could be
-  very interesting, but the explanation in the paper is rather brief,
-  and not self-contained. 
-
-* The last minor contribution is to present a library that relieves
-  the programmer of some bureaucracy that appears when using
-  reflection. As the authors note, the implementation of the library
-  is not groundbreaking.
 
 In summary, I think it is a nice paper, but I'm not convinced the
 contributions are enough and, for the sake of brevity, many
@@ -29,8 +7,6 @@ tutorial.  The case for the paper would be stronger, had it explained
 Agda's reflection in more detail, relieving the reader from the need
 to go into release notes, and had it explain (at least intuitively)
 all the definitions used.
-
-Detailed comments noted.
 
 ----------------------- REVIEW 2 ---------------------
 This paper describes the use of Agda's reflection mechanism to help with proof
@@ -43,7 +19,7 @@ help. However, this paper only really scratches the surface of what is possible
 - existing (unpublished, as far as I'm aware) examples such as the Ring solver
 go much further towards demonstrating its value.
 
-The 'Evenness' example uses a lot of space for something pretty simple. An in
+The 'Evenness' example uses a lot of space for something pretty simple. And in
 practice, the number won't necessarily be known. What if you know "Even x" and
 need to prove "Even (x + 100)". Does it still work? Similarly for the tautology
 example - what if there is an unknown formula which is nevertheless known to be
@@ -57,8 +33,6 @@ its application, but I think there are some limitations which need to be
 addressed before the paper can be accepted. In particular, the paper needs to
 discuss how the Boolean tautology example could scale to an infinite type such
 as Nat.
-
-Minor comments sorted.
 
 ----------------------- REVIEW 3 ---------------------
 Summary of the Content
@@ -114,6 +88,7 @@ It always specifies the constructor to be used for variables, while
 the remaining table values are mappings from term names to
 constructors. It would be more clear to point out this special case.
 
+% repeat this comment at the beginning of the chapter.
 I was a bit dissapointed when learning at the very end that Autoquote
 can only translate into non-dependent types. It would be better to set
 expectations properly in the beginning of the paper. You could modify
