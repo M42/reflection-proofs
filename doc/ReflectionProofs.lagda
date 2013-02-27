@@ -165,10 +165,7 @@ This paper addresses the following central questions:
 
 \researchquestion
 
-\paragraph{Contributions.} 
-\todo{explain all the definitions used, at least intuitively}
-
-This paper reports on the experience of using Agda's reflection mechanism to automate certain 
+\paragraph{Contributions.} This paper reports on the experience of using Agda's reflection mechanism to automate certain 
 categories of proofs.
 This is a case study,
 illustrative % reviewer 4: "exemplative => illustrative"
@@ -191,11 +188,10 @@ expression to a non-dependent datatype AST representing it
     reflection} is certainly not new, but still worth examining in the
   context of this technology. % removed keyword new, as per reviewer 2
 \end{itemize}
-
 The code presented in this paper compiles using 
- Agda version 2.3.2. Supporting code, including this %TODO does it compile??
+ Agda version 2.3.2.\footnote{All supporting code, including this
 paper in Literate Agda format, is available on
-GitHub.\footnote{\ghurl}
+GitHub. \ghurl} %
 % review comment applied: paper isn't Literate Agda
 
 \subsection{Introducing Agda}\label{sec:reflection}
@@ -223,13 +219,13 @@ which allowed run time modification of a program's code, for example by
 the program itself. This has given rise to powerful techniques for code reuse and
 abstraction.
 
-This paper explores how such a reflection mechanism can be used in a
-\emph{dependently typed} language such as Agda.
-
+%%%%% redundant comment, removing for now.
+% This paper explores how such a reflection mechanism can be used in a
+% \emph{dependently typed} language such as Agda.
 \section{Using Reflection}\label{sec:crash}
-\todo{``examples that complement the release notes, not the same
-  ones.'' -- maar ik wil het juist simpel houden. Wouter, idee\"en?}
-
+\todo{``examples that complement the release notes, not the same %
+  ones.'' -- maar ik wil het juist simpel houden. Wouter, idee\"en?} %
+ %
 Before going into any detail on what can be done with
 reflection, we will present Agda's
 reflection API by example. This is by no means a comprehensive
@@ -244,10 +240,8 @@ notes~\cite{agda-relnotes-228} for a listing of the data structures
 involved; the most important one is the type |Term : Set| which
 represents concrete Agda terms.
 
-The easiest example of quotation uses the |quoteTerm| keyword to turn
-a fragment of concrete syntax into a |Term| value (informally, one
-might say it is of type |concrete Agda expression -> Term|). Note that the
-|quoteTerm| keyword reduces like any other function in Agda. As an
+The easiest example of quotation uses the keyword |quoteTerm x : Term|, where |x| is a fragment of concrete syntax.  Note that
+|quoteTerm| reduces like any other function in Agda. As an
 example, the following unit test type checks:
 
 \begin{shade}
@@ -297,16 +291,17 @@ representing the type expected at the position of |quoteGoal|. In this example, 
 of |e| in the hole will be |def ℕ []|, i.e., the |Term| representing
 the type |ℕ|, which is a definition, hence |def|.
 
-The |unquote| keyword (whose informal type could be expressed as |Term -> concrete Agda|) converts a |Term| data type back to concrete
+The |unquote| keyword (whose  type could be expressed as |Term ->
+concrete Agda|, informally) converts a |Term| data type back to concrete
 syntax. Just as |quoteTerm| and |quoteGoal|, it type checks and
 normalises the |Term| before it is spliced into the program text. The
-|quote| keyword returns the representation of an identifier as a value in the
-primitive type |Name|. Thus, |quote x : Name|, if |x| is is the name of a definition (function, datatype, record, or
+|quote x : Name| keyword returns the representation of an identifier |x| as a value in the
+primitive type |Name|, if |x| is the name of a definition (function, datatype, record, or
       a constructor).
 
 
-Unfortunately, we cannot pattern match on constructor names without
-some inelegance. The only mechanism we have to distinguish |Name|s is
+Unfortunately, we cannot simply pattern match on constructor names.
+ The only mechanism we have to distinguish |Name|s is
 decidable equality, which results in code as presented below -- a lot
 less concise than the pattern matching equivalent would be.
 
@@ -321,7 +316,7 @@ whatever (con c args) with c ≟-Name quote foo
 \end{spec}
 \end{shade}
 
-Note that in particular, if we want a |case|-like decision here, many
+Note that since we want a |case|-like decision here, many
 branches will be necessary. The reason pattern matching on
 |Name|s is not supported, is that their domain is potentially infinite\todo{Wouter, zeg ik dit goed?}. Since
 Agda functions are required to be total, this would always require a
@@ -329,16 +324,12 @@ Agda functions are required to be total, this would always require a
 (which similarly only expose decidable equality), so the
 limitation is purely a technical one, which might be solved in the future.
 
-
 This short introduction should already be enough to start developing
-simple programs using reflection.  For a more detailed description of the
-reflection API in Agda, the 
-reader is referred to Chapter~3 of van der Walt's thesis~\cite{vdWalt:Thesis:2012}.
-It goes into more detail 
-regarding the data structures involved in Agda's reflection API, and later, 
-gives a detailed account of some real-world applications.
-
-
+simple programs using reflection.  For a more detailed description of
+the reflection API in Agda, the reader is referred to Chapter~3 of van
+der Walt's thesis~\cite{vdWalt:Thesis:2012}.  It goes into more detail
+regarding the data structures involved in Agda's reflection API, and
+later, gives a detailed account of some real-world applications.
 
 \section{Automatic Quoting}\label{sec:autoquote}
 \ignore{
@@ -349,7 +340,6 @@ open import Metaprogramming.Autoquote
 \end{shade}
 }
 
-\todo{vars are naturals -- does this mean they are de bruijn indexed? reviewer 2}
 In the previous section, we saw how we can recover values of type
 |Term|, representing concrete Agda terms. This is a start, but
 we rarely want to directly manipulate |Term|s: often it
@@ -393,7 +383,7 @@ the agony~-- is presented in this section, in the form of the
 We will use |Expr|, presented in Fig.~\ref{fig:exprdata}, as a running
 example of a toy AST.
 It is a simple non-dependent inductive data structure representing terms with Peano-style natural
-numbers, variables (represented using De Bruijn indices) and additions.
+numbers, variables represented using De Bruijn indices, and additions.
 
 
 \begin{shadedfigure}
@@ -434,7 +424,8 @@ exprTable = (  Var ,
 \caption{The mapping table for converting to the imaginary |Expr| AST. }\label{fig:exprTable}
 \end{shadedfigure}
 
-This table should be interpreted as follows: any variables encountered should be stored as |Var|s, and
+This table should be interpreted as follows: any variables encountered
+should be stored in |Var|s, and
 the |_+_| operator should be mapped to a |Plus| constructor. 
 A |zero|, from the |Data.Nat| standard library, should be treated as our |Z| constructor, etc.
  Note that the first item in the table
@@ -450,15 +441,15 @@ inferred)  proof that
 the conversion is possible, and a |Term| to convert,
 and produces an inhabitant of the desired data type, where
 possible. The implicit proof technique is outlined in
-Sec.~\ref{}. \todo{forward reference}
+Sec.~\ref{sec:implicit}. 
 
 The use of |doConvert| is illustrated in Fig.~\ref{fig:test-autoquote}. 
 The hidden assumption that the conversion is possible causes
 a 
 type error if an incompatible term is given.
-To convince yourself of the utility of the |Autoquote| library,
+The utility of the |Autoquote| library is clear if you
 compare this relatively straightforward code  to the verbose
-|term2boolexpr| function in Fig.~\ref{fig:concrete2abstract}.
+|term2boolexpr| snippet in Fig.~\ref{fig:concrete2abstract}.
 
 
 \begin{shadedfigure}
@@ -470,7 +461,7 @@ something = refl
 \caption{An example of |Autoquote| in use. See Fig.~\ref{fig:exprTable} for the definition of |exprTable|, a declarative |Name|-to-constructor mapping.}\label{fig:test-autoquote}
 \end{shadedfigure}
 
-In most cases, the result from |doConvert| will require some
+Usually, the result from |doConvert| will require some
 post-processing -- 
 for example, turning all
 naturals into |Fin n| values, or scope checking a resulting
@@ -478,7 +469,8 @@ expression -- as we will see later in the Boolean tautologies example (Sec.~\ref
 of the burden of converting |Term|s into other ASTs.
 
 A mechanism like |Autoquote| is actually an ad-hoc workaround for a more
-general difficulty in Agda, namely that currently, pattern matching on data types
+general difficulty in Agda, namely that currently, a watered-down
+version of pattern matching on data types
 exposing decidable equality is  unreasonably awkward. If this were
 possible in general, like it is for |String|, the |Autoquote|
 library would be redundant.
@@ -507,7 +499,6 @@ stage for the second. .... ... \todo{clarity}
 
 \todo{uses a lot of space for something simple. what about proving
   Even (x+100)? how about infinite types? without this, it isn't clear that the paper answers the central question, namely whether agda's reflection mechanism is practically usable. reviewer 2}
-\todo{think about font / colour -- what will come out in print?}
 To illustrate the concept of proof by reflection, we will follow
 Chlipala's example of even naturals~\cite{chlipala2011certified}.
  We start by defining the
@@ -602,7 +593,7 @@ number, since the parameter |even? n|  is equal to |⊥|,
 |tt| would not be accepted where it is in the |Even 28| example. This will
 produce a type error stating that the types |⊤| and |⊥| cannot be unified.
 
-Since the type |⊤| is a simple record type, Agda can infer the |tt|
+\paragraph{Implicit Proofs.}\label{sec:implicit} Since the type |⊤| is a simple record type, Agda can infer the |tt|
 argument. This means we can turn the assumption |even? n| into an
 implicit argument, so a user could get away with writing just
 |soundnessEven| as the proof, letting Agda fill in the missing proof. 
@@ -611,13 +602,10 @@ function slightly, making all its arguments implicit.  This trick works
 because Agda supports eta expansion for record types. More specifically, Agda will automatically fill in implicit arguments of the unit type. Here,
  the type system is doing work for us which is not done for general
  data types; for records eta expansion is safe, since recursion is not allowed.
-This trick is
-implemented in the code on GitHub, and will be
-used from here on to make our proofs easier to use.
+This trick  will be
+used from here on to make our proof generators easier to use.
 
-
-
-Note that it is possible to generate a user-friendly ``error'' of
+\paragraph{Friendlier Errors.} Note that it is possible to generate a user-friendly ``error'' of
 sorts, by replacing the |⊥| with
 an empty type having a descriptive name:
 
@@ -626,7 +614,6 @@ an empty type having a descriptive name:
 data IsOdd : ℕ -> Set where
 \end{spec}  
 \end{shade}
-
 
 This makes the soundness proof a little less straightforward, but in return the
 type error generated if an odd number is used becomes more
@@ -654,11 +641,10 @@ Take as an example the following Boolean formula.
 (p_1 \vee q_1) \wedge (p_2 \vee q_2) \Rightarrow (q_1 \vee p_1) \wedge (q_2 \vee p_2)
 \end{align}
 
-It is trivial\todo{hm, trivial? easy if tedious seems better.} to see that this is a tautology, but directly proving this 
-in Agda can be rather tedious. It
-is even worse if we want to check if the formula always holds by
-trying all possible variable assignments, since this requires $2^n$
-cases, where $n$ is the number of variables.
+It is simple to verify that this is a tautology, but directly proving this 
+in Agda would be rather tedious. Assuming we want to check if the formula always holds by
+trying all possible variable assignments, this would require $2^n$
+pattern matching cases, where $n$ is the number of variables.
 
 To automate this process, we will follow a similar approach to
 the one given in the previous section. We start by defining an
@@ -676,22 +662,11 @@ data BoolExpr (n : ℕ) : Set where
 \caption{Inductive definition of Boolean expressions with $n$ free variables.}\label{fig:boolexprn}
 \end{shadedfigure}
 
-
-
 There is nothing
 surprising about this definition; we use the type |Fin n| to ensure
-that variables (represented by |Atomic|) are always in scope. If we want to
+that variables (represented by |Atomic| and identified by their De Bruijn index) are always in scope. If we want to
 evaluate the expression, however, we will need some way to map variables to values.
 Enter |Env n|: a vector of $n$ Boolean values. It has fixed size |n| since a |BoolExpr n| has at most $n$ free variables.
-
-% ...lijkt me dat mensen dit wel begrijpen. Ik probeer hier ruimte te
-% besparen. --Paul
-% \begin{shade}
-% \begin{spec}
-% Env   : ℕ → Set
-% Env   = Vec Bool
-% \end{spec}
-% \end{shade}
 
 Now we can define an evaluation function, which tells us if a given
 Boolean expression is true or not, under some assignment of variables. It does this by evaluating
@@ -858,11 +833,6 @@ soundness {n} b {p}          = soundnessAcc b [] (zero-least 0 n) p
 }
 \end{shade}
 
-%If we look closely at the definition of |soundnessAcc|, we see that it
-%builds up the environment by assigning some configuration of |true| and |false| to the variables. It eventually returns the
-%leaf from |forallsAcc| which is the proof that the formula is a tautology
-%in that specific case. 
-
 Now, we can prove theorems by a call of the form |soundness b {p}|, where |b| is the
 representation of the formula under consideration, and |p| is the evidence
 that all branches of the proof tree are true. Agda is convinced\todo{review 4: what does convinced mean?}
@@ -875,9 +845,9 @@ is inhabited.  This once  again exploits the fact that  Agda supports eta
 expansion for record types. 
 
 If the module
-passes the type checker, we know our formula is both a tautology and
-that we have the corresponding proof object at our disposal
-afterwards, as in |someTauto| (Fig.~\ref{fig:dup}).
+type checks, we know our formula is both a tautology and
+that we have the corresponding proof object at our disposal,
+ as in |someTauto| (Fig.~\ref{fig:dup}).
 
 \begin{shadedfigure}
 \begin{code}
@@ -907,7 +877,7 @@ for formulae containing many variables.
 
 It would be desirable for this representation
 process to be automated. Luckily we have the |Autoquote| library
-for precisely this purpose.\todo{review 4 says append ``and we show this now''}
+for precisely this purpose, and we show this now.
 
 
 \subsection{Adding Reflection}\label{sec:addrefl}
@@ -963,14 +933,13 @@ formulae are tautologies.  The following snippet illustrates the use of
 the |proveTautology| function; we can omit all arguments except |e|, since they
   can  be inferred.
 
-  \todo{what is the type of proveTautology?}
 \begin{shade}
 \begin{code}
-peirce     : (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
-peirce     = quoteGoal e in proveTautology e
+peirce     :    (p q : Bool) → P(((p ⇒ q) ⇒ p) ⇒ p)
+peirce     =    quoteGoal e in proveTautology e
 
-fave       : exampletheorem -- defined in Fig.~\ref{fig:exampletheorem}
-fave       = quoteGoal e in proveTautology e
+fave       :    exampletheorem -- defined in Fig.~\ref{fig:exampletheorem}
+fave       =    quoteGoal e in proveTautology e
 \end{code}
 \end{shade}
 
@@ -1097,6 +1066,7 @@ We would like to thank each of  the 4 anonymous reviewers for detailed and const
 % Beperk je tot de essentie
 % Geef voorbeelden
 % Minder colloquial
+% fonts and colours in final version
 % check for overfull hboxes and such
 \end{document}
 

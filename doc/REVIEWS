@@ -1,17 +1,4 @@
------------------------ REVIEW 1 ---------------------
-
-In summary, I think it is a nice paper, but I'm not convinced the
-contributions are enough and, for the sake of brevity, many
-definitions are not given or explained, hindering its value as a
-tutorial.  The case for the paper would be stronger, had it explained
-Agda's reflection in more detail, relieving the reader from the need
-to go into release notes, and had it explain (at least intuitively)
-all the definitions used.
-
 ----------------------- REVIEW 2 ---------------------
-This paper describes the use of Agda's reflection mechanism to help with proof
-automation, and gives some simple examples, including proving evenness of
-natural numbers and proving that a boolean formula is a tautology.
 
 It seems that proof automation is important for a practical language with
 dependent types, and Agda's reflection mechanism as described is likely to
@@ -28,9 +15,7 @@ come up in practice and how the reflection techniques described help. Without
 this, it's not clear that the paper answers the given central question of
 whether Agda's reflective capabilities are sufficient and practically usable.
 
-In summary: there's some nice tutorial material here describing reflection and
-its application, but I think there are some limitations which need to be
-addressed before the paper can be accepted. In particular, the paper needs to
+In particular, the paper needs to
 discuss how the Boolean tautology example could scale to an infinite type such
 as Nat.
 
@@ -45,30 +30,7 @@ automate proofs (similar to tactics). This works by reducing an
 expression to a record of unique Unit record leaves, which can be
 inferred as an implicit argument by Agda.
 
-The paper also briefly overviews Agda's reflection mechanism, and
-shows how it can be used to automate the production of values in the
-expression language representing the goal proposition (which are
-passed as arguments to "tactics".) The paper contributes a novel
-Autoquote mechanism that enables the translation from the expression
-language to the propositional language to be specified declaratively.
-Without Autquote, verbose boilerplate must be written to translate
-quoted terms into an expression language that tactics operate on.
-
 The Review
-
-The paper does a good job of summarzing the current situation of
-proofs by reflection in Agda, and motivates the need for Agda's
-quoting facilities to get rid of duplicate information in the type of
-the goal and arguments passed to tactics. The declarative Autoquote
-translation table is a much needed alernative to supplying boilerplate
-translations of quoted terms into expressions AST's.
-
-In a way the translation table is an instance of a more general
-mechanism to recover a notion of simple "pattern matching" from an abstract
-datatype only exposing equality operations. In this case "names" are
-the abstract datatype (ADT), which expose decidable equality functions that
-make up the implementation of the declarative pattern matching-esque
-table.
 
 Maybe you could address why Agda does not support pattern matching on
 names? Is this a technial or theoretical limitation? Agda does support
@@ -83,18 +45,6 @@ variables, and Boolean Tautologies is an "open" example with
 quantified variables. It would be helpful to include such a wording in
 the section names, or explicitly mention the difference in the prose.
 
-I assume that the first argument of a Table value is a special case.
-It always specifies the constructor to be used for variables, while
-the remaining table values are mappings from term names to
-constructors. It would be more clear to point out this special case.
-
-% repeat this comment at the beginning of the chapter.
-I was a bit dissapointed when learning at the very end that Autoquote
-can only translate into non-dependent types. It would be better to set
-expectations properly in the beginning of the paper. You could modify
-the contributions list to say that Autoquote translates a quoted
-expression to a non-dependent datatype AST that represents it.
-
 Finally, in Boolean Tautologies the type of variables is a finite
 enumeration (Bool). This allows the proof tree to enumerate all
 possible ways the proposition in question could reduce. Does this
@@ -103,15 +53,7 @@ should be mentioned. If so, it should be pointed out and hopefully
 reference a particular example to look at in detail in the provided
 library code.
 
-In summary, the paper contributes a useful declarative translation
-table whose use is demonstrated by example. Overall the examples do a
-good job of motivating the need for Autoquote, but the paper should
-clarify the issues mentioned above.
-
-
 ----------------------- REVIEW 4 ---------------------
-The paper is clear in its intention: to explore the practical use of the Agda
-reflection API. It does this by means of two examples: showing that even
 numbers are even, and that Boolean tautologies are indeed tautologies. The
 examples are developed step-by-step, but it can be difficult to follow,
 particularly in the latter example, without a clearer high-level statement at
@@ -121,5 +63,3 @@ While the examples are interesting, I am tempted to ask what we might conclude
 from it. While it's of clear value to the Agda implementors, it perhaps has the
 message for the non-expert that using the system in practice is difficult. To
 quote an example from p10 "The Diff argument is unfortunately needed for...
-
-Detailed comments noted.
