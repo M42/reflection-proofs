@@ -5,10 +5,10 @@ TEXFILE=$(LHSFILE:.lagda=.tex)
 PDF=$(TEXFILE:.tex=.pdf)
 FMTS=$(wildcard *.fmt)
 
-grayscale.pdf: $(PDF)
-	gs -sOutputFile=grayscale.pdf -sDEVICE=pdfwrite \
-		-sColorConversionStrategy=Gray -dProcessColorModel=/DeviceGray \
-		-dCompatibilityLevel=1.4 -dNOPAUSE -dBATCH $(PDF)
+# grayscale.pdf: $(PDF)
+# 	gs -sOutputFile=grayscale.pdf -sDEVICE=pdfwrite \
+# 		-sColorConversionStrategy=Gray -dProcessColorModel=/DeviceGray \
+# 		-dCompatibilityLevel=1.4 -dNOPAUSE -dBATCH $(PDF)
 
 $(PDF): $(TEXFILE)
 	TEXMFOUTPUT=`pwd` rubber -v --pdf $<

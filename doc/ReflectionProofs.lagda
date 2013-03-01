@@ -104,9 +104,9 @@ open import Proofs.Util.Types using (Diff; Base; Step)
 %% Give citations etc a nicer look
 \hypersetup{
   colorlinks,
-  citecolor=DarkBlue,
+  citecolor=black,
   linkcolor=black,
-  urlcolor=DarkBlue}
+  urlcolor=black}
 
 \date{\today}
 \newcommand{\HRule}{\noindent\rule{\linewidth}{1.5pt}}
@@ -139,7 +139,6 @@ when using reflection in a practical setting.
 \end{abstract}
 
 
-
 \newcommand{\researchquestion}{%
 \begin{quote}
   ``What practical issues do we run into when trying to engineer
@@ -160,6 +159,7 @@ possible to convert a program fragment into its corresponding abstract
 syntax tree (AST) and vice versa. In tandem with Agda's dependent types,
 this has promising new programming potential.
 
+\todo{squinting}
 
 This paper addresses the following central questions:
 
@@ -318,7 +318,7 @@ whatever (con c args) with c ≟-Name quote foo
 
 Note that since we want a |case|-like decision here, many
 branches will be necessary. The reason pattern matching on
-|Name|s is not supported, is that their domain is potentially infinite\todo{Wouter, zeg ik dit goed?}. Since
+|Name|s is not supported, is that it is a builtin non-inductive type, so the elimination principle is unclear, and its domain is potentially infinite\todo{Wouter, zeg ik dit goed?}. Since
 Agda functions are required to be total, this would always require a
 ``default'' case.  However, Agda does allow matching on |String|s
 (which similarly only expose decidable equality), so the
@@ -835,9 +835,8 @@ soundness {n} b {p}          = soundnessAcc b [] (zero-least 0 n) p
 
 Now, we can prove theorems by a call of the form |soundness b {p}|, where |b| is the
 representation of the formula under consideration, and |p| is the evidence
-that all branches of the proof tree are true. Agda is convinced\todo{review 4: what does convinced mean?}
-that the representation does in fact correspond to the concrete
-formula, and also that |soundness| gives a valid proof. We do not
+that all branches of the proof tree are true.
+We do not
 even give |p| explicitly since the only valid values are nested
 pairs of |tt|, which can be
 inferred automatically for closed terms if the type
@@ -845,9 +844,10 @@ is inhabited.  This once  again exploits the fact that  Agda supports eta
 expansion for record types. 
 
 If the module
-type checks, we know our formula is both a tautology and
-that we have the corresponding proof object at our disposal,
- as in |someTauto| (Fig.~\ref{fig:dup}).
+type checks, we know that the representation of the formula corresponds to the concrete
+expression, |soundness| gave a valid proof, and that the formula is in fact a tautology.
+We also have the corresponding proof object at our disposal,
+as in  |someTauto| (Fig.~\ref{fig:dup}).
 
 \begin{shadedfigure}
 \begin{code}
@@ -882,7 +882,6 @@ for precisely this purpose, and we show this now.
 
 \subsection{Adding Reflection}\label{sec:addrefl}
 
-\todo{see reviewer 3: among other things there are a lot of useful comments regarding the declarative translation table.}
 \todo{more from review 3: open / closed proof example, question whether the approach scales.}
 It might come as a surprise that in a paper focusing on reflection --
 in the programming language technology sense -- we have not yet
@@ -897,15 +896,14 @@ convert it to its corresponding |BoolExpr| automatically.
 
 
 The conversion between a |Term| and |BoolExpr| is achieved in two phases.
-Since |Autoquote| only supports simple inductive data types, the first issue we encounter is that
+Since |Autoquote| only supports non-dependent data types, the first issue we encounter is that
 |BoolExpr n| has an argument of type |Fin n| to its constructor |Atomic| (see Fig.~\ref{fig:boolexprn}).
 To work around this, we introduce a simpler, intermediary data structure, to which we will convert
 from |Term|. This type, called |BoolInter|, is not shown here, but the only difference with |BoolExpr n| is that its
 variables are represented by naturals instead of |Fin|s.
 
-
-The |Autoquote| library needs a lookup table, mentioning which constructor represents
-variables and what the arity of the constructors is. This way \todo{remove mention of arity: this is automatic. note that not-fitting arities are rejected.}
+The |Autoquote| library uses a lookup table, mentioning which constructor represents
+variables and how names map to constructors. This way
 only |Term|s containing variables or the usual operators 
 are accepted. Using the mapping presented in Fig.~\ref{fig:booltable}, we can
 construct a function that, for suitable |Term|s,
@@ -1014,16 +1012,20 @@ two separate languages. This paper explores an alternative, where metaprograms a
 fact that proof generation in Agda is explicit may be something some
 people appreciate. 
 
-There are performance issues\todo{need to be more specific about this, says review 4} with the current reflection API in
-Agda. This should not come as a surprise. The extensive usage of proof
-by reflection in Coq and SSReflect~\cite{gonthier:inria-00515548} has
+Performance of the 
+current reflection API in
+Agda could also be improved. Introducing reflective proofs requires a lot of compile time computation,
+and for this approach to scale, Agda would need a more efficient static evaluator  than the current call-by-name
+implementation. 
+The extensive use of proof
+by reflection in Coq and SSReflect~\cite{gonthier:inria-00515548}, for example for proving the four colour theorem~\cite{DBLP:conf/ascm/Gonthier07}, has
 motivated a lot of recent work on improving Coq's compile time
-evaluation. We hope that Agda can be extended with similar technology.
+evaluation. We hope that Agda can be improved similarly.
 
  
 \paragraph{Conclusions.}
-Returning to our research question,  repeated here to jog the memory,
-a summary of findings is made.\todo{some over-colloquialisms}
+Returning to our research question,  repeated here,
+a summary of findings is made.
 
 \researchquestion
 
