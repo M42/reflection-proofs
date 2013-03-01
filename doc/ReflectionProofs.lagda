@@ -39,7 +39,8 @@
 \newcommand{\ghloc}{https://github.com/toothbrush/reflection-proofs}
 \newcommand{\ghurl}{\url{\ghloc}}
 \def\CC{{C\nolinebreak[4]\hspace{ -.05em}\raisebox{.2ex}{\small\bf ++}}}
-\colorlet{hlite}{CornflowerBlue!15!white}
+%\colorlet{hlite}{CornflowerBlue!15!white}
+\colorlet{hlite}{black!7!white}
 
 \newcommand{\hlitem}[1]{\item[\colorbox{hlite}{#1}]~\\}
 \newcommand{\ch}{Curry--Howard isomorphism\xspace}
