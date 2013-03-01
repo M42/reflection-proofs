@@ -640,7 +640,7 @@ Take as an example the following Boolean formula.
 (p_1 \vee q_1) \wedge (p_2 \vee q_2) \Rightarrow (q_1 \vee p_1) \wedge (q_2 \vee p_2)
 \end{align}
 
-If we squint, we can see that \ref{eqn:tauto-example} is a tautology, but directly proving this 
+If we squint, we can see that (\ref{eqn:tauto-example}) is a tautology, but directly proving this 
 in Agda would be rather tedious. Assuming we want to check if the formula always holds by
 trying all possible variable assignments, this would require $2^n$
 pattern matching cases, where $n$ is the number of variables.
