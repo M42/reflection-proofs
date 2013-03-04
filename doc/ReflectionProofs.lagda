@@ -139,15 +139,14 @@ when using reflection in a practical setting.
   reflection, metaprogramming}
 \end{abstract}
 
-
 \newcommand{\researchquestion}{%
-\begin{quote}
+\begin{quote}%
   ``What practical issues do we run into when trying to engineer
   automatic proofs in a dependently typed language with reflection?
   Are Agda's reflective capabilities sufficient and practically
   usable, and if not, which improvements might make life easier?''
-\end{quote}
-}
+\end{quote}%
+}%
 
 \section{Introduction}\label{chap:introduction}
 
