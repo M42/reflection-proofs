@@ -49,24 +49,29 @@
 % \usepackage{float} % enable H position specifier
 % \newenvironment{shadedfigure}{\begin{figure}}{\end{figure}}
 % \newenvironment{shade}{}{}
-\newenvironment{shadedfigure}[1][tbhp]{%
- % \vskip -5mm
-    \begin{figure}[#1]
-    \begin{adjustbox}{minipage=\linewidth-10pt,margin=5pt,bgcolor=hlite}
-}{%
-    \end{adjustbox}
-    \end{figure}
- % \vskip -5mm
-}
-\newenvironment{shade}{
 
-\vskip 0.2\baselineskip
+%%%%%%%%%%%%%%%%%%
+% make figures a little more snug
+\setlength{\textfloatsep}{0.5\baselineskip plus 0.2\baselineskip minus 0.2\baselineskip}
+\setlength{\intextsep}{0.5\baselineskip plus 0.2\baselineskip minus 0.2\baselineskip}
+%%%%%%%%%%%%%%%%%%
+
+\newenvironment{shadedfigure}[1][tbhp]{%
+    \begin{figure}[#1]%
+    \begin{adjustbox}{minipage=\linewidth-10pt,margin=5pt,bgcolor=hlite}%
+}{%
+    \end{adjustbox}%
+    \end{figure}%
+}
+\newenvironment{shade}{%
+%
+\vskip 0.2\baselineskip%
 \begin{adjustbox}{%
 minipage=\linewidth,margin=0pt,padding=0pt,bgcolor=hlite%
 }}{%
-\end{adjustbox}
-\vskip 0.2\baselineskip
-
+\end{adjustbox}%
+\vskip 0.2\baselineskip%
+%
 }
 
 \newcommand{\lagda}{\texttt{\--\--{}lagda}\xspace}
@@ -75,7 +80,7 @@ minipage=\linewidth,margin=0pt,padding=0pt,bgcolor=hlite%
 module doc.ReflectionProofs where
 
 open import Proofs.TautologyProver hiding (concrete2abstract;  soundness ;
-        boolTable;  proofGoal ; ⟦_⊢_⟧ ; forallsAcc )
+        boolTable;  proofGoal ;  forallsAcc )
 open import Data.Bool renaming (not to ¬_)
 open import Relation.Binary.PropositionalEquality
 open import Reflection
@@ -178,7 +183,7 @@ files. A detailed tutorial is available elsewhere~\cite{vdWalt:Thesis:2012}.
 \item We present |Autoquote|, an Agda library that does a
   declaratively-specified 
   translation of a quoted
-expression to a non-dependent datatype AST representing it
+expression to an AST in a non-dependent datatype representing it
 (Sec.~\ref{sec:autoquote}).
 \item We show how to use Agda's reflection mechanism to
   automate certain categories of proofs (Sec.~\ref{sec:proof-by-reflection}).
@@ -289,15 +294,17 @@ representing the type expected at the position of |quoteGoal|. In this example, 
 of |e| in the hole will be |def ℕ []|, i.e., the |Term| representing
 the type |ℕ|, which is a definition, hence |def|.
 
-The |unquote| keyword (whose  type could be expressed as |Term ->
-concrete Agda|, informally) converts a |Term| data type back to concrete
-syntax. Just as |quoteTerm| and |quoteGoal|, it type checks and
-normalises the |Term| before it is spliced into the program text. The
+The |unquote| keyword % (whose  type could be expressed as |Term ->
+%concrete Agda|, informally)
+ takes one argument -- a |Term|  -- and converts it back to a concrete
+expression. Just as |quoteTerm| and |quoteGoal|, it type checks and
+normalises the |Term| before it is spliced into the program text. Note that it is not yet possible to introduce top-level declarations
+using |unquote|. This is a technical limitation.
+
+The
 |quote x : Name| keyword returns the representation of an identifier |x| as a value in the
 primitive type |Name|, if |x| is the name of a definition (function, datatype, record, or
       a constructor).
-
-
 Unfortunately, we cannot simply pattern match on constructor names.
  The only mechanism we have to distinguish |Name|s is
 decidable equality, which results in code as presented below -- a lot
@@ -377,7 +384,7 @@ A (partial) solution to this problem~-- something which at least mitigates
 the agony~-- is presented in this section, in the form of the
 |Autoquote| library.
 
-\paragraph{The |Autoquote| Library.}
+\paragraph{The |Autoquote| Library.} %
 We will use |Expr|, presented in Fig.~\ref{fig:exprdata}, as a running
 example of a toy AST.
 It is a simple non-dependent inductive data structure representing terms with Peano-style natural
@@ -490,19 +497,22 @@ combines a number of existing methods into a usable package.
 Here we will see two case studies illustrating proof by
 reflection and how Agda's reflection mechanism can make the technique
 more convenient. The first example is a closed example and  sets the
-stage for the second. .... ... \todo{clarity}
+stage for the second, an open expression type extended to include variables.
 
 
-\subsection{Simple Example: Evenness}\label{sec:evenness}
+\subsection{Closed Example: Evenness}\label{sec:evenness}
 
-\todo{uses a lot of space for something simple. what about proving
-  Even (x+100)? how about infinite types? without this, it isn't clear that the paper answers the central question, namely whether agda's reflection mechanism is practically usable. reviewer 2}
 To illustrate the concept of proof by reflection, we will follow
-Chlipala's example of even naturals~\cite{chlipala2011certified}.
+Chlipala's example of even naturals~\cite{chlipala2011certified}. This
+example will serve as a simple introduction, making the example in
+Sec.~\ref{sec:Boolean-tautologies} clearer.
+
+Our objective is to be able to automatically prove evenness of certain naturals. To this end, we first write a Boolean
+test function which decides if a natural is even, then prove the
+soundness of this predicate. This results in a proof generator. 
+
  We start by defining the
-property |Even| below. There are two constructors: the first
-constructor says that zero is even; the second constructor states that
-if $n$ is even, then so is $2 + n$.
+property |Even| below.
 
 \begin{shade}
 \begin{code}
@@ -514,15 +524,7 @@ data Even      : ℕ → Set where
 
 Using these rules to produce the proof that some large number $n$ is
 even is tedious: the proof that $2 \times n$ is even requires $n$
-applications of the |isEven+2| constructor. For example, here is the
-proof that 6 is even:
-
-\begin{shade}
-\begin{code}
-isEven6 : Even 6
-isEven6 = isEven+2 (isEven+2 (isEven+2 isEven0))
-\end{code}
-\end{shade}
+applications of the |isEven+2| constructor.
 
 To automate this, we will show how to \emph{compute} the proof
 required. We start by defining a predicate |even?| that
@@ -532,8 +534,8 @@ and |false|, since
  there exists
 a proof that some number is even, if it is $0$ or $2 + n$, for even $n$. Otherwise, no proof exists. 
 The idea
-of ``there exists'' is perfectly modelled by the unit and empty types,
-since the unit type has one inhabitant, the empty type none.
+of ``there exists'' is perfectly modelled by the unit and empty types. % ,
+% since the unit type has one inhabitant, the empty type none.
 
 \begin{shade}
 \begin{code}
@@ -551,8 +553,7 @@ inhabited. Since we are working in a constructive logic, the only
 way to show this is to give some witness. This is done in the function |soundnessEven|. What
 we are 
 actually doing here is giving a recipe for
-constructing proof trees, such as the one we manually defined for
-|isEven6|.
+constructing proof trees.
 
 \begin{shade}
 \begin{code}
@@ -569,7 +570,7 @@ right-hand side of the function definition. The assumption, |even?
 absurd pattern, \texttt{()}.
 
 If we need a proof that some arbitrary
-|n| is even, we only need to call |soundnessEven|. Note that
+|n| is even, |soundnessEven| builds it. Note that
 the value of |n| is inferred. The only
 argument we must to provide to |soundnessEven| is a proof
 that |even? n| is inhabited. For any closed term, such as the numbers |28|
@@ -583,9 +584,9 @@ isEven8772      = soundnessEven tt
 \end{code}
 \end{shade}
 
-Now we can easily get a proof that arbitrarily large numbers are even,
-without having to explicitly write down a large proof tree. Note that
-it is not possible to write something with type |Even 27|, or any other uneven
+Now we can easily get a proof term for arbitrarily large even numbers,
+without having to explicitly write down the proof tree. Note that
+it is not possible to give a term with type |Even 27|, or any other uneven
 number, since the parameter |even? n|  is equal to |⊥|,
  thus
 |tt| would not be accepted where it is in the |Even 28| example. This will
@@ -593,17 +594,18 @@ produce a type error stating that the types |⊤| and |⊥| cannot be unified.
 
 \paragraph{Implicit Proofs.}\label{sec:implicit} Since the type |⊤| is a simple record type, Agda can infer the |tt|
 argument. This means we can turn the assumption |even? n| into an
-implicit argument, so a user could get away with writing just
+implicit argument, so a user could write just
 |soundnessEven| as the proof, letting Agda fill in the missing proof. 
-To achieve this, we modify the |soundnessEven|
-function slightly, making all its arguments implicit.  This trick works
-because Agda supports eta expansion for record types. More specifically, Agda will automatically fill in implicit arguments of the unit type. Here,
- the type system is doing work for us which is not done for general
+This trick works
+because Agda supports eta expansion for record types. More
+specifically, Agda will automatically fill in implicit arguments of
+the unit type. Here, the type system is doing work for us which is not
+done for general
  data types; for records eta expansion is safe, since recursion is not allowed.
 This trick  will be
 used from here on to make our proof generators easier to use.
 
-\paragraph{Friendlier Errors.} Note that it is possible to generate a user-friendly ``error'' of
+\paragraph{Friendlier Errors.}  It is possible to generate a user-friendly ``error'' of
 sorts, by replacing the |⊥| with
 an empty type having a descriptive name:
 
@@ -618,28 +620,37 @@ type error generated if an odd number is used becomes more
 informative. When a user tries to use the |soundnessEven| lemma to generate a proof
 of the statement |Even 7|, Agda will complain about a missing implicit
 argument of type |IsOdd 7|. An unsolved implicit argument is marked
-yellow in Agda, which looks less scary than a type error in a visible argument, but rest assured that
+yellow in Agda, which looks less scary than a type error in a visible argument, but 
 no spurious proofs are being generated.
-This concludes the example of proving that certain naturals are even using proof by reflection.
+
+
+\paragraph{Limitations.} This is a very simple, closed example. In particular, it would not work in the
+presence of variables, for example to define a lemma like |Even x -> Even (x + 100)|. 
+Why this is the case, and how it could be solved, is discussed at the end of Sec.~\ref{para:limi}.
+
+
+% This concludes the example of proving that certain naturals are even using proof by reflection.
 The next step will be to use the same approach for a more involved and
 realistic problem.
 
-\subsection{Second Example: Boolean Tautologies}\label{sec:Boolean-tautologies}
 
-We will now apply the same technique as above to a more interesting problem, making
+
+
+\subsection{Open Example: Boolean Tautologies}\label{sec:Boolean-tautologies}
+
+We will now apply the same steps as above to a different problem, making
 the relationship to the previous example clear at each step.
-The next example of proof by reflection will be a decision procedure 
-that checks if a Boolean expression is a tautology. We will follow the same
-recipe as for even naturals, with one further addition. In the
-previous example, the input of our decision procedure |even?| and the
-problem domain were both natural numbers. As we shall see, this need
-not always be the case: more complex structures and properties may be used.
-Take as an example the following Boolean formula.
+The next example of proof by reflection will be lifting a predicate
+that checks if a Boolean expression with indexed variables is a tautology under all possible
+assignments, to a proof generator. We will follow the same
+procedure as for even naturals. 
+
+Take as an example the following proposition.
 \begin{align}\label{eqn:tauto-example}
 (p_1 \vee q_1) \wedge (p_2 \vee q_2) \Rightarrow (q_1 \vee p_1) \wedge (q_2 \vee p_2)
 \end{align}
 
-If we squint, we can see that (\ref{eqn:tauto-example}) is a tautology, but directly proving this 
+If we squint, it is evident that (\ref{eqn:tauto-example}) is a tautology, but directly proving this 
 in Agda would be rather tedious. Assuming we want to check if the formula always holds by
 trying all possible variable assignments, this would require $2^n$
 pattern matching cases, where $n$ is the number of variables.
@@ -660,11 +671,10 @@ data BoolExpr (n : ℕ) : Set where
 \caption{Inductive definition of Boolean expressions with $n$ free variables.}\label{fig:boolexprn}
 \end{shadedfigure}
 
-There is nothing
-surprising about this definition; we use the type |Fin n| to ensure
+We use the type |Fin n| to ensure
 that variables (represented by |Atomic| and identified by their De Bruijn index) are always in scope. If we want to
 evaluate the expression, however, we will need some way to map variables to values.
-Enter |Env n|: a vector of $n$ Boolean values. It has fixed size |n| since a |BoolExpr n| has at most $n$ free variables.
+For this we use |Env n|: a vector of $n$ Boolean values, since a |BoolExpr n| has at most $n$ free variables.
 
 Now we can define an evaluation function, which tells us if a given
 Boolean expression is true or not, under some assignment of variables. It does this by evaluating
@@ -681,33 +691,30 @@ open import Proofs.Util.Handy
 }
 
 \begin{shade}
-\begin{code}
+\begin{spec}
 ⟦_⊢_⟧ : ∀ {n : ℕ} (e : Env n) → BoolExpr n → Bool
 ⟦ env     ⊢ Truth           ⟧ = true
-⟦ env     ⊢ Falsehood       ⟧ = false
 ⟦ env     ⊢ And   be   be₁  ⟧ =     ⟦ env ⊢ be ⟧     ∧      ⟦ env ⊢ be₁ ⟧
-⟦ env     ⊢ Or    be   be₁  ⟧ =     ⟦ env ⊢ be ⟧     ∨      ⟦ env ⊢ be₁ ⟧
-⟦ env     ⊢ Not   be        ⟧ = ¬   ⟦ env ⊢ be ⟧
-⟦ env     ⊢ Imp   be   be₁  ⟧ =     ⟦ env ⊢ be ⟧     ⇒      ⟦ env ⊢ be₁ ⟧
 ⟦ env     ⊢ Atomic n        ⟧ = lookup n env
-\end{code}
+...
+\end{spec}
 \end{shade}
 
 Recall our decision function |even?| in the previous section. It returned
 |⊤| if the proposition was valid, |⊥| otherwise. Looking at |⟦_⊢_⟧|, we see that
 we should just translate |true| to the unit type and false to the empty type, to get
 the analogue of the |even?| function. We therefore define a function
-|P| in Fig.~\ref{fig:error}, mapping Booleans to types. To give more useful error messages, we decorate the empty type with a string.
+|P| in Fig.~\ref{fig:error}, mapping Booleans to types. As before we decorate the empty type, this time with a string, to give more informative error messages.
 
 \begin{shadedfigure}
 \begin{spec}
-data Error (e : String) : Set where
+data Error (e : String) : Set where 
 
 P    : Bool → Set
 P  true    =     ⊤
 P  false   =     Error "Argument expression does not evaluate to true."
 \end{spec}
-\caption{Helper type |Error|, enabling clearer type errors.}\label{fig:error}
+\caption{Empty helper type |Error|, enabling clearer type errors.}\label{fig:error}
 \end{shadedfigure}
 
 
@@ -740,27 +747,14 @@ to lift the function |P| over arbitrary environments.
 
 The function |forallsAcc|, in Fig.~\ref{fig:forallsacc}, performs this lifting. This function represents the real analogue
 of |even?| in this situation: it returns a type which is only inhabited if the argument Boolean
-expression is true under all variable assignments. This is done by generating a full binary tree
+expression is true under all variable assignments. This is done by cumulatively generating a full binary tree -- the truth table --
 of |⊤| or |⊥| types, depending on the result of |⟦_⊢_⟧| under each assignment.
 This corresponds precisely to the expression being a tautology if and
 only if the tree is inhabited. The function |foralls| simply bootstraps
 |forallsAcc| with an empty environment -- it is omitted for brevity.
-\todo{p10, Para ``the function..'': could remark that the tree effectively codes up the
-truth table for the proposition in question.}
-
-The |Diff| argument is unfortunately needed for bookkeeping, to prove that |forallsAcc| will eventually produce a
-\todo{review 4 says ``needs clarification''}
+The |Diff| argument is  needed  to make |forallsAcc| produce a
 tree with depth equal to the number of free variables in an
-expression, and can be ignored.\todo{this is the argument driving the
-  computation, we cannot ignore it. explain this better. ``* In page 10, it says that the argument of forallsAcc can be ignored,
-  but it is precisely the argument driving the computation. It'd be
-  nice to explain it better.
-``, quoth reviewer 1}
-\todo{reviewer 4 says this is unsatisfactory. that's true, because
-  actually Diff is there to be able to prove that sizes will
-  eventually match up}
-
-
+expression, putting  a bound on the recursion. 
 
 \begin{shadedfigure}
 \begin{code}
@@ -860,12 +854,37 @@ someTauto    = soundness rep
 \end{shadedfigure}
 
 If one were to give as input a formula which is not a tautology, Agda would not be able to infer the proof |foralls|, since
-it would be an uninhabited type. This would result in an unsolved meta-variable, which
-might seem a triviality if you do not read the compiler's output carefully. Luckily Agda disallows
-importing modules with unsolved meta-variables, which means such a spurious proof would not be usable elsewhere
+it would be an uninhabited type. As before, this would result in an unsolved meta-variable (since |Error| and |⊤| cannot be unified).
+Agda disallows
+importing modules with unsolved meta-variables, which means such an unfulfilled proof obligation would not be usable elsewhere
 in a real-life development. 
 
-The only part we still have to do manually is to convert the concrete
+
+% TODO this paragraph should probably be beefier. Also, maybe mention these limitations in the Discussion. 
+\paragraph{Limitations.}\label{para:limi} Unfortunately, this approach is only possible using variables with a finite type. If we wanted
+to prove properties about naturals, for example, we would not be able to enumerate all possible values.
+Also, not all problems are decidable. In the ring solver
+example~\cite{ringsolver} a canonical representation is used, but this
+does not always exist. One way forward would be if a proof search
+system could be implemented, going beyond simple reflection. By
+inspecting the shape of the obligation it might be possible to find a
+lemma which sufficiently reduces the goal to something we can easily
+generate.  This is motivated by the evenness example: we could imagine
+it being possible to automatically prove lemmas like |Even n -> Even
+(n + 100)|, given a list of usable lemmas. On inspecting the goal and
+finding the |Plus (Var n) 100| term, we might be able to learn that
+this lemma (which would have a particularly tedious proof) is an
+instance of |Even x -> Even y -> Even (x + y)|, which could be an
+existing library proof. However, this would require a rather advanced
+way of recognising structures in proof goals, and a reliable proof
+search for useful lemmas in a database. By the time this is
+implemented (if that is possible in Agda), we would nearly have
+Coq-style tactics. However, this is definitely an avenue for future
+work.
+
+
+
+\paragraph{Summary.} The only part we still have to do manually is to convert the concrete
 Agda representation of the formula (|p ∧ q ⇒ q|, in this case) into our abstract
 syntax (|rep|, in this example). This is unfortunate, as we end up typing out the
 formula twice. We also have to count the number of variables
@@ -873,32 +892,32 @@ ourselves and convert them to De Bruijn indices. This is
 error-prone given how cluttered the abstract representation can get
 for formulae containing many variables. 
 
-It would be desirable for this representation
-process to be automated. Luckily we have the |Autoquote| library
+We would like this representation
+process to be automated. Luckily |Autoquote| is available
 for precisely this purpose, and we show this now.
 
 
 \subsection{Adding Reflection}\label{sec:addrefl}
 
-\todo{more from review 3: open / closed proof example, question whether the approach scales.}
 It might come as a surprise that in a paper focusing on reflection --
 in the programming language technology sense -- we have not yet
-presented a convincing use for reflection. This is about to change. 
+presented a convincing use for reflection. 
 We can get rid of the duplication seen in Fig.~\ref{fig:dup} using Agda's reflection API. 
 There we see the same Boolean formula twice: once in the type signature as an Agda
 proposition and once expressed as a  |BoolExpr|. Using
 the |quoteGoal| keyword to inspect the
-current goal, and passing that goal to |Autoquote|, 
+current goal would give us the Agda representation, and passing that to |Autoquote|, 
  we can
 convert it to its corresponding |BoolExpr| automatically.
 
 
-The conversion between a |Term| and |BoolExpr| is achieved in two phases.
-Since |Autoquote| only supports non-dependent data types, the first issue we encounter is that
+The conversion between a |Term| and |BoolExpr| is achieved in two phases, necessary
+because
+|Autoquote| only supports non-dependent data types, and
 |BoolExpr n| has an argument of type |Fin n| to its constructor |Atomic| (see Fig.~\ref{fig:boolexprn}).
 To work around this, we introduce a simpler, intermediary data structure, to which we will convert
 from |Term|. This type, called |BoolInter|, is not shown here, but the only difference with |BoolExpr n| is that its
-variables are represented by naturals instead of |Fin|s.
+variables are represented by |Nat|s instead of |Fin|s.
 
 The |Autoquote| library uses a lookup table, mentioning which constructor represents
 variables and how names map to constructors. This way
@@ -921,8 +940,16 @@ boolTable = (Atomic ,
 Once we have a |BoolInter| expression, we just need to check that its
 variables are all in scope (this means that $\forall$ |Atomic| $x  :     x < n$, if we
 want to convert to a |BoolExpr n|), and replace all the |ℕ| values with their |Fin n| counterparts.
-We can now write a function called |proveTautology|, which uses the automatic quoter and calls |soundness| on the resulting term.
-\todo{what is the type of provetautology}
+We can now write a function called |proveTautology|, which uses the automatic quoter and calls |soundness| on the resulting term. An
+approximation of |proveTautology|s type is given here. In summary, it takes a term (as bound in the body of |quoteGoal|), quotes it with |Autoquote|, passes it to |soundness|, which returns a term which fulfills the |proofGoal| type.
+
+
+\begin{shade}
+\begin{spec}
+proveTautology : (t : Term) →      let      t' = doConvert boolTable t
+                                   in ...   {i : foralls t'} →                     proofGoal n t'
+\end{spec}
+\end{shade}
 
 That is all we need to automatically prove that
 formulae are tautologies.  The following snippet illustrates the use of
@@ -946,8 +973,7 @@ trusts.
 \section{Discussion}\label{sec:discussion}
 
  
-\paragraph{Related Work.} 
- 
+\paragraph{Related Work.}  %
 Our main innovations are novel combinations of existing
 techniques; as a result, quite a number of subjects are relevant to mention
 here.
@@ -976,7 +1002,7 @@ in Agda, although it is lacking in a number of fundamental
 capabilities, most notably type awareness of |unquote|, and type preservation
 when using |quoteTerm|.
 
-\paragraph{Evaluation.}
+\paragraph{Evaluation.} %
 If we look at the taxonomy of reflective systems in programming language technology written up 
 by Sheard~\cite{sheard-staged-programming},
 we see that we can make a few rough judgements about the metaprogramming facilities Agda currently 
@@ -1021,7 +1047,7 @@ motivated a lot of recent work on improving Coq's compile time
 evaluation. We hope that Agda can be improved similarly.
 
  
-\paragraph{Conclusions.}
+\paragraph{Conclusions.} %
 Returning to our research question,  repeated here,
 a summary of findings is made.
 
@@ -1029,33 +1055,32 @@ a summary of findings is made.
 
 
 This paper has presented two simple applications of proof by
-reflection, the latter using Agda's reflection API. 
-We 
-have managed to automate generation of a certain class of mundane
-proofs. 
- This shows that the reflection capabilities recently added to Agda are quite useful for
- automating tedious tasks.  For example, we now need not encode expressions
- manually:
- using |quoteTerm| and |Autoquote|, the AST conversion can be done
- automatically. 
-Furthermore, by using the proof by reflection technique, we have shown
-how to automatically generate proofs, without loss
- of general applicability. Constraining ourselves to
-(pairs of) unit types as predicates, we can let Agda infer them, and by tagging
-an empty type with a string, we can achieve more helpful errors if
-these predicates are invalid. These simple tools were sufficient to
-engineer relatively powerful and -- more importantly -- easily usable
-proof tools.
+reflection, the latter using Agda's reflection API.  We have managed
+to automate generation of a certain class of mundane proofs.  This
+shows that the reflection capabilities recently added to Agda are
+quite useful for automating tedious tasks.  For example, we now need
+not encode expressions manually: using |quoteTerm| and |Autoquote|,
+the AST conversion can be done automatically.  Furthermore, by using
+the proof by reflection technique, we have shown how to automatically
+generate proofs, without loss of general applicability. Constraining
+ourselves to (pairs of) unit types as predicates, we can let Agda
+infer them, and by tagging an empty type with a string, we can achieve
+more helpful errors if these predicates are invalid. These simple
+tools were sufficient to engineer relatively powerful and -- more
+importantly -- easily usable proof tools. Unfortunately, these proofs are limited
+to finite domains, and are still not very user-friendly or scalable. In particular, quantifying
+over variables with infinite domains should not be a great conceptual difficulty, but would necessitate
+a lot of extra machinery: a smarter goal inspector, and a generalised lemma searching or matching.
 
 It seems conceivable to imagine that in the future, using techniques such as those presented
 here, a framework for tactics might be within reach. Eventually we might be able to define an
 embedded language in Agda, in the style of Coq's tactic language, to
 inspect the shape of the proof that is needed using reflection, and look at a database
-of predefined proof recipes to see if one of them might discharge the obligation. An advantage of 
+of predefined proof recipes to see if one of them might discharge or simplify the obligation. An advantage of 
 this approach versus the tactic language in Coq, would be that the language of the propositions and
 tactics is the same.
 
-\subsubsection{Acknowledgements.} %TODO is this enough/right?
+\subsubsection{Acknowledgements.} %
 We would like to thank each of  the 4 anonymous reviewers for detailed and constructive comments that greatly improved the article.
 
 \bibliography{refs}{}
