@@ -15,7 +15,7 @@ Also included in this repository is the final thesis for the project, which goes
 Questions and comments are of course welcome; my email address is my first name at my domain dot org, which can be found in my GitHub profile.
 
 Paul van der Walt  
-https://denknerd.org
+http://www.denknerd.org
 
 Using the package
 -----------------
