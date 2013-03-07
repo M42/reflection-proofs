@@ -14,7 +14,7 @@ Also included in this repository is the article, which goes into some detail on 
 Questions and comments are of course welcome; my email address is my first name at my domain dot org.
 
 Paul van der Walt  
-https://denknerd.org
+http://www.denknerd.org
 
 Using the package
 -----------------
