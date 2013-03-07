@@ -137,7 +137,7 @@ of using reflection to automate certain proofs using \emph{proof by
   reflection}. 
 It presents a library that
 can be used for automatically quoting a class of concrete Agda terms
-to a simple, user-defined
+to a non-dependent, user-defined
 inductive data type, alleviating the burden a programmer usually faces
 when using reflection in a practical setting. 
 \keywords{dependently-typed programming, reflection, Agda, proof by
@@ -209,8 +209,8 @@ functional programming language
 and a proof assistant for intuitionistic logic. It is comparable to
 Coq, which is based on
 Coquand's calculus of constructions~\cite{DBLP:journals/iandc/CoquandH88}. 
-For an excellent tutorial on dependently typed programming using Agda,
-the reader is referred to Norell's work~\cite{Norell:2009:DTP:1481861.1481862}.
+There are many excellent tutorials
+ on dependently typed programming using Agda~\cite{Norell:2009:DTP:1481861.1481862,norell:thesis,Oury:2008:PP:1411204.1411213}.
 
 Since version 2.2.8, Agda includes a reflection API~\cite{agda-relnotes-228}, which allows the conversion of
 parts of a program's code into an abstract syntax tree, a data structure
@@ -222,16 +222,11 @@ which allowed run time modification of a program's code, for example by
 the program itself. This has given rise to powerful techniques for code reuse and
 abstraction.
 
-%%%%% redundant comment, removing for now.
-% This paper explores how such a reflection mechanism can be used in a
-% \emph{dependently typed} language such as Agda.
 \section{Using Reflection}\label{sec:crash}
-\todo{``examples that complement the release notes, not the same %
-  ones.'' -- maar ik wil het juist simpel houden. Wouter, idee\"en?} %
- %
+
 Before going into any detail on what can be done with
-reflection, we will present Agda's
-reflection API by example. This is by no means a comprehensive
+reflection, we will present several small examples of Agda's
+reflection API. This is by no means a comprehensive
 tutorial; instead, one can be found in \cite{vdWalt:Thesis:2012}.
 
 \paragraph{The Keywords.} There are several keywords that can be used to quote and unquote
@@ -256,7 +251,7 @@ example₀   = refl
 
 Dissecting
 this, we introduced a lambda abstraction, so we expect the |lam|
-constructor. Its one argument is visible (as opposed to hidden/implicit), and
+constructor. Its one argument is visible (as opposed to implicit), and
 the body of the lambda abstraction is just a reference to the
 nearest-bound variable, thus |var 0|, applied to an empty list of
 arguments. Variables are referred to by their De Bruijn indices.
@@ -323,11 +318,13 @@ whatever (con c args) with c ≟-Name quote foo
 
 Note that since we want a |case|-like decision here, many
 branches will be necessary. The reason pattern matching on
-|Name|s is not supported, is that it is a builtin non-inductive type, so the elimination principle is unclear, and its domain is potentially infinite\todo{Wouter, zeg ik dit goed?}. Since
-Agda functions are required to be total, this would always require a
-``default'' case.  However, Agda does allow matching on |String|s
+|Name|s is not supported, is that the elimination principle is not clear, since |Name| is a builtin, non-inductive type. 
+% Since
+% Agda functions are required to be total, this would always require a
+%``default'' case. 
+ However, Agda does allow matching on |String|s
 (which similarly only expose decidable equality), so the
-limitation is purely a technical one, which might be solved in the future.
+limitation is a technical one, which might be solved in the future.
 
 This short introduction should already be enough to start developing
 simple programs using reflection.  For a more detailed description of
@@ -860,7 +857,7 @@ importing modules with unsolved meta-variables, which means such an unfulfilled 
 in a real-life development. 
 
 
-% TODO this paragraph should probably be beefier. Also, maybe mention these limitations in the Discussion. 
+% TODO mention these limitations in the Discussion. 
 \paragraph{Limitations.}\label{para:limi} Unfortunately, this approach is only possible using variables with a finite type. If we wanted
 to prove properties about naturals, for example, we would not be able to enumerate all possible values.
 Also, not all problems are decidable. In the ring solver
@@ -877,9 +874,11 @@ this lemma (which would have a particularly tedious proof) is an
 instance of |Even x -> Even y -> Even (x + y)|, which could be an
 existing library proof. However, this would require a rather advanced
 way of recognising structures in proof goals, and a reliable proof
-search for useful lemmas in a database. By the time this is
-implemented (if that is possible in Agda), we would nearly have
-Coq-style tactics. However, this is definitely an avenue for future
+search for useful lemmas in a database. 
+This would correspond to implementing an analogue of Coq's \texttt{auto} tactic
+in Agda. The Agda synthesizer Agsy already implements such a  proof search,
+but is built directly into the compiler.
+ However, this is definitely an avenue for future
 work.
 
 
@@ -1081,7 +1080,9 @@ this approach versus the tactic language in Coq, would be that the language of t
 tactics is the same.
 
 \subsubsection{Acknowledgements.} %
-We would like to thank each of  the 4 anonymous reviewers for detailed and constructive comments that greatly improved the article.
+We would like to thank each of the four anonymous reviewers for taking
+the time to provide detailed and constructive comments that greatly
+improved the article.
 
 \bibliography{refs}{}
 %\bibliographystyle{plain}
