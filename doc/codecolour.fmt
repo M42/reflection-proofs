@@ -165,3 +165,6 @@
 %format proofGoal' = "\defin{proofGoal}"
 %format => = "\con{=\mkern-10mu\text{>}}"
 %format someTauto2 = "\defin{someTauto2}"
+
+%format Fsuc = "\con{suc}"
+%format Fzero = "\con{zero}"
