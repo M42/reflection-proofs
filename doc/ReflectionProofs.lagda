@@ -114,9 +114,10 @@ open import Proofs.Util.Types using (Diff; Base; Step)
 \date{\today}
 \title{Engineering Proof by Reflection in Agda}
 \author{Paul van der Walt \and Wouter Swierstra}
+\newcommand{\myemail}{paul@@denknerd.org}
 \institute{
 Department of Computer Science, Utrecht University, The Netherlands\\
-\href{mailto:paul.vanderwalt@@inria.fr}{\nolinkurl{paul.vanderwalt@@inria.fr}}, \href{mailto:W.S.Swierstra@@uu.nl}{\nolinkurl{W.S.Swierstra@@uu.nl}}
+\href{mailto:\myemail}{\nolinkurl{\myemail}}, \href{mailto:W.S.Swierstra@@uu.nl}{\nolinkurl{W.S.Swierstra@@uu.nl}}
 }
 
 \begin{document}
