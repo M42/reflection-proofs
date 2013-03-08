@@ -16,11 +16,9 @@
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% TODO: stuff only for DRAFT versions {{
 %%%%% microtype with settings.
 \usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
 \microtypecontext{spacing=nonfrench}
-\usepackage[disable]{todonotes}
 %% end DRAFT-version stuff. }}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1054,10 +1052,7 @@ improved the article.
 % for LNCS bibliography:
 \bibliographystyle{splncs}%this one doesn't sort automatically. :(
 % (TODO) Voor IFL paper:
-% Beperk je tot de essentie
-% Geef voorbeelden
 % Minder colloquial
-% fonts and colours in final version
 % check for overfull hboxes and such
 \end{document}
 
