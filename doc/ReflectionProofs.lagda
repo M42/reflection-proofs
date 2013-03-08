@@ -1,5 +1,7 @@
 \documentclass{llncs}
 
+\pdfoutput=1
+
 \usepackage{color}
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
 
