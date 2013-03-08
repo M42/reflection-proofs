@@ -1,6 +1,5 @@
 \documentclass{llncs}
 
-\pdfoutput=1
 
 \usepackage{color}
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
@@ -31,8 +30,13 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Font definitions.
-\usepackage{tgpagella}                  %% looks a little like palatino -- thanks Zapf!
+%\usepackage{tgpagella}                  %% looks a little like palatino -- thanks Zapf!
 \usepackage[T1]{fontenc}
+\usepackage{savesym}
+\usepackage{amsmath}
+\savesymbol{iint}
+\usepackage{txfonts}
+\restoresymbol{TXF}{iint}
 \renewcommand{\ttdefault}{lmtt}         %% Latin Modern for teletype
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -98,8 +102,6 @@ open import Proofs.Util.Types using (Diff; Base; Step)
 
 \end{code}
 }
-
-\usepackage{amsmath}
 
 \usepackage{hyperref}
 \usepackage{url}
@@ -1049,7 +1051,6 @@ the time to provide detailed and constructive comments that greatly
 improved the article.
 
 \bibliography{refs}{}
-%\bibliographystyle{plain}
 % for LNCS bibliography:
 \bibliographystyle{splncs}%this one doesn't sort automatically. :(
 % (TODO) Voor IFL paper:
