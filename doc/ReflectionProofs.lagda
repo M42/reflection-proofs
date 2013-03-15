@@ -31,6 +31,7 @@
 %\usepackage{tgpagella}                  %% looks a little like palatino -- thanks Zapf!
 \usepackage[T1]{fontenc}
 \usepackage{savesym}
+
 \usepackage{amsmath}
 \savesymbol{iint}
 \usepackage{txfonts}
@@ -101,15 +102,18 @@ open import Proofs.Util.Types using (Diff; Base; Step)
 \end{code}
 }
 
+\usepackage[numbers,sort&compress]{natbib}
 \usepackage{hyperref}
-\usepackage{url}
-
-%% Give citations etc a nicer look
+%%%%% Give citations etc a nicer look
 \hypersetup{
   colorlinks,
   citecolor=black,
   linkcolor=black,
   urlcolor=black}
+%%%%%%%%%%%%%%%%
+\usepackage{url}
+
+
 
 \date{\today}
 \title{Engineering Proof by Reflection in Agda}
@@ -151,7 +155,7 @@ when using reflection in a practical setting.
 \section{Introduction}\label{chap:introduction}
 
 The dependently typed programming language
-Agda~\cite{norell:thesis}, \cite{Norell:2009:DTP:1481861.1481862} has recently been
+Agda~\citep{norell:thesis,Norell:2009:DTP:1481861.1481862} has recently been
 extended with a \emph{reflection mechanism}~\cite{vdWalt:Thesis:2012} for compile time metaprogramming in the style of Lisp~\cite{lisp-macros},
 MetaML~\cite{metaml}, Template Haskell~\cite{template-haskell}, and
 \CC\ templates%~\cite{cplusplus}
@@ -206,7 +210,7 @@ and a proof assistant for intuitionistic logic. It is comparable to
 Coq, which is based on
 Coquand's calculus of constructions~\cite{DBLP:journals/iandc/CoquandH88}. 
 There are many excellent tutorials
- on Agda~\cite{Norell:2009:DTP:1481861.1481862}, \cite{norell:thesis}, \cite{Oury:2008:PP:1411204.1411213}.
+ on Agda~\citep{Norell:2009:DTP:1481861.1481862,norell:thesis,Oury:2008:PP:1411204.1411213}.
 
 Since version 2.2.8, Agda includes a reflection API~\cite{agda-relnotes-228}, which allows the conversion of
 parts of a program's code into an abstract syntax tree, a data structure
@@ -769,7 +773,7 @@ environment.
 \begin{shade}
 \begin{code}
 proofGoal      :    (n m : ℕ) → Diff n m → BoolExpr m → Env n → Set
-proofGoal           .n     m    (Base    ) b acc = P ⟦ acc ⊢ b ⟧ 
+proofGoal           .m     m    (Base    ) b acc = P ⟦ acc ⊢ b ⟧ 
 proofGoal           n      m    (Step y  ) b acc =
                (a : Bool) → proofGoal (1 + n) m y b (a ∷ acc)
 \end{code}
@@ -957,7 +961,7 @@ As far as reflection in general goes, Demers and Malenfant~\cite{demers1995refle
 What we are referring to as reflection dates back to work by Smith~\cite{Smith:1984:RSL:800017.800513}
 and was initially presented in Lisp in the 80s. Since then,
 many developments in the functional, logic as well as object-oriented programming worlds have 
-emerged -- systems with varying power and scope \cite{DBLP:journals/lisp/Stump09}, \cite{Goldberg:1983:SLI:273}.
+emerged -- systems with varying power and scope \citep{DBLP:journals/lisp/Stump09}, \citep{Goldberg:1983:SLI:273}.
 Unfortunately, reflection
 is often unsafe: in Smalltalk and Objective-C, for example, calling
 non-existent functions causes exceptions, to name just one pitfall.
@@ -1051,10 +1055,7 @@ improved the article.
 
 \bibliography{refs}{}
 % for LNCS bibliography:
-\bibliographystyle{splncs}%this one doesn't sort automatically. :(
-% (TODO) Voor IFL paper:
-% Minder colloquial
-% check for overfull hboxes and such
+\bibliographystyle{splncsnat}%this one doesn't sort automatically. :(
 \end{document}
 
 %%% Local Variables:
