@@ -183,7 +183,8 @@ files. A detailed tutorial is available elsewhere~\cite{vdWalt:Thesis:2012}.
 \item We present |Autoquote|, an Agda library that does a
   declaratively-specified 
   translation of a quoted
-expression to an AST in a non-dependent datatype representing it
+expression to
+a representation in a user-defined non-dependent datatype 
 (Sec.~\ref{sec:autoquote}).
 \item We show how to use Agda's reflection mechanism to
   automate certain categories of proofs (Sec.~\ref{sec:proof-by-reflection}).
@@ -224,8 +225,7 @@ which allowed run time modification of a program's code.
 
 \section{Using Reflection}\label{sec:crash}
 
-Before going into any detail on what can be done with
-reflection, we will present several small examples.
+We will now introduce the reflection API with some small examples.
 %%% redundancy removed:
 % This is by no means a comprehensive
 % tutorial; instead, one can be found in \cite{vdWalt:Thesis:2012}.
@@ -346,11 +346,11 @@ total, which means they must have a case for each possible pattern. Since  |Term
  covers all quotable terms, it has many alternatives.  Furthermore,
  for |Name|s, we only have decidable
 equality. This is why
- such a
- conversion function might become
+ such 
+ conversion functions tend to become
 verbose, as in the code snippet of
 Fig.~\ref{fig:concrete2abstract}, an excerpt of a
-conversion function, before a better solution was developed.
+conversion function used before a better solution was developed.
 
 \begin{shadedfigure}
 \begin{spec}
@@ -392,7 +392,7 @@ data Expr : Set where
 We might want to convert an expression, such as $5 + x$, to this AST
 using reflection. In an ideal world, we would just pattern match on
 concrete constructs such as the |_+_| function and return elements
-like |Plus| of our AST.  The |Autoquote| library does just this,
+like |Plus| of our AST.  The |Autoquote| library allows just this,
 exposing an interface which, when provided with such a mapping,
 automatically quotes expressions that fit. Here, \emph{fitting} is
 defined as only containing names that are listed in the mapping, or
@@ -423,7 +423,7 @@ Bruijn-indexed variables. The rest of the table is an arbitrary list of construc
 
 We will not say much about the implementation of this library, since
 it is not groundbreaking.
-For more details, we again refer to \cite{vdWalt:Thesis:2012}, Sec.~3.3. 
+For more details, we again refer to (\cite{vdWalt:Thesis:2012}, Sec.~3.3). 
 Using the library is simple; it exposes a function called
 |doConvert| which takes the conversion table, a (hidden, automatically
 inferred)  proof that
@@ -490,8 +490,9 @@ stage for the second, an open expression type extended to include variables.
 \subsection{Closed Example: Evenness}\label{sec:evenness}
 
 To illustrate the concept of proof by reflection, we will follow
-Chlipala's example of even naturals~\cite{chlipala2011certified}. It will serve as a stepping stone for the example in
-Sec.~\ref{sec:Boolean-tautologies}.
+Chlipala's example of even naturals~\cite{chlipala2011certified}. 
+%%It will serve as a stepping stone for the example in
+%%Sec.~\ref{sec:Boolean-tautologies}.
 Our objective is to be able to automatically prove evenness of certain naturals. To this end, we first write a 
 test function which decides if a natural is even, then prove the
 soundness of this predicate. This results in a proof generator. 
@@ -581,13 +582,13 @@ argument. This means we can turn the assumption |even? n| into an
 implicit argument, so a user could just write 
 |soundnessEven| as the proof, letting Agda fill in the missing proof. 
 This trick works
-because Agda supports eta expansion for record types. More
-specifically, Agda will automatically fill in implicit arguments of
+because Agda supports eta expansion for record types. 
+Concretely, Agda will automatically fill in implicit arguments of
 the unit type. Here, the type system is doing more work than
  for general
  data types; for records eta expansion is safe, since recursion is not allowed.
 This trick  will be
-used from here on to make our proof generators easier to use.
+used from here on to ameliorate  our proof generators' interfaces.
 
 \paragraph{Friendlier Errors.}  It is possible to generate a descriptive ``error'' of
 sorts, by replacing the |⊥| with
@@ -623,8 +624,7 @@ We will now apply the same steps as above to a different problem, clarifying
 the relationship to the previous example  at each step.
 This example of proof by reflection will be lifting a predicate
 that checks if a Boolean expression with indexed variables is a tautology under all possible
-assignments, to a proof generator. We will follow the same
-procedure as for even naturals. 
+assignments, to a proof generator. 
 
 Take as an example the following proposition.
 \begin{align}\label{eqn:tauto-example}
@@ -653,11 +653,11 @@ data BoolExpr (n : ℕ) : Set where
 
 We use the type |Fin n| to ensure
 that variables (represented by |Atomic| and identified by their De Bruijn index) are in scope. If we want to
-evaluate the expression, however, we will need some way to map variables to values.
+evaluate the expression, we will need some way to map variables to values.
 For this we use |Env n|: a vector of $n$ Boolean values. %, since a |BoolExpr n| has at most $n$ free variables.
 
 Now we can define an interpretation function, which tells us if an
- expression is true or not, under some assignment of variables. It does this by evaluating
+ expression is true or not, given some assignment of variables. It does this by evaluating
 the formula's % the apostrophe is bonafide.
  AST, filling in for |Atomic| values the concrete values which are
 looked up in the environment. For example, |And| is evaluated to
@@ -680,7 +680,7 @@ open import Proofs.Util.Handy
 \end{spec}
 \end{shade}
 
-Recall our decision function |even?| in the previous section. It returned
+Recall our test function |even?| in the previous section. It returned
 |⊤| if the proposition was valid, |⊥| otherwise. Looking at |⟦_⊢_⟧|, we see that
 we should just translate |true| to the unit type and |false| to the empty type, to get
 the analogue of the |even?| function. We therefore define a function
@@ -747,13 +747,14 @@ forallsAcc b acc    (Step y   ) =
 \end{shadedfigure}
 
 \paragraph{Soundness.} Now we finally know our real decision function |foralls|, we can set about proving its
-soundness. Following the |soundnessEven| example, we want a function something like this.
+soundness. Following the |soundnessEven| example, we want a function with a type something like in Fig.~\ref{fig:informal-soundness}.
 
-\begin{shade}
+\begin{shadedfigure}
 \begin{spec}
 soundness : {n : ℕ} → (b : BoolExpr n) → foralls b → ...
 \end{spec}
-\end{shade}
+\caption{The informal type of |soundness|, taking an expression and its truth table.}\label{fig:informal-soundness}
+\end{shadedfigure}
 
 But what should the return type of the |soundness| lemma be? We would like to
 prove that the argument |b| is a tautology, and hence, the |soundness|
@@ -864,7 +865,7 @@ work.
 
 
 \paragraph{Summary.} The only thing we still have to do manually is convert the 
-Agda representation of the formula (|p ∧ q ⇒ q|, in this case) into our abstract
+Agda representation of the formula (|p ∧ q ⇒ q|, for example) into our abstract
 syntax (|rep|). This is unfortunate, as we end up typing out the
 formula twice. We also have to count the number of variables
 ourselves and convert them to De Bruijn indices. This is
@@ -920,7 +921,7 @@ Once we have a |BoolInter| expression, the second phase is to check that its
 variables are all in scope (this means that $\forall$ |Atomic| $x  :     x < n$, if we
 want to convert to a |BoolExpr n|), and replace all |ℕ| values with their |Fin n| counterparts.
 We can now write a function |proveTautology|, which uses the automatic quoter and calls |soundness| on the resulting term. An
-approximation of |proveTautology|s type is given here. In summary, it
+approximation of |proveTautology|'s type is given here. In summary, it
 takes a term (as bound in the body of |quoteGoal|), quotes it with
 |Autoquote|, passes it to |soundness|, which returns a term 
 fulfilling the |proofGoal| type.
@@ -1012,7 +1013,7 @@ implementation.
 The extensive use of proof
 by reflection in Coq and SSReflect~\cite{gonthier:inria-00515548}, for example for proving the four colour theorem~\cite{DBLP:conf/ascm/Gonthier07}, has
 motivated a lot of recent work on improving Coq's compile time
-evaluation. We hope that Agda can be improved similarly.
+evaluation. We hope that Agda will be similarly improved.
  
 \paragraph{Conclusions.} %
 Returning to our research question,  repeated here,
@@ -1055,7 +1056,7 @@ improved the article.
 
 \bibliography{refs}{}
 % for LNCS bibliography:
-\bibliographystyle{splncsnat}%this one doesn't sort automatically. :(
+\bibliographystyle{splncs}
 \end{document}
 
 %%% Local Variables:
