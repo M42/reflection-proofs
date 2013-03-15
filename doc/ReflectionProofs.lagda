@@ -102,8 +102,10 @@ open import Proofs.Util.Types using (Diff; Base; Step)
 \end{code}
 }
 
-\usepackage[numbers,sort&compress]{natbib}
+%\usepackage[numbers,sort&compress]{natbib}
+\newcommand{\citep}[1]{\cite{#1}}
 \usepackage{hyperref}
+
 %%%%% Give citations etc a nicer look
 \hypersetup{
   colorlinks,
@@ -211,7 +213,7 @@ and a proof assistant for intuitionistic logic. It is comparable to
 Coq, which is based on
 Coquand's calculus of constructions~\cite{DBLP:journals/iandc/CoquandH88}. 
 There are many excellent tutorials
- on Agda~\citep{Norell:2009:DTP:1481861.1481862,norell:thesis,Oury:2008:PP:1411204.1411213}.
+ on Agda~\citep{norell:thesis,Norell:2009:DTP:1481861.1481862,Oury:2008:PP:1411204.1411213}.
 
 Since version 2.2.8, Agda includes a reflection API~\cite{agda-relnotes-228}, which allows the conversion of
 parts of a program's code into an abstract syntax tree, a data structure
