@@ -25,4 +25,4 @@ The code included in this repository can be used as a convenient starting point 
 Note on compiler modifications
 ------------------------------
 
-At the time of writing, the code presented here does not work as advertised: a slightly modified version of the Agda compiler is required. Why this is needed, and what modifications are involved, is explained in detail in the [thesis](https://github.com/toothbrush/reflection-proofs/downloads) this code supports – please have a look at Appendix A.1 there before telling me my code doesn't compile.
+At the time of writing, the code presented here does not work as advertised: a slightly modified version of the Agda compiler is required. Why this is needed, and what modifications are involved, is explained in detail in the [thesis](https://github.com/toothbrush/reflection-proofs/downloads) this code supports – please have a look at Appendix A.1 there first. Essentially, quoted lambda terms are annotated with a type signature, which isn't default behaviour.
