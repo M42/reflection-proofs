@@ -11,24 +11,28 @@
 %%% the colouring configuration.
 
 % types. never used?
-\newcommand{\ty}[1]{\mathsf{#1}}
+\newcommand{\ty}[1]{{\color{RawSienna}\mathsf{#1}}} 
 
 % constructors: was PineGreen
-\newcommand{\con}[1]{\mathsf{#1}}
-\newcommand{\consymop}[1]{\mathsf{#1}}
-\newcommand{\consym}[1]{\mathsf{#1}}
+\newcommand{\con}[1]{{\color{PineGreen}\mathsf{#1}}}
+\newcommand{\consymop}[1]{{\color{PineGreen}\mathsf{#1}}}
+\newcommand{\consym}[1]{{\color{PineGreen}\mathsf{#1}}} 
 
 % identifiers and definitions: was NavyBlue
-\newcommand{\id}[1]{\mathsf{#1}}
-\newcommand{\defin}[1]{\mathsf{#1}}
+%\newcommand{\id}[1]{\mathsf{#1}}
+%\newcommand{\defin}[1]{\mathsf{#1}}
+\newcommand{\id}[1]{{\color{NavyBlue}\mathsf{#1}}}
+\newcommand{\defin}[1]{{\color{NavyBlue}\mathsf{#1}}} 
 % field of a record:
-\newcommand{\fld}[1]{\mathsf{#1}}
+\newcommand{\fld}[1]{{\color{Maroon}\mathsf{#1}}} 
+%\newcommand{\fld}[1]{\mathsf{#1}}
+
 %%% black bold keywords: (like let, in, where, data)
 \newcommand{\bkw}[1]{\ensuremath{\bm{\mathsf{#1}}}}
 % keywords:
-%\newcommand{\keyword}[1]{{\color{darkbordeaux}\mathsf{#1}}}
 \newcommand{\keyword}[1]{{\bkw{#1}}}
 
+\colorlet{Hole}{Dandelion!25!white}
 \newcommand{\textsigma}{\ensuremath{\sigma}}
 \newcommand{\textalpha}{\ensuremath{\alpha}}
 
@@ -103,8 +107,6 @@
 }
 
 
-%\colorlet{Hole}{Dandelion!25!white}
-\colorlet{Hole}{black!25!white}
 %format (HOLE x)  = "\MyColorBox[Hole]{\ensuremath{\{\,\,\}_{" x "}}}"
 
 
