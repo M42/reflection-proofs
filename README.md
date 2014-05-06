@@ -21,7 +21,7 @@ Using the package
 
 The code included in this repository can be used as a convenient starting point for doing your own reflective development; all of it should compile fine in mainline Agda (currently version 2.3.2). You could conceivably also want to prove the evenness of certain naturals, no one is going to hold you back there. Examples of how to achieve this are given in the modules prefixed with `Example`, so have a peek how that works there.
 
-Reference to thesis / self-plug
--------------------------------
+Reference to master thesis / self-plug
+--------------------------------------
 
-This paper covers a small portion of what the original thesis covers, in a lot less detail. Inquisitive readers are encouraged to take a look at the  [thesis](https://github.com/downloads/toothbrush/reflection-proofs/ReflectionProofs.pdf); more extensive  [code](https://github.com/toothbrush/reflection-proofs/tree/msc-thesis)  can be found in the `msc-thesis` branch.
+This paper covers a small portion of what the original master thesis covers, in a lot less detail. Inquisitive readers are encouraged to take a look at the  [thesis](https://github.com/downloads/toothbrush/reflection-proofs/ReflectionProofs.pdf); more extensive  [code](https://github.com/toothbrush/reflection-proofs/tree/msc-thesis)  can be found in the `msc-thesis` branch.
